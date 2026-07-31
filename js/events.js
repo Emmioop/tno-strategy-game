@@ -258,7 +258,7 @@ const STORY_EVENTS = [
     tag: 'critical',
     title: '兄弟相残',
     body: `<p>内战全面爆发。帝国的心脏沦为废墟，曾经并肩作战的将军们在不同的旗帜下互相屠杀。</p>
-    <p>鲁尔区的工厂停转，汉堡港被封锁，慕尼黑在轰炸中燃烧。东方总督辖区趁机脱离控制，意大利与日本在一旁观望，OFN的中情局则在暗中资助每一个反德势力。</p>
+    <p>鲁尔区的工厂停转，汉堡港被封锁，慕尼黑在轰炸中燃烧。东方总督辖区趁机脱离控制，意大利与日本在一旁观望，美国的中情局则在暗中资助每一个反德势力。</p>
     <p>你的军队在前线苦战。物资短缺，士气低落，而敌人不止一个。</p>
     <p><strong>你需要做一个关键决策：如何赢得这场内战？</strong></p>`,
     choices: [
@@ -276,7 +276,7 @@ const STORY_EVENTS = [
       },
       {
         text: '寻求外国援助',
-        desc: '向OFN或日本求援。有效但伤国际地位',
+        desc: '向美国或日本求援。有效但伤国际地位',
         effects: { money: 80, militaryPower: 15, deterrence: -8 },
         setFlags: { civil_war_strategy: 'foreign_aid', foreign_intervention: true }
       }
@@ -466,13 +466,13 @@ const STORY_EVENTS = [
     tag: 'major',
     title: '华盛顿的试探',
     body: `<p>内战后的美国，正经历着自己的政治风暴。</p>
-    <p>1964年大选后，共和民主党与国家进步党（NPP）的斗争白热化。OFN注意到德国内战后的虚弱，华盛顿开始试探：是否可能与新德国缓和关系，集中精力应对日本共荣圈？</p>
-    <p>中情局送来了一份非官方备忘录：如果德国愿意在奴隶制与核武器上做出姿态，OFN可以承认新政权，甚至提供经济援助。</p>
+    <p>1964年大选后，共和民主党与国家进步党（NPP）的斗争白热化。美国注意到德国内战后的虚弱，华盛顿开始试探：是否可能与新德国缓和关系，集中精力应对日本共荣圈？</p>
+    <p>中情局送来了一份非官方备忘录：如果德国愿意在奴隶制与核武器上做出姿态，美国可以承认新政权，甚至提供经济援助。</p>
     <p>这是一个机会，也是一个陷阱——与"自由世界"握手，意味着背叛帝国的意识形态根基。</p>`,
     choices: [
       {
         text: '积极回应，寻求缓和',
-        desc: '+OFN关系 +资金 -威慑',
+        desc: '+美国关系 +资金 -威慑',
         effects: { ofn_relation: 20, money: 60, deterrence: -5 },
         setFlags: { ofn_detente: true, detente_started: true },
         condition: (s) => s.flags.reformist || s.flags.conservative
@@ -484,7 +484,7 @@ const STORY_EVENTS = [
       },
       {
         text: '拒绝并公开羞辱',
-        desc: '+威慑 -OFN关系',
+        desc: '+威慑 -美国关系',
         effects: { deterrence: 8, ofn_relation: -15 },
         setFlags: { ofn_humiliated: true },
         condition: (s) => s.flags.militarist || s.flags.extremist
@@ -499,12 +499,12 @@ const STORY_EVENTS = [
     tag: 'major',
     title: '日出之国的邀请',
     body: `<p>日本帝国也注意到了德国的变化。</p>
-    <p>共荣圈在60年代后期相对稳定，但内部矛盾丛生：中国的反抗从未停歇，东南亚的资源掠夺引发人道灾难，而东京的军部与文官政府明争暗斗。日本希望与德国重建某种"轴心"，共同对抗OFN。</p>
+    <p>共荣圈在60年代后期相对稳定，但内部矛盾丛生：中国的反抗从未停歇，东南亚的资源掠夺引发人道灾难，而东京的军部与文官政府明争暗斗。日本希望与德国重建某种"轴心"，共同对抗美国。</p>
     <p>但德国与日本在亚太利益上有根本冲突——谁控制太平洋？谁主导中国？这些问题没有答案。日本的邀请，更像是一份陷阱密布的盟约。</p>`,
     choices: [
       {
         text: '重建轴心同盟',
-        desc: '+日本关系 +威慑 -OFN关系',
+        desc: '+日本关系 +威慑 -美国关系',
         effects: { japan_relation: 20, deterrence: 8, ofn_relation: -10 },
         setFlags: { axis_revived: true }
       },
@@ -515,7 +515,7 @@ const STORY_EVENTS = [
       },
       {
         text: '拒绝，转向对抗',
-        desc: '+OFN关系 -日本关系',
+        desc: '+美国关系 -日本关系',
         effects: { japan_relation: -15, ofn_relation: 8 },
         setFlags: { japan_rivalry: true }
       }
@@ -530,7 +530,7 @@ const STORY_EVENTS = [
     title: '三头同盟的裂痕',
     body: `<p>意大利、伊比利亚联盟、土耳其组成的"三头同盟"，是德国在欧洲南翼的对手。</p>
     <p>齐亚诺的意大利试图在德、美、日之间走钢丝；弗朗哥的伊比利亚联盟苟延残喘；土耳其则在泛突厥主义的迷梦中挣扎。如今，三头同盟内部矛盾激化——伊比利亚的老独裁者将死，土耳其的军方蠢蠢欲动，意大利想摆脱德国阴影却又怕被吞掉。</p>
-    <p>这是一个拉拢南欧、巩固欧洲霸权的良机——或者，把它推向OFN的怀抱。</p>`,
+    <p>这是一个拉拢南欧、巩固欧洲霸权的良机——或者，把它推向美国的怀抱。</p>`,
     choices: [
       {
         text: '武力威胁，迫使臣服',
@@ -672,7 +672,7 @@ const STORY_EVENTS = [
     <p>你必须行动。但要如何对付一个拥有核武器、毫无底线、且渗透了你政府的敌人？</p>`,
     choices: [
       {
-        text: '联合OFN与日本，先发制人',
+        text: '联合美国与日本，先发制人',
         desc: '三极联手铲除勃艮第。+国际关系 -资金',
         effects: { ofn_relation: 25, japan_relation: 20, money: -100, deterrence: -5 },
         setFlags: { burgundian_war: true, burgundian_threat: true, three_way_alliance: true },
@@ -714,7 +714,7 @@ const STORY_EVENTS = [
     choices: [
       {
         text: '协助建立国际核监管',
-        desc: '+国际声誉 +OFN关系',
+        desc: '+国际声誉 +美国关系',
         effects: { ofn_relation: 15, japan_relation: 10, stability: 8 },
         setFlags: { nuclear_watchdog: true },
         condition: (s) => s.flags.three_way_alliance || s.flags.arms_control
@@ -748,7 +748,7 @@ const STORY_EVENTS = [
     choices: [
       {
         text: '资助亲德派系',
-        desc: '干涉美国内政。+威慑 -OFN关系',
+        desc: '干涉美国内政。+威慑 -美国关系',
         effects: { deterrence: 5, ofn_relation: -20, money: -40 },
         setFlags: { us_intervention: true }
       },
@@ -759,7 +759,7 @@ const STORY_EVENTS = [
       },
       {
         text: '秘密提供人道援助',
-        desc: '+OFN关系 -资金',
+        desc: '+美国关系 -资金',
         effects: { ofn_relation: 10, money: -30 },
         setFlags: { us_aid: true },
         condition: (s) => s.flags.reformist
@@ -888,8 +888,8 @@ const STORY_EVENTS = [
         condition: (s) => s.flags.reformist
       },
       {
-        text: '联合OFN遏制俄罗斯',
-        desc: '+OFN关系 -俄罗斯关系',
+        text: '联合美国遏制俄罗斯',
+        desc: '+美国关系 -俄罗斯关系',
         effects: { ofn_relation: 20, russia_relation: -20, deterrence: 10 },
         setFlags: { russia_containment: true }
       },
@@ -953,7 +953,7 @@ const STORY_EVENTS = [
     title: '网络的诞生',
     body: `<p>如果帝国追上了计算机革命，那么1985年，它将面对一个全新的怪物：<strong>互联网</strong>。</p>
     <p>信息的自由流动，是极权体制的天敌。当任何人都能与任何人交流，当任何真相都能绕过审查传播，帝国的宣传机器将面临前所未有的挑战。</p>
-    <p>OFN的"阿帕网"已经连接了数千个节点；日本的"共荣网络"覆盖了亚洲；帝国的"日耳曼网"则被设计成一个封闭的、受监控的内部网络。但防火墙能挡住思想的洪水吗？</p>`,
+    <p>美国的"阿帕网"已经连接了数千个节点；日本的"共荣网络"覆盖了亚洲；帝国的"日耳曼网"则被设计成一个封闭的、受监控的内部网络。但防火墙能挡住思想的洪水吗？</p>`,
     choices: [
       {
         text: '建立严密的网络防火墙',
@@ -1187,11 +1187,11 @@ const STORY_EVENTS = [
     minTurn: { year: 1966 },
     tag: 'minor',
     title: '科学家出逃',
-    body: `<p>一名帝国核物理学家试图经瑞士逃往OFN，被边防截获。他声称"无法再忍受帝国的窒息"。</p>`,
+    body: `<p>一名帝国核物理学家试图经瑞士逃往美国，被边防截获。他声称"无法再忍受帝国的窒息"。</p>`,
     choices: [
       { text: '处决以儆效尤', desc: '-研发 +威慑', effects: { research: -3, deterrence: 2 } },
       { text: '说服他留下', desc: '+研发 -资金', effects: { research: 5, money: -20 } },
-      { text: '放他走', desc: '+OFN关系 -威慑', effects: { ofn_relation: 8, deterrence: -3 }, condition: (s) => s.flags.reformist }
+      { text: '放他走', desc: '+美国关系 -威慑', effects: { ofn_relation: 8, deterrence: -3 }, condition: (s) => s.flags.reformist }
     ]
   },
 
@@ -1218,9 +1218,9 @@ const STORY_EVENTS = [
     minTurn: { year: 1970 },
     tag: 'minor',
     title: '外交突破',
-    body: `<p>一次非正式的多边会谈上，帝国外交官与OFN代表达成了意外的共识。</p>`,
+    body: `<p>一次非正式的多边会谈上，帝国外交官与美国代表达成了意外的共识。</p>`,
     choices: [
-      { text: '深化对话', desc: '+OFN关系', effects: { ofn_relation: 12 } },
+      { text: '深化对话', desc: '+美国关系', effects: { ofn_relation: 12 } },
       { text: '保持距离', desc: '无变化', effects: {} }
     ]
   },
@@ -1264,7 +1264,7 @@ const STORY_EVENTS = [
     body: `<p>情报机关发现，仍有勃艮第SS残党在地下活动，他们可能掌握着部分失落的核武器。</p>`,
     choices: [
       { text: '全面追捕', desc: '-资金 +稳定', effects: { money: -40, stability: 5 } },
-      { text: '与国际合作', desc: '+OFN关系 -资金', effects: { ofn_relation: 10, money: -20 } },
+      { text: '与国际合作', desc: '+美国关系 -资金', effects: { ofn_relation: 10, money: -20 } },
       { text: '忽视', desc: '-稳定', effects: { stability: -3 } }
     ]
   },

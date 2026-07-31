@@ -203,7 +203,7 @@ const BUILDINGS = {
 
 // ===== 势力定义 =====
 const FACTIONS = {
-  ofn: { id: 'ofn', name: '自由国家组织(OFN)', short: '美国/OFN', desc: '由美国领导的自由世界残部。民主的灯塔，虽已蒙尘。' },
+  ofn: { id: 'ofn', name: '自由国家组织', short: '美国', desc: '由美国领导的自由世界残部。民主的灯塔，虽已蒙尘。' },
   japan: { id: 'japan', name: '大东亚共荣圈', short: '日本', desc: '日本帝国与其仆从国。控制着太平洋与亚洲。' },
   italy: { id: 'italy', name: '三头同盟', short: '意大利', desc: '意大利、伊比利亚、土耳其的松散联盟，意图摆脱德国。' },
   burgundy: { id: 'burgundy', name: '勃艮第骑士团国', short: '勃艮第', desc: '希姆莱的噩梦之国。它策划着世界的终结。' },
