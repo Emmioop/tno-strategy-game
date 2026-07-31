@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>千年帝国的最后一息 · TNO策略游戏</title>
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 
@@ -35,6 +35,7 @@
     </div>
 
     <button class="btn-enter" id="btn-start">进入帝国总理府 ▸</button>
+    <button class="btn-secondary" id="btn-continue" style="margin-top:10px;display:none;">继续游戏 ▸</button>
     <button class="btn-secondary" id="btn-tutorial-splash" style="margin-top:10px;background:transparent;border-color:var(--border);color:var(--text-secondary);padding:8px 24px;font-size:13px;">阅读教程</button>
   </div>
 
@@ -87,10 +88,10 @@
   <div id="toast-container"></div>
 
   <!-- ===== 脚本 ===== -->
-  <script src="js/data.js?v=7"></script>
-  <script src="js/events.js?v=7"></script>
-  <script src="js/game.js?v=7"></script>
-  <script src="js/ui.js?v=7"></script>
+  <script src="js/data.js?v=8"></script>
+  <script src="js/events.js?v=8"></script>
+  <script src="js/game.js?v=8"></script>
+  <script src="js/ui.js?v=8"></script>
   <script>
     // 难度选择初始化
     (function initDifficultySelect() {
@@ -124,9 +125,37 @@
       });
     })();
 
+    // 检查是否有存档
+    (function checkSave() {
+      try {
+        const saved = localStorage.getItem('tno_game_save');
+        if (saved) {
+          const state = JSON.parse(saved);
+          if (state && !state.ended) {
+            const btn = document.getElementById('btn-continue');
+            btn.style.display = '';
+            const diffName = (window.DIFFICULTIES && DIFFICULTIES[state.difficulty]?.name) || '普通';
+            btn.textContent = `继续游戏（${state.year}年Q${state.quarter} · ${diffName}）▸`;
+          }
+        }
+      } catch(e) {}
+    })();
+
     // 启动逻辑
     document.getElementById('btn-start').addEventListener('click', () => {
       UI.start();
+    });
+
+    // 继续游戏
+    document.getElementById('btn-continue').addEventListener('click', () => {
+      if (UI.loadGame()) {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('game').classList.add('active');
+        UI.renderAll();
+        UI.toast('存档已载入', 'success');
+      } else {
+        UI.toast('加载失败', 'error');
+      }
     });
 
     // 教程按钮（启动画面）

@@ -262,21 +262,33 @@ const Game = {
     if (!effects) return [];
     const changes = [];
     const diff = this.getDiff();
+
+    // 关系key映射：事件中用 ofn_relation，state中用 ofn
+    const relKeyMap = {
+      ofn_relation: 'ofn',
+      japan_relation: 'japan',
+      italy_relation: 'italy',
+      burgundy_relation: 'burgundy',
+      russia_relation: 'russia'
+    };
+
     for (const key in effects) {
       const val = effects[key];
       let actualVal = val;
+      // 映射关系key
+      const mappedKey = relKeyMap[key] || key;
+
       // 负面效果受难度惩罚倍率影响
-      if (val < 0 && (key in this.state.resources || key in this.state.relations)) {
+      if (val < 0 && (mappedKey in this.state.resources || mappedKey in this.state.relations)) {
         actualVal = Math.round(val * diff.penMod);
       }
-      if (key in this.state.resources) {
-        this.state.resources[key] += actualVal;
-        changes.push({ key, val: actualVal });
-      } else if (key in this.state.relations) {
-        this.state.relations[key] = Math.max(-100, Math.min(100, this.state.relations[key] + actualVal));
-        changes.push({ key, val: actualVal });
-      } else if (key === 'stability' || key === 'deterrence') {
-        // 已在 resources 中处理
+
+      if (mappedKey in this.state.resources) {
+        this.state.resources[mappedKey] += actualVal;
+        changes.push({ key: mappedKey, val: actualVal });
+      } else if (mappedKey in this.state.relations) {
+        this.state.relations[mappedKey] = Math.max(-100, Math.min(100, this.state.relations[mappedKey] + actualVal));
+        changes.push({ key: mappedKey, val: actualVal });
       }
     }
     return changes;

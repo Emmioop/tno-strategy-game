@@ -297,7 +297,7 @@ const UI = {
     document.getElementById('action-bar').innerHTML = `
       <button class="btn-next-turn" id="btn-next-turn">推进至下一季度 ▸</button>
       <button class="btn-secondary" id="btn-save">保存进度</button>
-      <button class="btn-secondary" id="btn-restart">重新开始</button>
+      <button class="btn-secondary" id="btn-restart">放弃存档并重启</button>
     `;
 
     document.getElementById('btn-next-turn').onclick = () => this.nextTurn();
@@ -771,6 +771,9 @@ const UI = {
 
     this.renderAll();
 
+    // 自动保存
+    this.autoSave();
+
     // 处理事件
     if (this.pendingEvents.length > 0) {
       this.currentEventIndex = 0;
@@ -799,6 +802,8 @@ const UI = {
     if (this.currentEventIndex >= this.pendingEvents.length) {
       // 所有事件处理完毕
       this.pendingEvents = [];
+      // 事件处理完后自动保存
+      this.autoSave();
       if (Game.state.ended) {
         this.showEnding();
       } else {
@@ -928,6 +933,13 @@ const UI = {
     } catch (e) {
       this.toast('保存失败', 'error');
     }
+  },
+
+  // ===== 自动保存（静默） =====
+  autoSave() {
+    try {
+      localStorage.setItem('tno_game_save', JSON.stringify(Game.state));
+    } catch (e) {}
   },
 
   // ===== 加载游戏 =====
