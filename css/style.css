@@ -48,12 +48,14 @@ body {
 /* ===== 启动画面 ===== */
 #splash {
   position: fixed; inset: 0; z-index: 1000;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  overflow-y: auto;
   background:
     radial-gradient(ellipse at center, rgba(168,50,50,0.15) 0%, transparent 60%),
     linear-gradient(180deg, #0a0a0c 0%, #14141a 100%);
-  text-align: center; padding: 40px;
+  text-align: center; padding: 8vh 40px 40px;
 }
+#splash > * { flex-shrink: 0; }
 
 #splash .title-main {
   font-family: var(--font-serif);
