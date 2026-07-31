@@ -20,7 +20,7 @@ const BUILDINGS = {
     category: '经济'
   },
   infrastructure: {
-    id: 'infra',
+    id: 'infrastructure',
     name: '基础设施',
     type: 'civilian',
     desc: '高速公路、铁路与电网。让帝国的血管重新跳动，也让军队调遣更快。',
