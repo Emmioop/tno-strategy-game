@@ -133,7 +133,12 @@ const Game = {
         japan: -10,
         italy: 5,
         burgundy: -30,
-        russia: -40
+        russia: -40,
+        france: -15,
+        egypt: 0,
+        middle_east: -5,
+        africa: -5,
+        french_indochina: 0
       },
 
       // 建筑 {buildingId: count}
@@ -269,7 +274,12 @@ const Game = {
       japan_relation: 'japan',
       italy_relation: 'italy',
       burgundy_relation: 'burgundy',
-      russia_relation: 'russia'
+      russia_relation: 'russia',
+      france_relation: 'france',
+      egypt_relation: 'egypt',
+      middle_east_relation: 'middle_east',
+      africa_relation: 'africa',
+      french_indochina_relation: 'french_indochina'
     };
 
     for (const key in effects) {

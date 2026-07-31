@@ -1895,6 +1895,421 @@ const STORY_EVENTS = [
       { text: '深入调查', desc: '-资金 +稳定', effects: { money: -40, stability: 4 } }
     ]
   }
+  ,
+
+  /* ===========================================================
+   * 法国事件
+   * =========================================================== */
+
+  {
+    id: 'ev_free_france_rallying',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '自由法国集结',
+    body: `<p>在法国南部，一股新生的力量正在集结——<strong>自由法国</strong>运动。</p>
+    <p>戴高乐的追随者们从马赛、图卢兹和里昂的地下走出，他们与美国的情报机构合作，在山区建立训练营，在城市中开展地下印刷。他们的口号穿越了被占领的法国：<em>liberté, égalité, fraternité</em>。</p>
+    <p>情报显示，自由法国正在寻求与帝国的直接谈判。他们的要求很明确：结束占领，恢复法国主权。</p>`,
+    choices: [
+      {
+        text: '派遣部队镇压',
+        desc: '+威慑 -法国抵抗 -美国关系',
+        effects: { deterrence: 5, ofn_relation: -10 },
+        setFlags: { french_resistance_crushed: true, war_europe: true }
+      },
+      {
+        text: '开启秘密谈判',
+        desc: '+美国关系 -稳定 -威慑',
+        effects: { ofn_relation: 10, stability: -4, deterrence: -3 },
+        setFlags: { french_negotiation: true },
+        showToast: '与自由法国的秘密谈判已开启'
+      },
+      {
+        text: '静观其变',
+        desc: '-稳定',
+        effects: { stability: -3 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_french_civil_war',
+    turn: { year: 1966, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '法国内战',
+    body: `<p>法国正在燃烧。</p>
+    <p>自由法国的抵抗力量与维希政权的民兵在巴黎街头激战。德军占领当局面临两难：是支持维希政权镇压抵抗，还是直接介入？</p>
+    <p>法国的局势已经失控。如果帝国不采取果断行动，整个法国可能陷入全面内战，届时不仅占领成本激增，美国也可能借此机会加大对欧洲的干涉。</p>`,
+    choices: [
+      {
+        text: '全面军事介入',
+        desc: '+威慑 -资金 -人力 -美国关系',
+        effects: { deterrence: 10, money: -80, manpower: -15, ofn_relation: -15 },
+        setFlags: { french_resistance_crushed: true, war_europe: true },
+        showToast: '帝国全面介入法国内战'
+      },
+      {
+        text: '支持维希政权',
+        desc: '+资金 -美国关系 -稳定',
+        effects: { money: 20, ofn_relation: -10, stability: -3 },
+        setFlags: { french_resistance_crushed: true }
+      },
+      {
+        text: '与自由法国妥协',
+        desc: '+美国关系 -威慑 -资金',
+        effects: { ofn_relation: 15, deterrence: -5, money: -40 },
+        setFlags: { french_negotiation: true },
+        condition: (s) => s.flags.french_negotiation || s.flags.reformist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_french_occupation_costs',
+    turn: { year: 1968, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '占领法国的经济成本',
+    body: `<p>占领法国的成本正在急剧上升。</p>
+    <p>每年帝国需要投入大量资金维持占领军、镇压抵抗运动、重建被破坏的基础设施。法国的经济价值远不及占领成本，而民众的敌意只在与日俱增。</p>
+    <p>有人开始质疑：继续占领法国是否真的符合帝国的利益？</p>`,
+    choices: [
+      {
+        text: '增加占领投入',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 3, money: -60 }
+      },
+      {
+        text: '削减占领开支',
+        desc: '+资金 -威慑 -稳定',
+        effects: { money: 40, deterrence: -4, stability: -3 },
+        condition: (s) => s.resources.money < -100
+      },
+      {
+        text: '推动自治方案',
+        desc: '+稳定 +美国关系 -威慑',
+        effects: { stability: 5, ofn_relation: 8, deterrence: -3 },
+        condition: (s) => s.flags.reformist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_degaulle_return',
+    turn: { year: 1970, quarter: 4 },
+    once: true,
+    tag: 'major',
+    title: '戴高乐回归',
+    body: `<p>夏尔·戴高乐——自由法国的传奇领袖——正在策划一场惊天回归。</p>
+    <p>如果自由法国在南部占据优势，戴高乐将从流亡中归来，统一法国的抵抗力量，建立一个与帝国分庭抗礼的法国政权。这将是对帝国在西欧霸权的直接挑战。</p>
+    <p>情报报告显示，戴高乐已秘密从美国获得资金支持。</p>`,
+    choices: [
+      {
+        text: '加强监视与镇压',
+        desc: '+威慑 -资金 -美国关系',
+        effects: { deterrence: 6, money: -40, ofn_relation: -12 },
+        setFlags: { degaulle_suppressed: true, french_resistance_crushed: true },
+        condition: (s) => !s.flags.french_negotiation
+      },
+      {
+        text: '与戴高乐派对话',
+        desc: '+美国关系 -威慑 -资金',
+        effects: { ofn_relation: 12, deterrence: -3, money: -30 },
+        setFlags: { degaulle_negotiation: true, french_negotiation: true },
+        condition: (s) => s.flags.french_negotiation
+      },
+      {
+        text: '暂不关注意大利，处理内政',
+        desc: '无重大影响',
+        effects: { stability: -2 }
+      }
+    ],
+    condition: (s) => s.flags.french_negotiation || s.year >= 1970
+  },
+
+  /* ===========================================================
+   * 非洲事件
+   * =========================================================== */
+
+  {
+    id: 'ev_north_africa_rising',
+    turn: { year: 1965, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '北非殖民地起义',
+    body: `<p>摩洛哥、阿尔及利亚和突尼斯的法国殖民地爆发了大规模起义。</p>
+    <p>民族主义者要求独立，法国殖民当局疲于应对。帝国在北非的利益受到威胁——摩洛哥的战略位置、阿尔及利亚的石油资源、突尼斯的海军基地都面临丧失的风险。</p>
+    <p>当地驻军请求增援，但帝国的兵力已分散在欧洲和东线。</p>`,
+    choices: [
+      {
+        text: '派遣远征军镇压',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 5, money: -50, manpower: -10 },
+        setFlags: { war_africa: true }
+      },
+      {
+        text: '外交施压',
+        desc: '+稳定 -威慑',
+        effects: { stability: 4, deterrence: -2 }
+      },
+      {
+        text: '放弃部分殖民地',
+        desc: '+资金 -威慑 -稳定',
+        effects: { money: 30, deterrence: -4, stability: -3 },
+        setFlags: { north_africa_conceded: true },
+        condition: (s) => s.flags.reformist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_italian_africa_collapse',
+    turn: { year: 1969, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '意大利非洲帝国崩溃',
+    body: `<p>意大利的非洲帝国正在土崩瓦解。</p>
+    <p>埃塞俄比亚的起义、利比亚的动荡、索马里的叛乱——墨索里尼的罗马帝国梦想在非洲化为尘埃。意大利的崩溃将影响整个地中海的力量平衡。</p>
+    <p>如果意大利倒台，帝国将不得不接管其非洲领地——这将是一个沉重的负担，同时也是一个机会。</p>`,
+    choices: [
+      {
+        text: '接管意大利非洲领地',
+        desc: '+威慑 -资金 -人力 -意大利关系',
+        effects: { deterrence: 8, money: -70, manpower: -12, italy_relation: -10 },
+        setFlags: { war_africa: true, italy_africa_collapse: true }
+      },
+      {
+        text: '支持意大利维持统治',
+        desc: '+意大利关系 -资金 -威慑',
+        effects: { italy_relation: 12, money: -40, deterrence: -3 }
+      },
+      {
+        text: '让意大利自行崩溃',
+        desc: '-威慑 -稳定',
+        effects: { deterrence: -5, stability: -4 },
+        setFlags: { italy_africa_collapse: true }
+      }
+    ],
+    condition: (s) => s.flags.italy_africa_collapse || s.year >= 1969
+  },
+
+  {
+    id: 'ev_suez_crisis',
+    turn: { year: 1973, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '苏伊士运河危机',
+    body: `<p>埃及宣布将苏伊士运河国有化，并封锁了以色列的航运。</p>
+    <p>以色列随即发动军事行动，入侵西奈半岛。英国和法国以保护运河为借口介入。整个中东濒临全面战争。</p>
+    <p>苏伊士运河是帝国从中东获取石油的生命线。如果运河被封锁，帝国的经济将受到严重冲击。</p>`,
+    choices: [
+      {
+        text: '派遣舰队保护运河',
+        desc: '+威慑 -资金 -中东关系',
+        effects: { deterrence: 8, money: -60, stability: -3 },
+        setFlags: { suez_crisis: true, war_middle_east: true }
+      },
+      {
+        text: '外交斡旋',
+        desc: '+稳定 -威慑',
+        effects: { stability: 5, deterrence: -3 },
+        setFlags: { suez_crisis: true }
+      },
+      {
+        text: '与以色列合作',
+        desc: '+以色列关系 -中东关系',
+        effects: { deterrence: 3, ofn_relation: 8, stability: -3 },
+        setFlags: { suez_crisis: true, war_middle_east: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_africa_scramble',
+    turn: { year: 1975, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '非洲独立浪潮',
+    body: `<p>非洲独立运动进入高潮。</p>
+    <p>从摩洛哥到南非，从埃及到尼日利亚，民族主义浪潮席卷整个非洲大陆。殖民地体系正在崩溃，新的国家如雨后春笋般涌现。</p>
+    <p>帝国在非洲的殖民利益面临全面挑战。是时候做出选择了——是维持旧秩序，还是接受非洲的独立？</p>`,
+    choices: [
+      {
+        text: '强化殖民统治',
+        desc: '+威慑 -资金 -稳定',
+        effects: { deterrence: 6, money: -50, stability: -4 },
+        setFlags: { war_africa: true }
+      },
+      {
+        text: '有条件地承认独立',
+        desc: '+稳定 -威慑 +资金',
+        effects: { stability: 8, deterrence: -3, money: 20 },
+        setFlags: { africa_emancipation: true },
+        condition: (s) => s.flags.reformist
+      },
+      {
+        text: '顺其自然',
+        desc: '-稳定',
+        effects: { stability: -3 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_south_africa_crisis',
+    turn: { year: 1980, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '南非种族隔离危机',
+    body: `<p>南非的种族隔离政权面临空前的国际压力。</p>
+    <p>纳尔逊·曼德拉领导的非洲人国民大会(ANC)发起了大规模抗议运动。国际社会呼吁制裁南非，但一些国家仍在与比勒陀利亚进行贸易。</p>
+    <p>帝国在南非拥有重要的矿产投资——黄金、钻石和铀矿。是支持种族隔离政权，还是转向民主力量？</p>`,
+    choices: [
+      {
+        text: '支持南非政府',
+        desc: '+资金 -人道形象',
+        effects: { money: 50, stability: -2 }
+      },
+      {
+        text: '转向民主力量',
+        desc: '+稳定 -资金',
+        effects: { stability: 6, money: -30 },
+        condition: (s) => s.flags.reformist
+      },
+      {
+        text: '保持中立',
+        desc: '无重大影响',
+        effects: { stability: -1 }
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 战争事件
+   * =========================================================== */
+
+  {
+    id: 'ev_first_nile_war',
+    turn: { year: 1967, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '第一次尼罗河战争',
+    body: `<p>以色列对埃及发动了先发制人的空中打击。</p>
+    <p>在六天之内，以色列摧毁了埃及、叙利亚和约旦的空军，占领了西奈半岛、约旦河西岸和戈兰高地。这场"六日战争"彻底改变了中东的力量格局。</p>
+    <p>帝国的石油供应线受到威胁。战争可能波及整个中东地区。</p>`,
+    choices: [
+      {
+        text: '支持以色列',
+        desc: '+威慑 -中东关系',
+        effects: { deterrence: 8, ofn_relation: 10, stability: -5 },
+        setFlags: { first_nile_war: true, war_middle_east: true }
+      },
+      {
+        text: '支持阿拉伯国家',
+        desc: '+中东关系 -美国关系 -威慑',
+        effects: { stability: 5, ofn_relation: -10, deterrence: -3 },
+        setFlags: { first_nile_war: true, war_middle_east: true }
+      },
+      {
+        text: '保持中立',
+        desc: '-稳定',
+        effects: { stability: -2 },
+        setFlags: { first_nile_war: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_mediterranean_crisis',
+    turn: { year: 1971, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '地中海危机',
+    body: `<p>地中海地区爆发了一场涉及多国的军事危机。</p>
+    <p>意大利、南斯拉夫、希腊、土耳其——地中海沿岸的帝国卫星国和中立国之间爆发了一系列边境冲突。一场更大规模的战争似乎一触即发。</p>
+    <p>帝国作为欧洲的主导力量，必须决定如何介入这场危机。</p>`,
+    choices: [
+      {
+        text: '派兵稳定局势',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 7, money: -55, manpower: -8 },
+        setFlags: { war_europe: true, war_mediterranean: true }
+      },
+      {
+        text: '外交调停',
+        desc: '+稳定 -威慑',
+        effects: { stability: 6, deterrence: -2 }
+      },
+      {
+        text: '支持意大利扩张',
+        desc: '+意大利关系 -稳定',
+        effects: { italy_relation: 10, stability: -3, deterrence: -2 },
+        setFlags: { war_europe: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_saharan_war',
+    turn: { year: 1985, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '撒哈拉战争',
+    body: `<p>一场爆发在撒哈拉沙漠的战争震惊了世界。</p>
+    <p>摩洛哥与阿尔及利亚因西撒哈拉领土争端爆发军事冲突。毛里塔尼亚、马里、尼日尔等国相继卷入。这场战争不仅涉及领土争端，还牵涉到石油、天然气和矿产资源的争夺。</p>
+    <p>帝国在北非的殖民地利益再次面临威胁。</p>`,
+    choices: [
+      {
+        text: '派兵保护帝国利益',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 9, money: -80, manpower: -12 },
+        setFlags: { war_africa: true, war_saharan: true }
+      },
+      {
+        text: '外交调停',
+        desc: '+稳定 -威慑',
+        effects: { stability: 7, deterrence: -3 },
+        setFlags: { war_saharan: true }
+      },
+      {
+        text: '出售军火牟利',
+        desc: '+资金 -稳定',
+        effects: { money: 100, stability: -4, deterrence: -5 },
+        setFlags: { war_africa: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_global_boom_1985',
+    turn: { year: 1985, quarter: 4 },
+    once: true,
+    tag: 'major',
+    title: '全球经济繁荣',
+    body: `<p>1985年见证了一场全球性的经济繁荣。</p>
+    <p>石油价格下跌、技术创新加速、金融市场繁荣——世界经济进入了一个黄金时期。帝国的经济也受益匪浅，工业产值大幅增长，失业率下降，人民生活水平提高。</p>
+    <p>然而，繁荣之下隐藏着泡沫和不平衡。通货膨胀的压力正在积累……</p>`,
+    choices: [
+      {
+        text: '加大投资，抓住机遇',
+        desc: '+资金 +研发 -稳定',
+        effects: { money: 80, research: 8, stability: -2 }
+      },
+      {
+        text: '收紧财政，防范风险',
+        desc: '+稳定 -资金',
+        effects: { stability: 8, money: -40 }
+      },
+      {
+        text: '投资核武器现代化',
+        desc: '+核威慑 -资金',
+        effects: { nukeDeter: 10, money: -70 },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  }
 
 ];
 
