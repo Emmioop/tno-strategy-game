@@ -220,6 +220,7 @@ const UI = {
     };
 
     document.getElementById('left-panel').innerHTML = `
+      <button class="mobile-close-btn" onclick="UI.toggleDrawer('')">✕ 关闭</button>
       <div class="panel-section">
         <h3>国势</h3>
         <div class="section-body">
@@ -334,9 +335,15 @@ const UI = {
     document.getElementById('m-btn-help').onclick = () => this.showTutorial();
 
     // 给左右面板各加一个关闭按钮（手机端可见）
-    ['left-panel', 'right-panel'].forEach(id => {
+    // 注意：left-panel 在 renderLeftPanel 模板中已经自带了，这里只处理 right-panel，
+    // 并且为了保险，每次都先清掉旧的再重新添加，确保不会丢失
+    ['right-panel'].forEach(id => {
       const panel = document.getElementById(id);
-      if (!panel || panel.querySelector('.mobile-close-btn')) return;
+      if (!panel) return;
+      // 先移除已有的旧关闭按钮（避免重复）
+      const oldBtns = panel.querySelectorAll('.mobile-close-btn');
+      oldBtns.forEach(b => b.remove());
+      // 在最前面插入新的关闭按钮
       const closeBtn = document.createElement('button');
       closeBtn.className = 'mobile-close-btn';
       closeBtn.innerHTML = '✕ 关闭';
@@ -921,6 +928,12 @@ const UI = {
       const saved = localStorage.getItem('tno_game_save');
       if (saved) {
         Game.state = JSON.parse(saved);
+        // 兼容性修复：如果有核弹但没有核武技术，自动解锁
+        if (Game.state.resources.nukes > 0 && !Game.state.techs['nuclear_tech']) {
+          Game.state.techs['nuclear_tech'] = true;
+          Game.state.flags['nuclear_tech'] = true;
+          localStorage.setItem('tno_game_save', JSON.stringify(Game.state));
+        }
         return true;
       }
     } catch (e) {}

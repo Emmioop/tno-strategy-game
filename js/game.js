@@ -60,14 +60,18 @@ const Game = {
       // 建造队列 {id, turnsLeft}
       buildQueue: [],
 
-      // 已研发科技
-      techs: {},
+      // 已研发科技（1962年的帝国已经掌握核武器技术）
+      techs: {
+        nuclear_tech: true
+      },
 
       // 政策选择 {policyId: optionId}
       policies: {},
 
       // 标记位
-      flags: {},
+      flags: {
+        nuclear_tech: true
+      },
 
       // 已触发的一次性事件
       triggeredEvents: {},
