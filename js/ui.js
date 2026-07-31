@@ -700,14 +700,20 @@ const UI = {
           const done = s.techs[t.id];
           const canResearch = !done && s.resources.research >= t.cost;
           return `
-            <div class="building-card civilian" style="${done ? 'opacity:0.6' : ''}">
-              <div class="b-name">${t.name} ${done ? '<span style="color:var(--accent-toxic);font-size:11px">✓ 已研发</span>' : ''}</div>
+            <div class="building-card civilian ${done ? 'tech-done' : ''}">
+              <div class="b-name">${t.name} ${done ? '<span style="color:var(--accent-toxic);font-size:11px;margin-left:6px">✓ 已研发</span>' : ''}</div>
               <div class="b-desc">${t.desc}</div>
               <div class="b-stats">
-                <span class="b-stat cost">研发 ${t.cost} ✦</span>
+                ${done
+                  ? `<span class="b-stat">研发成本 ${t.cost} ✦</span>`
+                  : `<span class="b-stat cost">研发 ${t.cost} ✦</span>`
+                }
               </div>
               <div class="b-actions">
-                <button class="btn btn-build" data-tech="${t.id}" ${canResearch ? '' : 'disabled'}>${done ? '已完成' : '研发'}</button>
+                ${done
+                  ? '<button class="btn btn-build" disabled>已完成</button>'
+                  : `<button class="btn btn-build" data-tech="${t.id}" ${canResearch ? '' : 'disabled'}>研发</button>`
+                }
               </div>
             </div>`;
         }).join('')}

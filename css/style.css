@@ -441,6 +441,13 @@ body {
 }
 .building-card .b-stat.gain { color: var(--accent-toxic); }
 .building-card .b-stat.cost { color: var(--accent-blood-bright); }
+.building-card.tech-done {
+  opacity: 0.55;
+  border-color: var(--border) !important;
+  background: var(--bg-panel);
+}
+.building-card.tech-done .b-stat { color: var(--text-muted); }
+.building-card.tech-done .b-stat.cost { color: var(--text-muted); }
 .building-card .b-count {
   display: inline-block;
   font-family: var(--font-mono);
