@@ -332,20 +332,33 @@ const UI = {
     document.getElementById('m-btn-left').onclick = () => this.toggleDrawer('left-panel');
     document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
     document.getElementById('m-btn-help').onclick = () => this.showTutorial();
+
+    // 给左右面板各加一个关闭按钮（手机端可见）
+    ['left-panel', 'right-panel'].forEach(id => {
+      const panel = document.getElementById(id);
+      if (!panel || panel.querySelector('.mobile-close-btn')) return;
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'mobile-close-btn';
+      closeBtn.innerHTML = '✕ 关闭';
+      closeBtn.onclick = () => this.toggleDrawer('');
+      panel.insertBefore(closeBtn, panel.firstChild);
+    });
   },
 
   // ===== 抽屉切换（手机端） =====
   toggleDrawer(panelId) {
-    const panel = document.getElementById(panelId);
     const overlay = document.getElementById('drawer-overlay');
-    const isOpen = panel.classList.contains('drawer-open');
     // 先关闭所有
     document.getElementById('left-panel').classList.remove('drawer-open');
     document.getElementById('right-panel').classList.remove('drawer-open');
     overlay.classList.remove('active');
-    if (!isOpen) {
-      panel.classList.add('drawer-open');
-      overlay.classList.add('active');
+    // 如果传入了有效 panelId，则判断是否要打开
+    if (panelId) {
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.classList.add('drawer-open');
+        overlay.classList.add('active');
+      }
     }
   },
 

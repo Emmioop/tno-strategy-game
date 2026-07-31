@@ -797,6 +797,24 @@ body {
   z-index: 680;
 }
 
+/* 手机端抽屉关闭按钮 */
+.mobile-close-btn {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(168,50,50,0.18), transparent);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-family: var(--font-serif);
+}
+
 /* 响应式 - 平板 */
 @media (max-width: 1100px) {
   #left-panel { width: 220px; }
@@ -922,6 +940,9 @@ body {
 
   /* 遮罩层激活态（手机端） */
   .drawer-overlay.active { display: block; }
+
+  /* 抽屉关闭按钮手机端可见 */
+  .mobile-close-btn { display: block; }
 
   /* 右面板内的操作按钮在手机端隐藏（已移到底部栏） */
   #action-bar { display: none; }
