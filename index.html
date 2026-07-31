@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>千年帝国的最后一息 · TNO策略游戏</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== 启动画面 ===== -->
+  <div id="splash">
+    <div class="title-sub">TNO · 1962 — 2000</div>
+    <div class="title-main">千年帝国的最后一息</div>
+    <div class="title-tag">大日耳曼国 · 策略推演</div>
+
+    <div class="prologue">
+      <p><strong>1945年，德国赢得了战争。</strong></p>
+      <p>红军在乌拉尔山脚下崩溃，美国被迫签订停战协议。大日耳曼国从莱茵河延伸到高加索，三极世界的秩序维持了十七年。</p>
+      <p>但1962年的帝国已是风中残烛——1950年代的经济奇迹化为泡沫，奴隶种姓支撑着全部工业，青年走上街头抗议，而<strong>在贝格霍夫的元首</strong>，身体一天比一天虚弱。</p>
+      <p>您将扮演帝国权力核心的一员。从希特勒之死到新世纪的钟声，在长达三十八年的岁月中，为德国的未来做出抉择——设计军工业以威慑敌国，发展民工业以延续经济，在内战的废墟上重建，在三极冷战中周旋，直至2000年的终局。</p>
+      <p>或至少，在黑暗中找到一个不那么黑暗的出口。</p>
+    </div>
+
+    <div class="disclaimer">
+      ⚠ 本游戏基于TNO（The New Order: Last Days of Europe）架空世界观创作，纯属虚构历史推演。<br>
+      游戏内容旨在探讨极权主义的后果与历史教训，绝无任何政治立场或意识形态宣传意图。<br>
+      游戏中所有人物、事件、国家均为虚构，与现实无关。
+    </div>
+
+    <button class="btn-enter" id="btn-start">进入帝国总理府 ▸</button>
+  </div>
+
+  <!-- ===== 主游戏界面 ===== -->
+  <div id="game">
+    <!-- 顶部状态栏 -->
+    <div id="topbar"></div>
+
+    <!-- 主区域 -->
+    <div id="main">
+      <!-- 左侧面板 -->
+      <div id="left-panel"></div>
+
+      <!-- 中央内容 -->
+      <div id="center">
+        <div id="tabs">
+          <div class="tab active" data-tab="overview">帝国概览</div>
+          <div class="tab" data-tab="industry">工业建设</div>
+          <div class="tab" data-tab="policy">国策政策</div>
+          <div class="tab" data-tab="tech">科技研发</div>
+          <div class="tab" data-tab="events">事件纪事</div>
+        </div>
+        <div id="tab-content"></div>
+      </div>
+
+      <!-- 右侧面板 -->
+      <div id="right-panel">
+        <div id="news-ticker"></div>
+        <div id="action-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 事件弹窗 -->
+  <div id="event-modal"></div>
+
+  <!-- 结局画面 -->
+  <div id="ending-screen"></div>
+
+  <!-- Toast 容器 -->
+  <div id="toast-container"></div>
+
+  <!-- ===== 脚本 ===== -->
+  <script src="js/data.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    // 启动逻辑
+    document.getElementById('btn-start').addEventListener('click', () => {
+      UI.start();
+    });
+
+    // 标签页切换
+    document.addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (tab && tab.dataset.tab) {
+        UI.renderTab(tab.dataset.tab);
+      }
+    });
+
+    // 键盘快捷键：空格下一回合
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.getElementById('game').classList.contains('active')) {
+        if (!document.getElementById('event-modal').classList.contains('active') &&
+            !document.getElementById('ending-screen').classList.contains('active')) {
+          e.preventDefault();
+          UI.nextTurn();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
