@@ -1415,25 +1415,25 @@ const STORY_EVENTS = [
     tag: 'critical',
     title: '红色巨熊的归来',
     body: `<p>朱可夫元帅——或他的继承者——以铁拳统一了俄罗斯。</p>
-    <p>新苏联的红旗再次飘扬在莫斯科上空。红军的坦克轰鸣着开向西方边境，三十年前的仇恨从未消散。这个统一的俄罗斯拥有数亿人口、无尽的资源、以及核武器。</p>
-    <p>帝国面对的不再是分散的军阀，而是一个复仇的巨人。第二次西俄战争，似乎只是时间问题。</p>`,
+    <p>新苏联的红旗再次飘扬在莫斯科上空。但这不是斯大林时代——统一后的俄罗斯需要至少十年时间才能恢复元气，重建工业、重整军队。帝国不必立即面对全面战争，但时间不在我们这一边。</p>
+    <p>俄罗斯已经统一，但它还需要时间来治愈战争的创伤。现在是做准备的时候了。</p>`,
     choices: [
       {
-        text: '全面备战',
-        desc: '+军力 +威慑 -资金 -稳定',
-        effects: { militaryPower: 20, deterrence: 15, money: -80, stability: -8 },
+        text: '积极备战（长期规划）',
+        desc: '+军力 +威慑 -资金，影响较轻',
+        effects: { militaryPower: 10, deterrence: 10, money: -50, stability: -4 },
         setFlags: { russia_communist: true, russia_war_preparing: true }
       },
       {
         text: '寻求外交缓和',
-        desc: '+俄罗斯关系 -威慑 -稳定',
-        effects: { russia_relation: 20, deterrence: -10, stability: -5 },
+        desc: '+俄罗斯关系 影响较轻',
+        effects: { russia_relation: 25, deterrence: -5, stability: -2 },
         setFlags: { russia_detente: true }
       },
       {
         text: '联合美国遏制红色威胁',
-        desc: '+美国关系 -俄罗斯关系 +威慑',
-        effects: { ofn_relation: 20, russia_relation: -25, deterrence: 10 },
+        desc: '+美国关系 影响较轻',
+        effects: { ofn_relation: 15, russia_relation: -15, deterrence: 6 },
         setFlags: { russia_containment: true }
       }
     ],
@@ -1447,26 +1447,26 @@ const STORY_EVENTS = [
     tag: 'critical',
     title: '黑色俄罗斯的崛起',
     body: `<p>奥克坦——一个前合作者、法西斯狂热者——统一了俄罗斯。</p>
-    <p>他的"俄罗斯民族国"建立在前德国盟友和纯粹的暴力之上。这个俄罗斯对德国怀有复杂的感情：既模仿又仇恨，既想结盟又想复仇。它比苏联更危险，因为它不受任何意识形态束缚——它只有赤裸裸的权力欲望。</p>
-    <p>更可怕的是，这个法西斯俄罗斯可能拥有从勃艮第或内战中流失的核武器。</p>`,
+    <p>他的"俄罗斯民族国"建立在战争废墟之上。但即使是最狂热的追随者也需要时间来消化征服的领土。短期内，俄罗斯是虚弱的——但一旦恢复，它的威胁将是致命的。</p>
+    <p>现在是争取时间的最好机会。</p>`,
     choices: [
       {
-        text: '结盟，共同对抗美国',
-        desc: '+俄罗斯关系 +威慑 -美国关系 -稳定',
-        effects: { russia_relation: 15, deterrence: 10, ofn_relation: -20, stability: -8 },
+        text: '尝试拉拢（风险联盟）',
+        desc: '+俄罗斯关系 +威慑 -美国关系',
+        effects: { russia_relation: 20, deterrence: 8, ofn_relation: -10, stability: -4 },
         setFlags: { russia_fascist: true, russia_alliance: true }
       },
       {
-        text: '先发制人打击',
-        desc: '+军力 -稳定 -资金 -国际声誉',
-        effects: { militaryPower: 15, stability: -15, money: -60, ofn_relation: -15 },
-        setFlags: { russia_preemptive: true }
+        text: '加强边境防御',
+        desc: '+威慑 轻成本',
+        effects: { deterrence: 10, money: -35, stability: 2 },
+        setFlags: { russia_fascist: true }
       },
       {
-        text: '加强防御，静观其变',
-        desc: '+威慑 -资金',
-        effects: { deterrence: 12, money: -50, stability: 3 },
-        setFlags: { russia_fascist: true }
+        text: '秘密支持反奥克坦叛军',
+        desc: '-俄罗斯关系 -资金',
+        effects: { russia_relation: -15, money: -40, ofn_relation: 5 },
+        setFlags: { russia_fascist: true, russia_opposition: true }
       }
     ],
     condition: (s) => s.flags.russia_unifier === 'fascist'
@@ -1479,36 +1479,101 @@ const STORY_EVENTS = [
     tag: 'critical',
     title: '摄政的疯狂',
     body: `<p>塔博里茨基——一个为"失踪"的沙皇皇子摄政的狂信徒——统一了俄罗斯。</p>
-    <p>他相信阿列克谢皇子仍然活着，终将归来。在等待皇子的过程中，他用核火和死亡"净化"一切不洁。这不是一个国家，这是一个末日教派——一个拥有核武器的末日教派。</p>
-    <p>情报显示，塔博里茨基的俄罗斯正在崩溃。但在崩溃之前，他可能拉着整个世界一起毁灭。</p>`,
+    <p>情报显示，这个疯狂的政权极其不稳定，甚至在统一战争中就已经濒临崩溃。它可能会自行瓦解，也可能在毁灭前拉着世界陪葬。</p>
+    <p>这不是威胁，这是定时炸弹，但倒计时的长度未知。</p>`,
     choices: [
       {
-        text: '紧急备战',
-        desc: '+军力 +威慑 -稳定 -资金',
-        effects: { militaryPower: 25, deterrence: 20, stability: -12, money: -70 },
+        text: '加强边界警戒',
+        desc: '+威慑 低成本',
+        effects: { militaryPower: 8, deterrence: 10, money: -40, stability: -3 },
         setFlags: { russia_madman: true }
       },
       {
-        text: '试图与疯子谈判',
-        desc: '-稳定 -资金 可能无效',
-        effects: { stability: -8, money: -30 },
+        text: '尝试进行有限度的接触',
+        desc: '-稳定 轻',
+        effects: { stability: -4, money: -20 },
         setFlags: { russia_madman: true, russia_negotiation: true }
       },
       {
-        text: '封锁边境，静待其崩溃',
-        desc: '+威慑 -资金 -稳定',
-        effects: { deterrence: 8, money: -50, stability: -5 },
+        text: '封锁边境等待它崩溃',
+        desc: '成本最低',
+        effects: { deterrence: 5, money: -30, stability: -1 },
         setFlags: { russia_madman: true, russia_quarantine: true }
       },
       {
-        text: '联合世界，暗杀塔博里茨基',
-        desc: '-资金 高风险',
-        effects: { money: -80, ofn_relation: 15, stability: -3 },
-        setFlags: { russia_madman: true, tabi_assassination: true },
-        showToast: '暗杀行动已启动——这是拯救世界的最后手段'
+        text: '联合情报机构，支持叛军',
+        desc: '中成本，长期收益',
+        effects: { money: -50, ofn_relation: 10, russia_relation: -10, stability: -2 },
+        setFlags: { russia_madman: true, tabi_assassination: true }
       }
     ],
     condition: (s) => s.flags.russia_unifier === 'madman'
+  },
+
+  // ===== 渐进式威胁：俄罗斯恢复 =====
+  {
+    id: 'ev_russia_recovery_1',
+    turn: { year: 1975, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '俄罗斯重建',
+    body: `<p>统一后的俄罗斯从战争的废墟中站起来了。</p>
+    <p>第一阶段重建完成：军工综合体重新运转，军队开始整编训练，乌拉尔山区的工厂开足了马力。这只是开始，但趋势已经不可逆转。</p>
+    <p>如果帝国还没准备好，那么现在是时候了。</p>`,
+    choices: [
+      { text: '加速东方防线建设', desc: '+威慑 -资金', effects: { deterrence: 8, money: -45 } },
+      { text: '增加军备生产', desc: '+军力 -资金', effects: { militaryPower: 10, money: -40, manpower: -5 } },
+      { text: '保持观望', desc: '无成本', effects: { deterrence: -3, russia_relation: -3 } }
+    ],
+    condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman'
+  },
+
+  {
+    id: 'ev_russia_recovery_2',
+    turn: { year: 1978, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '俄罗斯重新武装',
+    body: `<p>卫星照片显示了令人不安的画面：俄罗斯在AA线一侧建造了数百座新军事设施，坦克师的数量是三年前的三倍。</p>
+    <p>俄罗斯官方声明这是"内部防御需求"，但任何有理智的人都能看出——他们正在为战争做准备。</p>
+    <p>距离战争，还有最后几年。</p>`,
+    choices: [
+      { text: '对等部署军队', desc: '+军力 +威慑 -资金 -人力', effects: { militaryPower: 12, deterrence: 10, money: -55, manpower: -8 } },
+      { text: '提出裁军谈判', desc: '+关系 -威慑', effects: { russia_relation: 10, deterrence: -5, stability: 2 } },
+      { text: '联合美国发表联合声明', desc: '+美国关系 +威慑', effects: { ofn_relation: 10, deterrence: 8, russia_relation: -8 } }
+    ],
+    condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman'
+  },
+
+  // ===== 塔博里茨基崩溃事件（好分支） =====
+  {
+    id: 'ev_taboritsky_collapses',
+    turn: { year: 1976, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '黑暗的终结',
+    body: `<p>塔博里茨基的俄罗斯崩溃了。</p>
+    <p>这个由狂信徒建立的政权从内部瓦解——粮食短缺、军队哗变、"皇子失踪"的谎言终于被揭穿。塔博里茨基本人在卫兵哗变中被杀，摄政俄罗斯分崩离析，化为十几个小军阀。</p>
+    <p>这是帝国能遇到的最好结局：不费一兵一卒，最大的威胁自行消散。</p>`,
+    choices: [
+      {
+        text: '趁机接管边境缓冲区',
+        desc: '+威慑 +领土',
+        effects: { deterrence: 15, stability: 8, russia_relation: -10, manpower: 10 }
+      },
+      {
+        text: '向新军阀出售武器',
+        desc: '+资金',
+        effects: { money: 80, russia_relation: -5 },
+        setFlags: { tabi_collapsed: true }
+      },
+      {
+        text: '保持克制，观察局势',
+        desc: '+稳定',
+        effects: { stability: 6, russia_relation: 5 }
+      }
+    ],
+    condition: (s) => s.flags.russia_unifier === 'madman' && s.year <= 1978
   },
 
   {
@@ -1518,25 +1583,25 @@ const STORY_EVENTS = [
     tag: 'critical',
     title: '双头鹰的重生',
     body: `<p>赤塔的罗曼诺夫家族——弗拉基米尔大公的继承者——统一了俄罗斯，恢复了沙皇制度。</p>
-    <p>这个新帝国既不像苏联那样仇恨德国，也不像民主俄罗斯那样友好。它是一个骄傲的、古老的、充满复仇欲望的帝国。沙皇要求归还所有被占领的俄罗斯领土——包括东方总督辖区。</p>
-    <p>两个帝国面对面站着：一个宣称千年，一个已经重生。</p>`,
+    <p>这个新帝国将主要精力放在亚洲和太平洋方向，对西部边界的要求相对温和。沙皇的外交部门表示：<em>"可以用条约和金钱解决的问题，不必用鲜血。"</em></p>
+    <p>这是最温和的一个俄罗斯，但不是无害的。</p>`,
     choices: [
       {
-        text: '承认沙皇政权',
-        desc: '+俄罗斯关系 -威慑',
-        effects: { russia_relation: 15, deterrence: -5 },
+        text: '承认并缔结互不侵犯条约',
+        desc: '+俄罗斯关系 +稳定',
+        effects: { russia_relation: 25, stability: 5, deterrence: -3 },
         setFlags: { russia_monarchist: true, russia_recognized: true }
       },
       {
-        text: '拒绝承认',
-        desc: '-俄罗斯关系 +威慑 +稳定',
-        effects: { russia_relation: -15, deterrence: 8, stability: 5 },
+        text: '只承认，不签署任何协议',
+        desc: '中立选择',
+        effects: { russia_relation: -8, deterrence: 5, stability: 3 },
         setFlags: { russia_monarchist: true }
       },
       {
-        text: '提出君主制同盟',
-        desc: '+俄罗斯关系 -美国关系 +威慑',
-        effects: { russia_relation: 20, ofn_relation: -15, deterrence: 5 },
+        text: '提出王朝联盟提议',
+        desc: '高风险高收益',
+        effects: { russia_relation: 15, ofn_relation: -12, deterrence: 5, stability: -3 },
         setFlags: { russia_monarchist: true, monarchist_alliance: true }
       }
     ],
@@ -1548,39 +1613,99 @@ const STORY_EVENTS = [
     turn: { year: 1981, quarter: 2 },
     once: true,
     tag: 'critical',
-    title: '第二次西俄战争',
-    body: `<p>统一的俄罗斯向帝国发出了最后通牒：归还被占领的东方总督辖区领土，否则战争。</p>
-    <p>无论统一者是民主派还是共产党，是法西斯还是沙皇——他们都要求同一件事：俄罗斯的领土完整。红军/俄军的集结在AA线东侧展开，帝国东方边境硝烟弥漫。</p>
-    <p>这是帝国生死存亡的时刻。三十年前，帝国在第一次西俄战争中险胜。这一次，对手更强大，而帝国更虚弱。</p>`,
+    title: 'AA线危机',
+    body: `<p>俄罗斯的外交官向帝国递交了外交照会：<em>"我们就AA线以东的领土问题展开建设性对话。"</em></p>
+    <p>这不是最后通牒——但它是最后通牒的前身。俄军在边境的兵力从3年前的12个师增加到了47个师，但他们还没有完全动员。</p>
+    <p>现在的选择，将决定未来十年的命运。</p>
+    <p style="color:var(--text-muted);font-size:12px;font-style:italic">（俄罗斯在1985Q2之前不会发起全面进攻——你还有4年准备时间）</p>`,
     choices: [
       {
-        text: '全面战争，寸土不让',
-        desc: '+军力 +威慑 -稳定 -资金 -人力',
-        effects: { militaryPower: 25, deterrence: 15, stability: -15, money: -100, manpower: -20 },
+        text: '寸步不让，全面动员',
+        desc: '+军力 +威慑 中代价',
+        effects: { militaryPower: 15, deterrence: 12, stability: -8, money: -70, manpower: -10 },
         setFlags: { west_russian_war: true, total_war: true }
       },
       {
-        text: '部分让步，避免全面战争',
-        desc: '+俄罗斯关系 -威慑 -稳定 -资金',
-        effects: { russia_relation: 15, deterrence: -12, stability: -8, money: -50 },
+        text: '做出部分领土让步',
+        desc: '+关系 -威慑 低代价',
+        effects: { russia_relation: 20, deterrence: -8, stability: -4, money: -30 },
         setFlags: { west_russian_war: true, partial_concession: true }
       },
       {
-        text: '核威慑，逼退俄罗斯',
-        desc: '+核威慑 -稳定 -资金 -国际声誉',
-        effects: { nukeDeter: 25, stability: -10, money: -60, ofn_relation: -10 },
+        text: '提出长期谈判框架',
+        desc: '拖延战略，争取时间',
+        effects: { russia_relation: 5, stability: 2, deterrence: -2 },
+        setFlags: { west_russian_war: true, negotiation_period: true }
+      },
+      {
+        text: '核态势升级，战略威慑',
+        desc: '+核威慑 -关系',
+        effects: { nukeDeter: 18, stability: -5, money: -45, ofn_relation: -8 },
         setFlags: { west_russian_war: true, nuclear_brinkmanship: true }
       },
       {
-        text: '归还领土，求和',
-        desc: '+俄罗斯关系 -威慑 -稳定',
-        effects: { russia_relation: 30, deterrence: -20, stability: -12, money: -30 },
-        setFlags: { west_russian_war: true, territory_returned: true },
-        condition: (s) => s.flags.reformist || s.flags.russia_detente
+        text: '和平条约（全面归还领土）',
+        desc: '永久和平 最严重让步',
+        effects: { russia_relation: 40, deterrence: -15, stability: -8, money: -20, militaryPower: -5 },
+        setFlags: { west_russian_war: true, territory_returned: true, permanent_peace: true },
+        condition: (s) => s.flags.reformist || s.flags.russia_detente || s.flags.russia_recognized
       }
     ],
-    condition: (s) => s.flags.russia_democratic || s.flags.russia_communist ||
-                     s.flags.russia_fascist || s.flags.russia_madman || s.flags.russia_monarchist
+    condition: (s) => !s.flags.permanent_peace && (
+      s.flags.russia_democratic || s.flags.russia_communist ||
+      s.flags.russia_fascist || (s.flags.russia_madman && !s.flags.tabi_collapsed) || s.flags.russia_monarchist
+    )
+  },
+
+  // ===== 西俄战争终极事件（1985） =====
+  {
+    id: 'ev_west_russia_final',
+    turn: { year: 1985, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '命运的抉择',
+    body: `<p>四年时间到了。俄军完成了全面动员，外交谈判破裂。现在他们再次发出外交照会，而这一次，没有再商量的余地。</p>
+    <p>帝国的军力与威慑能否抵挡住威胁？或者，和平条约的条款是否已经生效？</p>`,
+    choices: [
+      {
+        text: '全面战争（威慑≥80可获胜）',
+        desc: '高风险 高回报',
+        effects: { militaryPower: 8, deterrence: 5, stability: -10, money: -60, manpower: -15 },
+        setFlags: { final_war: true },
+        condition: (s) => !s.flags.permanent_peace && !s.flags.territory_returned
+      },
+      {
+        text: '接受最终妥协',
+        desc: '永久避免战争',
+        effects: { russia_relation: 25, deterrence: -10, stability: 3, money: -20 },
+        setFlags: { final_peace: true },
+        condition: (s) => !s.flags.permanent_peace
+      },
+      {
+        text: '和平条约已签署',
+        desc: '两国进入永久和平时代',
+        effects: { stability: 10, money: 30, russia_relation: 15 },
+        setFlags: { final_peace: true, golden_age: true },
+        condition: (s) => s.flags.permanent_peace
+      }
+    ],
+    condition: (s) => s.flags.west_russian_war && s.year === 1985
+  },
+
+  // ===== 终局结算：俄罗斯威胁是否真正导致崩溃 =====
+  {
+    id: 'ev_russia_final_resolve',
+    turn: { year: 1990, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '千年之战',
+    body: `<p>冷战的边界终于固化。</p>
+    <p>帝国要么成功顶住了俄罗斯的威胁，要么做出了足够的让步换取和平，要么已经在战火中付出了代价。无论如何，这一页翻过去了。</p>
+    <p>还有最后十年。</p>`,
+    choices: [
+      { text: '专注内政建设', desc: '+稳定 +资金', effects: { stability: 8, money: 50, research: 5 } },
+      { text: '加强最后的威慑', desc: '+军力 +核慑', effects: { militaryPower: 10, nukeDeter: 8, money: -30 } }
+    ]
   },
 
   /* ===========================================================

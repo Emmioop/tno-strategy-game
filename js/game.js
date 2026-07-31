@@ -506,10 +506,20 @@ const Game = {
 
     // 稳定度衰减（回归中值）
     if (r.stability > 60) income.stability -= (r.stability - 60) * 0.05;
+    if (r.stability > 30) income.stability -= 0.5;
     if (r.stability < 30) income.stability += (30 - r.stability) * 0.05;
 
-    // 威慑衰减
-    income.deterrence -= 1;
+    // 威慑衰减（加大力度）
+    income.deterrence -= 2;
+
+    // 军力衰减（军备维护）
+    income.militaryPower -= 0.5;
+
+    // 研发衰减（研究老化）
+    income.research -= 0.3;
+
+    // 核武库衰减（维护）
+    income.nukeDeter -= 1;
 
     // 基础收入
     income.money += 10;
