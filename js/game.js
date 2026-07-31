@@ -90,6 +90,9 @@ const Game = {
     return DIFFICULTIES[this.difficulty] || DIFFICULTIES.normal;
   },
 
+  // 存档版本号（修改资源平衡时递增，旧存档将被重置）
+  SAVE_VERSION: 16,
+
   // ===== 初始化新游戏 =====
   init() {
     const diff = this.getDiff();
@@ -114,10 +117,10 @@ const Game = {
       },
       chosenPath: null,
 
-      // 资源（受难度影响）
+      // 资源（受难度影响）—— 超少量初始资源
       resources: {
-        money: Math.round(500 * rm),         // 帝国马克（百万元）
-        manpower: Math.round(100 * rm),      // 可用人力
+        money: Math.round(200 * rm),         // 帝国马克（百万元）
+        manpower: Math.round(30 * rm),       // 可用人力
         stability: Math.round(45 * rm),      // 稳定度 0-100
         deterrence: Math.round(60 * rm),     // 综合威慑
         militaryPower: Math.round(80 * rm),  // 军事实力
@@ -141,14 +144,11 @@ const Game = {
         french_indochina: 0
       },
 
-      // 建筑 {buildingId: count}
+      // 建筑 {buildingId: count} —— 极少量初始建筑
       buildings: {
-        consumer_factory: 3,
-        infrastructure: 2,
-        agriculture: 2,
-        arms_factory: 2,
-        aircraft_factory: 1,
-        ss_barracks: 1
+        consumer_factory: 1,
+        agriculture: 1,
+        arms_factory: 1
       },
 
       // 建造队列 {id, turnsLeft}
@@ -186,7 +186,8 @@ const Game = {
 
       // 游戏是否结束
       ended: false,
-      endingId: null
+      endingId: null,
+      saveVersion: this.SAVE_VERSION
     };
 
     return this.state;
@@ -569,7 +570,7 @@ const Game = {
       income.money -= b.maint * count;
     }
 
-    // 政策影响
+    // 政策影响 —— 大幅削弱，只保留极少量加成
     this.applyPolicyEffects(income);
 
     // 稳定度衰减（只降不回，必须通过事件恢复）
@@ -588,9 +589,18 @@ const Game = {
     // 核武库衰减（维护）
     income.nukeDeter -= 1;
 
-    // 基础收入 —— 只有人力和少量钱被动增加（大幅减少）
-    income.money += 5;
-    income.manpower += 3;
+    // 基础收入 —— 超少量被动增加
+    income.money += 1;
+    income.manpower += 1;
+
+    // 国策树持续加成：已完成国策提供每回合buff
+    for (const fid of this.state.completedFoci) {
+      const f = NATIONAL_FOCI[fid];
+      if (!f || !f.perTurn) continue;
+      for (const key in f.perTurn) {
+        income[key] = (income[key] || 0) + f.perTurn[key];
+      }
+    }
 
     // 难度修正：正面收入受incomeMod影响，负面受penMod影响
     for (const key in income) {
@@ -613,30 +623,30 @@ const Game = {
   // ===== 应用政策效果到收入 =====
   applyPolicyEffects(income) {
     const s = this.state;
-    // 政策只影响 money 和 manpower，其他（稳定/威慑/军力/核慑/研发）只能通过事件获得
+    // 政策只提供极少量 money/manpower，其他（稳定/威慑/军力/核慑/研发）只能通过事件获得
     const econ = s.policies.economy;
-    if (econ === 'slave_economy') { income.money += 15; }
-    if (econ === 'mixed_reform') { income.money += 8; }
-    if (econ === 'war_economy') { income.money -= 10; }
-    if (econ === 'free_market') { income.money += 30; }
+    if (econ === 'slave_economy') { income.money += 2; }
+    if (econ === 'mixed_reform') { income.money += 1; }
+    if (econ === 'war_economy') { income.money -= 2; }
+    if (econ === 'free_market') { income.money += 3; }
 
     const slave = s.policies.slave_policy;
-    if (slave === 'maintain_slaves') { income.money += 10; }
-    if (slave === 'limited_rights') { income.money -= 5; income.manpower += 2; }
-    if (slave === 'gradual_emancipation') { income.money -= 15; income.manpower += 3; }
-    if (slave === 'harsher_rule') { income.money += 15; income.manpower -= 2; }
+    if (slave === 'maintain_slaves') { income.money += 2; }
+    if (slave === 'limited_rights') { income.manpower += 1; }
+    if (slave === 'gradual_emancipation') { income.money -= 2; income.manpower += 1; }
+    if (slave === 'harsher_rule') { income.money += 2; income.manpower -= 1; }
 
     const mil = s.policies.military_doctrine;
-    if (mil === 'defensive') { income.money += 5; }
-    if (mil === 'expansionist') { income.money -= 10; }
-    if (mil === 'modernization') { income.money += 8; }
-    if (mil === 'nuclear_first') { income.money -= 15; }
+    if (mil === 'defensive') { income.money += 1; }
+    if (mil === 'expansionist') { income.money -= 2; }
+    if (mil === 'modernization') { income.money += 1; }
+    if (mil === 'nuclear_first') { income.money -= 3; }
 
     const youth = s.policies.youth_policy;
-    if (youth === 'suppress_youth') { income.manpower -= 2; }
-    if (youth === 'coopt_youth') { income.money += 5; }
-    if (youth === 'dialogue') { income.money += 5; }
-    if (youth === 'militarize_youth') { income.manpower += 5; income.money -= 5; }
+    if (youth === 'suppress_youth') { income.manpower -= 1; }
+    if (youth === 'coopt_youth') { income.money += 1; }
+    if (youth === 'dialogue') { income.money += 1; }
+    if (youth === 'militarize_youth') { income.manpower += 2; income.money -= 1; }
   },
 
   // ===== 推进一回合 =====

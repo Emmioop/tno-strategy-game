@@ -298,6 +298,7 @@ const UI = {
       <button class="btn-next-turn" id="btn-next-turn">推进至下一季度 ▸</button>
       <button class="btn-secondary" id="btn-save">保存进度</button>
       <button class="btn-secondary" id="btn-restart">放弃存档并重启</button>
+      ${this.isDebugMode() ? '<button class="btn-secondary" id="btn-debug" style="border-color:var(--accent-gold);color:var(--accent-gold);">DEBUG</button>' : ''}
     `;
 
     document.getElementById('btn-next-turn').onclick = () => this.nextTurn();
@@ -307,6 +308,8 @@ const UI = {
         location.reload();
       }
     };
+    const dbgBtn = document.getElementById('btn-debug');
+    if (dbgBtn) dbgBtn.onclick = () => this.toggleDebugPanel();
 
     // 移动端底部操作栏
     this.renderMobileActionBar();
@@ -461,7 +464,11 @@ const UI = {
       case 'industry': content.innerHTML = this.renderIndustry(); break;
       case 'policy': content.innerHTML = this.renderPolicy(); break;
       case 'tech': content.innerHTML = this.renderTech(); break;
+      case 'shop': content.innerHTML = this.renderShop(); break;
       case 'events': content.innerHTML = this.renderEventLog(); break;
+    }
+    if (tab === 'shop') {
+      this.bindShopEvents();
     }
   },
 
@@ -1436,6 +1443,200 @@ const UI = {
     return html;
   },
 
+  // ===== 商店页 =====
+  renderShop() {
+    const s = Game.state;
+    const r = s.resources;
+    const isDebug = this.isDebugMode();
+
+    // 商店商品定义
+    const shopItems = [
+      { id: 'shop_stab', name: '维稳拨款', desc: '派遣党卫军巡逻队，恢复秩序。', cost: { money: 80 }, gain: { stability: 5 }, icon: '⚖' },
+      { id: 'shop_det', name: '军事演习', desc: '在东部边境举行大规模演习，展示武力。', cost: { money: 120, manpower: 25 }, gain: { deterrence: 5 }, icon: '⚔' },
+      { id: 'shop_mil', name: '雇佣兵合同', desc: '从海外招募职业军人。', cost: { money: 180 }, gain: { militaryPower: 8 }, icon: '🎖' },
+      { id: 'shop_res', name: '科研资助', desc: '向帝国大学拨发专项经费。', cost: { money: 150 }, gain: { research: 6 }, icon: '🔬' },
+      { id: 'shop_nuke', name: '核材料采购', desc: '从铀矿采购浓缩铀。', cost: { money: 250, research: 25 }, gain: { nukeDeter: 5, nukes: 1 }, icon: '☢', reqFlag: 'nuclear_tech' },
+      { id: 'shop_recruit', name: '征兵动员', desc: '在占领区强制征兵。', cost: { money: 60 }, gain: { manpower: 15 }, icon: '👥' },
+      { id: 'shop_loan', name: '帝国债券', desc: '发行战争债券，换取现金。代价是未来需偿还。', cost: { stability: -5 }, gain: { money: 120 }, icon: '💰' },
+      { id: 'shop_propa', name: '宣传套餐', desc: '戈培尔亲自操刀的宣传攻势。', cost: { money: 70 }, gain: { stability: 3, deterrence: 2 }, icon: '📻' }
+    ];
+
+    let itemsHtml = '';
+    for (const item of shopItems) {
+      if (item.reqFlag && !s.flags[item.reqFlag]) continue;
+      const canAfford = Object.entries(item.cost).every(([k, v]) => (r[k] || 0) + v >= 0);
+      const costStr = Object.entries(item.cost).map(([k, v]) => {
+        const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发' };
+        return `${labels[k] || k} ${v > 0 ? '-' : '+'}${Math.abs(v)}`;
+      }).join(' · ');
+      const gainStr = Object.entries(item.gain).map(([k, v]) => {
+        const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发', nukes: '核弹' };
+        return `+${v} ${labels[k] || k}`;
+      }).join(' · ');
+      itemsHtml += `
+        <div class="shop-item ${canAfford ? '' : 'disabled'}" data-shop-id="${item.id}">
+          <div class="shop-icon">${item.icon}</div>
+          <div class="shop-info">
+            <div class="shop-name">${item.name}</div>
+            <div class="shop-desc">${item.desc}</div>
+            <div class="shop-cost">${costStr}</div>
+          </div>
+          <div class="shop-gain">${gainStr}</div>
+          <button class="shop-buy-btn" data-shop-buy="${item.id}" ${canAfford ? '' : 'disabled'}>购买</button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="shop-container">
+        <div class="shop-header">
+          <h3>帝国特别采购</h3>
+          <p style="font-size:12px;color:var(--text-muted);margin:4px 0 16px;">用资源换取即时加成。谨慎使用。</p>
+        </div>
+        <div class="shop-list">${itemsHtml}</div>
+
+        ${isDebug ? this.renderDebugPanel() : `
+          <div class="shop-footer">
+            <div style="font-size:11px;color:var(--text-muted);margin-top:32px;padding-top:16px;border-top:1px solid var(--border);">
+              帝国总理府 · 物资调配司
+            </div>
+            <div style="margin-top:12px;">
+              <input type="password" id="shop-code-input" placeholder="授权码"
+                style="background:var(--bg-dark);border:1px solid var(--border);color:var(--text-muted);padding:6px 10px;border-radius:4px;font-size:12px;width:140px;font-family:var(--font-mono);" />
+              <button id="shop-code-btn"
+                style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer;">验证</button>
+            </div>
+          </div>
+        `}
+      </div>
+    `;
+  },
+
+  // ===== 商店事件绑定 =====
+  bindShopEvents() {
+    // 商品购买
+    document.querySelectorAll('[data-shop-buy]').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.shopBuy;
+        this.shopBuy(id);
+      };
+    });
+
+    // 密码输入
+    const codeBtn = document.getElementById('shop-code-btn');
+    const codeInput = document.getElementById('shop-code-input');
+    if (codeBtn && codeInput) {
+      codeBtn.onclick = () => this.checkShopCode();
+      codeInput.onkeydown = (e) => {
+        if (e.key === 'Enter') this.checkShopCode();
+      };
+    }
+
+    // debug按钮
+    document.querySelectorAll('[data-dbg-act]').forEach(btn => {
+      btn.onclick = () => this.debugAction(btn.dataset.dbgAct);
+    });
+  },
+
+  checkShopCode() {
+    const input = document.getElementById('shop-code-input');
+    if (!input) return;
+    const val = (input.value || '').trim().toUpperCase();
+    if (val === 'WOLFSCHANZE') {
+      sessionStorage.setItem('tno_debug', '1');
+      this.toast('授权成功。开发者模式已激活。', 'success');
+      this.renderTab('shop');
+    } else {
+      this.toast('授权码无效', 'error');
+      input.value = '';
+    }
+  },
+
+  shopBuy(id) {
+    const s = Game.state;
+    const r = s.resources;
+    const shopItems = {
+      shop_stab: { cost: { money: 80 }, gain: { stability: 5 } },
+      shop_det: { cost: { money: 120, manpower: 25 }, gain: { deterrence: 5 } },
+      shop_mil: { cost: { money: 180 }, gain: { militaryPower: 8 } },
+      shop_res: { cost: { money: 150 }, gain: { research: 6 } },
+      shop_nuke: { cost: { money: 250, research: 25 }, gain: { nukeDeter: 5, nukes: 1 } },
+      shop_recruit: { cost: { money: 60 }, gain: { manpower: 15 } },
+      shop_loan: { cost: { stability: -5 }, gain: { money: 120 } },
+      shop_propa: { cost: { money: 70 }, gain: { stability: 3, deterrence: 2 } }
+    };
+    const item = shopItems[id];
+    if (!item) return;
+
+    // 检查资源
+    for (const [k, v] of Object.entries(item.cost)) {
+      if ((r[k] || 0) + v < 0) {
+        this.toast('资源不足', 'error');
+        return;
+      }
+    }
+    // 扣除
+    for (const [k, v] of Object.entries(item.cost)) {
+      r[k] = (r[k] || 0) - v;
+    }
+    // 增加
+    for (const [k, v] of Object.entries(item.gain)) {
+      if (k === 'stability') r[k] = Math.min(100, (r[k] || 0) + v);
+      else r[k] = (r[k] || 0) + v;
+    }
+    Game.clampResources();
+    this.toast('购买成功', 'success');
+    this.renderAll();
+    this.autoSave();
+  },
+
+  // ===== Debug 面板渲染（商店内） =====
+  renderDebugPanel() {
+    return `
+      <div style="margin-top:24px;padding:16px;border:1px solid var(--accent-gold);border-radius:8px;background:rgba(168,50,50,0.05);">
+        <div style="color:var(--accent-gold);font-weight:bold;margin-bottom:12px;">⚙ 开发者控制台</div>
+        <div style="display:grid;gap:8px;">
+          <div style="font-size:11px;color:var(--text-muted);">资源调整</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="dbg-btn" data-dbg-act="money100">+100 资金</button>
+            <button class="dbg-btn" data-dbg-act="money500">+500 资金</button>
+            <button class="dbg-btn" data-dbg-act="mp50">+50 人力</button>
+            <button class="dbg-btn" data-dbg-act="mp200">+200 人力</button>
+            <button class="dbg-btn" data-dbg-act="stab20">+20 稳定</button>
+            <button class="dbg-btn" data-dbg-act="det20">+20 威慑</button>
+            <button class="dbg-btn" data-dbg-act="mil30">+30 军力</button>
+            <button class="dbg-btn" data-dbg-act="nuk20">+20 核慑</button>
+            <button class="dbg-btn" data-dbg-act="res20">+20 研发</button>
+            <button class="dbg-btn" data-dbg-act="nuke5">+5 核弹</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">时间控制</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="dbg-btn" data-dbg-act="skip4">跳4回合</button>
+            <button class="dbg-btn" data-dbg-act="skip16">跳16回合</button>
+            <button class="dbg-btn" data-dbg-act="goto1980">跳到1980</button>
+            <button class="dbg-btn" data-dbg-act="goto2000">跳到2000</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">国策 / 科技</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="dbg-btn" data-dbg-act="focus">秒完当前国策</button>
+            <button class="dbg-btn" data-dbg-act="allfocus">完成所有国策</button>
+            <button class="dbg-btn" data-dbg-act="techs">解锁所有科技</button>
+            <button class="dbg-btn" data-dbg-act="flags">解锁所有标记</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">其他</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="dbg-btn" data-dbg-act="relation">关系全+50</button>
+            <button class="dbg-btn" data-dbg-act="russia">俄罗斯立即统一</button>
+            <button class="dbg-btn" data-dbg-act="maxall">资源全满</button>
+            <button class="dbg-btn" data-dbg-act="reset">资源清零</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">查看状态</div>
+          <button class="dbg-btn" data-dbg-act="dump">输出状态到控制台</button>
+        </div>
+      </div>
+    `;
+  },
+
   // ===== 事件日志页 =====
   renderEventLog() {
     const s = Game.state;
@@ -1626,6 +1827,171 @@ const UI = {
     setTimeout(() => el.remove(), 4000);
   },
 
+  // ===== DEBUG 模式 =====
+  isDebugMode() {
+    try { return sessionStorage.getItem('tno_debug') === '1'; } catch(e) { return false; }
+  },
+
+  toggleDebugPanel() {
+    let panel = document.getElementById('debug-panel');
+    if (panel) {
+      panel.remove();
+      return;
+    }
+    panel = document.createElement('div');
+    panel.id = 'debug-panel';
+    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:9999;width:320px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+    panel.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <strong style="color:var(--accent-gold);">DEBUG 控制台</strong>
+        <span id="dbg-close" style="cursor:pointer;color:var(--text-muted);">✕</span>
+      </div>
+      <div style="display:grid;gap:8px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">资源调整</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="dbg-btn" data-act="money100">+100 资金</button>
+          <button class="dbg-btn" data-act="money500">+500 资金</button>
+          <button class="dbg-btn" data-act="mp50">+50 人力</button>
+          <button class="dbg-btn" data-act="mp200">+200 人力</button>
+          <button class="dbg-btn" data-act="stab20">+20 稳定</button>
+          <button class="dbg-btn" data-act="det20">+20 威慑</button>
+          <button class="dbg-btn" data-act="mil30">+30 军力</button>
+          <button class="dbg-btn" data-act="nuk20">+20 核慑</button>
+          <button class="dbg-btn" data-act="res20">+20 研发</button>
+          <button class="dbg-btn" data-act="nuke5">+5 核弹</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">时间控制</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="dbg-btn" data-act="skip4">跳4回合</button>
+          <button class="dbg-btn" data-act="skip16">跳16回合</button>
+          <button class="dbg-btn" data-act="goto1980">跳到1980</button>
+          <button class="dbg-btn" data-act="goto2000">跳到2000</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">国策 / 科技</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="dbg-btn" data-act="focus">秒完当前国策</button>
+          <button class="dbg-btn" data-act="allfocus">完成所有国策</button>
+          <button class="dbg-btn" data-act="techs">解锁所有科技</button>
+          <button class="dbg-btn" data-act="flags">解锁所有标记</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">其他</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="dbg-btn" data-act="relation">关系全+50</button>
+          <button class="dbg-btn" data-act="russia">俄罗斯立即统一</button>
+          <button class="dbg-btn" data-act="maxall">资源全满</button>
+          <button class="dbg-btn" data-act="reset">资源清零</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">查看状态</div>
+        <button class="dbg-btn" data-act="dump">输出状态到控制台</button>
+      </div>
+    `;
+    document.body.appendChild(panel);
+    panel.querySelector('#dbg-close').onclick = () => panel.remove();
+    panel.querySelectorAll('.dbg-btn').forEach(btn => {
+      btn.style.cssText = 'background:var(--bg-dark);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;cursor:pointer;';
+      btn.onclick = () => this.debugAction(btn.dataset.act);
+    });
+  },
+
+  debugAction(act) {
+    const s = Game.state;
+    const r = s.resources;
+    switch(act) {
+      case 'money100': r.money += 100; this.toast('+100 资金', 'success'); break;
+      case 'money500': r.money += 500; this.toast('+500 资金', 'success'); break;
+      case 'mp50': r.manpower += 50; this.toast('+50 人力', 'success'); break;
+      case 'mp200': r.manpower += 200; this.toast('+200 人力', 'success'); break;
+      case 'stab20': r.stability = Math.min(100, r.stability + 20); this.toast('+20 稳定', 'success'); break;
+      case 'det20': r.deterrence += 20; this.toast('+20 威慑', 'success'); break;
+      case 'mil30': r.militaryPower += 30; this.toast('+30 军力', 'success'); break;
+      case 'nuk20': r.nukeDeter += 20; this.toast('+20 核慑', 'success'); break;
+      case 'res20': r.research += 20; this.toast('+20 研发', 'success'); break;
+      case 'nuke5': r.nukes += 5; this.toast('+5 核弹', 'success'); break;
+      case 'skip4':
+        for (let i = 0; i < 4 && !s.ended; i++) { Game.advanceTurn([], () => {}); }
+        this.toast('跳过4回合', 'success'); break;
+      case 'skip16':
+        for (let i = 0; i < 16 && !s.ended; i++) { Game.advanceTurn([], () => {}); }
+        this.toast('跳过16回合', 'success'); break;
+      case 'goto1980':
+        while (s.year < 1980 && !s.ended) { Game.advanceTurn([], () => {}); }
+        this.toast(`跳到 ${s.year}Q${s.quarter}`, 'success'); break;
+      case 'goto2000':
+        while (s.year < 2000 && !s.ended) { Game.advanceTurn([], () => {}); }
+        this.toast(`跳到 ${s.year}Q${s.quarter}`, 'success'); break;
+      case 'focus':
+        if (s.currentFocus) {
+          const f = NATIONAL_FOCI[s.currentFocus];
+          if (f) {
+            s.completedFoci.push(s.currentFocus);
+            if (f.setFlags) { for (const k in f.setFlags) s.flags[k] = f.setFlags[k]; }
+            if (f.effects) { for (const k in f.effects) {
+              if (k.includes('_relation')) { s.relations[k] = (s.relations[k]||0) + f.effects[k]; }
+              else { r[k] = (r[k]||0) + f.effects[k]; }
+            }}
+            s.currentFocus = null; s.focusProgress = 0;
+            this.toast(`国策完成: ${f.name}`, 'success');
+          }
+        } else { this.toast('当前无执行中国策', 'error'); }
+        break;
+      case 'allfocus':
+        for (const fid in NATIONAL_FOCI) {
+          if (!s.completedFoci.includes(fid)) {
+            s.completedFoci.push(fid);
+            const f = NATIONAL_FOCI[fid];
+            if (f.setFlags) { for (const k in f.setFlags) s.flags[k] = f.setFlags[k]; }
+          }
+        }
+        s.currentFocus = null; s.focusProgress = 0;
+        s.flags.economic_reform_1 = true;
+        s.flags.slave_reform_1 = true;
+        s.flags.political_reform_1 = true;
+        s.flags.nuclear_tech = true;
+        s.flags.advanced_tech = true;
+        s.flags.burgundian_threat = true;
+        this.toast('所有国策已完成', 'success'); break;
+      case 'techs':
+        for (const tid in (typeof TECHS !== 'undefined' ? TECHS : {})) {
+          s.techs[tid] = true; s.flags[tid] = true;
+        }
+        this.toast('所有科技已解锁', 'success'); break;
+      case 'flags':
+        s.flags.economic_reform_1 = true;
+        s.flags.slave_reform_1 = true;
+        s.flags.political_reform_1 = true;
+        s.flags.nuclear_tech = true;
+        s.flags.advanced_tech = true;
+        s.flags.burgundian_threat = true;
+        s.flags.rocketry_done = true;
+        s.flags.burgundy_betrayed = false;
+        this.toast('关键标记已解锁', 'success'); break;
+      case 'relation':
+        for (const k in s.relations) { s.relations[k] = Math.min(100, (s.relations[k]||0) + 50); }
+        this.toast('所有关系+50', 'success'); break;
+      case 'russia':
+        s.russiaState = 'unified';
+        s.flags.russia_unified = true;
+        s.flags.russia_democratic = true;
+        this.toast('俄罗斯已统一（民主派）', 'success'); break;
+      case 'maxall':
+        r.money = 9999; r.manpower = 9999; r.stability = 100; r.deterrence = 999;
+        r.militaryPower = 999; r.nukeDeter = 999; r.research = 999; r.nukes = 99;
+        this.toast('资源全满', 'success'); break;
+      case 'reset':
+        r.money = 200; r.manpower = 30; r.stability = 45; r.deterrence = 60;
+        r.militaryPower = 80; r.nukeDeter = 30; r.research = 20; r.nukes = 2;
+        this.toast('资源已重置', 'success'); break;
+      case 'dump':
+        console.log('===== GAME STATE DUMP =====');
+        console.log(JSON.parse(JSON.stringify(s)));
+        console.log('===== END DUMP =====');
+        this.toast('状态已输出到控制台(F12)', 'success'); break;
+    }
+    Game.clampResources();
+    this.renderAll();
+    this.autoSave();
+  },
+
   // ===== 保存游戏（localStorage） =====
   saveGame() {
     try {
@@ -1648,7 +2014,14 @@ const UI = {
     try {
       const saved = localStorage.getItem('tno_game_save');
       if (saved) {
-        Game.state = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // 存档版本检查：版本不匹配则拒绝加载旧存档
+        if (!parsed.saveVersion || parsed.saveVersion !== Game.SAVE_VERSION) {
+          console.log('存档版本不匹配，需要开新档');
+          localStorage.removeItem('tno_game_save');
+          return false;
+        }
+        Game.state = parsed;
         // 恢复难度设置
         if (Game.state.difficulty) {
           Game.difficulty = Game.state.difficulty;

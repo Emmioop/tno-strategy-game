@@ -38,7 +38,7 @@ const STORY_EVENTS = [
       {
         text: '这是帝国的荣光时刻',
         desc: '享受这最后的辉煌',
-        effects: { stability: 6, money: 30, deterrence: 8 },
+        effects: { stability: 6, money: 6, deterrence: 8 },
         showToast: '登月庆典振奋了帝国的士气'
       }
     ]
@@ -139,13 +139,13 @@ const STORY_EVENTS = [
       {
         text: '将其纳入管制',
         desc: '灰色合法化。+资金 -稳定',
-        effects: { money: 80, stability: -3 },
+        effects: { money: 15, stability: -3 },
         setFlags: { blackmarket_regulated: true }
       },
       {
         text: '视而不见',
         desc: '继续放任',
-        effects: { money: 30, stability: -2 }
+        effects: { money: 6, stability: -2 }
       }
     ]
   },
@@ -229,7 +229,7 @@ const STORY_EVENTS = [
       {
         text: '效忠鲍曼（保守派）',
         desc: '维持现状，巩固权力',
-        effects: { stability: 10, money: 80 },
+        effects: { stability: 10, money: 15 },
         setFlags: { chosen_path: 'bormann', conservative: true },
         showToast: '你选择了保守路线'
       },
@@ -277,7 +277,7 @@ const STORY_EVENTS = [
       {
         text: '寻求外国援助',
         desc: '向美国或日本求援。有效但伤国际地位',
-        effects: { money: 80, militaryPower: 15, deterrence: -8 },
+        effects: { money: 15, militaryPower: 15, deterrence: -8 },
         setFlags: { civil_war_strategy: 'foreign_aid', foreign_intervention: true }
       }
     ]
@@ -364,7 +364,7 @@ const STORY_EVENTS = [
       {
         text: '开始重建帝国',
         desc: '内战结束，进入新时代',
-        effects: { stability: 15, money: 50 },
+        effects: { stability: 15, money: 10 },
         setFlags: { civil_war_over: true, reconstruction: true },
         showToast: '内战结束。重建开始。'
       }
@@ -399,14 +399,14 @@ const STORY_EVENTS = [
       {
         text: '推动现代化重建',
         desc: '+民产 +研发 -军力。需改革派',
-        effects: { money: 40, research: 8, militaryPower: -5, stability: 5 },
+        effects: { money: 8, research: 8, militaryPower: -5, stability: 5 },
         setFlags: { modern_reconstruction: true, economic_reform_1: true },
         condition: (s) => s.flags.reformist || s.flags.conservative
       },
       {
         text: '恢复传统奴隶经济',
         desc: '+资金 +稳定 -人力',
-        effects: { money: 60, stability: 8, manpower: -15 },
+        effects: { money: 12, stability: 8, manpower: -15 },
         setFlags: { slave_reconstruction: true }
       },
       {
@@ -432,7 +432,7 @@ const STORY_EVENTS = [
       {
         text: '维持并加强奴隶制',
         desc: '+资金 -稳定 -人力',
-        effects: { money: 50, stability: -5, manpower: -10 },
+        effects: { money: 10, stability: -5, manpower: -10 },
         setFlags: { slavery_maintained: true }
       },
       {
@@ -452,7 +452,7 @@ const STORY_EVENTS = [
       {
         text: '更严酷的镇压',
         desc: '杀一儆百。+资金 -稳定 -国际声誉',
-        effects: { money: 40, stability: -8, ofn_relation: -10 },
+        effects: { money: 8, stability: -8, ofn_relation: -10 },
         setFlags: { slavery_brutal: true },
         condition: (s) => s.flags.militarist || s.flags.extremist
       }
@@ -473,7 +473,7 @@ const STORY_EVENTS = [
       {
         text: '积极回应，寻求缓和',
         desc: '+美国关系 +资金 -威慑',
-        effects: { ofn_relation: 20, money: 60, deterrence: -5 },
+        effects: { ofn_relation: 20, money: 12, deterrence: -5 },
         setFlags: { ofn_detente: true, detente_started: true },
         condition: (s) => s.flags.reformist || s.flags.conservative
       },
@@ -567,13 +567,13 @@ const STORY_EVENTS = [
       {
         text: '加大民用投资',
         desc: '+资金 +稳定 -军力',
-        effects: { money: 80, stability: 8, militaryPower: -5 },
+        effects: { money: 15, stability: 8, militaryPower: -5 },
         setFlags: { civilian_boom: true }
       },
       {
         text: '均衡发展',
         desc: '各方面小幅提升',
-        effects: { money: 40, stability: 4, deterrence: 3 }
+        effects: { money: 8, stability: 4, deterrence: 3 }
       },
       {
         text: '军工扩张',
@@ -780,7 +780,7 @@ const STORY_EVENTS = [
       {
         text: '扩张合成燃料工业',
         desc: '+资金 -研发投入',
-        effects: { money: 40, research: -5, stability: 3 },
+        effects: { money: 8, research: -5, stability: 3 },
         setFlags: { synthetic_fuel: true }
       },
       {
@@ -792,7 +792,7 @@ const STORY_EVENTS = [
       {
         text: '军事控制中东油田',
         desc: '+资金 +威慑 -国际声誉',
-        effects: { money: 60, deterrence: 8, ofn_relation: -15, japan_relation: -10 },
+        effects: { money: 12, deterrence: 8, ofn_relation: -15, japan_relation: -10 },
         setFlags: { middle_east_intervention: true },
         condition: (s) => s.flags.militarist
       }
@@ -857,7 +857,7 @@ const STORY_EVENTS = [
       {
         text: '放弃太空，专注地球',
         desc: '+资金 -威慑',
-        effects: { money: 50, deterrence: -8 },
+        effects: { money: 10, deterrence: -8 },
         setFlags: { space_abandoned: true }
       }
     ]
@@ -916,19 +916,19 @@ const STORY_EVENTS = [
       {
         text: '紧缩政策',
         desc: '-稳定 +资金',
-        effects: { stability: -12, money: 80 },
+        effects: { stability: -12, money: 15 },
         setFlags: { austerity: true }
       },
       {
         text: '向富人与军头加税',
         desc: '+资金 -军力',
-        effects: { money: 60, militaryPower: -8, stability: 3 },
+        effects: { money: 12, militaryPower: -8, stability: 3 },
         setFlags: { wealth_tax: true }
       },
       {
         text: '印钞救急',
         desc: '+资金 -稳定 -长期',
-        effects: { money: 100, stability: -15 },
+        effects: { money: 15, stability: -15 },
         setFlags: { hyperinflation: true }
       },
       {
@@ -964,7 +964,7 @@ const STORY_EVENTS = [
       {
         text: '开放网络，拥抱信息时代',
         desc: '+研发 +资金 -稳定',
-        effects: { research: 20, money: 60, stability: -10 },
+        effects: { research: 20, money: 12, stability: -10 },
         setFlags: { internet_open: true },
         condition: (s) => s.flags.computer_revolution && s.flags.reformist
       },
@@ -998,7 +998,7 @@ const STORY_EVENTS = [
       {
         text: '无视环境，继续发展',
         desc: '+资金 -稳定 -长期',
-        effects: { money: 70, stability: -8 },
+        effects: { money: 12, stability: -8 },
         setFlags: { environment_ignored: true }
       },
       {
@@ -1057,7 +1057,7 @@ const STORY_EVENTS = [
       {
         text: '允许殖民地自治/独立',
         desc: '+稳定 +国际声誉 -威慑',
-        effects: { stability: 10, ofn_relation: 15, deterrence: -10, money: 30 },
+        effects: { stability: 10, ofn_relation: 15, deterrence: -10, money: 6 },
         setFlags: { decolonization: true },
         condition: (s) => s.flags.reformist
       },
@@ -1090,20 +1090,20 @@ const STORY_EVENTS = [
       {
         text: '推行鼓励生育政策',
         desc: '+人力 -资金',
-        effects: { manpower: 20, money: -70, stability: 3 },
+        effects: { manpower: 5, money: -70, stability: 3 },
         setFlags: { pro_natalist: true }
       },
       {
         text: '引入移民劳动力',
         desc: '+人力 -稳定',
-        effects: { manpower: 25, stability: -8 },
+        effects: { manpower: 5, stability: -8 },
         setFlags: { immigration_policy: true },
         condition: (s) => s.flags.reformist || s.flags.decolonization
       },
       {
         text: '自动化替代人力',
         desc: '+研发 +资金 -稳定',
-        effects: { research: 15, money: 40, stability: -5 },
+        effects: { research: 15, money: 8, stability: -5 },
         setFlags: { automation: true },
         condition: (s) => s.flags.computer_revolution
       }
@@ -1129,7 +1129,7 @@ const STORY_EVENTS = [
       {
         text: '低调务实，专注内政',
         desc: '+资金 +研发',
-        effects: { money: 50, research: 10 }
+        effects: { money: 10, research: 10 }
       },
       {
         text: '宗教复兴运动',
@@ -1205,7 +1205,7 @@ const STORY_EVENTS = [
     title: '奴隶起义',
     body: `<p>东方总督辖区的一处矿场爆发奴隶起义，守卫被杀，奴隶控制了整个矿区。</p>`,
     choices: [
-      { text: '血腥镇压', desc: '+资金 -稳定 -人力', effects: { money: 20, stability: -5, manpower: -10 } },
+      { text: '血腥镇压', desc: '+资金 -稳定 -人力', effects: { money: 4, stability: -5, manpower: -10 } },
       { text: '谈判安抚', desc: '-资金 +稳定', effects: { money: -30, stability: 4 } },
       { text: '派遣党卫军', desc: '+威慑 -稳定', effects: { deterrence: 3, stability: -3 } }
     ]
@@ -1234,7 +1234,7 @@ const STORY_EVENTS = [
     title: '经济利好',
     body: `<p>一项新的合成材料专利为帝国带来了意外的出口订单。</p>`,
     choices: [
-      { text: '投入再生产', desc: '+资金', effects: { money: 60 } },
+      { text: '投入再生产', desc: '+资金', effects: { money: 12 } },
       { text: '投入研发', desc: '+研发', effects: { research: 8 } }
     ]
   },
@@ -1308,7 +1308,7 @@ const STORY_EVENTS = [
     body: `<p>帝国科学家在材料科学领域取得突破，新型合金可显著提升军工品质。</p>`,
     choices: [
       { text: '投入军用', desc: '+军力 +威慑', effects: { militaryPower: 8, deterrence: 4 } },
-      { text: '投入民用', desc: '+资金 +稳定', effects: { money: 50, stability: 3 } },
+      { text: '投入民用', desc: '+资金 +稳定', effects: { money: 10, stability: 3 } },
       { text: '保密储备', desc: '+研发', effects: { research: 10 } }
     ]
   },
@@ -1559,7 +1559,7 @@ const STORY_EVENTS = [
     <p style="color:var(--accent-blood-bright)">帝国的东方防线正在从内部瓦解。</p>`,
     choices: [
       { text: '残酷镇压游击队', desc: '-人力 -稳定 +威慑', effects: { manpower: -12, stability: -8, deterrence: 5, militaryPower: 3 } },
-      { text: '拉拢当地斯拉夫人', desc: '-资金 +稳定 +人力', effects: { money: -50, stability: 5, manpower: 8, russia_relation: 3 } },
+      { text: '拉拢当地斯拉夫人', desc: '-资金 +稳定 +人力', effects: { money: -50, stability: 5, manpower: 2, russia_relation: 3 } },
       { text: '无视，专注军事准备', desc: '-稳定 +军力', effects: { stability: -6, militaryPower: 8, deterrence: 3 } }
     ],
     condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman' && s.flags.russia_unifier !== 'monarchist'
@@ -1599,12 +1599,12 @@ const STORY_EVENTS = [
       {
         text: '趁机接管边境缓冲区',
         desc: '+威慑 +领土',
-        effects: { deterrence: 15, stability: 8, russia_relation: -10, manpower: 10 }
+        effects: { deterrence: 15, stability: 8, russia_relation: -10, manpower: 3 }
       },
       {
         text: '向新军阀出售武器',
         desc: '+资金',
-        effects: { money: 80, russia_relation: -5 },
+        effects: { money: 15, russia_relation: -5 },
         setFlags: { tabi_collapsed: true }
       },
       {
@@ -1747,7 +1747,7 @@ const STORY_EVENTS = [
       {
         text: '和平条约已签署',
         desc: '两国进入永久和平时代',
-        effects: { stability: 12, money: 40, russia_relation: 20 },
+        effects: { stability: 12, money: 8, russia_relation: 20 },
         setFlags: { final_peace: true, golden_age: true },
         condition: (s) => s.flags.permanent_peace
       }
@@ -1767,7 +1767,7 @@ const STORY_EVENTS = [
       {
         text: '胜利者的和平',
         desc: '战争胜利后的重建',
-        effects: { stability: 15, money: 60, deterrence: 10, militaryPower: 5 },
+        effects: { stability: 15, money: 12, deterrence: 10, militaryPower: 5 },
         condition: (s) => s.flags.total_war_fought
       },
       {
@@ -1791,7 +1791,7 @@ const STORY_EVENTS = [
       {
         text: '妥协后的平静',
         desc: '和平条约带来的稳定',
-        effects: { stability: 8, money: 20, russia_relation: 10 },
+        effects: { stability: 8, money: 4, russia_relation: 10 },
         condition: (s) => s.flags.compromise_peace || s.flags.final_peace
       }
     ],
@@ -1809,7 +1809,7 @@ const STORY_EVENTS = [
     <p>帝国要么成功顶住了俄罗斯的威胁，要么做出了足够的让步换取和平，要么已经在战火中付出了代价。无论如何，这一页翻过去了。</p>
     <p>还有最后十年。</p>`,
     choices: [
-      { text: '专注内政建设', desc: '+稳定 +资金', effects: { stability: 8, money: 50, research: 5 } },
+      { text: '专注内政建设', desc: '+稳定 +资金', effects: { stability: 8, money: 10, research: 5 } },
       { text: '加强最后的威慑', desc: '+军力 +核慑', effects: { militaryPower: 10, nukeDeter: 8, money: -30 } }
     ]
   },
@@ -1936,7 +1936,7 @@ const STORY_EVENTS = [
       {
         text: '撤退部分驻军，减少损失',
         desc: '-威慑 +资金 +人力',
-        effects: { deterrence: -10, money: 30, manpower: 8 },
+        effects: { deterrence: -10, money: 6, manpower: 2 },
         setFlags: { britain_withdrawn: true }
       }
     ]
@@ -1993,7 +1993,7 @@ const STORY_EVENTS = [
       {
         text: '支持流亡政府复辟',
         desc: '+资金 -威慑 -稳定',
-        effects: { money: 30, deterrence: -5, stability: -5 },
+        effects: { money: 6, deterrence: -5, stability: -5 },
         setFlags: { turkey_restoration: true }
       },
       {
@@ -2017,7 +2017,7 @@ const STORY_EVENTS = [
     title: '俄罗斯难民潮',
     body: `<p>俄罗斯统一战争的难民涌入帝国东方边境。数十万人饥寒交迫，帝国边境城镇不堪重负。</p>`,
     choices: [
-      { text: '接纳难民', desc: '+人力 -稳定 -资金', effects: { manpower: 15, stability: -5, money: -30 } },
+      { text: '接纳难民', desc: '+人力 -稳定 -资金', effects: { manpower: 3, stability: -5, money: -30 } },
       { text: '驱逐难民', desc: '+稳定 -美国关系 -人力', effects: { stability: 4, ofn_relation: -8, manpower: -5 } },
       { text: '建立难民营', desc: '-资金 +稳定微', effects: { money: -40, stability: 2 } }
     ]
@@ -2077,7 +2077,7 @@ const STORY_EVENTS = [
     title: '西班牙难民',
     body: `<p>伊比利亚内战的难民涌入法国和低地国家，帝国不得不面对新一轮的人道危机。</p>`,
     choices: [
-      { text: '接纳', desc: '+人力 -稳定 -资金', effects: { manpower: 8, stability: -3, money: -20 } },
+      { text: '接纳', desc: '+人力 -稳定 -资金', effects: { manpower: 2, stability: -3, money: -20 } },
       { text: '封锁边境', desc: '+稳定 -资金 -美国关系', effects: { stability: 3, money: -15, ofn_relation: -5 } }
     ]
   },
@@ -2183,7 +2183,7 @@ const STORY_EVENTS = [
       {
         text: '支持维希政权',
         desc: '+资金 -美国关系 -稳定',
-        effects: { money: 20, ofn_relation: -10, stability: -3 },
+        effects: { money: 4, ofn_relation: -10, stability: -3 },
         setFlags: { french_resistance_crushed: true }
       },
       {
@@ -2214,7 +2214,7 @@ const STORY_EVENTS = [
       {
         text: '削减占领开支',
         desc: '+资金 -威慑 -稳定',
-        effects: { money: 40, deterrence: -4, stability: -3 },
+        effects: { money: 8, deterrence: -4, stability: -3 },
         condition: (s) => s.resources.money < -100
       },
       {
@@ -2287,7 +2287,7 @@ const STORY_EVENTS = [
       {
         text: '放弃部分殖民地',
         desc: '+资金 -威慑 -稳定',
-        effects: { money: 30, deterrence: -4, stability: -3 },
+        effects: { money: 6, deterrence: -4, stability: -3 },
         setFlags: { north_africa_conceded: true },
         condition: (s) => s.flags.reformist
       }
@@ -2375,7 +2375,7 @@ const STORY_EVENTS = [
       {
         text: '有条件地承认独立',
         desc: '+稳定 -威慑 +资金',
-        effects: { stability: 8, deterrence: -3, money: 20 },
+        effects: { stability: 8, deterrence: -3, money: 4 },
         setFlags: { africa_emancipation: true },
         condition: (s) => s.flags.reformist
       },
@@ -2400,7 +2400,7 @@ const STORY_EVENTS = [
       {
         text: '支持南非政府',
         desc: '+资金 -人道形象',
-        effects: { money: 50, stability: -2 }
+        effects: { money: 10, stability: -2 }
       },
       {
         text: '转向民主力量',
@@ -2506,7 +2506,7 @@ const STORY_EVENTS = [
       {
         text: '出售军火牟利',
         desc: '+资金 -稳定',
-        effects: { money: 100, stability: -4, deterrence: -5 },
+        effects: { money: 15, stability: -4, deterrence: -5 },
         setFlags: { war_africa: true },
         condition: (s) => s.flags.militarist
       }
@@ -2526,7 +2526,7 @@ const STORY_EVENTS = [
       {
         text: '加大投资，抓住机遇',
         desc: '+资金 +研发 -稳定',
-        effects: { money: 80, research: 8, stability: -2 }
+        effects: { money: 15, research: 8, stability: -2 }
       },
       {
         text: '收紧财政，防范风险',
