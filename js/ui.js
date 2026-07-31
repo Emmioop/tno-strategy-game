@@ -457,11 +457,328 @@ const UI = {
     const content = document.getElementById('tab-content');
     switch (tab) {
       case 'overview': content.innerHTML = this.renderOverview(); break;
+      case 'map': content.innerHTML = this.renderMap(); break;
       case 'industry': content.innerHTML = this.renderIndustry(); break;
       case 'policy': content.innerHTML = this.renderPolicy(); break;
       case 'tech': content.innerHTML = this.renderTech(); break;
       case 'events': content.innerHTML = this.renderEventLog(); break;
     }
+  },
+
+  // ===== 势力地图页 =====
+  renderMap() {
+    const s = Game.state;
+    const f = s.flags;
+
+    // 判断各势力状态颜色
+    const germanyColor = f.civil_war_imminent && !f.civil_war_over ? '#6a2a2a' : '#a83232';
+    const germanyLabel = f.civil_war_imminent && !f.civil_war_over ? '大日耳曼国（内战）' : '大日耳曼国';
+
+    const burgundyColor = '#4a2a4a';
+    const italyColor = f.italy_accepted || f.italy_leaves_sphere ? '#3a6a3a' : '#5a8a4a';
+    const italyLabel = f.italy_accepted ? '意大利（已脱离）' : '意大利（三头同盟）';
+
+    const iberiaColor = f.iberian_collapse ? '#6a5a3a' : '#8a7a4a';
+    const iberiaLabel = f.iberian_collapse ? '伊比利亚（崩溃）' : '伊比利亚联盟';
+
+    const englandColor = f.britain_withdrawn ? '#4a4a5a' : '#5a5a6a';
+
+    // 俄罗斯颜色根据统一者类型
+    let russiaColor = '#3a3a3a';
+    let russiaLabel = '俄罗斯（分裂）';
+    let russiaFragments = true;
+    if (f.russia_democratic) { russiaColor = '#3a7a5a'; russiaLabel = '俄罗斯共和国'; russiaFragments = false; }
+    else if (f.russia_communist) { russiaColor = '#8a2a2a'; russiaLabel = '新苏联'; russiaFragments = false; }
+    else if (f.russia_fascist) { russiaColor = '#5a3a3a'; russiaLabel = '俄罗斯民族国'; russiaFragments = false; }
+    else if (f.russia_madman) { russiaColor = '#2a2a2a'; russiaLabel = '摄政俄罗斯（疯狂）'; russiaFragments = false; }
+    else if (f.russia_monarchist) { russiaColor = '#4a4a8a'; russiaLabel = '俄罗斯帝国'; russiaFragments = false; }
+
+    const turkeyColor = f.turkey_junta ? '#6a6a3a' : '#5a5a4a';
+
+    // 关系连线颜色
+    const relLine = (val) => {
+      if (val > 20) return '#4a8a4a';
+      if (val > -10) return '#5a5a5a';
+      if (val > -40) return '#8a6a3a';
+      return '#a83232';
+    };
+
+    // 生成俄罗斯分裂区域
+    const russiaFragmentHtml = russiaFragments ? `
+      <g class="russia-fragments" opacity="0.7">
+        <path d="M 540 180 L 590 175 L 610 220 L 580 250 L 540 240 Z" fill="#4a3a3a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="西俄罗斯"/>
+        <path d="M 590 175 L 650 170 L 670 210 L 610 220 Z" fill="#3a4a3a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="乌拉尔"/>
+        <path d="M 650 170 L 720 175 L 730 220 L 670 210 Z" fill="#3a3a4a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="西伯利亚"/>
+        <path d="M 720 175 L 770 185 L 775 230 L 730 220 Z" fill="#4a4a3a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="远东"/>
+        <text x="565" y="215" font-size="8" fill="#8a8a8a" text-anchor="middle">西俄</text>
+        <text x="630" y="200" font-size="8" fill="#8a8a8a" text-anchor="middle">乌拉尔</text>
+        <text x="690" y="200" font-size="8" fill="#8a8a8a" text-anchor="middle">西伯利亚</text>
+        <text x="745" y="210" font-size="8" fill="#8a8a8a" text-anchor="middle">远东</text>
+      </g>
+    ` : `
+      <path d="M 540 175 L 770 180 L 775 235 L 540 245 Z" fill="${russiaColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region russia-unified" data-info="${russiaLabel}"/>
+      <text x="655" y="215" font-size="11" fill="#e8e6e0" text-anchor="middle" font-family="Georgia,serif">${russiaLabel}</text>
+    `;
+
+    // 生成SVG地图
+    const mapSvg = `
+      <svg viewBox="0 0 800 520" class="world-map" xmlns="http://www.w3.org/2000/svg">
+        <!-- 背景海洋 -->
+        <rect width="800" height="520" fill="#0d1117"/>
+
+        <!-- 海洋纹理 -->
+        <pattern id="waves" x="0" y="0" width="40" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 0 10 Q 10 5, 20 10 T 40 10" stroke="#111820" fill="none" stroke-width="0.5"/>
+        </pattern>
+        <rect width="800" height="520" fill="url(#waves)" opacity="0.3"/>
+
+        <!-- 经纬线 -->
+        <g stroke="#1a1a24" stroke-width="0.5" opacity="0.5">
+          <line x1="0" y1="100" x2="800" y2="100"/>
+          <line x1="0" y1="200" x2="800" y2="200"/>
+          <line x1="0" y1="300" x2="800" y2="300"/>
+          <line x1="0" y1="400" x2="800" y2="400"/>
+          <line x1="200" y1="0" x2="200" y2="520"/>
+          <line x1="400" y1="0" x2="400" y2="520"/>
+          <line x1="600" y1="0" x2="600" y2="520"/>
+        </g>
+
+        <!-- ===== 斯堪的纳维亚 ===== -->
+        <path d="M 330 60 L 380 55 L 410 90 L 390 130 L 360 125 L 340 100 Z"
+              fill="#3a3a44" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="斯堪的纳维亚（中立）"/>
+
+        <!-- ===== 英格兰（傀儡国） ===== -->
+        <path d="M 230 140 L 270 135 L 285 170 L 260 190 L 230 180 Z"
+              fill="${englandColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="英格兰合作国"/>
+        <text x="255" y="165" font-size="9" fill="#a8a6a0" text-anchor="middle">英格兰</text>
+
+        <!-- ===== 伊比利亚 ===== -->
+        <path d="M 170 280 L 230 275 L 245 320 L 210 350 L 175 335 Z"
+              fill="${iberiaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="${iberiaLabel}"/>
+        <text x="205" y="315" font-size="9" fill="#d8c8a0" text-anchor="middle">伊比利亚</text>
+
+        <!-- ===== 勃艮第（希姆莱之国） ===== -->
+        <path d="M 250 220 L 320 215 L 335 260 L 255 270 Z"
+              fill="${burgundyColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region burgundy-region" data-info="勃艮第国（希姆莱）"/>
+        <text x="295" y="245" font-size="9" fill="#8a6a8a" text-anchor="middle">勃艮第</text>
+
+        <!-- ===== 法兰西（被占领） ===== -->
+        <path d="M 230 210 L 250 220 L 255 270 L 235 280 L 220 250 Z"
+              fill="#5a3a3a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="法兰西（军事管辖）"/>
+        <text x="240" y="250" font-size="8" fill="#8a6a6a" text-anchor="middle">法国</text>
+
+        <!-- ===== 大日耳曼国（核心） ===== -->
+        <path d="M 320 170 L 420 165 L 440 220 L 430 270 L 380 280 L 335 260 L 320 220 Z"
+              fill="${germanyColor}" stroke="#e8c860" stroke-width="2" class="map-region germany-region" data-info="${germanyLabel}"/>
+        <text x="380" y="225" font-size="13" fill="#e8c860" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">大日耳曼国</text>
+
+        <!-- 东方总督辖区 -->
+        <path d="M 440 220 L 540 215 L 540 270 L 430 270 Z"
+              fill="#7a2a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="东方总督辖区"/>
+        <text x="490" y="248" font-size="9" fill="#c8a0a0" text-anchor="middle">东方总督辖区</text>
+
+        <!-- 高加索 -->
+        <path d="M 440 300 L 530 295 L 535 345 L 445 350 Z"
+              fill="#7a2a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="高加索（产油区）"/>
+        <text x="485" y="325" font-size="8" fill="#c8a0a0" text-anchor="middle">高加索</text>
+
+        <!-- 莫斯科维（被占领区） -->
+        <path d="M 440 170 L 540 175 L 540 215 L 440 220 Z"
+              fill="#6a2a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="莫斯科维（占领区）"/>
+
+        <!-- ===== 意大利 ===== -->
+        <path d="M 340 290 L 380 285 L 395 330 L 410 370 L 380 390 L 360 370 L 350 330 Z"
+              fill="${italyColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="${italyLabel}"/>
+        <text x="375" y="340" font-size="9" fill="#c8e8a0" text-anchor="middle">意大利</text>
+
+        <!-- ===== 土耳其 ===== -->
+        <path d="M 440 360 L 520 355 L 530 395 L 450 400 Z"
+              fill="${turkeyColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="土耳其"/>
+        <text x="485" y="380" font-size="8" fill="#a8a0a0" text-anchor="middle">土耳其</text>
+
+        <!-- ===== 俄罗斯区域 ===== -->
+        ${russiaFragmentHtml}
+
+        <!-- ===== 美国/OFN（远西） ===== -->
+        <g class="ofn-zone">
+          <rect x="10" y="180" width="80" height="120" rx="4" fill="#1a2a4a" stroke="#3a5a8a" stroke-width="1" opacity="0.7"/>
+          <text x="50" y="230" font-size="10" fill="#6a8aca" text-anchor="middle" font-family="Georgia,serif">美国</text>
+          <text x="50" y="245" font-size="8" fill="#4a6a9a" text-anchor="middle">OFN</text>
+          <!-- 箭头指向欧洲 -->
+          <line x1="90" y1="240" x2="155" y2="240" stroke="#3a5a8a" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+          <polygon points="155,240 148,236 148,244" fill="#3a5a8a" opacity="0.6"/>
+        </g>
+
+        <!-- ===== 日本（远东） ===== -->
+        <g class="japan-zone">
+          <rect x="720" y="280" width="70" height="80" rx="4" fill="#4a3a1a" stroke="#8a7a3a" stroke-width="1" opacity="0.7"/>
+          <text x="755" y="315" font-size="9" fill="#c8a84a" text-anchor="middle" font-family="Georgia,serif">日本</text>
+          <text x="755" y="330" font-size="7" fill="#8a7a3a" text-anchor="middle">共荣圈</text>
+          <!-- 箭头指向亚洲 -->
+          <line x1="720" y1="310" x2="680" y2="270" stroke="#8a7a3a" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+          <polygon points="680,270 688,268 686,276" fill="#8a7a3a" opacity="0.6"/>
+        </g>
+
+        <!-- ===== 关系连线 ===== -->
+        <g class="relation-lines" opacity="0.5">
+          <!-- 德国-意大利 -->
+          <line x1="380" y1="280" x2="375" y2="290" stroke="${relLine(s.relations.italy)}" stroke-width="2"/>
+          <!-- 德国-俄罗斯 -->
+          <line x1="440" y1="220" x2="540" y2="210" stroke="${relLine(s.relations.russia)}" stroke-width="2" stroke-dasharray="5,3"/>
+          <!-- 德国-美国（跨洋） -->
+          <line x1="320" y1="220" x2="90" y2="240" stroke="${relLine(s.relations.ofn)}" stroke-width="2" stroke-dasharray="3,4"/>
+          <!-- 德国-勃艮第 -->
+          <line x1="335" y1="245" x2="320" y2="245" stroke="${relLine(s.relations.burgundy)}" stroke-width="2"/>
+          <!-- 德国-日本（跨大陆） -->
+          <line x1="440" y1="200" x2="720" y2="310" stroke="${relLine(s.relations.japan)}" stroke-width="1.5" stroke-dasharray="2,5"/>
+        </g>
+
+        <!-- ===== 标注区域 ===== -->
+        <g class="map-annotations">
+          <!-- AA线（乌拉尔边界） -->
+          ${!russiaFragments ? '' : '<line x1="540" y1="160" x2="540" y2="260" stroke="#c9a84a" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/><text x="540" y="155" font-size="7" fill="#c9a84a" text-anchor="middle" opacity="0.7">AA线</text>'}
+        </g>
+
+        <!-- 指北针 -->
+        <g transform="translate(750, 40)">
+          <circle r="15" fill="none" stroke="#3a3a4a" stroke-width="1"/>
+          <polygon points="0,-12 -4,4 0,0 4,4" fill="#a83232"/>
+          <polygon points="0,12 -4,-4 0,0 4,-4" fill="#3a3a4a"/>
+          <text y="-18" text-anchor="middle" font-size="8" fill="#6a6864">N</text>
+        </g>
+
+        <!-- 图例 -->
+        <g transform="translate(15, 470)" class="map-legend">
+          <rect x="-5" y="-5" width="280" height="45" fill="#0a0a0c" stroke="#2a2a2a" stroke-width="1" rx="2"/>
+          <rect x="5" y="5" width="12" height="8" fill="${germanyColor}"/>
+          <text x="22" y="12" font-size="8" fill="#a8a6a0">帝国核心</text>
+          <rect x="75" y="5" width="12" height="8" fill="${burgundyColor}"/>
+          <text x="92" y="12" font-size="8" fill="#a8a6a0">勃艮第</text>
+          <rect x="145" y="5" width="12" height="8" fill="${italyColor}"/>
+          <text x="162" y="12" font-size="8" fill="#a8a6a0">意大利</text>
+          <rect x="210" y="5" width="12" height="8" fill="${russiaColor}"/>
+          <text x="227" y="12" font-size="8" fill="#a8a6a0">俄罗斯</text>
+          <line x1="5" y1="25" x2="20" y2="25" stroke="#4a8a4a" stroke-width="2"/>
+          <text x="25" y="28" font-size="8" fill="#a8a6a0">友好</text>
+          <line x1="60" y1="25" x2="75" y2="25" stroke="#5a5a5a" stroke-width="2"/>
+          <text x="80" y="28" font-size="8" fill="#a8a6a0">中立</text>
+          <line x1="115" y1="25" x2="130" y2="25" stroke="#a83232" stroke-width="2"/>
+          <text x="135" y="28" font-size="8" fill="#a8a6a0">敌对</text>
+        </g>
+      </svg>
+    `;
+
+    // 势力详情面板
+    const factionDetails = [
+      { name: '大日耳曼国', rel: null, desc: germanyLabel, color: germanyColor, isPlayer: true },
+      { name: '美国 (OFN)', rel: s.relations.ofn, desc: '自由世界残部，民主灯塔', color: '#3a5a8a' },
+      { name: '日本', rel: s.relations.japan, desc: '共荣圈霸主，太平洋帝国', color: '#8a7a3a' },
+      { name: '意大利', rel: s.relations.italy, desc: italyLabel, color: italyColor },
+      { name: '勃艮第', rel: s.relations.burgundy, desc: '希姆莱的黑暗国度', color: burgundyColor },
+      { name: russiaLabel, rel: s.relations.russia, desc: russiaFragments ? '群雄割据，前途未卜' : '已统一的东方巨人', color: russiaColor }
+    ];
+
+    const relText = (v) => {
+      if (v === null) return '—';
+      if (v <= -40) return '敌对';
+      if (v <= -10) return '冷淡';
+      if (v <= 10) return '中立';
+      if (v <= 40) return '友好';
+      return '盟友';
+    };
+    const relColor = (v) => {
+      if (v === null) return 'var(--text-muted)';
+      if (v <= -40) return 'var(--accent-blood-bright)';
+      if (v <= -10) return '#c97a3a';
+      if (v <= 10) return 'var(--text-muted)';
+      if (v <= 40) return 'var(--accent-toxic)';
+      return 'var(--accent-gold-bright)';
+    };
+
+    const factionHtml = factionDetails.map(fd => `
+      <div class="faction-detail-card">
+        <div class="fdc-color" style="background:${fd.color}"></div>
+        <div class="fdc-info">
+          <div class="fdc-name">${fd.name}</div>
+          <div class="fdc-desc">${fd.desc}</div>
+        </div>
+        <div class="fdc-rel" style="color:${relColor(fd.rel)}">
+          ${relText(fd.rel)}${fd.rel !== null ? ` ${fd.rel > 0 ? '+' : ''}${fd.rel}` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    // 时间轴
+    const timelineHtml = this.renderTimeline();
+
+    return `
+      <div class="map-page">
+        <div class="map-header">
+          <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em">三极世界势力图</h2>
+          <div style="font-size:12px;color:var(--text-muted)">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
+        </div>
+        <div class="map-container">${mapSvg}</div>
+        <div class="map-factions">${factionHtml}</div>
+        <div class="map-timeline-section">
+          <h3 style="font-family:var(--font-serif);color:var(--accent-gold);letter-spacing:0.1em;margin-bottom:10px">历史进程</h3>
+          ${timelineHtml}
+        </div>
+      </div>
+    `;
+  },
+
+  // ===== 时间轴 =====
+  renderTimeline() {
+    const s = Game.state;
+    const f = s.flags;
+
+    // 关键时间节点
+    const milestones = [
+      { year: 1962, label: '帝国登月', triggered: true },
+      { year: 1963, label: '元首之死', triggered: s.turn > 4 || f.civil_war_imminent },
+      { year: 1965, label: '内战结束', triggered: f.civil_war_over },
+      { year: 1968, label: '俄军阀混战', triggered: f.russia_infiltrated || f.russia_proxies || s.year >= 1968 },
+      { year: 1972, label: '俄罗斯统一', triggered: f.russia_unifier !== undefined || s.year >= 1972 },
+      { year: 1975, label: '冷战高潮', triggered: s.year >= 1975 },
+      { year: 1981, label: '西俄战争', triggered: f.west_russian_war },
+      { year: 1989, label: '核危机', triggered: s.year >= 1989 },
+      { year: 1996, label: '黄昏时代', triggered: s.year >= 1996 },
+      { year: 2000, label: '终局', triggered: s.year >= 2000 }
+    ];
+
+    // 当前进度百分比
+    const progressPct = Math.min(100, ((s.turn - 1) / s.totalTurns) * 100);
+
+    const milestoneHtml = milestones.map(m => {
+      const milestonePct = ((m.year - 1962) / 38) * 100;
+      const isPast = s.year > m.year || (s.year === m.year && m.triggered);
+      const isCurrent = s.year === m.year && !m.triggered;
+      const cls = isPast ? 'past' : (isCurrent ? 'current' : 'future');
+      return `
+        <div class="timeline-milestone ${cls}" style="left:${milestonePct}%">
+          <div class="tm-dot"></div>
+          <div class="tm-label">${m.year}</div>
+          <div class="tm-desc">${m.label}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="timeline-container">
+        <div class="timeline-bar">
+          <div class="timeline-progress" style="width:${progressPct}%"></div>
+          <div class="timeline-marker" style="left:${progressPct}%">
+            <div class="tm-current">${s.year}Q${s.quarter}</div>
+          </div>
+          ${milestoneHtml}
+        </div>
+        <div class="timeline-labels">
+          <span>1962</span>
+          <span>1981</span>
+          <span>2000</span>
+        </div>
+      </div>
+    `;
   },
 
   // ===== 概览页 =====
@@ -506,6 +823,10 @@ const UI = {
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;font-family:var(--font-serif)">
           ${this.getSituationSummary()}
         </div>
+      </div>
+      <div style="margin-top:16px;">
+        <h4 style="font-family:var(--font-serif);color:var(--accent-gold);margin-bottom:10px;letter-spacing:0.1em">历史进程</h4>
+        ${this.renderTimeline()}
       </div>
     `;
   },

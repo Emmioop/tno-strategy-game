@@ -1044,3 +1044,216 @@ body {
   #topbar .date { font-size: 13px; }
   .tab { padding: 8px 10px; font-size: 11px; }
 }
+
+/* ===== 势力地图页 ===== */
+.map-page {
+  padding: 16px;
+  overflow-y: auto;
+  height: 100%;
+}
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+.map-header h2 {
+  font-size: 16px;
+  margin: 0;
+}
+.map-container {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  overflow: hidden;
+}
+.world-map {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.map-region {
+  cursor: pointer;
+  transition: opacity 0.2s, filter 0.2s;
+}
+.map-region:hover {
+  opacity: 0.85;
+  filter: brightness(1.3);
+}
+.germany-region {
+  filter: drop-shadow(0 0 6px rgba(168,50,50,0.4));
+}
+.burgundy-region {
+  filter: drop-shadow(0 0 4px rgba(74,42,74,0.5));
+}
+.russia-unified {
+  animation: russiaGlow 3s ease-in-out infinite;
+}
+@keyframes russiaGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+/* 势力详情卡片 */
+.map-factions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.faction-detail-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  transition: border-color 0.2s;
+}
+.faction-detail-card:hover {
+  border-color: var(--border-bright);
+}
+.fdc-color {
+  width: 6px;
+  height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.fdc-info {
+  flex: 1;
+  min-width: 0;
+}
+.fdc-name {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.fdc-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fdc-rel {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: bold;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 时间轴 */
+.map-timeline-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.timeline-container {
+  position: relative;
+  padding: 20px 0 40px;
+}
+.timeline-bar {
+  position: relative;
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: visible;
+}
+.timeline-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blood), var(--accent-gold));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.timeline-marker {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 14px;
+  background: var(--accent-gold-bright);
+  transition: left 0.5s ease;
+}
+.tm-current {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--accent-gold-bright);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.timeline-milestone {
+  position: absolute;
+  top: -2px;
+  transform: translateX(-50%);
+}
+.timeline-milestone .tm-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+.timeline-milestone.past .tm-dot {
+  background: var(--accent-toxic);
+  box-shadow: 0 0 4px rgba(106,176,76,0.5);
+}
+.timeline-milestone.current .tm-dot {
+  background: var(--accent-gold-bright);
+  box-shadow: 0 0 6px rgba(232,200,96,0.6);
+  animation: pulse 1.5s infinite;
+}
+.timeline-milestone.future .tm-dot {
+  background: var(--border-bright);
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+.timeline-milestone .tm-label {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.timeline-milestone.past .tm-label { color: var(--accent-toxic); }
+.timeline-milestone.current .tm-label { color: var(--accent-gold-bright); }
+.timeline-milestone .tm-desc {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.timeline-milestone.past .tm-desc { color: var(--text-secondary); }
+.timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 50px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* 手机端地图适配 */
+@media (max-width: 768px) {
+  .map-factions { grid-template-columns: 1fr; }
+  .map-page { padding: 10px; }
+  .map-timeline-section { padding: 12px; }
+  .timeline-milestone .tm-desc { display: none; }
+  .timeline-milestone .tm-label { font-size: 8px; }
+}
