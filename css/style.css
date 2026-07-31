@@ -208,6 +208,7 @@ body {
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* 左侧面板 */
@@ -278,6 +279,8 @@ body {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-void);
+  min-width: 0;
+  min-height: 0;
 }
 
 #tabs {
@@ -325,6 +328,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 概览页 */
@@ -811,32 +816,40 @@ body {
   #splash .disclaimer { font-size: 10px; padding: 10px; }
   #splash .btn-enter { padding: 12px 32px; font-size: 15px; }
 
-  /* 主布局改为纵向 */
+  /* 主布局改为纵向，允许内容区滚动 */
   #game { height: 100vh; height: 100dvh; }
-  #main { flex-direction: column; overflow: visible; }
+  #main { flex-direction: column; overflow: hidden; min-height: 0; }
 
-  /* 顶栏 - 资源横向滚动，不换行 */
+  /* 顶栏 - 资源改为2行4列网格，全部可见无需滑动 */
   #topbar {
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 8px 10px;
   }
-  #topbar .faction-emblem { font-size: 13px; padding-right: 10px; }
+  #topbar .faction-emblem { font-size: 13px; padding-right: 8px; }
   #topbar .leader-info { display: none; }
   #topbar .resources {
     order: 3;
     width: 100%;
-    gap: 6px;
-    justify-content: flex-start;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
   }
-  #topbar .resources::-webkit-scrollbar { display: none; }
-  .resource { flex-shrink: 0; padding: 3px 8px; font-size: 12px; gap: 4px; }
-  .resource .delta { font-size: 10px; }
-  #topbar .date-block { padding-left: 10px; }
+  .resource {
+    padding: 4px 6px;
+    font-size: 11px;
+    gap: 3px;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+  .resource .icon { font-size: 10px; }
+  .resource .value { font-size: 13px; }
+  .resource .delta { font-size: 9px; }
+  #topbar .date-block { padding-left: 8px; }
   #topbar .date { font-size: 14px; }
 
   /* 左右面板改为可滑出抽屉，默认隐藏 */
@@ -854,16 +867,18 @@ body {
   #left-panel.drawer-open { transform: translateX(0); }
   #right-panel.drawer-open { transform: translateX(0); }
 
-  /* 中央内容区全宽，底部留出固定操作栏空间 */
-  #center { width: 100%; overflow: visible; }
-  #tabs { overflow-x: auto; flex-wrap: nowrap; }
+  /* 中央内容区全宽，flex 填充剩余空间 */
+  #center { width: 100%; overflow: hidden; min-height: 0; flex: 1; display: flex; flex-direction: column; }
+  #tabs { overflow-x: auto; flex-wrap: nowrap; flex-shrink: 0; }
   #tabs::-webkit-scrollbar { display: none; }
   .tab { padding: 10px 14px; font-size: 12px; flex-shrink: 0; }
   #tab-content {
     padding: 12px;
-    padding-bottom: 80px;
-    height: calc(100dvh - 140px);
+    padding-bottom: 90px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* 移动端底部固定操作栏 */
