@@ -470,6 +470,27 @@ const UI = {
     if (tab === 'shop') {
       this.bindShopEvents();
     }
+    if (tab === 'map') {
+      // 给普通的.map-region路径添加间隙stroke；特殊势力（德/美/日/勃艮第）保留醒目彩色边框
+      setTimeout(() => {
+        const specialClasses = ['germany-region', 'ofn-region', 'japan-region', 'burgundy-region'];
+        const regions = document.querySelectorAll('.map-container .map-region');
+        regions.forEach(path => {
+          const isSpecial = specialClasses.some(cls => path.classList.contains(cls));
+          if (isSpecial) {
+            // 特殊区域：稍微加粗自身彩色边框，并在外面再套一个间隙
+            path.setAttribute('stroke-width', (parseFloat(path.getAttribute('stroke-width')) || 1.5) + 1.5);
+            path.setAttribute('stroke-linejoin', 'round');
+            // 外层间隙：通过 filter / 伪元素不好做，这里简化：原彩色边框 + 比普通稍大的外扩
+          } else {
+            // 普通区域：深色间隙
+            path.setAttribute('stroke', '#1a2030');
+            path.setAttribute('stroke-width', '3.5');
+            path.setAttribute('stroke-linejoin', 'round');
+          }
+        });
+      }, 0);
+    }
   },
 
   // ===== 势力地图页 =====
@@ -547,21 +568,122 @@ const UI = {
 
     // 生成俄罗斯分裂区域
     const russiaFragmentHtml = russiaFragments ? `
-      <g class="russia-fragments" opacity="0.7">
-        <path d="M 540 180 L 590 175 L 610 220 L 580 250 L 540 240 Z" fill="#4a3a3a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="西俄罗斯"/>
-        <path d="M 590 175 L 650 170 L 670 210 L 610 220 Z" fill="#3a4a3a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="乌拉尔"/>
-        <path d="M 650 170 L 720 175 L 730 220 L 670 210 Z" fill="#3a3a4a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="西伯利亚"/>
-        <path d="M 720 175 L 770 185 L 775 230 L 730 220 Z" fill="#4a4a3a" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="远东"/>
-        <text x="565" y="215" font-size="8" fill="#8a8a8a" text-anchor="middle">西俄</text>
-        <text x="630" y="200" font-size="8" fill="#8a8a8a" text-anchor="middle">乌拉尔</text>
-        <text x="690" y="200" font-size="8" fill="#8a8a8a" text-anchor="middle">西伯利亚</text>
-        <text x="745" y="210" font-size="8" fill="#8a8a8a" text-anchor="middle">远东</text>
-      </g>
-    ` : `
-      <path d="M 540 175 L 770 180 L 775 235 L 540 245 Z" fill="${russiaColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region russia-unified" data-info="${russiaLabel}"/>
-      <text x="655" y="215" font-size="11" fill="#e8e6e0" text-anchor="middle" font-family="Georgia,serif">${russiaLabel}</text>
-    `;
+      <!-- ===== 俄罗斯军阀格局（1962初始）· 布局修正版 ===== -->
+      <g class="russia-fragments">
+        <!-- AA线（乌拉尔边界，调整到x=800） -->
+        <line x1="800" y1="120" x2="800" y2="400" stroke="#c9a84a" stroke-width="1" stroke-dasharray="2,2" opacity="0.65"/>
+        <text x="800" y="114" font-size="6.5" fill="#c9a84a" text-anchor="middle" opacity="0.9">AA线</text>
 
+        <!-- ======= 西俄罗斯（x710–800，AA线以西，三专员辖区东侧的废土） ======= -->
+        <!-- 科米共和国（民主试验田，最西北） -->
+        <path d="M 710 138 Q 742 132, 768 142 Q 774 170, 766 194 Q 746 206, 726 198 Q 710 176, 710 156 Z"
+              fill="#4a4a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="科米共和国（俄罗斯仅存的民主试验田）"/>
+        <text x="738" y="172" font-size="5.5" fill="#a0a0c0" text-anchor="middle" font-weight="bold">科米</text>
+
+        <!-- WRRF · 西俄罗斯革命阵线（科米以南，莫斯科以东） -->
+        <path d="M 710 196 Q 748 188, 776 198 Q 782 228, 774 254 Q 754 270, 728 266 Q 710 244, 710 218 Z"
+              fill="#5a3a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="WRRF · 西俄罗斯革命阵线（苏沃洛夫）"/>
+        <text x="742" y="232" font-size="5.5" fill="#c8a0a0" text-anchor="middle" font-weight="bold">WRRF</text>
+
+        <!-- 维亚特卡（君主制复辟，WRRF以南） -->
+        <path d="M 712 268 Q 748 260, 776 272 Q 782 300, 774 324 Q 754 338, 730 332 Q 712 308, 712 288 Z"
+              fill="#4a4a8a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="维亚特卡（君主制复辟，沙皇遗老）"/>
+        <text x="744" y="302" font-size="5.5" fill="#a0a0d8" text-anchor="middle" font-weight="bold">维亚特卡</text>
+
+        <!-- 萨马拉 · 俄罗斯解放军（弗拉索夫叛军，东南） -->
+        <path d="M 760 254 Q 788 248, 806 262 Q 810 290, 802 314 Q 782 326, 762 316 Q 752 292, 756 272 Z"
+              fill="#5a5a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="萨马拉 · 俄罗斯解放军（弗拉索夫叛军）"/>
+        <text x="782" y="286" font-size="5.5" fill="#c8c8a0" text-anchor="middle" font-weight="bold">萨马拉</text>
+
+        <!-- 雅利安兄弟会（邪教军国主义，维亚特卡以南，乌克兰东侧） -->
+        <path d="M 718 332 Q 750 326, 776 338 Q 782 366, 772 390 Q 752 402, 730 394 Q 716 370, 718 350 Z"
+              fill="#6a3a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="雅利安兄弟会（新异教军国主义邪教）"/>
+        <text x="746" y="366" font-size="5" fill="#c8a0b0" text-anchor="middle" font-weight="bold">雅利安兄弟会</text>
+
+        <!-- ======= 西西伯利亚/乌拉尔（x800–930，AA线东侧） ======= -->
+        <!-- 斯维尔德洛夫斯克（工业军阀，最北） -->
+        <path d="M 802 160 Q 838 154, 864 164 Q 872 194, 864 222 Q 842 236, 820 230 Q 804 206, 802 184 Z"
+              fill="#3a5a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="斯维尔德洛夫斯克（工业军阀）"/>
+        <text x="834" y="196" font-size="5.5" fill="#a0c8b0" text-anchor="middle" font-weight="bold">斯维尔德洛夫斯克</text>
+
+        <!-- 秋明（斯维尔德洛夫斯克以南） -->
+        <path d="M 802 232 Q 834 226, 860 238 Q 868 266, 858 292 Q 836 304, 816 296 Q 802 272, 802 252 Z"
+              fill="#5a4a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="秋明"/>
+        <text x="830" y="266" font-size="5.5" fill="#c8b8a0" text-anchor="middle" font-weight="bold">秋明</text>
+
+        <!-- 鄂木斯克（黑色联盟 · 极端复仇主义） -->
+        <path d="M 862 236 Q 900 228, 926 242 Q 934 278, 920 310 Q 892 324, 868 314 Q 852 286, 858 260 Z"
+              fill="#2a2a2a" stroke="#5a5a5a" stroke-width="1" class="map-region" data-info="鄂木斯克 · 黑色联盟（极端军国复仇主义）"/>
+        <text x="894" y="276" font-size="5.5" fill="#e8e8e8" text-anchor="middle" font-weight="bold">鄂木斯克</text>
+        <text x="894" y="288" font-size="4.5" fill="#a8a8a8" text-anchor="middle">黑色联盟</text>
+
+        <!-- 新西伯利亚（鄂木斯克以南） -->
+        <path d="M 860 314 Q 896 306, 924 318 Q 934 346, 922 370 Q 896 382, 872 374 Q 856 348, 860 328 Z"
+              fill="#4a4a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="新西伯利亚"/>
+        <text x="892" y="346" font-size="5.5" fill="#c8c8a0" text-anchor="middle" font-weight="bold">新西伯利亚</text>
+
+        <!-- ======= 中西伯利亚（x920–1035） ======= -->
+        <!-- 托木斯克（学者共和，最北） -->
+        <path d="M 920 198 Q 952 190, 978 202 Q 986 230, 976 256 Q 954 268, 932 260 Q 920 236, 920 216 Z"
+              fill="#4a5a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="托木斯克（学者共和，西伯利亚文人政府）"/>
+        <text x="948" y="232" font-size="5.5" fill="#a0c0c0" text-anchor="middle" font-weight="bold">托木斯克</text>
+
+        <!-- 克麦罗沃（托木斯克以南） -->
+        <path d="M 920 260 Q 950 254, 974 266 Q 982 294, 970 318 Q 948 328, 928 320 Q 918 296, 920 276 Z"
+              fill="#5a3a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="克麦罗沃"/>
+        <text x="948" y="292" font-size="5.5" fill="#c0a0c0" text-anchor="middle" font-weight="bold">克麦罗沃</text>
+
+        <!-- 黑军自由领土（无政府主义，东北） -->
+        <path d="M 976 212 Q 1006 206, 1028 218 Q 1036 248, 1024 274 Q 998 284, 978 272 Q 968 246, 974 228 Z"
+              fill="#2a2a2a" stroke="#5a5a5a" stroke-width="0.9" class="map-region" data-info="黑军自由领土（马赫诺无政府主义）"/>
+        <text x="1002" y="248" font-size="5" fill="#d8d8d8" text-anchor="middle" font-weight="bold">黑军自由领土</text>
+
+        <!-- 人民革命委员会（布党残部，新西伯利亚以东） -->
+        <path d="M 924 324 Q 958 316, 986 328 Q 996 356, 984 382 Q 958 394, 932 386 Q 920 360, 924 342 Z"
+              fill="#7a2a2a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="人民革命委员会（西伯利亚布党残部）"/>
+        <text x="956" y="358" font-size="5" fill="#e8a0a0" text-anchor="middle" font-weight="bold">人民革命委员会</text>
+
+        <!-- 克拉斯诺亚尔斯克（灰色地带） -->
+        <path d="M 978 286 Q 1008 280, 1030 292 Q 1038 322, 1026 346 Q 1004 356, 984 348 Q 972 322, 976 302 Z"
+              fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.8" opacity="0.75" class="map-region" data-info="克拉斯诺亚尔斯克（灰色地带）"/>
+        <text x="1004" y="320" font-size="5" fill="#a8a8a8" text-anchor="middle">克拉斯诺亚尔斯克</text>
+
+        <!-- ======= 远东区（x1035+） ======= -->
+        <!-- 伊尔库茨克（最北） -->
+        <path d="M 1032 186 Q 1060 180, 1082 192 Q 1090 220, 1080 244 Q 1058 254, 1040 244 Q 1030 220, 1032 200 Z"
+              fill="#5a4a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="伊尔库茨克"/>
+        <text x="1056" y="216" font-size="5.5" fill="#c8b0b0" text-anchor="middle" font-weight="bold">伊尔库茨克</text>
+
+        <!-- 布里亚特（伊尔库茨克以南） -->
+        <path d="M 1034 248 Q 1062 242, 1080 254 Q 1086 280, 1074 300 Q 1054 306, 1038 296 Q 1030 274, 1034 258 Z"
+              fill="#6a3a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="布里亚特"/>
+        <text x="1058" y="278" font-size="5.5" fill="#c8a0a0" text-anchor="middle" font-weight="bold">布里亚特</text>
+
+        <!-- 马加丹（远东流放地，最东北） -->
+        <path d="M 1084 198 Q 1112 192, 1130 206 Q 1136 236, 1122 260 Q 1098 268, 1084 254 Q 1076 228, 1084 208 Z"
+              fill="#5a5a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="马加丹（远东流放地军阀，投机者）"/>
+        <text x="1106" y="234" font-size="5.5" fill="#c8c8c8" text-anchor="middle" font-weight="bold">马加丹</text>
+
+        <!-- 赤塔（远东据点） -->
+        <path d="M 1080 230 Q 1106 224, 1124 238 Q 1130 266, 1116 288 Q 1094 294, 1078 282 Q 1072 258, 1080 240 Z"
+              fill="#6a5a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="赤塔"/>
+        <text x="1102" y="262" font-size="5.5" fill="#c8c0a0" text-anchor="middle" font-weight="bold">赤塔</text>
+
+        <!-- 阿穆尔（白色独裁，最东南） -->
+        <path d="M 1034 306 Q 1070 298, 1098 312 Q 1108 342, 1094 370 Q 1066 380, 1042 368 Q 1030 342, 1034 322 Z"
+              fill="#4a3a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="阿穆尔（远东白色独裁，日军阴影下）"/>
+        <text x="1066" y="342" font-size="5.5" fill="#b0a0c8" text-anchor="middle" font-weight="bold">阿穆尔</text>
+
+        <!-- 堪察加（半岛） -->
+        <path d="M 1128 222 Q 1148 216, 1160 232 Q 1164 262, 1150 286 Q 1130 294, 1122 276 Q 1118 250, 1128 230 Z"
+              fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.7" opacity="0.75" class="map-region" data-info="堪察加"/>
+        <text x="1144" y="258" font-size="4.5" fill="#a8a8a8" text-anchor="middle">堪察加</text>
+      </g>` : `
+      <!-- 统一后的俄罗斯（巨型块） · 坐标与新AA线对齐 -->
+      <path d="M 710 138 Q 820 120, 940 128 Q 1060 134, 1156 154 Q 1160 250, 1144 336 Q 1120 376, 1032 384 Q 920 388, 808 382 Q 724 374, 664 352 Q 652 270, 680 202 Z"
+            fill="${russiaColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region russia-unified" data-info="${russiaLabel}"/>
+      <text x="900" y="260" font-size="14" fill="#e8e6e0" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">${russiaLabel}</text>
+    `;
     // 生成SVG地图
     const mapSvg = `
       <svg viewBox="0 0 1200 750" class="world-map" xmlns="http://www.w3.org/2000/svg">
@@ -573,6 +695,9 @@ const UI = {
           <pattern id="medSea" x="0" y="0" width="32" height="16" patternUnits="userSpaceOnUse">
             <path d="M 0 8 Q 8 4, 16 8 T 32 8" stroke="#1a3550" fill="none" stroke-width="0.4"/>
           </pattern>
+          <pattern id="caspian" x="0" y="0" width="20" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 0 5 Q 5 2, 10 5 T 20 5" stroke="#1a3550" fill="none" stroke-width="0.3"/>
+          </pattern>
           <style>
             @keyframes warBlink { 0%,100%{opacity:0.3} 50%{opacity:1} }
             @keyframes warShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(1px,-1px)} 50%{transform:translate(-1px,1px)} 75%{transform:translate(1px,1px)} }
@@ -581,443 +706,371 @@ const UI = {
         </defs>
         <rect width="1200" height="750" fill="#0a0e14"/>
         <rect width="1200" height="750" fill="url(#waves)" opacity="0.3"/>
-        <g stroke="#181824" stroke-width="0.4" opacity="0.3">
-          <line x1="0" y1="150" x2="1200" y2="150"/>
-          <line x1="0" y1="300" x2="1200" y2="300"/>
-          <line x1="0" y1="450" x2="1200" y2="450"/>
-          <line x1="0" y1="600" x2="1200" y2="600"/>
-          <line x1="240" y1="0" x2="240" y2="750"/>
-          <line x1="480" y1="0" x2="480" y2="750"/>
-          <line x1="720" y1="0" x2="720" y2="750"/>
-          <line x1="960" y1="0" x2="960" y2="750"/>
+        <g stroke="#181824" stroke-width="0.4" opacity="0.2">
+          <line x1="0" y1="187" x2="1200" y2="187"/>
+          <line x1="0" y1="375" x2="1200" y2="375"/>
+          <line x1="0" y1="562" x2="1200" y2="562"/>
+          <line x1="300" y1="0" x2="300" y2="750"/>
+          <line x1="600" y1="0" x2="600" y2="750"/>
+          <line x1="900" y1="0" x2="900" y2="750"/>
         </g>
 
         <!-- ===== 地中海 ===== -->
-        <path d="M 340 448 Q 400 442, 460 444 Q 510 446, 555 450 L 585 455 Q 588 468, 578 474 Q 540 480, 490 478 Q 420 480, 360 474 Q 335 467, 340 455 Z"
+        <path d="M 400 330 Q 450 318, 500 322 Q 550 328, 590 338 L 596 354 Q 570 372, 510 378 Q 450 380, 408 374 Q 394 360, 398 345 Z"
               fill="#0f1e2e" stroke="#1a3550" stroke-width="0.8"/>
-        <path d="M 340 448 Q 400 442, 460 444 Q 510 446, 555 450 L 585 455 Q 588 468, 578 474 Q 540 480, 490 478 Q 420 480, 360 474 Q 335 467, 340 455 Z"
+        <path d="M 400 330 Q 450 318, 500 322 Q 550 328, 590 338 L 596 354 Q 570 372, 510 378 Q 450 380, 408 374 Q 394 360, 398 345 Z"
               fill="url(#medSea)" opacity="0.5"/>
-        <text x="460" y="466" font-size="8" fill="#3a6a8a" text-anchor="middle" opacity="0.6">地中海</text>
+        <text x="488" y="358" font-size="8" fill="#3a6a8a" text-anchor="middle" opacity="0.6">地中海</text>
+        <!-- 黑海 -->
+        <path d="M 592 290 Q 618 284, 644 290 Q 650 308, 636 322 Q 612 328, 594 322 Q 586 306, 592 290 Z"
+              fill="#0f1e2e" stroke="#1a3550" stroke-width="0.8"/>
+        <text x="618" y="310" font-size="6.5" fill="#3a6a8a" text-anchor="middle" opacity="0.6">黑海</text>
+        <!-- 里海 -->
+        <path d="M 682 308 Q 708 300, 730 310 Q 736 340, 724 370 Q 704 380, 686 370 Q 674 346, 676 324 Z"
+              fill="#0f1e2e" stroke="#1a3550" stroke-width="0.8"/>
+        <path d="M 682 308 Q 708 300, 730 310 Q 736 340, 724 370 Q 704 380, 686 370 Q 674 346, 676 324 Z"
+              fill="url(#caspian)" opacity="0.5"/>
+        <text x="706" y="344" font-size="6.5" fill="#3a6a8a" text-anchor="middle" opacity="0.6">里海</text>
+        <!-- 波斯湾 -->
+        <path d="M 688 430 Q 710 424, 724 436 L 722 452 Q 710 458, 696 456 Q 686 446, 688 430 Z"
+              fill="#0f1e2e" stroke="#1a3550" stroke-width="0.6"/>
 
-        <!-- ============ 美洲 ============ -->
+        <!-- ============ 北美洲 ============ -->
         <!-- 加拿大 -->
-        <path d="M 45 100 Q 120 90, 200 95 Q 260 100, 270 130 L 265 165 Q 250 180, 220 178 L 150 175 Q 90 172, 55 165 Q 40 145, 45 100 Z"
+        <path d="M 35 90 Q 120 78, 220 82 Q 280 95, 290 128 L 285 158 Q 270 172, 235 176 L 155 172 Q 88 166, 52 155 Q 32 128, 35 90 Z"
               fill="#3a4a5a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="加拿大（OFN）"/>
-        <text x="150" y="138" font-size="9" fill="#8aaaca" text-anchor="middle" font-weight="bold">加拿大</text>
-
+        <text x="160" y="130" font-size="9" fill="#8aaaca" text-anchor="middle" font-weight="bold">加拿大</text>
+        <!-- 格陵兰 -->
+        <path d="M 310 72 Q 340 64, 360 80 Q 362 110, 348 132 Q 328 142, 314 130 Q 304 106, 310 72 Z"
+              fill="#4a4a54" stroke="#2a2a2a" stroke-width="0.8" opacity="0.7" class="map-region" data-info="格陵兰"/>
+        <!-- 阿拉斯加 -->
+        <path d="M 18 110 Q 48 100, 70 112 Q 72 140, 58 162 Q 40 170, 28 158 Q 14 138, 18 110 Z"
+              fill="#3a4a5a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="阿拉斯加（美国）"/>
         <!-- 美国/OFN -->
-        <path d="M 55 185 Q 130 178, 210 182 Q 255 185, 262 215 L 258 270 Q 245 295, 210 298 L 130 295 Q 75 290, 58 265 Q 50 230, 55 185 Z"
+        <path d="M 45 180 Q 130 170, 220 175 Q 265 182, 272 215 L 268 278 Q 252 300, 220 304 L 125 300 Q 72 292, 54 265 Q 42 230, 45 180 Z"
               fill="#1a2a4a" stroke="#3a5a8a" stroke-width="1.5" class="map-region ofn-region" data-info="美国（OFN领袖）"/>
-        <text x="155" y="232" font-size="13" fill="#6a8aca" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">美国</text>
-        <text x="155" y="250" font-size="8" fill="#4a6a9a" text-anchor="middle">OFN · 自由国家组织</text>
-
+        <text x="158" y="238" font-size="13" fill="#6a8aca" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">美国</text>
+        <text x="158" y="256" font-size="8" fill="#4a6a9a" text-anchor="middle">OFN · 自由国家组织</text>
         <!-- 墨西哥 -->
-        <path d="M 100 305 Q 140 300, 170 308 L 175 335 Q 165 348, 145 348 Q 120 345, 105 332 Q 95 318, 100 305 Z"
+        <path d="M 90 308 Q 140 302, 178 312 L 182 344 Q 168 360, 142 362 Q 112 356, 94 340 Q 84 322, 90 308 Z"
               fill="#4a5a4a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="墨西哥"/>
-        <text x="138" y="325" font-size="7" fill="#a8b8a0" text-anchor="middle">墨西哥</text>
-
-        <!-- 中美洲/巴拿马 -->
-        <path d="M 140 352 Q 158 350, 168 360 L 165 372 Q 152 376, 142 370 Q 136 360, 140 352 Z"
+        <text x="138" y="334" font-size="7" fill="#a8b8a0" text-anchor="middle">墨西哥</text>
+        <!-- 中美洲 -->
+        <path d="M 132 365 Q 160 362, 178 374 L 174 394 Q 152 400, 136 390 Q 126 378, 132 365 Z"
               fill="#4a5a4a" stroke="#1a1a1a" stroke-width="0.6" class="map-region" data-info="中美洲（巴拿马）"/>
-        <text x="153" y="367" font-size="5" fill="#8a9a80" text-anchor="middle">巴拿马</text>
+        <text x="154" y="386" font-size="5.5" fill="#8a9a80" text-anchor="middle">巴拿马</text>
 
-        <!-- 哥伦比亚/委内瑞拉/秘鲁 -->
-        <path d="M 85 360 Q 120 352, 148 365 L 152 432 Q 140 465, 122 470 Q 100 465, 88 440 Q 78 400, 82 378 Z"
+        <!-- ============ 南美洲 ============ -->
+        <!-- 南美北部（哥伦比亚/委内瑞拉） -->
+        <path d="M 80 388 Q 120 378, 156 392 L 160 452 Q 144 478, 122 480 Q 94 472, 82 446 Q 72 412, 76 398 Z"
               fill="#5a5a3a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="南美北部（哥伦比亚/委内瑞拉/秘鲁）"/>
-        <text x="115" y="412" font-size="6" fill="#a8a880" text-anchor="middle">哥伦比亚</text>
-
+        <text x="118" y="432" font-size="6" fill="#a8a880" text-anchor="middle">哥伦比亚</text>
         <!-- 巴西 -->
-        <path d="M 158 380 Q 210 372, 252 382 Q 264 408, 258 438 Q 250 472, 222 482 Q 188 478, 168 455 Q 150 418, 155 398 Z"
+        <path d="M 158 404 Q 220 390, 270 404 Q 284 442, 276 478 Q 262 510, 230 518 Q 192 512, 168 488 Q 146 450, 152 424 Z"
               fill="#4a5a3a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="巴西"/>
-        <text x="205" y="428" font-size="9" fill="#a8c880" text-anchor="middle" font-weight="bold">巴西</text>
-
-        <!-- 阿根廷 -->
-        <path d="M 138 488 Q 175 482, 206 492 L 211 542 Q 200 570, 178 574 Q 152 570, 140 547 Q 130 515, 138 488 Z"
-              fill="#5a4a3a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="阿根廷"/>
-        <text x="172" y="532" font-size="8" fill="#c8a888" text-anchor="middle" font-weight="bold">阿根廷</text>
+        <text x="218" y="460" font-size="9" fill="#a8c880" text-anchor="middle" font-weight="bold">巴西</text>
+        <!-- 阿根廷/智利 -->
+        <path d="M 132 518 Q 175 508, 218 522 L 226 580 Q 212 612, 188 624 Q 156 620, 138 596 Q 122 556, 132 518 Z"
+              fill="#5a4a3a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="阿根廷/智利"/>
+        <text x="178" y="572" font-size="8" fill="#c8a888" text-anchor="middle" font-weight="bold">阿根廷</text>
 
         <!-- ============ 欧洲 ============ -->
         <!-- 冰岛 -->
-        <path d="M 305 98 Q 325 92, 340 100 Q 345 115, 338 122 Q 320 125, 308 118 Q 300 108, 305 98 Z"
+        <path d="M 295 155 Q 320 146, 340 158 Q 346 180, 336 196 Q 316 202, 302 190 Q 292 172, 295 155 Z"
               fill="#3a3a48" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="冰岛"/>
-        <text x="322" y="113" font-size="6" fill="#8a8a9a" text-anchor="middle">冰岛</text>
-
-        <!-- 斯堪的纳维亚（瑞典中立） -->
-        <path d="M 432 100 Q 455 92, 478 100 Q 490 115, 490 138 L 486 178 Q 478 202, 462 212 L 442 208 Q 430 192, 428 168 Q 426 138, 432 100 Z"
+        <text x="318" y="178" font-size="6" fill="#8a8a9a" text-anchor="middle">冰岛</text>
+        <!-- 斯堪的纳维亚（挪威/瑞典/中立） -->
+        <path d="M 420 118 Q 448 104, 475 114 Q 488 140, 486 180 L 480 214 Q 470 234, 452 240 L 436 230 Q 424 204, 422 174 Q 418 142, 420 118 Z"
               fill="#3a3a44" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="斯堪的纳维亚（瑞典中立）"/>
-        <text x="458" y="155" font-size="8" fill="#7a7a8a" text-anchor="middle">斯堪的纳维亚</text>
-
+        <text x="454" y="182" font-size="8" fill="#7a7a8a" text-anchor="middle">斯堪的纳维亚</text>
         <!-- 芬兰 -->
-        <path d="M 490 102 Q 508 96, 522 108 Q 526 130, 522 158 Q 516 188, 502 208 Q 488 210, 486 178 Q 490 138, 490 110 Z"
+        <path d="M 484 120 Q 508 110, 528 126 Q 534 156, 528 192 Q 520 216, 504 230 Q 490 232, 484 208 Q 480 168, 484 138 Z"
               fill="#4a4a54" stroke="#2a2a2a" stroke-width="1" class="map-region" data-info="芬兰"/>
-        <text x="504" y="155" font-size="7" fill="#8a8a9a" text-anchor="middle">芬兰</text>
-
-        <!-- 丹麦 -->
-        <path d="M 432 214 Q 448 209, 460 218 L 456 234 Q 446 240, 435 234 Q 428 224, 432 214 Z"
-              fill="#5a4a4a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="丹麦"/>
-        <text x="445" y="228" font-size="5.5" fill="#a8a0a0" text-anchor="middle">丹</text>
-
+        <text x="506" y="180" font-size="7" fill="#8a8a9a" text-anchor="middle">芬兰</text>
         <!-- 爱尔兰（中立） -->
-        <path d="M 328 188 Q 346 183, 354 196 Q 356 214, 346 224 Q 332 227, 325 216 Q 322 200, 328 188 Z"
+        <path d="M 335 212 Q 352 205, 362 218 Q 364 240, 354 252 Q 338 256, 330 244 Q 326 224, 335 212 Z"
               fill="${englandColor}" stroke="#1a1a1a" stroke-width="0.8" opacity="0.85" class="map-region" data-info="爱尔兰（中立）"/>
-        <text x="340" y="208" font-size="6" fill="#a8a6a0" text-anchor="middle">爱尔兰</text>
-
+        <text x="346" y="234" font-size="6" fill="#a8a6a0" text-anchor="middle">爱尔兰</text>
         <!-- 大不列颠（英格兰+苏格兰，德国傀儡） -->
-        <path d="M 360 168 Q 380 158, 398 166 Q 408 180, 406 198 L 402 228 Q 394 252, 376 260 Q 360 256, 354 240 Q 348 214, 352 188 Z"
+        <path d="M 366 188 Q 388 176, 408 184 Q 418 202, 416 222 L 412 256 Q 404 278, 386 284 Q 368 280, 360 264 Q 352 236, 356 210 Z"
               fill="${englandColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="大不列颠（德国傀儡）"/>
-        <path d="M 358 202 Q 380 204, 398 200" fill="none" stroke="#3a3a4a" stroke-width="0.6" stroke-dasharray="2,2"/>
-        <text x="380" y="186" font-size="6" fill="#8a8a9a" text-anchor="middle">苏格兰</text>
-        <text x="380" y="226" font-size="8" fill="#a8a6a0" text-anchor="middle" font-weight="bold">英格兰</text>
-
+        <text x="388" y="210" font-size="6" fill="#8a8a9a" text-anchor="middle">苏格兰</text>
+        <text x="388" y="250" font-size="8" fill="#a8a6a0" text-anchor="middle" font-weight="bold">英格兰</text>
         <!-- 伊比利亚联盟（西班牙+葡萄牙） -->
-        <path d="M 334 360 Q 365 352, 396 358 Q 414 372, 416 392 L 410 422 Q 398 440, 376 444 Q 350 442, 336 428 Q 326 408, 330 384 Z"
+        <path d="M 324 298 Q 360 288, 400 296 Q 422 312, 428 334 L 422 368 Q 406 392, 380 400 Q 348 396, 330 380 Q 314 354, 318 324 Z"
               fill="${iberiaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="${iberiaLabel}"/>
-        <path d="M 334 365 Q 343 362, 348 374 L 346 418 Q 340 428, 332 420 Q 328 396, 330 380 Z"
+        <path d="M 320 304 Q 332 300, 340 314 L 338 366 Q 330 380, 322 372 Q 318 344, 318 322 Z"
               fill="${iberiaColor}" stroke="#2a2a2a" stroke-width="0.5" opacity="0.7" class="map-region" data-info="葡萄牙"/>
-        <text x="338" y="396" font-size="5.5" fill="#c8b88a" text-anchor="middle">葡</text>
-        <text x="378" y="398" font-size="9" fill="#d8c8a0" text-anchor="middle" font-weight="bold">伊比利亚</text>
-
+        <text x="330" y="344" font-size="5.5" fill="#c8b88a" text-anchor="middle">葡</text>
+        <text x="378" y="346" font-size="9" fill="#d8c8a0" text-anchor="middle" font-weight="bold">伊比利亚</text>
         <!-- 法国北部（德占区） -->
-        <path d="M 418 268 Q 446 262, 470 268 Q 480 282, 478 296 L 472 314 Q 458 320, 442 316 Q 424 310, 418 298 Q 412 284, 418 268 Z"
+        <path d="M 412 248 Q 450 240, 480 248 Q 490 266, 486 286 L 480 310 Q 462 318, 444 312 Q 418 302, 408 286 Q 402 268, 412 248 Z"
               fill="${franceOccupiedColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="法兰西（德国占领区）"/>
-        <text x="448" y="292" font-size="7" fill="#c8a0a0" text-anchor="middle" font-weight="bold">德占法国</text>
-
+        <text x="448" y="280" font-size="7" fill="#c8a0a0" text-anchor="middle" font-weight="bold">德占法国</text>
         <!-- 法国南部（维希/自由法国） -->
-        <path d="M 410 316 Q 434 312, 460 316 Q 474 324, 476 340 L 470 360 Q 454 370, 434 368 Q 414 362, 408 346 Q 404 330, 410 316 Z"
+        <path d="M 400 312 Q 440 304, 476 314 Q 488 332, 480 358 L 472 378 Q 452 388, 430 384 Q 406 376, 398 354 Q 392 332, 400 312 Z"
               fill="${vichyColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="${franceLabel}"/>
-        <text x="442" y="338" font-size="7" fill="#d8a87a" text-anchor="middle">${f.french_resistance_crushed ? '维希法国' : '维希'}</text>
-        <text x="442" y="352" font-size="6.5" fill="#a8d8a8" text-anchor="middle">${freeFranceLabel.length > 8 ? '自由法国' : freeFranceLabel}</text>
-
+        <text x="440" y="348" font-size="7" fill="#d8a87a" text-anchor="middle">${f.french_resistance_crushed ? '维希法国' : '维希'}</text>
+        <text x="440" y="362" font-size="6.5" fill="#a8d8a8" text-anchor="middle">${freeFranceLabel.length > 8 ? '自由法国' : freeFranceLabel}</text>
         <!-- 荷兰 -->
-        <path d="M 462 248 Q 480 244, 486 252 L 482 262 Q 472 266, 464 262 Q 458 255, 462 248 Z"
+        <path d="M 460 222 Q 480 218, 488 228 L 484 242 Q 472 248, 462 242 Q 456 232, 460 222 Z"
               fill="#6a7a8a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="荷兰（中立/德占）"/>
-        <text x="473" y="258" font-size="5.5" fill="#a8a6a0" text-anchor="middle">荷</text>
-
+        <text x="472" y="238" font-size="5.5" fill="#a8a6a0" text-anchor="middle">荷</text>
         <!-- 比利时 -->
-        <path d="M 466 264 Q 484 262, 490 270 L 486 280 Q 476 284, 468 280 Q 462 273, 466 264 Z"
+        <path d="M 464 242 Q 486 240, 494 252 L 490 266 Q 478 272, 466 266 Q 460 254, 464 242 Z"
               fill="#7a6a5a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="比利时（中立/德占）"/>
-        <text x="477" y="275" font-size="5.5" fill="#a8a6a0" text-anchor="middle">比</text>
-
+        <text x="478" y="260" font-size="5.5" fill="#a8a6a0" text-anchor="middle">比</text>
         <!-- 勃艮第国（希姆莱） -->
-        <path d="M 478 288 Q 496 283, 510 292 Q 516 306, 510 320 L 502 334 Q 488 340, 476 332 Q 470 318, 472 304 Z"
+        <path d="M 472 262 Q 498 256, 520 268 Q 530 292, 522 316 L 510 336 Q 492 344, 476 332 Q 464 310, 466 286 Z"
               fill="${burgundyColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region burgundy-region" data-info="勃艮第国（希姆莱）"/>
-        <text x="492" y="312" font-size="8" fill="#8a6a8a" text-anchor="middle" font-weight="bold">勃艮第</text>
-
+        <text x="496" y="304" font-size="8" fill="#8a6a8a" text-anchor="middle" font-weight="bold">勃艮第</text>
         <!-- 瑞士（中立） -->
-        <path d="M 492 318 Q 510 315, 516 324 L 512 338 Q 502 343, 492 337 Q 488 328, 492 318 Z"
+        <path d="M 494 314 Q 518 310, 528 324 L 524 340 Q 510 346, 496 340 Q 488 328, 494 314 Z"
               fill="#8a7a6a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="瑞士（中立）"/>
-        <path d="M 496 326 L 500 322 L 504 326 L 508 320 L 512 326" fill="none" stroke="#6a6a6a" stroke-width="0.6" opacity="0.7"/>
-        <text x="504" y="334" font-size="5" fill="#a8a6a0" text-anchor="middle">瑞士</text>
+        <text x="510" y="332" font-size="5.5" fill="#a8a6a0" text-anchor="middle">瑞士</text>
+        <!-- 丹麦 -->
+        <path d="M 452 218 Q 474 212, 486 222 L 482 238 Q 470 244, 458 236 Q 450 226, 452 218 Z"
+              fill="#5a4a4a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="丹麦"/>
+        <text x="468" y="232" font-size="5.5" fill="#a8a0a0" text-anchor="middle">丹</text>
 
-        <!-- 大日耳曼国（德+奥+捷） -->
-        <path d="M 486 240 Q 512 232, 542 236 Q 566 242, 576 256 Q 582 282, 576 308 Q 568 328, 554 338 Q 534 342, 514 336 Q 498 330, 490 318 L 484 304 Q 480 288, 486 268 Q 484 252, 486 240 Z"
+        <!-- 大日耳曼国（德+奥+捷+苏台德） -->
+        <path d="M 480 220 Q 518 210, 560 216 Q 594 226, 606 246 Q 612 278, 604 310 Q 592 332, 570 344 Q 542 350, 518 342 Q 498 330, 488 312 L 482 290 Q 478 262, 482 244 Q 478 230, 480 220 Z"
               fill="${germanyColor}" stroke="#e8c860" stroke-width="2" class="map-region germany-region" data-info="${germanyLabel}"/>
-        <text x="528" y="282" font-size="13" fill="#e8c860" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">大日耳曼国</text>
-        <text x="548" y="316" font-size="6.5" fill="#d8b8d0" text-anchor="middle">奥</text>
-        <text x="560" y="262" font-size="6.5" fill="#d8c8a8" text-anchor="middle">捷</text>
+        <text x="542" y="272" font-size="13" fill="#e8c860" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">大日耳曼国</text>
+        <text x="566" y="320" font-size="6.5" fill="#d8b8d0" text-anchor="middle">奥</text>
+        <text x="590" y="240" font-size="6.5" fill="#d8c8a8" text-anchor="middle">捷</text>
 
-        <!-- 东方总督辖区（Ostland：波罗的海+白俄罗斯） -->
-        <path d="M 580 206 Q 606 199, 624 210 Q 628 238, 622 262 Q 612 280, 594 284 Q 580 280, 576 260 Q 574 232, 580 206 Z"
+        <!-- 东方总督辖区（Ostland：波罗的海三国+白俄罗斯） -->
+        <path d="M 576 182 Q 608 174, 638 184 Q 646 218, 640 248 Q 628 266, 604 270 Q 580 264, 572 242 Q 566 212, 576 182 Z"
               fill="#6a2a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="东方总督辖区（Ostland）"/>
-        <text x="600" y="242" font-size="7" fill="#c8a0a0" text-anchor="middle" font-weight="bold">Ostland</text>
-        <text x="600" y="254" font-size="5.5" fill="#a88080" text-anchor="middle">东方总督辖区</text>
-
+        <text x="606" y="224" font-size="7" fill="#c8a0a0" text-anchor="middle" font-weight="bold">Ostland</text>
+        <text x="606" y="238" font-size="5.5" fill="#a88080" text-anchor="middle">东方总督辖区</text>
         <!-- 总督辖区（波兰） -->
-        <path d="M 580 286 Q 606 281, 624 288 Q 630 302, 626 320 Q 616 334, 598 334 Q 582 330, 578 314 Q 576 300, 580 286 Z"
+        <path d="M 576 274 Q 606 268, 634 278 Q 642 298, 638 320 Q 626 338, 602 340 Q 580 334, 574 312 Q 570 290, 576 274 Z"
               fill="#7a3a3a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="总督辖区（波兰）"/>
-        <text x="600" y="312" font-size="6.5" fill="#d8a8a8" text-anchor="middle">波兰</text>
-
+        <text x="604" y="308" font-size="6.5" fill="#d8a8a8" text-anchor="middle">波兰</text>
+        <!-- 莫斯科专员辖区（Moskowien：仅保留莫斯科周边核心区） -->
+        <path d="M 640 180 Q 672 174, 702 180 Q 712 210, 706 240 Q 692 262, 668 266 Q 646 258, 638 232 Q 634 204, 640 180 Z"
+              fill="#5a2a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="莫斯科专员辖区（Moskowien）"/>
+        <text x="672" y="224" font-size="7" fill="#c89898" text-anchor="middle" font-weight="bold">Moskowien</text>
+        <text x="672" y="236" font-size="5" fill="#a87878" text-anchor="middle">莫斯科专员辖区</text>
+        <!-- 乌克兰专员辖区（Ukraine：第聂伯河以西，给东侧留军阀空间） -->
+        <path d="M 640 270 Q 678 264, 710 272 Q 720 302, 714 332 Q 700 356, 672 358 Q 648 348, 638 322 Q 634 294, 640 270 Z"
+              fill="#6a3a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="乌克兰专员辖区（Ukraine）"/>
+        <text x="676" y="316" font-size="7" fill="#d8a888" text-anchor="middle" font-weight="bold">Ukraine</text>
+        <text x="676" y="328" font-size="5" fill="#b88868" text-anchor="middle">乌克兰专员辖区</text>
+        <!-- 高加索专员辖区（Kaukasus） -->
+        <path d="M 670 352 Q 714 344, 752 354 Q 764 382, 758 412 Q 744 436, 718 442 Q 692 436, 678 414 Q 668 386, 670 352 Z"
+              fill="#5a3a2a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="高加索专员辖区（Kaukasus）"/>
+        <text x="714" y="396" font-size="7" fill="#d8a878" text-anchor="middle" font-weight="bold">Kaukasus</text>
+        <text x="714" y="408" font-size="5" fill="#b88858" text-anchor="middle">高加索专员辖区</text>
         <!-- 匈牙利 -->
-        <path d="M 582 338 Q 606 333, 622 340 Q 626 356, 618 370 Q 604 376, 588 372 Q 578 362, 580 350 Z"
+        <path d="M 576 334 Q 602 328, 620 338 Q 626 356, 618 374 Q 602 382, 586 378 Q 574 364, 576 348 Z"
               fill="#7a5a5a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="匈牙利（帝国卫星）"/>
-        <text x="600" y="358" font-size="6.5" fill="#d8b8b8" text-anchor="middle">匈牙利</text>
-
+        <text x="598" y="360" font-size="6.5" fill="#d8b8b8" text-anchor="middle">匈牙利</text>
         <!-- 罗马尼亚 -->
-        <path d="M 624 288 Q 650 285, 664 296 Q 668 316, 660 338 Q 648 358, 632 360 Q 622 350, 624 332 Q 620 310, 624 288 Z"
+        <path d="M 622 272 Q 650 268, 668 280 Q 676 308, 666 336 Q 650 356, 632 358 Q 620 340, 622 316 Q 618 290, 622 272 Z"
               fill="#7a5a4a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="罗马尼亚（帝国卫星）"/>
-        <text x="642" y="326" font-size="6.5" fill="#d8c8a0" text-anchor="middle">罗马尼亚</text>
-
+        <text x="644" y="322" font-size="6.5" fill="#d8c8a0" text-anchor="middle">罗马尼亚</text>
         <!-- 保加利亚 -->
-        <path d="M 606 376 Q 630 373, 644 382 Q 646 398, 638 406 Q 622 408, 610 402 Q 600 392, 606 376 Z"
+        <path d="M 604 382 Q 630 378, 646 390 Q 650 408, 640 420 Q 622 424, 608 416 Q 598 402, 604 382 Z"
               fill="#6a4a5a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="保加利亚（帝国卫星）"/>
-        <text x="624" y="392" font-size="6" fill="#c8a8c0" text-anchor="middle">保加利亚</text>
-
+        <text x="626" y="404" font-size="6" fill="#c8a8c0" text-anchor="middle">保加利亚</text>
         <!-- 南斯拉夫 -->
-        <path d="M 548 346 Q 576 341, 590 350 Q 596 366, 588 380 Q 574 392, 556 388 Q 544 380, 542 364 Z"
+        <path d="M 544 340 Q 574 334, 590 346 Q 596 366, 586 384 Q 570 396, 550 392 Q 538 378, 538 360 Z"
               fill="#6a5a6a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="南斯拉夫（帝国卫星）"/>
         <text x="566" y="370" font-size="6.5" fill="#c8b8c8" text-anchor="middle">南斯拉夫</text>
-
-        <!-- 希腊 -->
-        <path d="M 552 394 Q 576 391, 590 400 Q 592 418, 580 432 Q 564 438, 552 430 Q 546 416, 552 402 Z"
-              fill="#5a6a7a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="希腊（帝国卫星）"/>
-        <text x="570" y="416" font-size="6.5" fill="#a8b8d0" text-anchor="middle">希腊</text>
-
+        <!-- 阿尔巴尼亚/希腊 -->
+        <path d="M 538 394 Q 568 390, 584 400 Q 590 420, 578 440 Q 560 448, 546 438 Q 536 422, 538 408 Z"
+              fill="#5a6a7a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="阿尔巴尼亚/希腊（帝国卫星）"/>
+        <text x="564" y="422" font-size="6.5" fill="#a8b8d0" text-anchor="middle">希腊</text>
         <!-- 土耳其 -->
-        <path d="M 606 410 Q 642 404, 672 412 Q 686 426, 680 444 Q 670 458, 648 460 Q 622 456, 608 442 Q 600 426, 606 410 Z"
+        <path d="M 588 382 Q 626 372, 662 380 Q 680 402, 670 428 Q 656 448, 632 450 Q 604 444, 590 426 Q 580 406, 588 382 Z"
               fill="${turkeyColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="土耳其"/>
-        <text x="642" y="436" font-size="8" fill="#a8a0a0" text-anchor="middle" font-weight="bold">土耳其</text>
+        <text x="628" y="416" font-size="8" fill="#a8a0a0" text-anchor="middle" font-weight="bold">土耳其</text>
 
         <!-- 意大利（靴型半岛） -->
-        <path d="M 482 340 Q 502 346, 516 350 L 526 366 Q 532 388, 526 408 Q 520 428, 510 444 Q 500 454, 490 450 Q 482 440, 486 426 Q 478 410, 476 396 Q 472 376, 478 358 Q 478 348, 482 340 Z"
+        <path d="M 470 322 Q 498 316, 516 330 L 526 360 Q 528 390, 516 414 Q 504 438, 494 450 Q 480 448, 478 432 Q 470 410, 466 386 Q 460 358, 466 340 Z"
               fill="${italyColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="${italyLabel}"/>
-        <text x="502" y="388" font-size="9" fill="#c8e8a0" text-anchor="middle" font-weight="bold">意大利</text>
+        <text x="496" y="382" font-size="9" fill="#c8e8a0" text-anchor="middle" font-weight="bold">意大利</text>
         <!-- 西西里岛 -->
-        <path d="M 495 458 Q 510 452, 520 460 Q 518 472, 506 472 Q 494 468, 495 458 Z" fill="${italyColor}" stroke="#1a1a1a" stroke-width="0.5" opacity="0.75" class="map-region" data-info="西西里"/>
-        <text x="507" y="468" font-size="5" fill="#a8c880" text-anchor="middle">西西里</text>
+        <path d="M 490 456 Q 512 450, 524 462 Q 522 476, 506 480 Q 490 476, 490 456 Z"
+              fill="${italyColor}" stroke="#1a1a1a" stroke-width="0.5" opacity="0.75" class="map-region" data-info="西西里"/>
+        <text x="508" y="472" font-size="5" fill="#a8c880" text-anchor="middle">西西里</text>
         <!-- 撒丁岛 -->
-        <path d="M 462 400 Q 472 397, 476 408 Q 472 420, 463 420 Q 458 410, 462 400 Z" fill="${italyColor}" stroke="#1a1a1a" stroke-width="0.5" opacity="0.75" class="map-region" data-info="撒丁岛"/>
-        <text x="468" y="412" font-size="4.5" fill="#a8c880" text-anchor="middle">撒丁</text>
-        <!-- 意大利与利比亚海上连线 -->
-        <line x1="510" y1="448" x2="475" y2="478" stroke="${italyColor}" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.5"/>
+        <path d="M 448 364 Q 462 358, 470 374 Q 466 394, 452 396 Q 442 382, 448 364 Z"
+              fill="${italyColor}" stroke="#1a1a1a" stroke-width="0.5" opacity="0.75" class="map-region" data-info="撒丁岛"/>
+        <text x="458" y="380" font-size="4.5" fill="#a8c880" text-anchor="middle">撒丁</text>
+        <!-- 科西嘉 -->
+        <path d="M 440 322 Q 456 318, 462 332 Q 458 348, 446 350 Q 438 338, 440 322 Z"
+              fill="${vichyColor}" stroke="#1a1a1a" stroke-width="0.5" opacity="0.7" class="map-region" data-info="科西嘉"/>
+        <text x="450" y="338" font-size="4" fill="#d8a87a" text-anchor="middle">科西嘉</text>
 
         <!-- ============ 俄罗斯区域（军阀分裂 / 统一） ============ -->
-        ${russiaFragments ? `
-        <g class="russia-fragments">
-          <!-- ===== 西俄罗斯 ===== -->
-          <!-- 西俄罗斯革命阵线（WRRF） -->
-          <path d="M 658 128 Q 685 120, 706 128 Q 712 152, 706 176 Q 690 190, 670 186 Q 656 170, 656 150 Z"
-                fill="#5a3a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="西俄罗斯革命阵线（WRRF）"/>
-          <text x="682" y="158" font-size="5.5" fill="#c8a0a0" text-anchor="middle">WRRF</text>
-          <!-- 科米共和国 -->
-          <path d="M 708 124 Q 740 118, 760 130 Q 764 154, 756 180 Q 740 192, 720 186 Q 708 168, 708 145 Z"
-                fill="#4a4a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="科米共和国"/>
-          <text x="734" y="156" font-size="5.5" fill="#a0a0c0" text-anchor="middle">科米</text>
-          <!-- 维亚特卡（君主制） -->
-          <path d="M 670 196 Q 696 192, 716 200 Q 720 222, 712 242 Q 698 252, 680 246 Q 668 230, 668 212 Z"
-                fill="#4a4a8a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="维亚特卡（君主制）"/>
-          <text x="692" y="222" font-size="5.5" fill="#a0a0d8" text-anchor="middle">维亚特卡</text>
-          <!-- 萨马拉/俄罗斯解放军 -->
-          <path d="M 718 200 Q 745 195, 762 206 Q 768 228, 760 252 Q 745 264, 725 258 Q 715 242, 716 222 Z"
-                fill="#5a5a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="萨马拉（俄罗斯解放军）"/>
-          <text x="740" y="228" font-size="5.5" fill="#c8c8a0" text-anchor="middle">萨马拉</text>
-          <!-- 雅利安兄弟会 -->
-          <path d="M 680 252 Q 706 248, 726 256 Q 732 280, 722 298 Q 706 306, 688 298 Q 675 282, 678 268 Z"
-                fill="#6a3a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="雅利安兄弟会"/>
-          <text x="702" y="280" font-size="5" fill="#c8a0b0" text-anchor="middle">雅利安兄弟会</text>
-
-          <!-- ===== 西西伯利亚 ===== -->
-          <!-- 斯维尔德洛夫斯克 -->
-          <path d="M 772 136 Q 800 128, 826 136 Q 832 176, 822 210 Q 808 222, 788 218 Q 770 200, 770 170 Z"
-                fill="#3a5a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="斯维尔德洛夫斯克"/>
-          <text x="800" y="178" font-size="5.5" fill="#a0c8b0" text-anchor="middle">斯维尔德洛夫斯克</text>
-          <!-- 秋明 -->
-          <path d="M 772 222 Q 800 218, 816 226 Q 820 256, 808 280 Q 790 286, 776 280 Q 768 256, 772 236 Z"
-                fill="#5a4a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="秋明"/>
-          <text x="794" y="256" font-size="5.5" fill="#c8b8a0" text-anchor="middle">秋明</text>
-          <!-- 鄂木斯克（黑色联盟） -->
-          <path d="M 818 226 Q 856 220, 876 234 Q 882 272, 868 306 Q 844 320, 820 312 Q 808 286, 812 256 Z"
-                fill="#2a2a2a" stroke="#5a5a5a" stroke-width="1" class="map-region" data-info="鄂木斯克（黑色联盟）"/>
-          <text x="845" y="266" font-size="5.5" fill="#d8d8d8" text-anchor="middle">鄂木斯克</text>
-          <text x="845" y="276" font-size="4.5" fill="#a8a8a8" text-anchor="middle">黑色联盟</text>
-
-          <!-- ===== 中西伯利亚 ===== -->
-          <!-- 托木斯克 -->
-          <path d="M 880 166 Q 906 160, 926 168 Q 930 196, 920 220 Q 902 228, 884 222 Q 876 200, 880 180 Z"
-                fill="#4a5a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="托木斯克"/>
-          <text x="902" y="196" font-size="5.5" fill="#a0c0c0" text-anchor="middle">托木斯克</text>
-          <!-- 克麦罗沃 -->
-          <path d="M 880 228 Q 906 224, 920 232 Q 924 260, 912 282 Q 896 288, 882 282 Q 876 258, 880 240 Z"
-                fill="#5a3a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="克麦罗沃"/>
-          <text x="902" y="258" font-size="5.5" fill="#c0a0c0" text-anchor="middle">克麦罗沃</text>
-          <!-- 黑军自由领土 -->
-          <path d="M 928 180 Q 956 174, 974 184 Q 978 214, 966 240 Q 946 250, 928 240 Q 922 214, 928 196 Z"
-                fill="#3a3a3a" stroke="#5a5a5a" stroke-width="0.8" class="map-region" data-info="黑军自由领土（无政府主义）"/>
-          <text x="950" y="212" font-size="5" fill="#c8c8c8" text-anchor="middle">黑军自由领土</text>
-          <!-- 人民革命委员会 -->
-          <path d="M 906 268 Q 936 262, 966 270 Q 978 296, 968 320 Q 946 332, 918 326 Q 902 308, 906 288 Z"
-                fill="#7a2a2a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="人民革命委员会"/>
-          <text x="938" y="298" font-size="5" fill="#e8a0a0" text-anchor="middle">人民革命委员会</text>
-
-          <!-- ===== 远东 ===== -->
-          <!-- 伊尔库茨克 -->
-          <path d="M 978 168 Q 1006 162, 1024 170 Q 1028 196, 1020 216 Q 1002 222, 984 214 Q 976 194, 978 180 Z"
-                fill="#5a4a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="伊尔库茨克"/>
-          <text x="1000" y="194" font-size="5.5" fill="#c8b0b0" text-anchor="middle">伊尔库茨克</text>
-          <!-- 布里亚特 -->
-          <path d="M 978 224 Q 1006 220, 1020 228 Q 1022 250, 1010 262 Q 992 265, 980 258 Q 976 240, 978 230 Z"
-                fill="#6a3a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="布里亚特"/>
-          <text x="1000" y="244" font-size="5.5" fill="#c8a0a0" text-anchor="middle">布里亚特</text>
-          <!-- 赤塔 -->
-          <path d="M 1022 200 Q 1046 194, 1058 206 Q 1060 236, 1050 258 Q 1034 266, 1022 256 Q 1016 230, 1022 210 Z"
-                fill="#6a5a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="赤塔"/>
-          <text x="1040" y="232" font-size="5.5" fill="#c8c0a0" text-anchor="middle">赤塔</text>
-          <!-- 马加丹 -->
-          <path d="M 1042 175 Q 1070 170, 1082 182 Q 1084 206, 1074 228 Q 1056 236, 1042 226 Q 1038 200, 1042 182 Z"
-                fill="#5a5a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="马加丹"/>
-          <text x="1062" y="204" font-size="5.5" fill="#c8c8c8" text-anchor="middle">马加丹</text>
-          <!-- 阿穆尔 -->
-          <path d="M 1020 268 Q 1052 262, 1078 272 Q 1086 302, 1074 330 Q 1052 340, 1026 334 Q 1016 310, 1020 286 Z"
-                fill="#4a3a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="阿穆尔"/>
-          <text x="1050" y="302" font-size="5.5" fill="#b0a0c8" text-anchor="middle">阿穆尔</text>
-
-          <!-- AA线（乌拉尔边界） -->
-          <line x1="768" y1="130" x2="768" y2="320" stroke="#c9a84a" stroke-width="1" stroke-dasharray="2,2" opacity="0.55"/>
-          <text x="768" y="124" font-size="6.5" fill="#c9a84a" text-anchor="middle" opacity="0.8">AA线</text>
-        </g>` : `
-        <!-- 统一的俄罗斯 -->
-        <path d="M 658 126 Q 760 112, 870 120 Q 980 124, 1078 140 Q 1086 222, 1078 296 Q 1060 332, 1010 340 Q 900 344, 780 340 Q 700 334, 660 322 Q 648 252, 656 178 Z"
-              fill="${russiaColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region russia-unified" data-info="${russiaLabel}"/>
-        <text x="868" y="232" font-size="14" fill="#e8e6e0" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">${russiaLabel}</text>
-        `}
+        ${russiaFragmentHtml}
 
         <!-- ============ 非洲 ============ -->
-        <!-- 摩洛哥/阿尔及利亚（法属） -->
-        <path d="M 328 478 Q 380 472, 432 478 Q 444 496, 438 520 L 432 542 Q 414 550, 384 550 Q 348 546, 330 536 Q 322 510, 328 478 Z"
-              fill="${northAfricaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="摩洛哥/阿尔及利亚（法属）"/>
-        <text x="380" y="514" font-size="7" fill="#e8c8a0" text-anchor="middle">摩洛哥/阿尔及利亚</text>
-
+        <!-- 摩洛哥/阿尔及利亚/突尼斯（法属北非） -->
+        <path d="M 310 400 Q 370 392, 440 398 Q 456 422, 448 450 L 440 474 Q 410 488, 368 488 Q 328 482, 310 460 Q 298 432, 310 400 Z"
+              fill="${northAfricaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="摩洛哥/阿尔及利亚（法属北非）"/>
+        <text x="378" y="440" font-size="7" fill="#e8c8a0" text-anchor="middle">法属北非</text>
         <!-- 利比亚（意属） -->
-        <path d="M 442 478 Q 480 474, 510 480 Q 518 500, 512 526 L 502 544 Q 480 550, 458 546 Q 442 536, 440 516 Z"
+        <path d="M 450 408 Q 490 400, 526 408 Q 538 434, 530 462 L 518 484 Q 488 492, 462 486 Q 448 470, 448 442 Z"
               fill="${italyAfricaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="利比亚（意大利殖民地）"/>
-        <text x="478" y="514" font-size="7" fill="#c8e8a0" text-anchor="middle">利比亚</text>
-
+        <text x="490" y="448" font-size="7" fill="#c8e8a0" text-anchor="middle">利比亚</text>
         <!-- 埃及 -->
-        <path d="M 514 482 Q 548 478, 578 484 Q 586 506, 578 530 L 568 546 Q 548 550, 528 546 Q 514 534, 512 512 Z"
+        <path d="M 528 420 Q 560 414, 586 422 Q 596 448, 586 476 L 574 498 Q 550 508, 530 500 Q 520 478, 522 450 Z"
               fill="${egyptColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="埃及"/>
-        <text x="548" y="514" font-size="7" fill="#d8c88a" text-anchor="middle" font-weight="bold">埃及</text>
-        <path d="M 556 486 Q 558 506, 554 524 Q 552 538, 550 546" fill="none" stroke="#2a5a8a" stroke-width="1.2" opacity="0.8"/>
-        <text x="560" y="524" font-size="5" fill="#4a8aca" text-anchor="start" opacity="0.7">尼罗河</text>
-
+        <text x="556" y="460" font-size="7" fill="#d8c88a" text-anchor="middle" font-weight="bold">埃及</text>
+        <path d="M 562 424 Q 564 450, 560 472 Q 558 488, 556 500" fill="none" stroke="#2a5a8a" stroke-width="1.2" opacity="0.8"/>
+        <text x="568" y="468" font-size="5" fill="#4a8aca" text-anchor="start" opacity="0.7">尼罗河</text>
         <!-- 非洲战争标记 -->
         ${warAfrica ? `
         <g style="${warAnimStyle}">
-          <line x1="430" y1="505" x2="445" y2="518" stroke="#ff4444" stroke-width="2"/>
-          <line x1="445" y1="505" x2="430" y2="518" stroke="#ff4444" stroke-width="2"/>
-          <circle cx="437" cy="511" r="7" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.6"/>
+          <line x1="400" y1="438" x2="420" y2="456" stroke="#ff4444" stroke-width="2"/>
+          <line x1="420" y1="438" x2="400" y2="456" stroke="#ff4444" stroke-width="2"/>
+          <circle cx="410" cy="447" r="7" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.6"/>
         </g>
         <g style="${warShakeStyle}">
-          <circle cx="492" cy="505" r="2.5" fill="#ff6644" opacity="0.8"/>
+          <circle cx="480" cy="438" r="2.5" fill="#ff6644" opacity="0.8"/>
         </g>` : ''}
-
         <!-- 意属东非（埃塞俄比亚/索马里/厄立特里亚） -->
-        <path d="M 535 558 Q 575 552, 602 562 Q 612 586, 602 612 Q 580 624, 555 620 Q 534 608, 530 588 Z"
+        <path d="M 532 524 Q 572 516, 604 528 Q 614 556, 604 586 Q 580 600, 552 594 Q 530 578, 526 554 Z"
               fill="${italyAfricaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="意属东非（埃塞俄比亚/索马里/厄立特里亚）"/>
-        <text x="568" y="590" font-size="6.5" fill="#c8e8a0" text-anchor="middle">意属东非</text>
-
-        <!-- 西非/中非（模糊区域） -->
-        <path d="M 290 548 Q 360 542, 432 548 Q 440 576, 432 606 Q 380 616, 320 612 Q 288 605, 285 585 Q 285 565, 290 548 Z"
-              fill="${subSaharanColor}" stroke="#1a1a1a" stroke-width="0.8" opacity="0.7" class="map-region" data-info="西非/中非（模糊区域）"/>
-        <text x="362" y="582" font-size="7" fill="#7a7a5a" text-anchor="middle" opacity="0.8">西非/中非</text>
-
-        <!-- 中非/刚果（模糊） -->
-        <path d="M 436 556 Q 488 552, 528 560 Q 535 588, 528 612 Q 492 620, 452 616 Q 436 600, 436 580 Z"
-              fill="${subSaharanColor}" stroke="#1a1a1a" stroke-width="0.7" opacity="0.6" class="map-region" data-info="中非/刚果（模糊）"/>
-        <text x="482" y="588" font-size="6" fill="#7a7a5a" text-anchor="middle" opacity="0.8">中非</text>
-
+        <text x="566" y="560" font-size="6.5" fill="#c8e8a0" text-anchor="middle">意属东非</text>
+        <!-- 西非 -->
+        <path d="M 272 510 Q 340 498, 420 506 Q 432 540, 422 570 Q 370 586, 308 580 Q 268 568, 262 540 Q 264 522, 272 510 Z"
+              fill="${subSaharanColor}" stroke="#1a1a1a" stroke-width="0.8" opacity="0.7" class="map-region" data-info="西非/中非"/>
+        <text x="348" y="544" font-size="7" fill="#7a7a5a" text-anchor="middle" opacity="0.85">西非 / 中非</text>
+        <!-- 中非/刚果 -->
+        <path d="M 424 514 Q 480 506, 526 520 Q 534 552, 526 584 Q 488 600, 448 594 Q 426 574, 426 544 Z"
+              fill="${subSaharanColor}" stroke="#1a1a1a" stroke-width="0.7" opacity="0.65" class="map-region" data-info="中非/刚果"/>
+        <text x="478" y="556" font-size="6" fill="#7a7a5a" text-anchor="middle" opacity="0.85">中非</text>
         <!-- 南非 -->
-        <path d="M 442 628 Q 480 622, 516 630 Q 524 656, 512 676 Q 488 686, 462 680 Q 445 668, 442 648 Z"
+        <path d="M 428 602 Q 478 592, 520 606 Q 530 640, 518 672 Q 488 692, 452 686 Q 428 668, 424 640 Z"
               fill="${subSaharanColor}" stroke="#1a1a1a" stroke-width="0.9" class="map-region" data-info="南非"/>
-        <text x="478" y="656" font-size="7" fill="#a8b88a" text-anchor="middle" font-weight="bold">南非</text>
-
+        <text x="476" y="644" font-size="7" fill="#a8b88a" text-anchor="middle" font-weight="bold">南非</text>
         <!-- 马达加斯加（德属） -->
-        <path d="M 578 628 Q 596 624, 604 638 Q 602 668, 592 680 Q 580 680, 576 665 Q 574 645, 578 632 Z"
+        <path d="M 572 602 Q 594 596, 604 612 Q 602 652, 592 670 Q 578 672, 572 656 Q 568 626, 572 604 Z"
               fill="#5a3a5a" stroke="#1a1a1a" stroke-width="0.7" class="map-region" data-info="马达加斯加（德属）"/>
-        <text x="590" y="656" font-size="5.5" fill="#c8a8c8" text-anchor="middle">马达加斯加</text>
+        <text x="588" y="638" font-size="5.5" fill="#c8a8c8" text-anchor="middle">马达加斯加</text>
 
         <!-- ============ 中东 ============ -->
-        <!-- 伊拉克/黎凡特 -->
-        <path d="M 608 432 Q 632 428, 648 438 Q 652 458, 642 476 Q 624 482, 610 472 Q 602 455, 608 440 Z"
+        <!-- 黎凡特/叙利亚/伊拉克 -->
+        <path d="M 592 432 Q 624 424, 648 436 Q 654 462, 642 484 Q 620 492, 604 480 Q 594 458, 594 444 Z"
               fill="${iraqColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="伊拉克/黎凡特"/>
-        <text x="626" y="458" font-size="6" fill="#d8b8b8" text-anchor="middle">伊拉克</text>
-
+        <text x="622" y="462" font-size="6" fill="#d8b8b8" text-anchor="middle">伊拉克</text>
         <!-- 伊朗 -->
-        <path d="M 654 398 Q 690 392, 720 402 Q 730 426, 722 452 Q 706 472, 682 470 Q 660 460, 652 442 Q 648 420, 654 398 Z"
+        <path d="M 650 390 Q 690 380, 728 392 Q 742 422, 732 456 Q 710 482, 680 482 Q 656 470, 646 446 Q 640 418, 650 390 Z"
               fill="${iranColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="伊朗"/>
-        <text x="686" y="438" font-size="7.5" fill="#d8b8b8" text-anchor="middle" font-weight="bold">伊朗</text>
-
+        <text x="688" y="434" font-size="7.5" fill="#d8b8b8" text-anchor="middle" font-weight="bold">伊朗</text>
         <!-- 沙特阿拉伯 -->
-        <path d="M 594 486 Q 636 480, 672 492 Q 682 520, 672 552 Q 650 568, 622 565 Q 598 558, 590 538 Q 585 510, 594 486 Z"
+        <path d="M 584 492 Q 630 484, 676 498 Q 688 530, 678 566 Q 652 586, 618 584 Q 588 572, 578 546 Q 572 518, 584 492 Z"
               fill="${saudiColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="沙特阿拉伯"/>
-        <text x="634" y="524" font-size="7" fill="#c8b898" text-anchor="middle" font-weight="bold">沙特</text>
-
+        <text x="632" y="538" font-size="7" fill="#c8b898" text-anchor="middle" font-weight="bold">沙特</text>
         <!-- 也门/阿曼 -->
-        <path d="M 672 528 Q 706 524, 724 535 Q 728 562, 714 580 Q 692 585, 676 572 Q 668 550, 672 535 Z"
+        <path d="M 674 546 Q 710 540, 732 554 Q 736 582, 720 602 Q 696 608, 676 594 Q 668 572, 674 552 Z"
               fill="${saudiColor}" stroke="#1a1a1a" stroke-width="0.8" opacity="0.85" class="map-region" data-info="也门/阿曼"/>
-        <text x="698" y="556" font-size="5.5" fill="#b8a888" text-anchor="middle">也门/阿曼</text>
-
-        <!-- 中东战争标记 -->
+        <text x="702" y="576" font-size="5.5" fill="#b8a888" text-anchor="middle">也门/阿曼</text>
+        <!-- 阿富汗 -->
+        <path d="M 722 380 Q 760 372, 790 386 Q 798 414, 788 440 Q 766 452, 738 446 Q 722 426, 720 404 Z"
+              fill="#6a5a5a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="阿富汗"/>
+        <text x="756" y="416" font-size="6" fill="#c8b8b0" text-anchor="middle">阿富汗</text>
+        <!-- 中东战争标记 & 苏伊士运河 -->
         ${warMiddleEast ? `
         <g style="${warAnimStyle}">
-          <line x1="555" y1="495" x2="570" y2="510" stroke="#ff4444" stroke-width="2"/>
-          <line x1="570" y1="495" x2="555" y2="510" stroke="#ff4444" stroke-width="2"/>
-          <circle cx="562" cy="502" r="7" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.6"/>
+          <line x1="530" y1="440" x2="550" y2="456" stroke="#ff4444" stroke-width="2"/>
+          <line x1="550" y1="440" x2="530" y2="456" stroke="#ff4444" stroke-width="2"/>
+          <circle cx="540" cy="448" r="7" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.6"/>
         </g>
         <g style="${warShakeStyle}">
-          <polygon points="660,440 675,442 668,452" fill="#ff6644" opacity="0.7"/>
+          <polygon points="662,434 684,438 674,452" fill="#ff6644" opacity="0.7"/>
         </g>` : ''}
-        ${warMiddleEast ? `
-        <text x="528" y="500" font-size="5.5" fill="#a8a86a" text-anchor="middle" opacity="0.9">苏伊士</text>` : `
-        <text x="528" y="500" font-size="5.5" fill="#a8a86a" text-anchor="middle" opacity="0.6">苏伊士</text>`}
+        <text x="536" y="488" font-size="5.5" fill="#a8a86a" text-anchor="middle" opacity="${warMiddleEast ? '0.95' : '0.55'}">苏伊士</text>
 
         <!-- ============ 亚洲 ============ -->
-        <!-- 蒙古 -->
-        <path d="M 928 290 Q 966 284, 994 292 Q 1000 316, 990 336 Q 962 342, 936 336 Q 926 318, 928 298 Z"
-              fill="#5a4a3a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="蒙古"/>
-        <text x="960" y="316" font-size="6.5" fill="#c8b8a0" text-anchor="middle">蒙古</text>
-
-        <!-- 满洲国（日属傀儡） -->
-        <path d="M 1002 290 Q 1030 284, 1052 296 Q 1054 316, 1044 330 Q 1024 334, 1006 326 Q 998 310, 1002 292 Z"
-              fill="#6a5a2a" stroke="#1a1a1a" stroke-width="0.9" class="map-region" data-info="满洲国（日属傀儡）"/>
-        <text x="1026" y="312" font-size="6" fill="#d8c890" text-anchor="middle">满洲国</text>
-
-        <!-- 朝鲜（日属） -->
-        <path d="M 1048 328 Q 1068 322, 1078 336 Q 1080 360, 1070 374 Q 1058 376, 1050 362 Q 1044 345, 1048 328 Z"
-              fill="#6a5a2a" stroke="#1a1a1a" stroke-width="0.9" class="map-region" data-info="朝鲜（日属）"/>
-        <text x="1062" y="352" font-size="6" fill="#d8c890" text-anchor="middle">朝鲜</text>
-
-        <!-- 中国（日占/合作政府） -->
-        <path d="M 928 338 Q 980 332, 1032 340 Q 1044 370, 1036 410 Q 1010 436, 974 432 Q 944 425, 930 405 Q 922 375, 925 355 Z"
-              fill="#7a6a3a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="中国（日占/合作政府）"/>
-        <text x="980" y="384" font-size="9" fill="#d8c8a0" text-anchor="middle" font-weight="bold">中国</text>
-
         <!-- 印度 -->
-        <path d="M 794 396 Q 836 388, 872 398 Q 884 426, 876 458 Q 858 482, 832 484 Q 804 476, 794 456 Q 786 426, 794 398 Z"
+        <path d="M 760 402 Q 802 390, 844 402 Q 860 438, 850 478 Q 826 508, 798 508 Q 770 496, 758 466 Q 748 436, 754 418 Z"
               fill="#6a5a4a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="印度"/>
-        <text x="836" y="442" font-size="9" fill="#d8c8b0" text-anchor="middle" font-weight="bold">印度</text>
-
+        <text x="804" y="456" font-size="9" fill="#d8c8b0" text-anchor="middle" font-weight="bold">印度</text>
+        <!-- 巴基斯坦/俾路支斯坦 -->
+        <path d="M 730 430 Q 756 422, 762 444 L 758 480 Q 742 492, 728 480 Q 718 458, 722 444 Z"
+              fill="#6a5a4a" stroke="#1a1a1a" stroke-width="0.8" opacity="0.7" class="map-region" data-info="巴基斯坦"/>
+        <text x="742" y="464" font-size="6" fill="#b8a89a" text-anchor="middle">巴基斯坦</text>
+        <!-- 蒙古 -->
+        <path d="M 876 286 Q 920 278, 950 290 Q 960 316, 948 342 Q 918 350, 888 344 Q 874 320, 876 298 Z"
+              fill="#5a4a3a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="蒙古"/>
+        <text x="914" y="318" font-size="6.5" fill="#c8b8a0" text-anchor="middle">蒙古</text>
+        <!-- 中国（日占/合作政府） -->
+        <path d="M 870 326 Q 930 316, 990 324 Q 1010 362, 1000 404 Q 976 438, 938 440 Q 902 432, 882 410 Q 866 378, 868 352 Z"
+              fill="#7a6a3a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="中国（日占/合作政府）"/>
+        <text x="934" y="386" font-size="9" fill="#d8c8a0" text-anchor="middle" font-weight="bold">中国</text>
+        <!-- 满洲国（日属傀儡） -->
+        <path d="M 978 282 Q 1012 274, 1038 286 Q 1044 310, 1034 330 Q 1014 340, 990 332 Q 974 312, 978 292 Z"
+              fill="#6a5a2a" stroke="#1a1a1a" stroke-width="0.9" class="map-region" data-info="满洲国（日属傀儡）"/>
+        <text x="1006" y="310" font-size="6" fill="#d8c890" text-anchor="middle">满洲国</text>
+        <!-- 朝鲜（日属） -->
+        <path d="M 1028 334 Q 1048 328, 1060 342 Q 1064 368, 1052 386 Q 1038 390, 1030 374 Q 1022 352, 1028 336 Z"
+              fill="#6a5a2a" stroke="#1a1a1a" stroke-width="0.9" class="map-region" data-info="朝鲜（日属）"/>
+        <text x="1044" y="364" font-size="6" fill="#d8c890" text-anchor="middle">朝鲜</text>
         <!-- 法属印度支那 -->
-        <path d="M 888 428 Q 916 422, 936 432 Q 944 460, 934 486 Q 916 496, 898 488 Q 884 470, 886 450 Z"
+        <path d="M 882 442 Q 912 434, 934 448 Q 940 478, 928 504 Q 908 512, 890 500 Q 878 478, 880 460 Z"
               fill="${frenchIndochinaColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="法属印度支那"/>
-        <text x="912" y="460" font-size="6.5" fill="#a8b8c8" text-anchor="middle">法属印度支那</text>
-
+        <text x="908" y="474" font-size="6.5" fill="#a8b8c8" text-anchor="middle">法属印度支那</text>
+        <!-- 泰国/缅甸 -->
+        <path d="M 844 468 Q 874 462, 884 478 L 882 508 Q 868 520, 852 514 Q 840 498, 840 482 Z"
+              fill="#5a6a4a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="泰国/缅甸"/>
+        <text x="862" y="496" font-size="6" fill="#a8c8a0" text-anchor="middle">泰国/缅甸</text>
         <!-- 荷属东印度（印尼） -->
-        <path d="M 922 506 Q 962 498, 996 510 Q 1010 532, 1000 556 Q 974 566, 944 560 Q 922 550, 918 530 Z"
+        <path d="M 912 512 Q 956 502, 996 518 Q 1010 544, 1000 574 Q 970 590, 936 580 Q 908 560, 908 534 Z"
               fill="${dutchIndiesColor}" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="荷属东印度（印尼）"/>
-        <text x="960" y="534" font-size="6.5" fill="#b8c8d8" text-anchor="middle">荷属东印度</text>
-
+        <text x="954" y="546" font-size="6.5" fill="#b8c8d8" text-anchor="middle">荷属东印度</text>
         <!-- 菲律宾 -->
-        <path d="M 1028 442 Q 1050 438, 1064 450 Q 1062 478, 1050 490 Q 1036 487, 1028 472 Q 1024 458, 1028 442 Z"
+        <path d="M 1016 450 Q 1042 442, 1056 460 Q 1054 492, 1038 506 Q 1022 500, 1016 482 Q 1010 464, 1016 450 Z"
               fill="#5a6a4a" stroke="#1a1a1a" stroke-width="0.8" class="map-region" data-info="菲律宾"/>
-        <text x="1046" y="468" font-size="5.5" fill="#a8b8a0" text-anchor="middle">菲律宾</text>
+        <text x="1036" y="478" font-size="5.5" fill="#a8b8a0" text-anchor="middle">菲律宾</text>
+        <!-- 新几内亚 -->
+        <path d="M 994 560 Q 1030 552, 1058 572 Q 1060 596, 1044 612 Q 1016 618, 992 604 Q 984 582, 994 562 Z"
+              fill="#6a5a4a" stroke="#1a1a1a" stroke-width="0.7" class="map-region" data-info="新几内亚"/>
+        <text x="1026" y="590" font-size="5.5" fill="#c8b8a0" text-anchor="middle">新几内亚</text>
 
-        <!-- 日本本土岛屿 -->
+        <!-- 日本本土四岛 -->
         <g class="japan-zone">
-          <path d="M 1100 318 Q 1126 312, 1144 322 Q 1147 346, 1134 366 Q 1116 374, 1102 360 Q 1095 340, 1100 322 Z"
+          <path d="M 1088 326 Q 1122 314, 1144 328 Q 1150 358, 1136 386 Q 1114 402, 1098 386 Q 1088 358, 1090 340 Z"
                 fill="#4a3a1a" stroke="#8a7a3a" stroke-width="1.3" class="map-region japan-region" data-info="日本（共荣圈霸主）"/>
-          <path d="M 1112 295 Q 1130 290, 1144 298 Q 1144 312, 1130 316 Q 1114 314, 1106 306 Z"
+          <path d="M 1100 292 Q 1124 286, 1140 296 Q 1142 314, 1126 322 Q 1106 320, 1096 308 Z"
                 fill="#4a3a1a" stroke="#8a7a3a" stroke-width="1" class="map-region" data-info="日本（北海道）"/>
-          <path d="M 1090 370 Q 1108 368, 1114 380 Q 1108 392, 1095 390 Q 1086 380, 1090 370 Z"
-                fill="#4a3a1a" stroke="#8a7a3a" stroke-width="1" class="map-region" data-info="日本（九州）"/>
-          <text x="1122" y="346" font-size="11" fill="#c8a84a" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">日本</text>
-          <text x="1122" y="360" font-size="6.5" fill="#8a7a3a" text-anchor="middle">共荣圈</text>
+          <path d="M 1080 390 Q 1098 384, 1108 396 Q 1106 412, 1094 418 Q 1080 414, 1078 400 Z" fill="#4a3a1a" stroke="#8a7a3a" stroke-width="1" class="map-region" data-info="日本（九州）"/>
+          <text x="1118" y="362" font-size="11" fill="#c8a84a" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">日本</text>
+          <text x="1118" y="376" font-size="6.5" fill="#8a7a3a" text-anchor="middle">共荣圈</text>
         </g>
+        <!-- 台湾 -->
+        <path d="M 1064 400 Q 1076 396, 1082 406 Q 1080 422, 1070 424 Q 1060 414, 1064 400 Z"
+              fill="#4a3a1a" stroke="#8a7a3a" stroke-width="0.8" class="map-region" data-info="台湾（日属）"/>
+        <!-- 琉球/冲绳 -->
+        <path d="M 1140 404 Q 1156 398, 1164 410 Q 1162 422, 1150 424 Q 1140 416, 1140 404 Z"
+              fill="#4a3a1a" stroke="#8a7a3a" stroke-width="0.6" opacity="0.7" class="map-region" data-info="琉球（日属）"/>
 
         <!-- 澳大利亚 -->
-        <path d="M 1030 545 Q 1086 538, 1138 548 Q 1150 580, 1140 624 Q 1112 660, 1076 666 Q 1042 660, 1028 636 Q 1020 590, 1030 552 Z"
+        <path d="M 1000 578 Q 1060 566, 1120 576 Q 1138 610, 1128 658 Q 1096 694, 1056 698 Q 1018 688, 1002 662 Q 992 622, 1000 586 Z"
               fill="#6a5a3a" stroke="#1a1a1a" stroke-width="1" class="map-region" data-info="澳大利亚"/>
-        <text x="1084" y="600" font-size="9" fill="#d8c8a0" text-anchor="middle" font-weight="bold">澳大利亚</text>
+        <text x="1068" y="632" font-size="9" fill="#d8c8a0" text-anchor="middle" font-weight="bold">澳大利亚</text>
+        <!-- 新西兰 -->
+        <path d="M 1142 662 Q 1160 656, 1170 670 Q 1168 694, 1154 702 Q 1140 696, 1138 678 Z"
+              fill="#5a5a4a" stroke="#1a1a1a" stroke-width="0.7" class="map-region" data-info="新西兰"/>
+        <text x="1154" y="686" font-size="5.5" fill="#c8c8a0" text-anchor="middle">新西兰</text>
 
         <!-- ============ 关系连线 ============ -->
         <g class="relation-lines" opacity="0.5">
-          <line x1="528" y1="296" x2="500" y2="385" stroke="${relLine(s.relations.italy)}" stroke-width="1.8"/>
+          <line x1="542" y1="282" x2="496" y2="376" stroke="${relLine(s.relations.italy)}" stroke-width="1.8"/>
           ${russiaFragments ? `
-          <line x1="578" y1="270" x2="660" y2="200" stroke="${relLine(s.relations.russia)}" stroke-width="1.8" stroke-dasharray="5,3"/>` : `
-          <line x1="578" y1="280" x2="868" y2="232" stroke="${relLine(s.relations.russia)}" stroke-width="1.8" stroke-dasharray="5,3"/>`}
-          <line x1="486" y1="272" x2="155" y2="240" stroke="${relLine(s.relations.ofn)}" stroke-width="1.5" stroke-dasharray="3,4"/>
-          <line x1="486" y1="300" x2="492" y2="310" stroke="${relLine(s.relations.burgundy)}" stroke-width="2"/>
-          <line x1="576" y1="262" x2="1122" y2="345" stroke="${relLine(s.relations.japan)}" stroke-width="1.2" stroke-dasharray="2,5"/>
-          <line x1="560" y1="338" x2="642" y2="430" stroke="${relLine(s.relations.turkey)}" stroke-width="1.3" stroke-dasharray="4,3"/>
-          <line x1="576" y1="330" x2="686" y2="438" stroke="${relLine(s.relations.iran || 0)}" stroke-width="0.9" stroke-dasharray="3,4" opacity="0.4"/>
+          <line x1="640" y1="260" x2="740" y2="194" stroke="${relLine(s.relations.russia)}" stroke-width="1.8" stroke-dasharray="5,3"/>` : `
+          <line x1="640" y1="260" x2="920" y2="230" stroke="${relLine(s.relations.russia)}" stroke-width="1.8" stroke-dasharray="5,3"/>`}
+          <line x1="542" y1="272" x2="158" y2="240" stroke="${relLine(s.relations.ofn)}" stroke-width="1.5" stroke-dasharray="3,4"/>
+          <line x1="496" y1="304" x2="496" y2="312" stroke="${relLine(s.relations.burgundy)}" stroke-width="2.5"/>
+          <line x1="604" y1="264" x2="1118" y2="356" stroke="${relLine(s.relations.japan)}" stroke-width="1.2" stroke-dasharray="2,5"/>
+          <line x1="600" y1="340" x2="628" y2="416" stroke="${relLine(s.relations.turkey)}" stroke-width="1.3" stroke-dasharray="4,3"/>
+          <line x1="620" y1="348" x2="688" y2="436" stroke="${relLine(s.relations.iran || 0)}" stroke-width="0.9" stroke-dasharray="3,4" opacity="0.4"/>
         </g>
 
         <!-- ============ 战争动画标记 ============ -->
@@ -1026,45 +1079,45 @@ const UI = {
           ${warEurope ? `
           <g>
             <g style="${warAnimStyle}">
-              <line x1="468" y1="295" x2="484" y2="312" stroke="#ff4444" stroke-width="2.2"/>
-              <line x1="484" y1="295" x2="468" y2="312" stroke="#ff4444" stroke-width="2.2"/>
-              <circle cx="476" cy="303" r="10" fill="none" stroke="#ff4444" stroke-width="1.3" opacity="0.5"/>
+              <line x1="518" y1="286" x2="538" y2="306" stroke="#ff4444" stroke-width="2.2"/>
+              <line x1="538" y1="286" x2="518" y2="306" stroke="#ff4444" stroke-width="2.2"/>
+              <circle cx="528" cy="296" r="10" fill="none" stroke="#ff4444" stroke-width="1.3" opacity="0.5"/>
             </g>
             <g style="${warShakeStyle}">
-              <polygon points="510,288 528,282 524,296" fill="#ff6644" opacity="0.7"/>
-              <polygon points="512,318 532,320 524,330" fill="#ff6644" opacity="0.7"/>
+              <polygon points="548,254 570,250 564,266" fill="#ff6644" opacity="0.7"/>
+              <polygon points="558,314 578,318 570,330" fill="#ff6644" opacity="0.7"/>
             </g>
-            <circle cx="520" cy="304" r="3.5" fill="#ff8844" opacity="0.8" style="animation: explosion 1.5s ease-out infinite;"/>
+            <circle cx="558" cy="286" r="3.5" fill="#ff8844" opacity="0.8" style="animation: explosion 1.5s ease-out infinite;"/>
           </g>` : ''}
           ${warAfrica ? `
           <g>
             <g style="${warAnimStyle}">
-              <line x1="430" y1="505" x2="446" y2="520" stroke="#ff4444" stroke-width="2.2"/>
-              <line x1="446" y1="505" x2="430" y2="520" stroke="#ff4444" stroke-width="2.2"/>
-              <circle cx="438" cy="512" r="8" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.5"/>
+              <line x1="380" y1="436" x2="400" y2="454" stroke="#ff4444" stroke-width="2.2"/>
+              <line x1="400" y1="436" x2="380" y2="454" stroke="#ff4444" stroke-width="2.2"/>
+              <circle cx="390" cy="445" r="8" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.5"/>
             </g>
             <g style="${warShakeStyle}">
-              <polygon points="498,502 516,498 512,512" fill="#ff6644" opacity="0.7"/>
+              <polygon points="482,426 502,422 498,438" fill="#ff6644" opacity="0.7"/>
             </g>
-            <circle cx="506" cy="508" r="3" fill="#ff8844" opacity="0.8" style="animation: explosion 1.8s ease-out infinite;"/>
+            <circle cx="490" cy="432" r="3" fill="#ff8844" opacity="0.8" style="animation: explosion 1.8s ease-out infinite;"/>
           </g>` : ''}
           ${warMiddleEast ? `
           <g>
             <g style="${warAnimStyle}">
-              <line x1="548" y1="498" x2="564" y2="514" stroke="#ff4444" stroke-width="2.2"/>
-              <line x1="564" y1="498" x2="548" y2="514" stroke="#ff4444" stroke-width="2.2"/>
-              <circle cx="556" cy="506" r="8" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.5"/>
+              <line x1="526" y1="440" x2="546" y2="458" stroke="#ff4444" stroke-width="2.2"/>
+              <line x1="546" y1="440" x2="526" y2="458" stroke="#ff4444" stroke-width="2.2"/>
+              <circle cx="536" cy="449" r="8" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.5"/>
             </g>
             <g style="${warShakeStyle}">
-              <polygon points="660,440 678,443 670,454" fill="#ff6644" opacity="0.7"/>
+              <polygon points="660,434 680,438 672,452" fill="#ff6644" opacity="0.7"/>
             </g>
           </g>` : ''}
           ${warAsia ? `
           <g>
             <g style="${warAnimStyle}">
-              <line x1="920" y1="448" x2="938" y2="466" stroke="#ff4444" stroke-width="2.2"/>
-              <line x1="938" y1="448" x2="920" y2="466" stroke="#ff4444" stroke-width="2.2"/>
-              <circle cx="929" cy="457" r="8" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.5"/>
+              <line x1="912" y1="464" x2="932" y2="482" stroke="#ff4444" stroke-width="2.2"/>
+              <line x1="932" y1="464" x2="912" y2="482" stroke="#ff4444" stroke-width="2.2"/>
+              <circle cx="922" cy="473" r="8" fill="none" stroke="#ff4444" stroke-width="1" opacity="0.5"/>
             </g>
           </g>` : ''}
         </g>` : ''}
@@ -1131,6 +1184,7 @@ const UI = {
           <rect x="442" y="33" width="11" height="7" fill="#5a3a5a"/>
           <text x="457" y="40" font-size="7" fill="#a8a6a0">马岛</text>
         </g>
+        ${typeof MAP_EXTRA_SVG !== 'undefined' ? MAP_EXTRA_SVG : ''}
       </svg>
     `;
 

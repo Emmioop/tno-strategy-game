@@ -2540,11 +2540,4042 @@ const STORY_EVENTS = [
         condition: (s) => s.flags.militarist
       }
     ]
+  },
+
+  /* ===========================================================
+   * 第六幕扩展：世界的裂痕（1965-1980）
+   * =========================================================== */
+
+  {
+    id: 'ev_atlantropa_consequences',
+    turn: { year: 1965, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '亚特兰特罗帕的诅咒',
+    body: `<p>二十年前，<strong>直布罗陀大坝</strong>合龙时，帝国的工程师们曾在阳光下发誓——地中海将被驯服，新的土地将养活千年帝国。</p>
+    <p>如今，誓言成了诅咒。</p>
+    <p>海平面下降了数十米，<em>的里雅斯特、威尼斯、马赛、热那亚</em>——那些曾经辉煌的港口城市，如今悬挂在距海面几十米的干涸悬崖之上。咸腥的淤泥暴露在阳光下，腐烂的鱼腥味弥漫整个亚得里亚海岸。意大利的经济随海岸线一同塌陷，失业的渔民涌入山区，饥荒的阴影笼罩着西西里。</p>
+    <p>大坝本身也出现了裂缝。工程师们警告：如果不加以修缮，下一次洪水将冲垮整座大坝，把半个南欧淹没。</p>
+    <p>这是帝国"伟大工程"留下的伤口——一道还在流血的伤口。</p>`,
+    choices: [
+      {
+        text: '不惜代价修复大坝',
+        desc: '巨资维护，维持现状',
+        effects: { money: -90, stability: 4, manpower: -10 },
+        setFlags: { atlantropa_repaired: true },
+        showToast: '奴隶们被驱赶到直布罗陀，修复那座该死的大坝'
+      },
+      {
+        text: '放弃大坝，让地中海回归',
+        desc: '止损，但承认失败',
+        effects: { stability: -8, money: 20, deterrence: -4 },
+        setFlags: { atlantropa_abandoned: true },
+        showToast: '帝国的"千年工程"宣告破产'
+      },
+      {
+        text: '加速排水，夺回更多土地',
+        desc: '疯狂的扩张计划',
+        effects: { money: -50, stability: -6, manpower: -15, research: 5 },
+        setFlags: { atlantropa_accelerated: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_congo_dam_crisis',
+    turn: { year: 1966, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '刚果之泪',
+    body: `<p>德国人在刚果河上建造的大坝，是帝国在非洲最引以为傲的"奇迹"——一座横跨赤道的混凝土巨兽，号称能为整个中非提供电力。</p>
+    <p>但奇迹是有代价的。</p>
+    <p>大坝合龙三年后，一个人工湖在刚果盆地形成了——<strong>面积相当于半个比利时</strong>。数十万当地人被迫迁徙，雨林被淹没，整片整片的村庄沉入水底。尸体在湖面上漂浮，鳄鱼啃食着来不及逃走的牲畜。痢疾与疟疾在难民中蔓延，而帝国的官员们只在季度报告里写下一行字："劳动力损耗，略高于预期。"</p>
+    <p>如今大坝的涡轮开始出现故障。工程师说，是淤泥——被淹没的雨林正在腐烂，堵塞了进水口。</p>`,
+    choices: [
+      {
+        text: '派人维护大坝',
+        desc: '维持能源供应',
+        effects: { money: -40, research: 3, manpower: -8 },
+        showToast: '更多奴隶被送往刚果，没人知道他们能否回来'
+      },
+      {
+        text: '炸毁大坝，恢复原状',
+        desc: '极端的止损',
+        effects: { stability: -5, deterrence: -3, money: 10 },
+        setFlags: { congo_dam_destroyed: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '无视，继续榨取电力',
+        desc: '冷血的漠视',
+        effects: { money: 25, stability: -3, manpower: -12 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_anarchy_west_africa',
+    turn: { year: 1966, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '无政府区的黎明',
+    body: `<p>帝国的轰炸机曾在西非投下成千上万吨炸弹——不是为了征服，而是为了<em>惩罚</em>。那些拒绝服从的部落、那些庇护逃亡奴隶的村庄，都被夷为平地。结果是一片从尼日尔河延伸到几内亚湾的<strong>"无政府区"</strong>——没有政府，没有法律，只有废墟与饥饿。</p>
+    <p>但废墟之上，终于长出了新的东西。</p>
+    <p>几个军阀开始在尼日利亚北部崛起，他们之中有人打着泛非主义的旗号，有人宣称要重建古老的豪萨城邦，还有人——最危险的一类——开始向帝国献媚，换取武器去消灭自己的对手。</p>
+    <p>与此同时，OFN（自由国家组织）的特工也悄悄进入了这片土地，他们带来美元、无线电和承诺。</p>`,
+    choices: [
+      {
+        text: '支持亲德势力',
+        desc: '扶植傀儡',
+        effects: { money: -30, deterrence: 6, stability: 2 },
+        setFlags: { west_africa_pro_german: true }
+      },
+      {
+        text: '默许OFN介入',
+        desc: '减少帝国负担',
+        effects: { money: 15, deterrence: -5, stability: 3 },
+        setFlags: { west_africa_ofn: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '无视',
+        desc: '事不关己',
+        effects: { stability: -2, deterrence: -2 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_japan_economic_collapse',
+    turn: { year: 1967, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '日元的黄昏',
+    body: `<p>共荣圈的经济，是一座用纸牌搭成的神社。</p>
+    <p>日本试图用一套封闭的、以日元为中心的贸易体系维系整个东亚——但从满洲到印尼，没有哪个"成员"是真心接受的。日本的工业品质量低劣却价格高昂，东南亚的资源被低价掠夺，而东京的官僚们还在用1930年代的账本计算1970年代的世界。</p>
+    <p>1967年春，<strong>日元信用崩溃</strong>。黑市上，美元兑日元汇率一日三涨；大阪的银行门前排起长龙，储户们挤兑出最后一点黄金；满洲的工厂开始拒绝接受日元付款，转而用卢布和帝国马克结算。</p>
+    <p>共荣圈正在从内部瓦解——而这正是帝国的机会，也是帝国的危险。</p>`,
+    choices: [
+      {
+        text: '趁火打劫，扩大在亚洲的影响力',
+        desc: '高风险高回报',
+        effects: { money: 40, deterrence: -8, stability: -4, militaryPower: 5 },
+        setFlags: { japan_collapsed: true, asia_intervention: true }
+      },
+      {
+        text: '提供有限援助，稳住日本',
+        desc: '维持三极平衡',
+        effects: { money: -50, deterrence: 4, stability: 5 },
+        setFlags: { japan_aided: true }
+      },
+      {
+        text: '无视，冷眼旁观',
+        desc: '袖手旁观',
+        effects: { stability: 1, deterrence: -3 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_china_resistance_1968',
+    turn: { year: 1968, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '中原烽火',
+    body: `<p>日本在中国推行"产业振兴计划"——名义上是发展，实质上是把整个中原变成兵工厂与粮仓。农民被强制编入"共荣合作社"，粮食按东京的配额征收；工厂里，中国工人拿到的工资是日本同行的三分之一。</p>
+    <p>1968年，反抗终于爆发。</p>
+    <p>从太行山到长江中游，<strong>抵抗运动</strong>重新组织起来——既有国军残部，也有共产党的游击队，甚至还有一些自称"护国军"的地方豪强。他们袭击铁路、炸毁桥梁、暗杀日本宪兵。南京的傀儡政府摇摇欲坠。</p>
+    <p>帝国的情报机构注意到了这一切。东京正在向柏林求助——但柏林是否应该伸手？</p>`,
+    choices: [
+      {
+        text: '秘密支持中国抵抗者',
+        desc: '削弱日本',
+        effects: { money: -25, deterrence: -4, militaryPower: 3, stability: -2 },
+        setFlags: { china_resistance_supported: true, sino_german_covert: true }
+      },
+      {
+        text: '通知日本，换取好感',
+        desc: '维护共荣圈稳定',
+        effects: { deterrence: 5, stability: 3, money: 10 },
+        setFlags: { japan_informed: true }
+      },
+      {
+        text: '无视',
+        desc: '两不相帮',
+        effects: { stability: 0, deterrence: -1 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_british_underground',
+    turn: { year: 1969, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '不列颠的地下女王',
+    body: `<p>自1945年投降以来，不列颠就成了帝国的"模范属地"——表面上温顺，地下却从未熄灭火种。</p>
+    <p>1969年，情报机关截获了一封信——信中提到一个名字：<strong>伊丽莎白</strong>。</p>
+    <p>那位本应被处决或流亡的前王储之女，据说仍活着。她藏在苏格兰高地的某个矿坑里，在威尔士的教堂地下室里，在伦敦地铁废弃的隧道里辗转。她领导着一个被称为"<em>真实不列颠</em>"的地下组织，发行非法报纸，组织破坏行动，甚至与OFN保持着无线电联系。</p>
+    <p>帝国的不列颠总督要求立即清剿。但清剿一个有民众拥护的"女王"，会带来什么后果？</p>`,
+    choices: [
+      {
+        text: '全力清剿抵抗组织',
+        desc: '铁腕镇压',
+        effects: { manpower: -15, stability: -5, deterrence: 4, money: -30 },
+        setFlags: { british_resistance_crushed: true }
+      },
+      {
+        text: '与OFN秘密合作，默许其存在',
+        desc: '缓和局势',
+        effects: { stability: 4, deterrence: -3, money: -10 },
+        setFlags: { british_resistance_tolerated: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '支持抵抗，作为对日筹码',
+        desc: '阴谋家的选择',
+        effects: { money: -20, deterrence: -5, stability: -3 },
+        setFlags: { british_resistance_supported: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_spanish_civil_unrest',
+    turn: { year: 1969, quarter: 3 },
+    once: true,
+    tag: 'minor',
+    title: '伊比利亚的裂痕',
+    body: `<p>伊比利亚联邦——那个由西班牙与葡萄牙勉强缝合的怪胎——正在从内部崩裂。</p>
+    <p>卡内罗·布兰科的强人统治维持了十年，但经济的停滞、葡萄牙人的不满、加泰罗尼亚与巴斯克的地下独立运动，让这个联邦形同虚设。马德里的街头出现了抗议者，里斯本的工人开始罢工，而佛朗哥的旧部则在暗中筹划"回归纯西班牙"。</p>
+    <p>帝国对伊比利亚的稳定高度关注——直布罗陀大坝、亚特兰特罗帕的电力、地中海的航线，都依赖这个半岛。</p>`,
+    choices: [
+      {
+        text: '施压维持联邦统一',
+        desc: '+稳定 -资金',
+        effects: { stability: 4, money: -25, deterrence: 2 }
+      },
+      {
+        text: '支持西班牙单独主导',
+        desc: '重新洗牌',
+        effects: { stability: -3, deterrence: 3, money: -10 },
+        setFlags: { iberia_split: true }
+      },
+      {
+        text: '袖手旁观',
+        desc: '听天由命',
+        effects: { stability: -2, deterrence: -2 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_nuclear_accident_germany',
+    turn: { year: 1970, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '哈茨山的火光',
+    body: `<p>1970年6月，哈茨山附近的<strong>帝国第六反应堆</strong>发生了堆芯熔毁。</p>
+    <p>警报首先在午夜响起。值班工程师试图插入控制棒，但液压系统已经失灵——冷却剂沸腾成蒸汽，撕开了压力容器。黎明时分，一团肉眼可见的放射性云雾从反应堆大厅飘出，向东南方向飘去。</p>
+    <p>周边村庄在一周内被疏散，但消息已经被黑市电台传了出去。帝国新闻署手忙脚乱——是承认，还是掩盖？掩盖能维持表面的稳定，但代价是更多人的健康；承认会动摇民众对"帝国科技"的信心，却或许能挽救生命。</p>
+    <p>而某些人提议了一个更阴险的方案——<em>嫁祸勃艮第</em>。</p>`,
+    choices: [
+      {
+        text: '全面隐瞒，封锁消息',
+        desc: '保住面子，付出人命',
+        effects: { stability: 3, manpower: -25, money: -20 },
+        setFlags: { nuclear_coverup: true }
+      },
+      {
+        text: '公开事故，组织疏散',
+        desc: '诚实但动荡',
+        effects: { stability: -8, manpower: -10, money: -60, research: 4 },
+        setFlags: { nuclear_disclosed: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '嫁祸勃艮第破坏',
+        desc: '阴险的转嫁',
+        effects: { stability: 2, deterrence: -4, manpower: -20, money: -30 },
+        setFlags: { nuclear_blamed_burgundy: true, burgundy_tension: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 俄罗斯详细事件链（1970-1990）
+   * =========================================================== */
+
+  {
+    id: 'ev_wrrf_consolidation',
+    turn: { year: 1970, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '北方的红旗',
+    body: `<p>在莫斯科废墟以北的冻土上，<strong>西俄革命阵线（WRRF）</strong>终于在阿尔汉格尔斯克扎下了根。</p>
+    <p>十年来，他们在白海的冰封港口里苟延残喘，靠捕鱼和走私军火过活。如今，他们重新组织起了军队——一支由老兵、逃亡奴隶和绝望的农民组成的军队。<em>图哈切夫斯基</em>，那位"红色拿破仑"，在北方前线指挥所里铺开了地图；而<em>朱可夫</em>，则在更东的地方建立着自己的势力。</p>
+    <p>WRRF宣称自己是苏联的合法继承者，但"苏联"这个词，在俄罗斯已经分裂成了十几个互相仇杀的派别。北方红旗究竟能否重新统一这片破碎的大地，没有人知道。</p>`,
+    choices: [
+      {
+        text: '关注WRRF的动向',
+        desc: '情报收集',
+        effects: { research: 3, deterrence: 2, money: -10 }
+      },
+      {
+        text: '加强对东方总督辖区的防御',
+        desc: '+军事 -资金',
+        effects: { militaryPower: 8, money: -50, manpower: -10 },
+        setFlags: { eastern_border_reinforced: true }
+      },
+      {
+        text: '秘密联络WRRF，探求和谈可能',
+        desc: '危险的外交',
+        effects: { stability: -3, deterrence: -2, money: -15 },
+        setFlags: { wrrf_contact: true },
+        condition: (s) => s.flags.reformer
+      }
+    ]
+  },
+
+  {
+    id: 'ev_komi_democratic_experiment',
+    turn: { year: 1970, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '科米的民主之灯',
+    body: `<p>在乌拉尔山以西的冻原上，有一座几乎被遗忘的城市——<strong>瑟克特夫卡尔</strong>，科米共和国的首府。</p>
+    <p>这里发生了一件几乎不可能的事：在俄罗斯的废墟之上，一群人正在尝试<em>民主</em>。</p>
+    <p>领导这场实验的，是<em>斯维特兰娜·布哈林娜</em>——布哈林的女儿。她继承了父亲被枪决前未能实现的理想，建立了一个有议会、有选举、有言论自由的共和国。当然，这个"共和国"脆弱得可怕：它被军阀包围，经济靠采集野生浆果和走私木材维持，议会里从社会主义者到君主主义者吵成一团。</p>
+    <p>但灯亮着。在俄罗斯漫长的黑夜里，这一盏灯亮着。</p>`,
+    choices: [
+      {
+        text: '暗中观察这个"怪胎"',
+        desc: '+研发',
+        effects: { research: 4, money: -5 }
+      },
+      {
+        text: '渗透特工，颠覆科米',
+        desc: '消灭异端',
+        effects: { stability: 2, deterrence: 3, money: -25, manpower: -5 },
+        setFlags: { komi_infiltrated: true }
+      },
+      {
+        text: '通过中立国提供人道援助',
+        desc: '罕见的善意',
+        effects: { stability: 3, money: -20, deterrence: -2 },
+        setFlags: { komi_aided: true },
+        condition: (s) => s.flags.reformer
+      }
+    ]
+  },
+
+  {
+    id: 'ev_omsk_black_league',
+    turn: { year: 1971, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '鄂木斯克的地下城',
+    body: `<p>在乌拉尔以东的草原上，<strong>鄂木斯克</strong>正在变成一座坟墓——一座活着的坟墓。</p>
+    <p><em>德米特里·卡尔贝舍夫</em>将军，一位曾在战俘营中被折磨至残的老兵，建立了一个名为"<strong>黑色联盟</strong>"的组织。他们的意识形态简单到令人战栗：俄罗斯已经死了，唯一的救赎，是用核武器把德国一同埋葬。</p>
+    <p>为了这个目标，黑色联盟在鄂木斯克地下挖掘了一座庞大的地铁隧道网络——<em>深达数十米</em>，足以抵御帝国最猛烈的核打击。隧道里储藏着罐头、药品、武器，以及数千名被训练成"复仇工具"的年轻人。他们在地下操练，在地下生育，在地下等待那一天——"大审判日"。</p>
+    <p>卡尔贝舍夫的副官说：将军每天都会凝视一张柏林的照片，然后说同一句话——"<em>我们会在那里相见。</em>"</p>`,
+    choices: [
+      {
+        text: '加强情报监控黑色联盟',
+        desc: '+核威慑 -资金',
+        effects: { nukeDeter: 8, money: -40, research: 5, stability: -2 },
+        setFlags: { black_league_known: true }
+      },
+      {
+        text: '先发制人，空袭鄂木斯克',
+        desc: '高风险军事行动',
+        effects: { militaryPower: 6, money: -60, manpower: -20, stability: -5, deterrence: -6 },
+        setFlags: { omsk_bombed: true },
+        condition: (s) => s.flags.militarist
+      },
+      {
+        text: '无视，认为他们成不了气候',
+        desc: '致命的轻敌',
+        effects: { stability: 1, nukeDeter: -5 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_sverdlovsk_rokossovsky',
+    turn: { year: 1971, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '乌拉尔的元帅',
+    body: `<p>在斯维尔德洛夫斯克（叶卡捷琳堡），<em>康斯坦丁·罗科索夫斯基</em>元帅建立了一个军政府。</p>
+    <p>这位波兰裔的苏联元帅曾在古拉格中幸存，又在德国战俘营中九死一生。如今他穿着褪色的军装，坐在乌拉尔山的脚下，试图重建一支"真正的红军"。他的士兵们称呼他为"<strong>父亲</strong>"——不是出于恐惧，而是出于敬意。</p>
+    <p>罗科索夫斯基不谈意识形态，只谈秩序与胜利。他收容逃亡者，训练新兵，修筑工事。他的目标清晰而务实：先把乌拉尔山以西的俄罗斯统一，然后——然后才考虑那场对德国的复仇。</p>`,
+    choices: [
+      {
+        text: '密切监视乌拉尔方向',
+        desc: '+军事',
+        effects: { militaryPower: 4, money: -20, research: 2 }
+      },
+      {
+        text: '加强东方总督辖区防务',
+        desc: '防御升级',
+        effects: { militaryPower: 7, money: -45, manpower: -8 },
+        setFlags: { ural_defense_up: true }
+      },
+      {
+        text: '通过中间人试探和谈',
+        desc: '外交尝试',
+        effects: { stability: -2, money: -15, deterrence: -3 },
+        condition: (s) => s.flags.reformer
+      }
+    ]
+  },
+
+  {
+    id: 'ev_tomsk_scholar_republic',
+    turn: { year: 1972, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '学者们的乌托邦',
+    body: `<p>在西伯利亚的腹地，<strong>托木斯克</strong>成了一个奇怪的存在。</p>
+    <p>这里没有军阀，没有强人，只有一群<em>学者</em>。战前大学的幸存者们组织了一个"人文党"，建立了一个他们称为"学者共和国"的政权。宪法由哲学家起草，议会由教授组成，政策基于统计与辩论而非枪杆子。</p>
+    <p>他们尝试一种乌托邦式的社会主义——保留集体所有制，但拒绝暴力专政；保障言论自由，但要求公民接受基础教育。在俄罗斯的废墟上，这听起来像个笑话。但托木斯克的工厂确实在运转，学校确实在开学，孩子确实在学数学而不是射击。</p>
+    <p>有人说这是俄罗斯的另一种可能——一种从未被允许长大的可能。</p>`,
+    choices: [
+      {
+        text: '派遣学者交流',
+        desc: '+研发',
+        effects: { research: 6, stability: 2, money: -10 },
+        setFlags: { tomsk_exchange: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '嘲讽这种"幼稚"',
+        desc: '意识形态优越',
+        effects: { stability: 1, deterrence: 1 }
+      },
+      {
+        text: '渗透间谍窃取科研成果',
+        desc: '阴险的窃取',
+        effects: { research: 5, money: -20, stability: -2 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_siberian_black_army',
+    turn: { year: 1972, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '西伯利亚的自由领土',
+    body: `<p>在叶尼塞河与勒拿河之间的广袤森林里，一面<strong>黑旗</strong>升起来了。</p>
+    <p><em>西伯利亚黑军</em>——一群无政府主义者——宣布建立"自由领土"。他们没有政府，没有税收，没有警察。决策由村庄公社的露天大会做出，军队由志愿民兵组成，指挥官由选举产生并可随时罢免。</p>
+    <p>这听起来荒唐，但它居然运作起来了。自由领土的农民开垦了西伯利亚的黑土，合作社生产出足够的粮食养活自己，甚至还有剩余卖给过往的商队。他们既不进攻别人，也不允许别人进攻自己——任何试图征服他们的军阀，都会在森林里迷失、挨饿、被游击队一点点吃掉。</p>
+    <p>帝国情报机关对此感到困惑：该如何对付一个<em>没有首脑</em>可以斩的敌人？</p>`,
+    choices: [
+      {
+        text: '研究这种"无国家"现象',
+        desc: '+研发',
+        effects: { research: 4, money: -5 }
+      },
+      {
+        text: '支持邻近军阀剿灭他们',
+        desc: '消灭异端',
+        effects: { money: -25, deterrence: 3, stability: 1 },
+        setFlags: { black_army_targeted: true }
+      },
+      {
+        text: '无视',
+        desc: '不值得关注',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_magadan_warlord',
+    turn: { year: 1973, quarter: 1 },
+    once: true,
+    tag: 'minor',
+    title: '极东的投机者',
+    body: `<p>在鄂霍次克海冰冷的岸边，<strong>马加丹</strong>——前古拉格的转运港——落入了投机者之手。</p>
+    <p>这些军阀大多是前劳改营的犯人或看守，他们趁乱夺取了港口与金矿，建立起一个个短命而腐败的小政权。他们与日本暗中贸易，出卖西伯利亚的黄金与木材，换取日本的烈酒、香烟和武器。</p>
+    <p>没有理想，没有旗帜，只有赤裸裸的生存与贪婪。这就是马加丹。</p>`,
+    choices: [
+      {
+        text: '利用马加丹走私情报',
+        desc: '+研发 -资金',
+        effects: { research: 3, money: -15, stability: -1 }
+      },
+      {
+        text: '无视这片冻土',
+        desc: '不值一提',
+        effects: { stability: 1 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_amur_white_army',
+    turn: { year: 1973, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '黑龙江畔的白军',
+    body: `<p>在阿穆尔河（黑龙江）以北，<em>白色</em>重新成了旗帜的颜色。</p>
+    <p><strong>阿穆尔白军</strong>——由日本关东军扶植的沙俄旧部残党——建立了一个反共的军事独裁政权。他们的"首领"自称继承了高尔察克的衣钵，挂着双头鹰的徽章，在哈尔滨与海参崴之间巡逻。</p>
+    <p>这是一具行走的尸体。白军的"俄国"没有民众基础，全靠日本的军刀维持。他们仇恨一切红色——包括WRRF、罗科索夫斯基、甚至托木斯克的学者。而他们的"爱国主义"，本质上是对日本主子的谄媚。</p>
+    <p>但他们的电台依然在广播，他们的旗帜依然在飘——一面已经褪色了半个世纪的旗。</p>`,
+    choices: [
+      {
+        text: '利用白军刺探日本情报',
+        desc: '+研发',
+        effects: { research: 3, money: -10, stability: -1 }
+      },
+      {
+        text: '与日本争夺对白军的影响',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 5, money: -35, stability: -2 },
+        setFlags: { amur_contested: true }
+      },
+      {
+        text: '无视',
+        desc: '不值一提',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_chita_monarchist',
+    turn: { year: 1974, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '赤塔的沙皇',
+    body: `<p>在外贝加尔的草原上，<em>米哈伊尔二世</em>加冕了。</p>
+    <p>这位自称罗曼诺夫家族继承人的男子——究竟是不是真正的皇室血统，没人说得清——在赤塔的一座东正教堂里戴上了用黄铜仿制的皇冠。他宣称要"复辟沙皇俄国，恢复东正教的祖国"，并得到一批哥萨克与保皇派军官的拥护。</p>
+    <p>他的"帝国"穷困、偏远、半游牧，但仪式感十足。宫廷里恢复了旧俄的官职，军队穿着仿19世纪的军装，教堂的钟声每天为"沙皇"祈祷。有人说这是俄罗斯灵魂的回归，也有人说这只是一个疯子的cosplay。</p>`,
+    choices: [
+      {
+        text: '观察这个"沙皇"',
+        desc: '+研发',
+        effects: { research: 2, money: -5 }
+      },
+      {
+        text: '嘲弄其合法性',
+        desc: '意识形态宣传',
+        effects: { stability: 2, deterrence: 1 }
+      },
+      {
+        text: '秘密联络，作为潜在筹码',
+        desc: '阴险的外交',
+        effects: { money: -15, stability: -2, research: 2 },
+        setFlags: { chita_contact: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_buryat_sablin',
+    turn: { year: 1974, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '贝加尔湖畔的理想主义者',
+    body: `<p>在贝加尔湖东岸的布里亚特，发生了一件让所有老谋深算的军阀都感到困惑的事。</p>
+    <p><em>瓦列里·萨布林</em>——一个<strong>年仅23岁</strong>的青年——发动了一场兵变，夺取了乌兰乌德的控制权。他宣布建立"布里亚特自由苏维埃"，并发表了一份长达三小时的广播，痛斥苏联的堕落、官僚的腐化、和"用红旗包装的暴政"。</p>
+    <p>萨布林相信一种纯粹的、温和的、自由的共产主义——没有秘密警察，没有古拉格，没有特权阶层。他的口号是"<em>给社会主义一颗心</em>"。</p>
+    <p>所有人都认为这个年轻人活不过三个月。但他活下来了。他的士兵们——许多和他一样年轻——愿意为这个理想赴死。布里亚特的农民送来粮食，牧民送来马匹，甚至一些老布尔什维克也流着泪加入了他的队伍。</p>
+    <p>萨布林或许会失败，或许会被绞死。但在他活着的日子里，他证明了：即使在最黑暗的废墟上，<strong>理想</strong>依然能够燃烧。</p>`,
+    choices: [
+      {
+        text: '密切关注这个"疯子"',
+        desc: '+研发 -资金',
+        effects: { research: 4, money: -10, stability: -1 }
+      },
+      {
+        text: '支持邻近军阀剿灭他',
+        desc: '扼杀异端',
+        effects: { money: -30, deterrence: 3, stability: 1 },
+        setFlags: { sablin_targeted: true }
+      },
+      {
+        text: '通过秘密渠道表达"敬意"',
+        desc: '罕见的姿态',
+        effects: { stability: -2, money: -10, research: 2 },
+        condition: (s) => s.flags.reformer
+      }
+    ]
+  },
+
+  {
+    id: 'ev_irktusk_yagoda',
+    turn: { year: 1975, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '伊尔库茨克的旧影',
+    body: `<p>在贝加尔湖以西，<strong>伊尔库茨克</strong>笼罩在一片陈旧的恐惧中。</p>
+    <p>统治这里的，是<em>根里克·雅戈达</em>——前NKVD的头子，斯大林大清洗的执行者之一。这位老人奇迹般地在乱世中存活下来，并聚集了一批前秘密警察，建立了一个被称作"内务人民委员部国家"的政权。</p>
+    <p>雅戈达的"国家"是一个巨大的监狱。每个公民都是嫌疑犯，每个邻人都是线人，每个夜晚都可能伴随敲门声。他的特工遍布西伯利亚，暗杀异见者，渗透敌对军阀。他宣称自己在"保卫社会主义"，但所有人都知道——他保卫的，只是<em>自己的权力与过去的罪行</em>。</p>`,
+    choices: [
+      {
+        text: '利用雅戈达的特工网络',
+        desc: '+研发 -稳定',
+        effects: { research: 4, stability: -3, money: -15 },
+        setFlags: { yagoda_cooperation: true }
+      },
+      {
+        text: '与雅戈达划清界限',
+        desc: '道义之举',
+        effects: { stability: 2, deterrence: -2 },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '无视这个腐朽的政权',
+        desc: '不值得关注',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_kemerovo_rurik',
+    turn: { year: 1975, quarter: 3 },
+    once: true,
+    tag: 'minor',
+    title: '克麦罗沃的疯王',
+    body: `<p>在西西伯利亚的煤矿区，<strong>克麦罗沃</strong>出了一个奇怪的统治者。</p>
+    <p>一个自称<em>留里克二世</em>的男子——他声称自己是基辅罗斯留里克王朝的直系后裔——在煤矿的废墟上加冕为"全俄罗斯沙皇"。他穿着从剧院借来的戏服，佩戴着玻璃仿制的王冠，身边围绕着一群同样喝醉的"波雅尔"。</p>
+    <p>这听起来像个笑话，但这个"疯王"居然维持了几年秩序。他用中世纪的词汇治理现代的煤矿，把矿工封为"农奴"，把工头封为"骑士"。产量居然还提高了——或许是因为没有人敢违抗一个真正相信自己就是沙皇的疯子。</p>`,
+    choices: [
+      {
+        text: '把这当作笑话传播',
+        desc: '+稳定',
+        effects: { stability: 2, research: 1 }
+      },
+      {
+        text: '无视',
+        desc: '不值一提',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_vyatka_monarchy',
+    turn: { year: 1976, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '维亚特卡的复辟',
+    body: `<p>在卡马河上游的森林中，<strong>维亚特卡</strong>升起了一面正经的沙皇旗。</p>
+    <p>与赤塔的"疯王"不同，这里的复辟势力由一群严肃的保皇派军官和贵族组成。他们拥立了一位据信有罗曼诺夫血统的继承人，建立了正规的宫廷、军队与教会体系。这位"沙皇"清醒、虔诚、克制，每周禁食两次，每天亲理政务。</p>
+    <p>维亚特卡的君主主义者宣称：俄罗斯之所以沦落到今日，正是因为背弃了沙皇与上帝。回归正教与正统，是唯一的救赎。他们的军队纪律严明，他们的领地相对富庶——但他们的思想，停留在1917年。</p>`,
+    choices: [
+      {
+        text: '研究这个"正经的复辟"',
+        desc: '+研发',
+        effects: { research: 3, money: -5 }
+      },
+      {
+        text: '加强情报渗透',
+        desc: '+威慑',
+        effects: { deterrence: 3, money: -20, stability: 1 }
+      },
+      {
+        text: '无视',
+        desc: '不值一提',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_samara_vlasov',
+    turn: { year: 1976, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '萨马拉的叛军',
+    body: `<p>在伏尔加河中游，<strong>萨马拉</strong>成了一个令帝国尴尬的存在。</p>
+    <p>统治这里的，是<em>安德烈·弗拉索夫</em>将军和他那支"俄罗斯解放军"——一支在二战中为德国作战的俄奸部队。如今，他们的德国主子已经无力东顾，弗拉索夫便在萨马拉自立为王，建立了一个亲德的、反共的、被所有俄罗斯人唾弃的政权。</p>
+    <p>弗拉索夫的军队装备精良（用的都是帝国淘汰的武器），但士气低落。每个俄罗斯军阀都视他为叛徒，每个农民都视他为走狗。他靠着高压统治和德国的远程支援勉强维生，但所有人都知道——一旦德国断奶，他的政权会在一周内崩塌。</p>
+    <p>帝国是否还要继续供养这条已经没有牙齿的狗？</p>`,
+    choices: [
+      {
+        text: '继续支援弗拉索夫',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 4, money: -40, stability: -2 },
+        setFlags: { vlasov_supported: true }
+      },
+      {
+        text: '断绝支援，让他自生自灭',
+        desc: '止损',
+        effects: { money: 20, deterrence: -5, stability: 2 },
+        setFlags: { vlasov_abandoned: true }
+      },
+      {
+        text: '秘密策反其部下',
+        desc: '阴险的渗透',
+        effects: { research: 3, money: -15, stability: -1 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_aryan_brotherhood',
+    turn: { year: 1977, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '崇拜仇敌的人',
+    body: `<p>在彼得罗扎沃茨克附近的森林里，出现了一个让所有俄罗斯军阀都感到恶心的势力——<strong>雅利安兄弟会</strong>。</p>
+    <p>这是一群俄罗斯人——一群<em>崇拜纳粹</em>的俄罗斯人。他们剃光头，纹上卐字，穿着仿制的党卫军制服，用德语诵读《我的奋斗》。他们宣称：斯拉夫人是劣等民族，理应被优秀种族统治；而他们的"使命"，是帮助德国彻底征服俄罗斯，"净化"这片土地。</p>
+    <p>这是何等的荒诞——一群人，跪着请求屠刀落下，恳求刽子手把他们自己也杀掉。他们甚至派出使者前往帝国，请求"加入"党卫军。帝国的官员们面面相觑，不知该接收这群可悲的疯子，还是把他们一并送进焚尸炉。</p>
+    <p>仇恨可以孕育反抗，也可以孕育<em>对仇恨者的崇拜</em>。这是俄罗斯废墟上最可悲的一种病症。</p>`,
+    choices: [
+      {
+        text: '利用他们作为反俄宣传工具',
+        desc: '阴险的利用',
+        effects: { deterrence: 3, stability: -4, money: -10 },
+        setFlags: { aryan_brotherhood_used: true }
+      },
+      {
+        text: '拒绝与他们往来',
+        desc: '划清界限',
+        effects: { stability: 2, deterrence: -1 },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '把他们当作笑话',
+        desc: '冷嘲热讽',
+        effects: { stability: 1, research: 1 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_ural_border_war',
+    turn: { year: 1977, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '乌拉尔的炮声',
+    body: `<p>乌拉尔山——那条分割欧亚的脊梁——成了一道流血的伤口。</p>
+    <p>帝国的<strong>东方总督辖区</strong>与西伯利亚的俄罗斯军阀们在山脉两侧对峙已久。1977年夏，一支俄罗斯游击队越过分界线，袭击了叶卡捷琳堡（帝国称"斯维尔德洛夫斯克"）以东的一个德军哨所，杀死了12名士兵。</p>
+    <p>帝国随即展开报复性扫荡，炮击了山另一侧的几个村庄。俄罗斯军阀则调动正规军进入山区，与帝国守军发生了小规模交火。局势迅速升级——双方都在边境增兵，一场局部冲突有可能演变成全面战争。</p>`,
+    choices: [
+      {
+        text: '增援东方总督辖区',
+        desc: '+军事 -资金',
+        effects: { militaryPower: 8, money: -50, manpower: -12, deterrence: 4 },
+        setFlags: { ural_war_escalated: true }
+      },
+      {
+        text: '寻求停火谈判',
+        desc: '+稳定 -威慑',
+        effects: { stability: 5, deterrence: -4, money: -10 },
+        setFlags: { ural_ceasefire: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '使用化学武器清剿山区',
+        desc: '残酷的报复',
+        effects: { militaryPower: 4, stability: -6, manpower: -5, deterrence: -3 },
+        setFlags: { ural_chemical: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_russia_superregional_war',
+    turn: { year: 1978, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '俄罗斯的决战',
+    body: `<p>1978年，俄罗斯各地的"区域统一者"开始了一场决定命运的厮杀。</p>
+    <p>西部的WRRF、中部的科米、东部的罗科索夫斯基、南部的萨布林与雅戈达——这些已经统一了自己所在区域的强权，开始向彼此的领地推进。乌拉尔山两侧炮火连天，西伯利亚的铁路线上挤满了运兵列车，伏尔加河上的桥梁被反复炸毁又反复修复。</p>
+    <p>这场"超级区域战争"将决定俄罗斯的命运——谁将统一这片破碎的大地？是北方的红旗，是科米的民主，是乌拉尔的军政府，还是贝加尔湖畔那个23岁青年的理想？</p>
+    <p>帝国屏息凝神地注视着东方。一个统一的俄罗斯，将是帝国最可怕的噩梦。</p>`,
+    choices: [
+      {
+        text: '全力支援东方总督辖区防御',
+        desc: '+军事 -资金',
+        effects: { militaryPower: 10, money: -70, manpower: -15, deterrence: 5 },
+        setFlags: { russia_war_german_intervened: true }
+      },
+      {
+        text: '秘密资助某个代理人',
+        desc: '阴险的棋局',
+        effects: { money: -40, deterrence: 2, stability: -2, research: 3 },
+        setFlags: { russia_proxy_war: true }
+      },
+      {
+        text: '加强边境，静观其变',
+        desc: '防御优先',
+        effects: { militaryPower: 5, money: -30, stability: 2 },
+        setFlags: { russia_war_observed: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_tabortsy_purge',
+    turn: { year: 1978, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '神权恐怖',
+    body: `<p>科米那盏微弱的民主之灯，<em>熄灭了</em>。</p>
+    <p>极端派——一个名为"<strong>激情阵线</strong>"的神权运动——在科米的混乱中夺取了政权。他们的领袖，<em>谢尔盖·塔博里茨基</em>，是一个坚信沙皇太子阿列克谢仍然活着的疯子。他宣称自己受命于"复活的太子"，要在俄罗斯建立政教合一的"神圣帝国"。</p>
+    <p>塔博里茨基的统治是纯粹的恐怖。异见者被钉死在教堂门前，"异端"的村庄被烧成白地，知识分子被成批处决。他恢复了中世纪的酷刑，并宣称这一切都是"为太子的归来净化俄罗斯"。</p>
+    <p>整个俄罗斯都在颤抖——连那些最冷酷的军阀，也无法理解这种以神之名实施的疯狂。帝国情报机关甚至开始担心：如果这种狂热蔓延到东方总督辖区的俄罗斯裔人口……</p>`,
+    choices: [
+      {
+        text: '加强边境封锁',
+        desc: '+军事 -资金',
+        effects: { militaryPower: 6, money: -35, stability: 2, deterrence: 2 },
+        setFlags: { tabortsy_contained: true }
+      },
+      {
+        text: '秘密资助反塔博里茨基势力',
+        desc: '铲除疯子',
+        effects: { money: -50, stability: 3, research: 2, deterrence: -2 },
+        setFlags: { tabortsy_opposed: true }
+      },
+      {
+        text: '无视，认为疯子会自我毁灭',
+        desc: '冷眼旁观',
+        effects: { stability: -3, deterrence: -1 }
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 全球事件链（1975-1995）
+   * =========================================================== */
+
+  {
+    id: 'ev_south_african_war',
+    turn: { year: 1975, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '好望角的硝烟',
+    body: `<p>1975年，南非成了三极冷战的第一个真正战场。</p>
+    <p>帝国的南非总督辖区（前南非白人政权）面临着非洲人国民大会的武装起义。OFN（自由国家组织，以美国为首）秘密向ANC提供武器与资金；日本则试图趁机在印度洋沿岸扩大影响；而帝国本身，则把南非视作通往印度洋的战略跳板。</p>
+    <p>从开普敦到约翰内斯堡，游击战、空袭、暗杀、种族屠杀交织在一起。ANC的战士在丛林里接受OFN训练，帝国的雇佣兵在城镇里搜捕"恐怖分子"，日本的商船则在德班港卸下一箱箱标着"医疗物资"的步枪。</p>
+    <p>这是一场没有宣战的战争——一场用代理人打的世界大战。</p>`,
+    choices: [
+      {
+        text: '增派雇佣兵与装备',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 8, money: -60, manpower: -15, militaryPower: 4 },
+        setFlags: { south_africa_intervened: true }
+      },
+      {
+        text: '与OFN秘密谈判，划分势力',
+        desc: '+稳定 -威慑',
+        effects: { stability: 5, deterrence: -4, money: -20 },
+        setFlags: { south_africa_negotiated: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '使用化学武器清剿起义区',
+        desc: '残酷的镇压',
+        effects: { militaryPower: 5, stability: -7, manpower: -8, deterrence: -3 },
+        setFlags: { south_africa_chemical: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_indonesian_independence',
+    turn: { year: 1976, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '香料群岛的怒火',
+    body: `<p>荷属东印度的残局，终于在1976年引爆。</p>
+    <p>帝国在战后接管了荷兰的东南亚殖民地，但统治从未稳固。苏门答腊与爪哇的独立运动潜伏了二十年，如今趁着帝国注意力分散，发动了全面起义。<em>印度尼西亚共和国</em>在日惹宣布成立，游击队控制了广大乡村。</p>
+    <p>日本试图拉拢这个新生的共和国进入共荣圈；OFN则许诺承认与援助。帝国面临选择：是投入巨资镇压，还是体面地撤退？</p>`,
+    choices: [
+      {
+        text: '增兵镇压起义',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 5, money: -50, manpower: -12, militaryPower: 3 },
+        setFlags: { indonesia_suppressed: true }
+      },
+      {
+        text: '允许有限自治',
+        desc: '+稳定 -威慑',
+        effects: { stability: 4, deterrence: -3, money: -10 },
+        setFlags: { indonesia_autonomy: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '撤出，让日本去头疼',
+        desc: '止损',
+        effects: { money: 20, deterrence: -6, stability: 2 },
+        setFlags: { indonesia_abandoned: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_indian_civil_war',
+    turn: { year: 1977, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '次大陆的撕裂',
+    body: `<p>印度——那个被三极瓜分的次大陆——在1977年陷入了全面内战。</p>
+    <p>帝国支持的印度自治领（西北部）、日本扶植的自由印度政府（东部）、以及OFN暗中援助的印度共和国（南部）——三方势力在恒河平原上厮杀。数百万难民在饥荒与战火中流离失所，加尔各答成了人间地狱，德里的废墟再次被炮火覆盖。</p>
+    <p>三极各自押注自己的代理人，谁也不敢直接出兵——因为这意味着另外两极的介入。这是一场完美的代理人战争，也是一场完美的人道灾难。</p>`,
+    choices: [
+      {
+        text: '加大对印度自治领的支援',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 6, money: -55, militaryPower: 3, stability: -2 },
+        setFlags: { india_proxy_german: true }
+      },
+      {
+        text: '推动三方停火谈判',
+        desc: '+稳定 -威慑',
+        effects: { stability: 6, deterrence: -3, money: -20 },
+        setFlags: { india_ceasefire: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '趁乱掠夺印度文物与资源',
+        desc: '冷血的牟利',
+        effects: { money: 30, stability: -4, deterrence: -2 },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_brazil_economic_miracle',
+    turn: { year: 1978, quarter: 1 },
+    once: true,
+    tag: 'minor',
+    title: '南美的经济奇迹',
+    body: `<p>当旧大陆在废墟上喘息时，<strong>巴西</strong>正在创造一个奇迹。</p>
+    <p>OFN庇护下的巴西经历了十年高速增长——钢铁厂在亚马逊河口拔地而起，汽车工业突飞猛进，里约热内卢的摩天大楼比柏林的还高。巴西成了OFN在南美的支柱，也是帝国商品在国际黑市上的强劲对手。</p>
+    <p>帝国的经济学家忧心忡忡：一个强大的巴西，意味着OFN的资源更加充裕，也意味着帝国面临的竞争更加激烈。</p>`,
+    choices: [
+      {
+        text: '加强与南美亲德势力的联系',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 3, money: -25, research: 2 }
+      },
+      {
+        text: '窃取巴西的工业技术',
+        desc: '+研发 -稳定',
+        effects: { research: 5, stability: -2, money: -10 }
+      },
+      {
+        text: '无视',
+        desc: '不值一提',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_argentina_dirty_war',
+    turn: { year: 1979, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '银之河的肮脏战争',
+    body: `<p>阿根廷的军政府发动了一场"<strong>肮脏战争</strong>"。</p>
+    <p>布宜诺斯艾利斯的军政府对左翼反对派展开了系统性清洗——学生、工会分子、记者、甚至单纯的同情者，都在深夜被带走，消失在拉普拉塔河的暗流中。官方称他们"失踪"了，但所有人都知道，失踪意味着死亡。</p>
+    <p>帝国与阿根廷军政府关系暧昧——既想拉拢这个南美大国，又不愿公开支持这种赤裸的暴行。OFN则在人道层面谴责，但暗中同样不愿左翼在拉美坐大。</p>`,
+    choices: [
+      {
+        text: '暗中支持军政府',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 4, stability: -3, money: -15 },
+        setFlags: { argentina_supported: true }
+      },
+      {
+        text: '谴责暴行',
+        desc: '+稳定 -威慑',
+        effects: { stability: 3, deterrence: -2 },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '袖手旁观',
+        desc: '事不关己',
+        effects: { stability: 0 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_oil_crisis_1979',
+    turn: { year: 1979, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '黑金的诅咒',
+    body: `<p>1979年，中东的动荡引发了全球性的<strong>石油危机</strong>。</p>
+    <p>帝国控制下的波斯湾油田发生罢工与破坏活动，产量锐减。与此同时，OFN支持的阿拉伯民族主义者在伊拉克与科威特发动起义，破坏输油管道。油价在三个月内翻了三倍——帝国的工业机器第一次尝到了能源短缺的滋味。</p>
+    <p>加油站前排起长队，工厂被迫减产，通货膨胀吞噬了中产阶级的积蓄。奴隶制经济在劳动力上无忧，但在能源上，第一次显露出脆弱。</p>`,
+    choices: [
+      {
+        text: '出兵镇压中东起义',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 6, money: -60, manpower: -12, militaryPower: 4 },
+        setFlags: { middle_east_intervened: true }
+      },
+      {
+        text: '开发替代能源',
+        desc: '+研发 -资金',
+        effects: { research: 8, money: -45, stability: -2 }
+      },
+      {
+        text: '与OFN协调能源供应',
+        desc: '+稳定 -威慑',
+        effects: { stability: 4, deterrence: -3, money: -10 },
+        condition: (s) => s.flags.reformer
+      }
+    ]
+  },
+
+  {
+    id: 'ev_iranian_revolution',
+    turn: { year: 1980, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '波斯的怒吼',
+    body: `<p>帝国扶植的伊朗傀儡政权，在1980年轰然倒塌。</p>
+    <p>德黑兰的街头挤满了人群——伊斯兰教士、左翼学生、民族主义者、被剥夺土地的农民——他们共同反对那个腐败而亲德的"沙阿"。帝国派去的顾问被愤怒的人群拖出使馆，几名士兵被私刑处死。</p>
+    <p>一个新的<strong>伊斯兰共和国</strong>在德黑兰宣布成立。它既反帝国，也反OFN，也反日本——它宣称要"驱逐一切外国势力"，恢复波斯的独立与尊严。</p>
+    <p>波斯湾北岸的油田，一夜之间从帝国的资产变成了敌人的武器。</p>`,
+    choices: [
+      {
+        text: '军事干预，扶植新傀儡',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 7, money: -70, manpower: -15, militaryPower: 5, stability: -3 },
+        setFlags: { iran_intervened: true }
+      },
+      {
+        text: '承认新政权，寻求外交关系',
+        desc: '+稳定 -威慑',
+        effects: { stability: 5, deterrence: -5, money: -10 },
+        setFlags: { iran_recognized: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '秘密资助反新政权的部族',
+        desc: '阴险的颠覆',
+        effects: { money: -35, deterrence: 2, stability: -2 },
+        setFlags: { iran_undermined: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_lebanon_civil_war',
+    turn: { year: 1980, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '雪松之国的崩塌',
+    body: `<p>黎巴嫩——那个曾被称为"中东瑞士"的小国——在内战中支离破碎。</p>
+    <p>基督教马龙派、逊尼派、什叶派、德鲁兹派、巴勒斯坦难民——各方势力在贝鲁特的废墟中厮杀。帝国支持基督教派以维持在地中海东岸的影响；OFN则暗中援助穆斯林派别；以色列的情报机构也在幕后操纵。</p>
+    <p>贝鲁特曾经是中东最繁华的港口，如今成了分裂的城市——东西两区由不同的民兵控制，狙击手在十字路口潜伏，任何一辆过路的车都可能成为目标。</p>`,
+    choices: [
+      {
+        text: '支持基督教派',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 4, money: -30, stability: 1 },
+        setFlags: { lebanon_christian: true }
+      },
+      {
+        text: '推动和谈',
+        desc: '+稳定 -威慑',
+        effects: { stability: 4, deterrence: -2, money: -15 },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '袖手旁观',
+        desc: '事不关己',
+        effects: { stability: -1, deterrence: -1 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_somali_ethiopian_war',
+    turn: { year: 1981, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '非洲之角的战争',
+    body: `<p>索马里与埃塞俄比亚因欧加登地区的归属爆发了战争。</p>
+    <p>这是一场典型的代理人战争——索马里背后是日本与某些阿拉伯国家，埃塞俄比亚背后则是帝国与OFN。两国都在非洲之角争夺战略要地与红海航线的控制权。坦克在干旱的草原上推进，空袭摧毁了为数不多的城镇，饥荒跟随战火蔓延。</p>`,
+    choices: [
+      {
+        text: '支援埃塞俄比亚',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 4, money: -35, militaryPower: 2 },
+        setFlags: { ethiopia_supported: true }
+      },
+      {
+        text: '调停停火',
+        desc: '+稳定 -威慑',
+        effects: { stability: 4, deterrence: -2, money: -10 },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '出售武器给双方牟利',
+        desc: '+资金 -稳定',
+        effects: { money: 25, stability: -4, deterrence: -2 }
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 科技与文化事件（1970-1995）
+   * =========================================================== */
+
+  {
+    id: 'ev_german_internet',
+    turn: { year: 1975, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '帝国数据网',
+    body: `<p>1975年，帝国的科学家们完成了一项划时代的工程——<strong>帝国数据网</strong>（Reichsdatennetz）。</p>
+    <p>从日耳曼尼亚到慕尼黑，从汉堡到维也纳，一台台庞大的计算机通过电话线连接起来，能够在数小时内传输过去需要数周才能送达的数据。帝国的军政机关第一次拥有了"实时"的神经中枢。</p>
+    <p>但这项技术引发了激烈的争论。改革派希望将网络开放给大学与企业，认为这能极大促进创新；保守派担忧信息自由流动会动摇统治；军国派则坚持网络必须为军事服务，绝不能落入民间。</p>
+    <p>一个决定，将定义帝国下一个时代的形态。</p>`,
+    choices: [
+      {
+        text: '开放网络给民用',
+        desc: '+研发 +资金 -稳定',
+        effects: { research: 10, money: 20, stability: -4 },
+        setFlags: { internet_open: true },
+        showToast: '帝国的数据网向民间开放，创新的火种被点燃'
+      },
+      {
+        text: '严格管控网络',
+        desc: '+稳定 -研发',
+        effects: { stability: 5, research: 3, money: -10 },
+        setFlags: { internet_controlled: true }
+      },
+      {
+        text: '网络军事专用',
+        desc: '+军事 +核威慑 -研发',
+        effects: { militaryPower: 6, nukeDeter: 5, research: -3, money: -30 },
+        setFlags: { internet_military: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_personal_computer',
+    turn: { year: 1980, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '桌面上的革命',
+    body: `<p>1980年，<strong>个人电脑</strong>开始走入帝国中产家庭。</p>
+    <p>OFN的"苹果"与"IBM"早已掀起浪潮，帝国不甘落后，推出了自己的家用电脑——"西门子家用终端"。它笨重、昂贵、操作复杂，但能做文书、记账、甚至玩简单的游戏。</p>
+    <p>这项技术的普及速度超出所有人预料。年轻一代迅速掌握了它，黑市上开始流通OFN产的软件与游戏。帝国的审查机关第一次面临一个无法完全控制的媒介——代码可以藏在磁盘里，思想可以随软盘传播。</p>`,
+    choices: [
+      {
+        text: '鼓励国产个人电脑发展',
+        desc: '+研发 +资金 -稳定',
+        effects: { research: 7, money: 15, stability: -3 },
+        setFlags: { pc_encouraged: true }
+      },
+      {
+        text: '审查所有软件与磁盘',
+        desc: '+稳定 -研发',
+        effects: { stability: 4, research: 1, money: -15 },
+        setFlags: { pc_censored: true }
+      },
+      {
+        text: '只允许党政机关使用',
+        desc: '+稳定 -研发 -资金',
+        effects: { stability: 3, research: -2, money: -10 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_space_race_mars',
+    turn: { year: 1985, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '红色行星',
+    body: `<p>三极太空竞赛，从月球延伸到了<strong>火星</strong>。</p>
+    <p>帝国、OFN、日本——三方都在秘密研制载人火星任务。1962年的登月只是序章，真正的荣耀属于第一个踏上红色行星的人。帝国的"火星计划"由冯·布劳恩的继任者们主导，耗资相当于一个中等省份的年度预算。</p>
+    <p>1985年初，帝国宣布将在五年内发射载人火星飞船。OFN随即宣布自己的计划，日本也不甘落后。这是一场没有硝烟的战争——胜者将获得半个世纪的意识形态优势。</p>`,
+    choices: [
+      {
+        text: '倾全国之力赢得火星竞赛',
+        desc: '+威慑 +研发 -资金',
+        effects: { deterrence: 8, research: 12, money: -90, stability: -3 },
+        setFlags: { mars_race_committed: true },
+        showToast: '帝国将征服红色行星'
+      },
+      {
+        text: '与OFN合作火星计划',
+        desc: '+研发 +稳定 -威慑',
+        effects: { research: 8, stability: 4, deterrence: -4, money: -40 },
+        setFlags: { mars_cooperation: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '放弃载人火星，专注卫星军事化',
+        desc: '+军事 +核威慑 -研发',
+        effects: { militaryPower: 6, nukeDeter: 6, research: -2, money: -30 },
+        setFlags: { mars_military: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_genetic_engineering',
+    turn: { year: 1985, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '上帝的剪刀',
+    body: `<p>1985年，帝国的生物学家宣布掌握了<strong>基因编辑</strong>技术。</p>
+    <p>从改良农作物到治疗遗传病，这项技术前景广阔。但党卫军的"生命之泉"部门立刻嗅到了更黑暗的可能——"优化"日耳曼种族的基因，制造更强壮、更聪明、更"纯正"的雅利安人。</p>
+    <p>改革派与教会都表示担忧：人类是否有权篡改生命的密码？而军国派则看到了"超级士兵"的雏形。</p>`,
+    choices: [
+      {
+        text: '允许民用基因研究',
+        desc: '+研发 +资金 -稳定',
+        effects: { research: 7, money: 15, stability: -3 },
+        setFlags: { genetic_civil: true }
+      },
+      {
+        text: '秘密进行种族"优化"实验',
+        desc: '+稳定 -研发 -人力',
+        effects: { stability: 2, research: 4, manpower: -8, money: -40 },
+        setFlags: { genetic_eugenic: true },
+        condition: (s) => s.flags.militarist
+      },
+      {
+        text: '全面禁止基因研究',
+        desc: '+稳定 -研发',
+        effects: { stability: 4, research: -4, money: -5 },
+        setFlags: { genetic_banned: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_environmental_movement',
+    turn: { year: 1986, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '灰色的天空',
+    body: `<p>1986年，帝国的<strong>环境问题</strong>已经无法忽视。</p>
+    <p>鲁尔区的天空常年灰黄，莱茵河里再也找不到鱼，巴伐利亚的森林在酸雨中成片枯死。核事故的阴影、奴隶工厂的污染、无节制的资源开采——帝国的"经济奇迹"正在透支这片土地的未来。</p>
+    <p>一群年轻的学者与中产阶级开始组织"环境保护协会"，要求立法限制排放。这在帝国是前所未有的事——一个独立于党的民间组织。党卫军建议取缔，但改革派认为这或许是释放社会压力的安全阀。</p>`,
+    choices: [
+      {
+        text: '允许环保组织合法活动',
+        desc: '+稳定 -资金 +研发',
+        effects: { stability: 4, money: -25, research: 3 },
+        setFlags: { environmental_allowed: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '取缔环保组织',
+        desc: '+稳定 -研发',
+        effects: { stability: 2, research: -2, money: -5 },
+        setFlags: { environmental_banned: true }
+      },
+      {
+        text: '有限采纳环保建议',
+        desc: '+稳定 -资金',
+        effects: { stability: 3, money: -30, research: 1 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_chernobyl_equivalent',
+    turn: { year: 1986, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '易北河畔的熔毁',
+    body: `<p>1986年8月，帝国中部发生了一场比1970年更可怕的<strong>核灾难</strong>。</p>
+    <p>易北河畔的"帝国第九反应堆"在一次测试中失控，堆芯完全熔毁，爆炸掀开了反应堆大厅的屋顶。放射性物质随烟柱升至数千米高空，随风飘向整个中欧。易北河被污染，半个德意志的地下水面临威胁。</p>
+    <p>周边20公里被划为禁区，数十万人被迫永久撤离。帝国新闻署这次无法再隐瞒——辐射云已经飘到了法国与北欧，OFN的卫星照片传遍了世界。</p>
+    <p>这是帝国"科技至上"神话的破灭。民众第一次大规模地质疑：我们究竟被带到了哪里？</p>`,
+    choices: [
+      {
+        text: '公开全部信息，组织大规模疏散',
+        desc: '+稳定 -资金 -人力',
+        effects: { stability: 5, money: -90, manpower: -15, research: 4 },
+        setFlags: { chernobyl_disclosed: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '部分承认，淡化影响',
+        desc: '+稳定 -研发',
+        effects: { stability: 2, research: -3, money: -40, manpower: -20 },
+        setFlags: { chernobyl_downplayed: true }
+      },
+      {
+        text: '嫁祸勃艮第破坏',
+        desc: '阴险的转嫁',
+        effects: { stability: 3, deterrence: -5, manpower: -25, money: -50 },
+        setFlags: { chernobyl_blamed_burgundy: true, burgundy_tension: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 冷战终局事件（1985-2000）
+   * =========================================================== */
+
+  {
+    id: 'ev_german_economic_crisis_1985',
+    turn: { year: 1985, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '奴隶制的尽头',
+    body: `<p>1985年，帝国的<strong>奴隶制经济</strong>终于走到了尽头。</p>
+    <p>半个世纪以来，东方总督辖区的奴隶劳工撑起了帝国的工业大厦。但奴隶没有积极性，生产率逐年下降；维持奴隶起义镇压的成本逐年上升；国际黑市上，奴隶生产的劣质商品越来越难以与OFN竞争。更致命的是——东方的俄罗斯正在重新统一，奴隶来源正在枯竭。</p>
+    <p>帝国经济出现了第一次<strong>负增长</strong>。通货膨胀、物资短缺、工厂倒闭——曾经"千年"的经济，原来如此脆弱。</p>
+    <p>改革派说：是时候放弃了。保守派说：放弃奴隶制，帝国就不再是帝国。军国派说：抢更多的奴隶。</p>`,
+    choices: [
+      {
+        text: '启动渐进式经济改革',
+        desc: '+稳定 -资金 +研发',
+        effects: { stability: 5, money: -50, research: 6 },
+        setFlags: { economic_reform_started: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '强化镇压，维持现状',
+        desc: '+军事 -稳定 -资金',
+        effects: { militaryPower: 5, stability: -6, money: -30, manpower: -10 },
+        setFlags: { slavery_maintained: true }
+      },
+      {
+        text: '向东扩张，夺取新奴隶来源',
+        desc: '+军事 -资金 -稳定',
+        effects: { militaryPower: 6, money: -60, stability: -4, manpower: -15 },
+        setFlags: { eastern_expansion: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_reform_movement_1987',
+    turn: { year: 1987, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '改革的风',
+    body: `<p>1987年，一场<em>改革运动</em>在帝国高层涌动。</p>
+    <p>一批年轻的官僚与经济学家——受到OFN"新思维"思潮的影响——提出了一揽子改革方案：逐步废除奴隶制、引入市场机制、放松言论管控、与OFN进行战略对话。他们被称为"<strong>新改革派</strong>"，其领袖被暗中比作"帝国的戈尔巴乔夫"。</p>
+    <p>保守派惊恐万分，称这是"自杀"。军国派则暗中准备政变。而最高决策层——必须做出选择：是顺应历史，还是逆流而上？</p>`,
+    choices: [
+      {
+        text: '全力支持改革',
+        desc: '+稳定 +研发 -威慑',
+        effects: { stability: 6, research: 8, deterrence: -5, money: -30 },
+        setFlags: { reform_full: true, reform_path: true },
+        condition: (s) => s.flags.reformer || s.flags.economic_reform_started
+      },
+      {
+        text: '有限改革，平衡各方',
+        desc: '+稳定 -研发',
+        effects: { stability: 3, research: 2, deterrence: -2, money: -20 },
+        setFlags: { reform_limited: true }
+      },
+      {
+        text: '镇压改革派',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 5, stability: -7, money: -10 },
+        setFlags: { reform_crushed: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_berlin_wall_equivalent',
+    turn: { year: 1989, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '壁垒的松动',
+    body: `<p>1989年春，一道无形的<strong>柏林墙</strong>开始出现裂缝。</p>
+    <p>如果改革已经推进，那么帝国的边境管控开始放松——东方总督辖区与俄罗斯之间的人员往来增加，OFN与帝国之间的旅游限制放宽，甚至帝国公民第一次被允许自由收听外国广播。</p>
+    <p>日耳曼尼亚的街头出现了自发的人群，他们不是来抗议，而是来<em>讨论</em>——在公开场合，用真名实姓，讨论帝国的未来。这种景象在二十年前是不可想象的。</p>
+    <p>但保守派与军国派正在聚集。他们警告：放松控制就是自杀。一场反扑正在酝酿。</p>`,
+    choices: [
+      {
+        text: '进一步开放边境与言论',
+        desc: '+稳定 -威慑',
+        effects: { stability: 7, deterrence: -6, research: 4, money: -10 },
+        setFlags: { wall_opened: true },
+        condition: (s) => s.flags.reform_path || s.flags.reform_full
+      },
+      {
+        text: '维持现状，谨慎观察',
+        desc: '+稳定',
+        effects: { stability: 3, deterrence: -1 }
+      },
+      {
+        text: '重新收紧管控',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 4, stability: -5, money: -10 },
+        setFlags: { wall_reclosed: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_nuclear_disarmament',
+    turn: { year: 1989, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '核裁军的谈判桌',
+    body: `<p>1989年秋，三极代表第一次坐在了<strong>核裁军</strong>的谈判桌前。</p>
+    <p>地点选在苏黎世——一个中立得几乎可笑的城市。帝国、OFN、日本的外交官们面面相觑，桌上摆着各自核武库的清单。半个世纪的对峙让三方累积了足以毁灭地球数十次的核武器，而经济危机与改革浪潮让"缓和"第一次成为可能。</p>
+    <p>谈判艰难而漫长。每一枚导弹的削减都伴随着激烈的讨价还价。但至少——他们坐下来了。</p>`,
+    choices: [
+      {
+        text: '积极推进核裁军',
+        desc: '+稳定 -核威慑 +研发',
+        effects: { stability: 6, nukeDeter: -10, research: 4, money: 20 },
+        setFlags: { disarmament_advanced: true },
+        condition: (s) => s.flags.reform_path || s.flags.reform_full
+      },
+      {
+        text: '象征性削减',
+        desc: '+稳定',
+        effects: { stability: 3, nukeDeter: -3, money: 5 }
+      },
+      {
+        text: '拒绝裁军，秘密扩充核武',
+        desc: '+核威慑 -稳定',
+        effects: { nukeDeter: 8, stability: -4, money: -50 },
+        setFlags: { disarmament_refused: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_end_of_cold_war',
+    turn: { year: 1991, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '冷战的终结',
+    body: `<p>1991年——如果改革成功——<strong>冷战结束了</strong>。</p>
+    <p>帝国、OFN、日本三方在日内瓦签署了《三方和平协定》，正式结束持续近半个世纪的三极对峙。核武器被大幅削减，代理人战争逐步停火，三极开始建立常设的外交协调机制。</p>
+    <p>帝国不再是那个张牙舞爪的千年帝国——它变成了一个仍然威严但疲惫的大国，开始学着与这个世界共存。OFN欢呼"历史的终结"，日本则在共荣圈内部进行着自己的改革。</p>
+    <p>这不是乌托邦——冲突、不信任、利益争夺依然存在。但人类第一次从核毁灭的阴影下走出来，呼吸到了相对自由的空气。</p>`,
+    choices: [
+      {
+        text: '拥抱和平，推动一体化',
+        desc: '+稳定 +研发 +资金',
+        effects: { stability: 10, research: 8, money: 30, deterrence: -8 },
+        setFlags: { cold_war_ended: true, peace_path: true },
+        condition: (s) => s.flags.reform_path || s.flags.disarmament_advanced
+      },
+      {
+        text: '谨慎合作，保留实力',
+        desc: '+稳定 +威慑',
+        effects: { stability: 5, deterrence: 2, research: 3 },
+        setFlags: { cold_war_thaw: true }
+      },
+      {
+        text: '表面合作，暗中备战',
+        desc: '+军事 -稳定',
+        effects: { militaryPower: 5, stability: -3, money: -30 },
+        setFlags: { cold_war_fake: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_new_world_order_1992',
+    turn: { year: 1992, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '新世界秩序',
+    body: `<p>1992年，一个<strong>新世界秩序</strong>正在成形。</p>
+    <p>冷战的结束留下了巨大的权力真空。三极都在重新定义自己的角色——帝国试图转型为"正常大国"，OFN主导建立新的国际秩序，日本则谋求与其经济实力相称的政治地位。联合国（或其在这个世界的对应物）第一次真正有了行动能力。</p>
+    <p>但旧秩序的碎片依然锋利——非洲的军阀、中东的极端主义、俄罗斯统一后的民族主义、南美的左翼浪潮——新秩序的建立，远比冷战的结束更艰难。</p>`,
+    choices: [
+      {
+        text: '积极参与新秩序建设',
+        desc: '+稳定 +研发 +资金',
+        effects: { stability: 6, research: 5, money: 20, deterrence: -2 },
+        setFlags: { new_order_active: true },
+        condition: (s) => s.flags.peace_path || s.flags.cold_war_ended
+      },
+      {
+        text: '韬光养晦，专注国内',
+        desc: '+稳定 +资金',
+        effects: { stability: 4, money: 25, research: 2 }
+      },
+      {
+        text: '利用混乱扩张势力',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 5, stability: -4, money: -20, militaryPower: 3 },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_economic_globalization',
+    turn: { year: 1993, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '地球村的黎明',
+    body: `<p>1993年，<strong>经济全球化</strong>浪潮席卷世界。</p>
+    <p>冷战的结束打开了贸易与资本流动的闸门。跨国公司在三极之间穿梭，供应链跨越半个地球，金融市场24小时运转。帝国的工业品第一次大规模进入OFN市场，OFN的消费品也摆上了日耳曼尼亚的货架。</p>
+    <p>繁荣随之而来——但也带来了新的不平等。帝国的传统工人失业，奴隶制残余产业无法竞争；OFN的制造业外流；日本陷入泡沫破裂的阵痛。全球化是一把双刃剑。</p>`,
+    choices: [
+      {
+        text: '全面拥抱全球化',
+        desc: '+资金 +研发 -稳定',
+        effects: { money: 35, research: 6, stability: -4 },
+        setFlags: { globalization_full: true }
+      },
+      {
+        text: '有选择地开放',
+        desc: '+资金 +稳定',
+        effects: { money: 20, stability: 3, research: 2 }
+      },
+      {
+        text: '保护本土产业',
+        desc: '+稳定 -资金',
+        effects: { stability: 4, money: -10, research: -2 },
+        setFlags: { protectionism: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_technology_revolution_1995',
+    turn: { year: 1995, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '数字革命',
+    body: `<p>1995年，<strong>互联网</strong>彻底改变了世界。</p>
+    <p>个人电脑已经普及，互联网把整个地球连接成一张网。信息以前所未有的速度流动，帝国的审查机关第一次感到力不从心——你无法审查一封加密的电子邮件，无法封锁一个镜像服务器。</p>
+    <p>新经济崛起，传统产业衰落。帝国的"数据网"不得不与全球互联网对接，否则将被时代抛弃。但对接意味着思想的洪流将涌入这个曾经封闭的帝国。</p>`,
+    choices: [
+      {
+        text: '全面接入全球互联网',
+        desc: '+研发 +资金 -稳定',
+        effects: { research: 10, money: 25, stability: -5 },
+        setFlags: { internet_global: true }
+      },
+      {
+        text: '建立"帝国局域网"，过滤内容',
+        desc: '+稳定 -研发',
+        effects: { stability: 4, research: 2, money: -15 },
+        setFlags: { internet_filtered: true }
+      },
+      {
+        text: '利用网络进行全球宣传',
+        desc: '+威慑 +研发',
+        effects: { deterrence: 4, research: 5, money: -20 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_millennium_celebration',
+    turn: { year: 1999, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '千年之夜',
+    body: `<p>1999年12月31日午夜。</p>
+    <p>时钟指向2000年——一个新千年的开端。</p>
+    <p>日耳曼尼亚的勃兰登堡门下，人群聚集。他们之中有老纳粹，有改革派，有从未见过战争的年轻人，有仍戴着奴隶枷锁痕迹的东方人。焰火照亮了夜空——这些焰火，本可以是导弹的尾焰。</p>
+    <p>帝国的"千年"承诺，曾经是恐怖的预言——千年统治，千年压迫。如今，站在新千年的门槛上，每个人都在问同一个问题：<em>下一个千年，将会是什么样？</em></p>
+    <p>没有人知道答案。但至少——在这个夜晚，他们还活着。这本身，已是一种奇迹。</p>`,
+    choices: [
+      {
+        text: '发表"千年和平"演说',
+        desc: '+稳定 +威慑',
+        effects: { stability: 10, deterrence: 4, research: 3, money: 10 },
+        setFlags: { millennium_peace: true },
+        showToast: '新千年的钟声敲响，帝国宣布致力于和平'
+      },
+      {
+        text: '举行盛大阅兵，炫耀武力',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 8, stability: -3, militaryPower: 4, money: -30 },
+        setFlags: { millennium_military: true },
+        condition: (s) => s.flags.militarist
+      },
+      {
+        text: '低调跨年，反思历史',
+        desc: '+稳定 +研发',
+        effects: { stability: 6, research: 5, money: -5 },
+        setFlags: { millennium_reflection: true },
+        condition: (s) => s.flags.reformer
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 随机/周期性事件
+   * =========================================================== */
+
+  {
+    id: 'ev_slave_revolt_cycle',
+    turn: { year: 1972, quarter: 2 },
+    once: false,
+    tag: 'major',
+    title: '枷锁下的怒火',
+    body: `<p>又一次<strong>奴隶起义</strong>在东方总督辖区爆发。</p>
+    <p>这一次是卢布林附近的一座军火厂。奴隶们用偷藏的零件制造了简陋的武器，在午夜发动暴动，杀死了守卫，夺取了军火库。他们打出了一面红旗——一面已经褪色但依然鲜红的旗。</p>
+    <p>党卫军迅速调集部队围剿，但起义已经扩散到周边几个营地。这是今年第三次大规模起义——奴隶制的火山，正在周期性喷发。</p>`,
+    choices: [
+      {
+        text: '残酷镇压',
+        desc: '+威慑 -人力 -稳定',
+        effects: { deterrence: 5, manpower: -15, stability: -3, money: -20 },
+        setFlags: { slave_revolt_crushed: true }
+      },
+      {
+        text: '改善奴隶待遇以安抚',
+        desc: '+稳定 -资金',
+        effects: { stability: 4, money: -40, deterrence: -2 },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '动员民兵协助镇压',
+        desc: '+军事 -稳定',
+        effects: { militaryPower: 3, stability: -2, manpower: -8, money: -15 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_burgundian_infiltration',
+    turn: { year: 1974, quarter: 2 },
+    once: false,
+    tag: 'critical',
+    title: '黑色的影子',
+    body: `<p>情报机关在一次例行排查中，发现了一名<strong>勃艮第间谍</strong>。</p>
+    <p>这个伪装成档案馆职员的男子，已经在帝国中央档案馆潜伏了七年。他窃取的文件涉及军力部署、核武器清单、甚至最高决策层的内部备忘录。审讯中他咬破了藏在牙齿里的毒药——但情报机关还是从他藏匿的微型胶卷中拼出了令人胆寒的画面。</p>
+    <p>勃艮第——那个希姆莱的"理想国"——对帝国的渗透，比所有人想象的都深。下一个间谍，可能就坐在你隔壁的办公室。</p>`,
+    choices: [
+      {
+        text: '发起大规模反间谍行动',
+        desc: '+威慑 -资金 -稳定',
+        effects: { deterrence: 6, money: -45, stability: -4, research: 3 },
+        setFlags: { burgundy_purge: true }
+      },
+      {
+        text: '秘密策反，反向渗透勃艮第',
+        desc: '+研发 -资金',
+        effects: { research: 5, money: -30, deterrence: 2 },
+        setFlags: { burgundy_counterintel: true }
+      },
+      {
+        text: '对勃艮第发出公开警告',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 4, stability: -3, money: -10 },
+        setFlags: { burgundy_warning: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_underground_nazi_resistance',
+    turn: { year: 1992, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '地下的旧梦',
+    body: `<p>战后（如果帝国在冷战中失败或改革），<strong>地下纳粹抵抗运动</strong>浮出水面。</p>
+    <p>一批拒绝接受新时代的旧党卫军、前集中营看守、激进民族主义者，组织了"帝国复兴阵线"。他们在巴伐利亚的山区、奥地利的乡村、阿根廷的德裔社区建立据点，发动恐怖袭击——暗杀改革派官员、炸弹袭击OFN设施、劫持飞机。</p>
+    <p>他们宣称要"恢复千年帝国的荣光"，但所到之处只留下鲜血与废墟。这是旧时代的回声——一个不愿死去的噩梦。</p>`,
+    choices: [
+      {
+        text: '全力清剿',
+        desc: '+稳定 -资金 -人力',
+        effects: { stability: 5, money: -40, manpower: -10, deterrence: 2 },
+        setFlags: { nazi_resistance_crushed: true }
+      },
+      {
+        text: '与OFN联合反恐',
+        desc: '+稳定 +研发',
+        effects: { stability: 4, research: 4, money: -20, deterrence: -1 },
+        setFlags: { joint_antiterror: true },
+        condition: (s) => s.flags.peace_path
+      },
+      {
+        text: '与他们秘密妥协',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 3, stability: -5, money: -10 },
+        setFlags: { nazi_compromise: true },
+        condition: (s) => s.flags.militarist
+      }
+    ]
+  },
+
+  {
+    id: 'ev_refugee_crisis_balkans',
+    turn: { year: 1978, quarter: 2 },
+    once: false,
+    tag: 'major',
+    title: '巴尔干的流民',
+    body: `<p>巴尔干再次涌出<strong>难民潮</strong>。</p>
+    <p>克罗地亚与塞尔维亚的族群冲突、希腊的经济崩溃、保加利亚的饥荒——数十万人涌向帝国边境，寻求庇护。他们衣衫褴褛，饥饿疲惫，眼中是绝望与恳求。</p>
+    <p>帝国的边防部队不知该如何处置——放行会冲击国内就业与稳定，遣返则等于送他们去死。而OFN的记者们正守在边境，相机快门闪个不停。</p>`,
+    choices: [
+      {
+        text: '开放边境，接收难民',
+        desc: '+人力 -稳定 -资金',
+        effects: { manpower: 10, stability: -4, money: -30 },
+        setFlags: { refugees_accepted: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '关闭边境，武力驱赶',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 3, stability: -5, money: -10 },
+        setFlags: { refugees_rejected: true }
+      },
+      {
+        text: '建立难民营，有限接收',
+        desc: '+稳定 -资金',
+        effects: { stability: 2, money: -25, manpower: 3 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_pandemic_flu',
+    turn: { year: 1976, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '白色瘟疫',
+    body: `<p>1976年秋，一种<strong>新型流感</strong>从东南亚爆发，迅速蔓延至全球。</p>
+    <p>共荣圈拥挤的劳工营、帝国奴隶工厂的宿舍、OFN的贫民窟——病毒在所有"多余的人"聚集的地方疯狂繁殖。医疗系统不堪重负，尸体来不及火化，街道上空无一人。</p>
+    <p>帝国的医疗资源优先供应雅利安人，奴隶与东方人口被弃之不顾——但这反而让病毒在底层肆意传播，最终回溢到上层。瘟疫不认种族，不认阶级。</p>`,
+    choices: [
+      {
+        text: '全民动员抗疫',
+        desc: '+稳定 -资金 -人力',
+        effects: { stability: 5, money: -60, manpower: -10, research: 4 },
+        setFlags: { pandemic_controlled: true },
+        condition: (s) => s.flags.reformer
+      },
+      {
+        text: '只保护"优等人口"',
+        desc: '+稳定 -人力',
+        effects: { stability: 2, manpower: -25, money: -20, deterrence: -2 },
+        setFlags: { pandemic_unequal: true }
+      },
+      {
+        text: '封锁边境，自生自灭',
+        desc: '+威慑 -稳定',
+        effects: { deterrence: 3, stability: -6, manpower: -20, money: -10 },
+        setFlags: { pandemic_quarantine: true }
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 第七幕：帝国的裂痕——德国深度事件链（1963-1980）
+   * =========================================================== */
+
+  {
+    id: 'ev_speidel_neutral_zone',
+    turn: { year: 1963, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '斯派达尔的中立区',
+    body: `<p>当德国内战的炮火在日耳曼尼亚上空呼啸时，一位老军人做出了一个出人意料的决定。</p>
+    <p><strong>汉斯·斯派达尔元帅</strong>——这位曾在西俄战争中力挽狂澜的国防军将领——率领日耳曼尼亚卫戍部队控制了首都核心区域，宣布建立<strong>"日耳曼尼亚保护区"</strong>。隆美尔元帅，那位年迈但仍然受人尊敬的"沙漠之狐"，站在他的一边。</p>
+    <p>保护区的范围包括政府区、各国大使馆和克里米亚的海军基地。斯派达尔的意图很简单：在四位候选人的厮杀中，保持首都的中立，保护外交官和平民，等待尘埃落定。</p>
+    <p>四位候选人都对斯派达尔怒目而视，但没有人敢进攻日耳曼尼亚——那意味着摧毁帝国的象征，失去继承的合法性。于是，一个奇怪的中立区在内战的废墟中苟延残喘，成了乱世中唯一的净土。</p>
+    <p>而斯派达尔自己，那个不想当元首的军人，坐在总理府的办公桌前，看着窗外的硝烟，叹了口气。</p>`,
+    choices: [
+      { text: '支持斯派达尔的中立', desc: '维护首都稳定', effects: { stability: 5 }, setFlags: { speidel_neutral: true }, showToast: '日耳曼尼亚保护区建立' },
+      { text: '要求斯派达尔交出权力', desc: '冒险但可能获得首都控制权', effects: { stability: -8 }, showToast: '斯派达尔拒绝了你的要求' },
+      { text: '秘密与斯派达尔谈判', desc: '试图拉拢中立区', effects: { stability: 2, money: -20 }, showToast: '谈判正在进行' }
+    ]
+  },
+
+  {
+    id: 'ev_crimea_hofer',
+    turn: { year: 1963, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '克里米亚的霍费尔',
+    body: `<p>内战的混乱给了野心家们可乘之机。<strong>迈尔·霍费尔</strong>，一位海军少将，率领一部分舰艇和海军人员脱离了内战各方，驶向克里米亚半岛。</p>
+    <p>在那里，他接管了当地政府，宣布克里米亚为"帝国海军直辖领"。塞瓦斯托波尔的军港成了他的权力基础，黑海舰队残存的舰艇向他效忠。</p>
+    <p>霍费尔本人是鲍曼的支持者，但在这场混战中，他选择了割据一方，等待胜者出现。他的逻辑很简单：谁赢了内战，他就向谁效忠；但如果没人能赢，他至少保住了自己的地盘和舰队。</p>
+    <p>对内战各方来说，霍费尔是个麻烦——但也是个筹码。控制克里米亚，就意味着控制了黑海。</p>`,
+    choices: [
+      { text: '承认霍费尔的自治', desc: '换取海军支持', effects: { militaryPower: 3, stability: -2 }, setFlags: { hofer_autonomy: true } },
+      { text: '派舰队讨伐霍费尔', desc: '高风险高回报', effects: { militaryPower: -5, stability: -4 }, condition: (s) => !s.flags.reformist },
+      { text: '通过外交手段解决', desc: '需要改革派', effects: { stability: 3, money: -30 }, condition: (s) => s.flags.reformist, showToast: '霍费尔愿意谈判' }
+    ]
+  },
+
+  {
+    id: 'ev_student_movement_1968',
+    turn: { year: 1968, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '一九六八：街头的革命',
+    body: `<p>1968年的春天，帝国的大学校园爆发了前所未有的大规模抗议。</p>
+    <p>灵感来自大洋彼岸——美国的民权运动通过地下电台和走私刊物传到了德国。柏林大学、慕尼黑大学、法兰克福大学的学生们走上街头，高举着<strong>"自由"、"真相"、"不再沉默"</strong>的标语。</p>
+    <p>这不是1962年那场被轻易镇压的小规模抗议。这一次，数以万计的学生、知识分子、甚至部分中产阶级加入了游行。他们要求言论自由、释放政治犯、废除奴隶制、结束秘密警察的恐怖统治。</p>
+    <p>党卫军要求镇压。国防军则态度暧昧——许多年轻军官同情学生。而施佩尔（如果他在位）看到了改革的机会，鲍曼则恨不得把所有人送进集中营。</p>
+    <p>帝国的街道上，口号声与警棍声交织在一起。这是1968年——全世界的青年都在造反，帝国的青年也不例外。</p>`,
+    choices: [
+      { text: '镇压！党卫军上街', desc: '用铁拳恢复秩序', effects: { stability: -10, manpower: -10, militaryPower: 2 }, setFlags: { student_massacre_1968: true }, showToast: '血腥镇压震惊了世界' },
+      { text: '与学生对话，推动有限改革', desc: '需要改革派路线', effects: { stability: 5, research: 5 }, condition: (s) => s.flags.reformist, setFlags: { student_dialogue: true } },
+      { text: '收编学生领袖，纳入体制', desc: '温和路线', effects: { stability: 2, manpower: 3 }, showToast: '部分学生领袖接受了招安' },
+      { text: '利用学生运动清洗政敌', desc: '阴险但有效', effects: { stability: -3, militaryPower: 3 }, condition: (s) => s.flags.militarist }
+    ]
+  },
+
+  {
+    id: 'ev_bormann_stagnation',
+    turn: { year: 1970, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '鲍曼的泥潭',
+    body: `<p>马丁·鲍曼赢了内战，但他赢不了时间。</p>
+    <p>五年过去了，帝国还是老样子——奴隶制、黑市、党卫军、官僚机器。鲍曼的治国方略可以概括为三个字：<strong>"不要动"</strong>。不要改革经济，不要触碰奴隶制，不要惹怒军方，不要激怒党卫军。</p>
+    <p>问题是，"不要动"本身就是一种慢性死亡。帝国的工业产出年年下滑，通货膨胀失控，黑市已经取代了正规经济。东方总督辖区的奴隶起义此起彼伏，党卫军和国防军的内斗从未停止。</p>
+    <p>鲍曼坐在总理府里，像一只守着腐肉的秃鹫。他知道帝国在腐烂，但他不知道——或者说不在乎——如何阻止。在他看来，只要帝国"还在"，他的任务就完成了。</p>
+    <p>但帝国的人民已经开始窃窃私语：<em>"鲍曼不下台，帝国就得死。"</em></p>`,
+    choices: [
+      { text: '维持现状，一切照旧', desc: '继续腐烂', effects: { stability: -5, money: -20 }, showToast: '帝国继续沉沦' },
+      { text: '推动有限经济改革', desc: '微调而不触及根本', effects: { money: 10, stability: -3 }, showToast: '改革收效甚微' },
+      { text: '清洗鲍曼派系', desc: '需要军力支持', effects: { stability: -10, militaryPower: -5 }, condition: (s) => s.flags.militarist, showToast: '政变失败！帝国陷入混乱' }
+    ],
+    condition: (s) => s.flags.conservative
+  },
+
+  {
+    id: 'ev_speer_reforms_deep',
+    turn: { year: 1970, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '施佩尔的四步改革',
+    body: `<p>阿尔伯特·施佩尔——建筑师出身的元首——终于开始兑现他的承诺。</p>
+    <p>他的改革计划分为四步：<strong>第一步</strong>，放宽言论管制，允许有限度的新闻自由；<strong>第二步</strong>，逐步解放东方奴隶，先给予"有限权利"，再分批释放；<strong>第三步</strong>，引入市场机制，打破国家垄断；<strong>第四步</strong>，与OFN缓和关系，结束冷战。</p>
+    <p>每一步都是惊心动魄的博弈。党内的保守派视他为叛徒，党卫军视他为软弱的理想主义者，甚至连他自己的盟友都在怀疑：改革会不会走得太远？帝国会不会在改革中分崩离析？</p>
+    <p>但施佩尔坚持己见。他曾在日记中写道：<em>"帝国已经死了，只是还没有倒下。我的任务不是让它复活，而是让它在死前活成一个更好的自己。"</em></p>
+    <p>改革的第一步已经迈出。但每一步都可能是悬崖。</p>`,
+    choices: [
+      { text: '全力推进四步改革', desc: '高风险高回报', effects: { stability: -5, research: 10, money: 15 }, setFlags: { speer_reform_step1: true }, showToast: '改革正式启动' },
+      { text: '只推进经济改革，暂缓政治改革', desc: '更稳妥', effects: { money: 20, stability: 2 }, setFlags: { speer_economic_only: true } },
+      { text: '改革太危险，暂缓执行', desc: '保守选择', effects: { stability: 3, research: -5 }, showToast: '改革计划被搁置' }
+    ],
+    condition: (s) => s.flags.reformist
+  },
+
+  {
+    id: 'ev_goering_war_economy',
+    turn: { year: 1970, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '戈林的铁血经济',
+    body: `<p>赫尔曼·戈林——帝国元帅——用最简单的方式解决了经济危机：<strong>把一切都变成军队的。</strong></p>
+    <p>工厂？军需品生产线。大学？军事研究院。青年？兵营里的新兵。经济？一个巨大的军火工业复合体。</p>
+    <p>戈林的逻辑是一种危险的简洁：<em>"只要帝国不断打赢战争，经济就不会崩溃。"</em>于是，他开始规划下一场战争——对手是谁？意大利？俄罗斯残部？还是OFN本身？</p>
+    <p>将军们兴奋得发抖。经济学家们吓得脸色苍白。而普通德国人发现，他们的配给票上印着坦克的图案。</p>
+    <p>戈林坐在鹰巢，嚼着珠宝（他真的会这样做），俯瞰着他的军事帝国。他笑了——一个末日狂人的笑。</p>`,
+    choices: [
+      { text: '全面支持战争经济', desc: '+军力 +威慑 -资金 -稳定', effects: { militaryPower: 15, deterrence: 10, money: -40, stability: -8 }, setFlags: { goering_war_economy: true } },
+      { text: '有限军事化', desc: '平衡路线', effects: { militaryPower: 8, deterrence: 5, money: -20 }, showToast: '部分工厂转为军工' },
+      { text: '将军们要求更多', desc: '舍尔纳派系施压', effects: { stability: -5, militaryPower: 5 }, condition: (s) => s.flags.militarist }
+    ],
+    condition: (s) => s.flags.militarist
+  },
+
+  {
+    id: 'ev_heydrich_terror',
+    turn: { year: 1970, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '海德里希的暗夜',
+    body: `<p>莱因哈德·海德里希——"布拉格屠夫"、"金发野兽"、"铁心人"——坐在元首的椅子上，微笑着。</p>
+    <p>那是一种让人脊背发凉的微笑。海德里希是希姆莱的代理人，勃艮第的傀儡，但他绝不是一个听话的木偶。他的野心比希姆莱更深沉，他的残忍比希姆莱更理性——这才是最可怕的地方。</p>
+    <p>上台后，海德里希立刻强化了恐怖统治。秘密警察无处不在，告密者遍布每个社区。他建立了一套精密的社会控制系统：每个人都被分类、标记、监控。异见者不是被枪决——那太仁慈了——而是被"消失"，仿佛从未存在过。</p>
+    <p>海德里希的最终目标是明确的：将德国变成勃艮第的复制品，一个纯粹的SS国家。然后，与希姆莱一起，启动"最终方案"——核子末日。</p>
+    <p>在日耳曼尼亚的夜空下，海德里希的金发在灯光中闪着冷光。他轻声说：<em>"秩序，来自恐惧。"</em></p>`,
+    choices: [
+      { text: '配合SS的恐怖统治', desc: '最黑暗的道路', effects: { stability: 5, deterrence: 10, manpower: -20, research: -10 }, setFlags: { heydrich_terror: true } },
+      { text: '暗中抵抗海德里希', desc: '极度危险', effects: { stability: -8 }, showToast: '你的抵抗被发现了吗？' },
+      { text: '与勃艮第彻底合并', desc: '不可逆的黑暗', effects: { stability: -15, deterrence: 20 }, setFlags: { burgundy_merge: true }, showToast: '德国不再是独立国家' }
+    ],
+    condition: (s) => s.flags.extremist
+  },
+
+  {
+    id: 'ev_slave_rebellion_east',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '东方的怒火',
+    body: `<p>它终于来了——东方总督辖区的大规模奴隶起义。</p>
+    <p>数十万斯拉夫人——被从家园拖走、被烙上编号、被当作牲口使用的男人和女人——终于拿起了武器。铁链、农具、偷藏的步枪，成了他们的武器。他们从煤矿、工厂、农场涌出，像一股不可阻挡的洪流。</p>
+    <p>起义的导火索是一连串的事件：1968年学生运动带来的思想启蒙、施佩尔改革给予的虚假希望、以及——最重要的——一个名叫<strong>"沃利亚"</strong>（意为"自由"）的地下组织，用走私电台广播着反抗的诗句和指令。</p>
+    <p>党卫军立刻出动，但他们的兵力已经被内战消耗殆尽。国防军态度暧昧——许多军官不愿意屠杀平民。东方总督辖区陷入了火海。</p>
+    <p>而在日耳曼尼亚，一个问题悬在每个人头顶：<em>帝国的根基，正在燃烧。你救不救？</em></p>`,
+    choices: [
+      { text: '全面镇压，绝不妥协', desc: '血腥但维护秩序', effects: { stability: -10, militaryPower: -8, manpower: -30 }, setFlags: { slave_revolt_crushed: true } },
+      { text: '谈判，给予有限自由', desc: '需要改革派', effects: { stability: -3, money: -30 }, condition: (s) => s.flags.reformist, setFlags: { slave_negotiation: true } },
+      { text: '利用起义清洗政敌', desc: '借刀杀人', effects: { stability: -5, militaryPower: -3 }, condition: (s) => s.flags.militarist },
+      { text: '放弃东方总督辖区', desc: '割肉止损', effects: { stability: -15, deterrence: -10, money: -50 }, setFlags: { ostland_abandoned: true }, showToast: '帝国放弃了东方' }
+    ]
+  },
+
+  {
+    id: 'ev_economic_collapse_1975',
+    turn: { year: 1975, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '一九七五：大崩溃',
+    body: `<p>它不是突然发生的。它是一步步走来——从1945年的战争红利耗尽，到50年代的借贷狂欢，到60年代的奴隶制续命，到70年代的全面崩溃。</p>
+    <p><strong>帝国马克</strong>在一天之内贬值了百分之七十。柏林的银行前排起了长龙，人们举着成捆的纸币，却买不到一块面包。工厂停转，不是因为缺少订单，而是因为付不起电费。军队的军饷成了废纸，士兵们开始逃亡。</p>
+    <p>这不是一次普通的经济衰退。这是奴隶制经济的终极宿命——当你把数百万人的劳动视为"免费"时，你的经济就不再是一个经济，而是一个吸血系统。而血，总有被吸干的一天。</p>
+    <p>施佩尔的改革派惊慌失措。鲍曼的保守派目瞪口呆。戈林的军国派看到了战争的机会。而海德里希的极端派——他们笑了。因为混乱，是SS最好的朋友。</p>
+    <p>1975年。帝国经济的丧钟，敲响了。</p>`,
+    choices: [
+      { text: '紧急经济管制', desc: '配给制+价格冻结', effects: { stability: -5, money: -30 }, setFlags: { economic_control: true } },
+      { text: '向OFN请求经济援助', desc: '需要改革派+缓和', effects: { money: 40, stability: -8, deterrence: -5 }, condition: (s) => s.flags.reformist && s.relations.ofn > 0 },
+      { text: '通过战争掠夺资源', desc: '需要军国派', effects: { money: 30, militaryPower: -5, stability: -10 }, condition: (s) => s.flags.militarist, setFlags: { war_for_resources: true } },
+      { text: '发行新货币', desc: '壮士断腕', effects: { money: -50, stability: 3 }, showToast: '新帝国马克发行' }
+    ]
+  },
+
+  /* ===========================================================
+   * 第八幕：地中海的裂变——意大利与三头同盟事件链（1968-1982）
+   * =========================================================== */
+
+  {
+    id: 'ev_italian_democracy_movement',
+    turn: { year: 1968, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '意大利之春',
+    body: `<p>亚特兰特罗帕计划杀死了意大利的经济，但没能杀死意大利人的精神。</p>
+    <p>1968年，当帝国的学生在街头造反时，意大利的学生也走上了街头。但他们喊的不是"自由"——他们喊的是<strong>"共和国"</strong>。</p>
+    <p>意大利的民主运动有着深厚的根基。直布罗陀大坝摧毁了那不勒斯、热那亚、威尼斯的沿海经济后，数百万人失业、饥饿、绝望。意大利国王安布罗西奥二世和他法西斯政府无力应对，只能依靠秘密警察维持统治。</p>
+    <p>但地下电台在广播，地下报纸在流传，地下组织在壮大。一个名叫<strong>"意大利复兴运动"</strong>的地下政党浮出水面，号召人民推翻法西斯统治，恢复共和国。</p>
+    <p>意大利是三头同盟的核心。如果意大利倒了，伊比利亚和土耳其也会动摇。而德国——帝国的霸权，正在地中海的阳光下融化。</p>`,
+    choices: [
+      { text: '支持意大利民主运动', desc: '需要改革派', effects: { stability: 3, deterrence: -3 }, condition: (s) => s.flags.reformist, setFlags: { italy_democracy_supported: true } },
+      { text: '帮助意大利政府镇压', desc: '维持法西斯政权', effects: { deterrence: 5, stability: -3 }, showToast: '意大利政府镇压了民主运动' },
+      { text: '袖手旁观', desc: '让意大利自生自灭', effects: { stability: -2 }, showToast: '意大利局势持续动荡' }
+    ]
+  },
+
+  {
+    id: 'ev_italian_economic_crisis',
+    turn: { year: 1970, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '沉没的海岸',
+    body: `<p>直布罗陀大坝建成已经十五年了。地中海的海岸线下降了数十米，曾经繁华的港口城市变成了干涸的废墟。</p>
+    <p><strong>那不勒斯</strong>的渔民在干涸的海床上捡拾着贝壳——那是他们唯一的食物。 <strong>热那亚</strong>的船坞空空荡荡，生锈的船骨架躺在太阳下暴晒。<strong>威尼斯</strong>——曾经的水上明珠——成了一座臭气熏天的泥城，运河变成了污水沟。</p>
+    <p>意大利的经济已经崩溃了。大坝不仅摧毁了渔业和航运，还摧毁了整个地中海贸易网络。意大利的出口归零，进口全靠德国施舍。而德国——它自己也在经济危机的边缘摇摇欲坠。</p>
+    <p>意大利人把一切苦难归咎于德国。标语涂满了罗马的墙壁：<em>"大坝杀死了意大利"、"德国人是我们的敌人不是盟友"、"推翻大坝！"</em></p>
+    <p>三头同盟的基础，正在海水退去的海岸上崩塌。</p>`,
+    choices: [
+      { text: '提供经济援助给意大利', desc: '花钱买盟友', effects: { money: -40, deterrence: 3 }, showToast: '意大利暂时稳定了' },
+      { text: '提议拆除直布罗陀大坝', desc: '需要改革派', effects: { stability: 5, money: -60 }, condition: (s) => s.flags.reformist, setFlags: { dam_removal_proposed: true } },
+      { text: '无视意大利的苦难', desc: '三头同盟将受影响', effects: { stability: -3, deterrence: -5 }, showToast: '意大利对德国更加愤怒' }
+    ]
+  },
+
+  {
+    id: 'ev_iberian_federation_strain',
+    turn: { year: 1971, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '伊比利亚的裂痕',
+    body: `<p>伊比利亚联邦——弗朗哥的西班牙和萨拉查的葡萄牙的联合体——正在从内部撕裂。</p>
+    <p>问题出在结构上。弗朗哥和萨拉查都是独裁者，都不愿意当副手。联邦成立时，两人达成了一个脆弱的协议：弗朗哥管军事，萨拉查管经济。但十五年后，这个协议已经名存实亡。</p>
+    <p>西班牙的军方越来越傲慢，葡萄牙的财政越来越紧张。加泰罗尼亚和巴斯克的分离主义运动死灰复燃，殖民地的独立战争消耗着国力。而两国的年轻一代——他们不想再活在两个老人的阴影下。</p>
+    <p>弗朗哥已经78岁了，萨拉查已经81岁了。两个老人守着一个摇摇欲坠的联邦，而他们身后的继承人们已经开始磨刀霍霍。</p>
+    <p>伊比利亚的黄昏，正在到来。</p>`,
+    choices: [
+      { text: '支持弗朗哥派系', desc: '军方更亲近德国', effects: { deterrence: 3, stability: -2 } },
+      { text: '支持萨拉查派系', desc: '经济导向', effects: { money: 10, stability: -2 } },
+      { text: '推动伊比利亚民主化', desc: '需要改革派', effects: { stability: 5, deterrence: -3 }, condition: (s) => s.flags.reformist },
+      { text: '不干预', desc: '等待结果', effects: { stability: -1 } }
+    ]
+  },
+
+  {
+    id: 'ev_gibraltar_dam_maintenance',
+    turn: { year: 1972, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '直布罗陀大坝危机',
+    body: `<p>直布罗陀大坝——亚特兰特罗帕计划的杰作，德国工程学的奇迹——正在老化。</p>
+    <p>十七年的海水压力在大坝上留下了裂缝。工程师们发出了警告：如果不进行大规模维修，大坝可能在五年内崩塌。一旦大坝崩塌，大西洋的海水将以海啸般的速度灌回地中海，淹没所有沿海低地——包括数十万人的居住区。</p>
+    <p>维修费用是一个天文数字：相当于帝国半年军费的十分之一。而拆除大坝——让地中海恢复原来的水位——将淹没十五年来在干涸海床上建立的一切定居点和工业。</p>
+    <p>这是一个两难的选择。修，没钱；拆，也没钱；不修不拆，等着大坝自己塌。</p>
+    <p>而在大坝的另一边，意大利人正在祈祷：祈祷大坝塌掉，让海水回来，让他们的港口复活。</p>`,
+    choices: [
+      { text: '斥巨资维修大坝', desc: '-大量资金 +威慑', effects: { money: -80, deterrence: 5, stability: 3 }, showToast: '大坝得到了加固' },
+      { text: '拆除大坝，恢复地中海', desc: '需要改革派', effects: { money: -50, stability: 8, deterrence: -3 }, condition: (s) => s.flags.reformist, setFlags: { dam_removed: true }, showToast: '海水回来了！地中海重获新生' },
+      { text: '拖延维修，先撑着', desc: '风险极大', effects: { stability: -5 }, setFlags: { dam_deteriorating: true }, showToast: '大坝的裂缝在扩大...' }
+    ]
+  },
+
+  {
+    id: 'ev_mediterranean_draining',
+    turn: { year: 1973, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '干涸的海洋',
+    body: `<p>直布罗陀大坝继续做着它的工作——排干地中海。</p>
+    <p>海平面又下降了几米。新的陆地从海水中露出，盐碱覆盖的荒地延伸到天边。曾经的水下世界现在是一片白花花的盐碱地，鱼类腐烂的骨头散落在干涸的海床上。</p>
+    <p>生态灾难是全方位的。地中海的鱼类几乎灭绝，沿岸的气候变得干旱炎热，农业产量锐减。曾经的地中海明珠——里维埃拉、克里特、塞浦路斯——变成了尘土飞扬的荒地。</p>
+    <p>而更可怕的是，干涸的海床成了疾病的温床。盐尘暴席卷沿岸城市，呼吸道疾病爆发。数百万人的健康受到了威胁。</p>
+    <p>亚特兰特罗帕计划——德国的"伟大工程"——已经变成了地中海的末日。</p>`,
+    choices: [
+      { text: '投入资源治理生态', desc: '治标不治本', effects: { money: -30, stability: 3, research: 2 } },
+      { text: '迁移受影响人口', desc: '人道但不经济', effects: { money: -20, manpower: -10, stability: 2 } },
+      { text: '无视生态灾难', desc: '任其恶化', effects: { stability: -5, manpower: -15 }, showToast: '地中海沿岸变成了人间地狱' }
+    ]
+  },
+
+  {
+    id: 'ev_italian_colonial_wars',
+    turn: { year: 1974, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '帝国的黄昏：意属东非',
+    body: `<p>意属东非——意大利在非洲的殖民帝国——正在燃烧。</p>
+    <p>埃塞俄比亚、厄立特里亚、索马里——这些被意大利用毒气和屠杀征服的土地——终于爆发了全面的独立战争。起义军控制了大部分乡村，意大利殖民军龟缩在城市里，靠着空中轰炸勉强维持。</p>
+    <p>意大利自身的经济已经崩溃，无力维持殖民战争。而德国——帝国自己的麻烦已经够多了——不愿意为意大利的殖民冒险买单。</p>
+    <p>但问题在于：如果意属东非崩溃，OFN和日本可能会趁虚而入，争夺非洲的战略资源。而且，意大利殖民军的溃败会严重打击三头同盟的威望。</p>
+    <p>在亚的斯亚贝巴，意大利总督府的旗帜在风中飘摇——不知道还能飘多久。</p>`,
+    choices: [
+      { text: '派遣志愿军支援意大利', desc: '+军力消耗 +威慑', effects: { militaryPower: -5, deterrence: 3, stability: 2 } },
+      { text: '施压意大利放弃殖民地', desc: '需要改革派', effects: { stability: 5, deterrence: -3 }, condition: (s) => s.flags.reformist, showToast: '意大利被迫考虑撤出非洲' },
+      { text: '趁火打劫，夺取殖民地资源', desc: '阴险', effects: { money: 20, stability: -5, deterrence: -5 }, condition: (s) => s.flags.militarist },
+      { text: '不干预', desc: '让非洲自生自灭', effects: { stability: -2 } }
+    ]
+  },
+
+  {
+    id: 'ev_turkey_coup_attempt',
+    turn: { year: 1975, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '安卡拉的枪声',
+    body: `<p>土耳其——三头同盟中最脆弱的一环——终于出了事。</p>
+    <p>军方对文官政府的腐败和无能忍无可忍。一群年轻军官发动了政变，占领了安卡拉的政府区和伊斯坦布尔的广播电台。他们宣布"恢复秩序"，解散议会，实施军管。</p>
+    <p>土耳其的军政府上台后，立刻面临两个问题：一是库尔德人的独立运动在东部愈演愈烈，二是阿拉伯殖民地的反抗从未停止。军政府需要钱、需要武器、需要国际承认。</p>
+    <p>而德国和意大利面临一个选择：支持军政府（更稳定但更不可控），还是支持恢复文官政府（更民主但更软弱）？</p>
+    <p>在博斯普鲁斯海峡的夜色中，军靴声回荡。凯末尔的遗产，又一次落入了军人手中。</p>`,
+    choices: [
+      { text: '承认军政府', desc: '务实的稳定', effects: { deterrence: 3, stability: -2 }, setFlags: { turkey_junta: true } },
+      { text: '施压军政府还政于民', desc: '需要改革派', effects: { stability: 3, deterrence: -2 }, condition: (s) => s.flags.reformist },
+      { text: '秘密支持库尔德人', desc: '分而治之', effects: { stability: -5, money: 10 }, condition: (s) => s.flags.militarist, showToast: '库尔德人获得了秘密支持' }
+    ]
+  },
+
+  {
+    id: 'ev_iberian_civil_war_1978',
+    turn: { year: 1978, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '伊比利亚内战',
+    body: `<p>它终于爆发了。伊比利亚联邦——那个由两个老人和一堆矛盾拼凑起来的国家——在内战中分崩离析。</p>
+    <p>弗朗哥死了（有人说是被毒死的），萨拉查也死了（有人说是心脏病，也有人说是被气死的）。他们的继承人们没有老人的威望，却有老人的野心。西班牙军方和葡萄牙军方在边境线上对峙，加泰罗尼亚和巴斯克宣布独立，无政府主义者在巴塞罗那筑起了街垒。</p>
+    <p>伊比利亚半岛陷入了血腥的内战。三方——不，四方、五方——势力在互相厮杀。马德里、巴塞罗那、里斯本、毕尔巴鄂，每个城市都是战场。</p>
+    <p>德国、意大利、OFN，甚至日本，都在暗中下注。伊比利亚的铀矿、钢铁和港口太重要了，不能让它落入敌人手中。</p>
+    <p>而在伊比利亚的废墟上，一面新的旗帜升起——红色的、黑色的、共和的。也许是希望，也许是另一个噩梦。</p>`,
+    choices: [
+      { text: '支持西班牙军方统一伊比利亚', desc: '恢复秩序', effects: { militaryPower: -3, deterrence: 3, stability: -3 }, setFlags: { iberian_civil_war: true } },
+      { text: '支持伊比利亚民主力量', desc: '需要改革派', effects: { stability: 5, money: -30 }, condition: (s) => s.flags.reformist, setFlags: { iberian_democracy: true } },
+      { text: '瓜分伊比利亚', desc: '与意大利/OFN分赃', effects: { money: 30, stability: -8, deterrence: -5 }, condition: (s) => s.flags.militarist },
+      { text: '接收伊比利亚难民', desc: '人道主义', effects: { manpower: 10, stability: 2, money: -20 } }
+    ]
+  },
+
+  {
+    id: 'ev_italy_leaves_german_sphere',
+    turn: { year: 1980, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '告别：意大利的独立',
+    body: `<p>这是一个时代的终结。</p>
+    <p>意大利——曾经是德国最忠实的盟友，后来是三头同盟的核心——正式宣布退出德国的势力范围。意大利新政府（无论它是民主的还是军政府的）发表声明：<em>"意大利不再是任何人的附庸。地中海是地中海人的地中海。"</em></p>
+    <p>这一声明震动了整个欧洲。三头同盟名存实亡，德国在南欧的影响力土崩瓦解。更糟糕的是，意大利开始与OFN接触——如果意大利加入OFN，德国的战略后院将彻底失火。</p>
+    <p>德国的选项有限。军事干预？内战后的帝国军力不足。经济制裁？意大利已经在靠黑市过活了。外交斡旋？意大利人恨透了德国人。</p>
+    <p>在罗马，意大利国旗——三色旗——重新飘扬在奎里纳莱宫上空。二十年来第一次，没有德国旗帜在它旁边。</p>`,
+    choices: [
+      { text: '接受现实，与意大利和平分手', desc: '需要改革派', effects: { stability: 3, deterrence: -8 }, condition: (s) => s.flags.reformist, setFlags: { italy_leaves_sphere: true } },
+      { text: '经济制裁意大利', desc: '报复性措施', effects: { stability: -3, money: -20, deterrence: 2 }, showToast: '意大利经济雪上加霜，但更加反德' },
+      { text: '军事威胁', desc: '极度危险', effects: { stability: -10, deterrence: 5 }, condition: (s) => s.flags.militarist, showToast: '战争边缘！' },
+      { text: '通过外交拉拢意大利', desc: '温和路线', effects: { money: -40, stability: 2, deterrence: -3 }, showToast: '意大利愿意保持对话' }
+    ]
+  },
+
+  /* ===========================================================
+   * 第九幕：日出之国的黄昏——日本与共荣圈事件链（1965-1985）
+   * =========================================================== */
+
+  {
+    id: 'ev_japan_military_coup_1965',
+    turn: { year: 1965, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '东京的军靴',
+    body: `<p>日本帝国的陆军和海军之间的对立，终于到了不可调和的地步。</p>
+    <p>一群陆军军官发动了政变，试图推翻"软弱"的文官政府，建立军部独裁。他们冲进了首相官邸，暗杀了几名温和派大臣，宣布"国家紧急状态"。</p>
+    <p>但政变失败了。海军——掌握着日本最强大的武装力量——拒绝支持陆军。驻扎在横须贺的海军陆战队与东京的陆军卫戍部队在街头对峙了三天。最终，天皇出面调停，政变首领被逮捕（然后"自杀"），局势暂时平静下来。</p>
+    <p>但裂痕已经无法弥合。陆海对立从政策分歧变成了血海深仇。双方都在暗中扩充核武器——日本的核武库已经分成了两半，陆军一半，海军一半。</p>
+    <p>对德国来说，日本的内部动荡既是机会也是威胁。一个分裂的日本更容易对付，但也更容易做出不理性的事——比如发射核弹。</p>`,
+    choices: [
+      { text: '利用日本内部分裂', desc: '渔翁得利', effects: { deterrence: 3, stability: -2 }, showToast: '情报部门开始渗透日本' },
+      { text: '支持海军派系', desc: '海军更理性', effects: { money: -20, deterrence: 2 }, setFlags: { japan_navy_support: true } },
+      { text: '调解日本陆海对立', desc: '需要改革派', effects: { stability: 3, research: 3 }, condition: (s) => s.flags.reformist },
+      { text: '趁日本内乱扩张势力', desc: '军事路线', effects: { militaryPower: 5, deterrence: -5 }, condition: (s) => s.flags.militarist }
+    ]
+  },
+
+  {
+    id: 'ev_china_economic_collapse_1968',
+    turn: { year: 1968, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '中国大崩溃',
+    body: `<p>日本在中国的激进经济计划——所谓的"新秩序经济"——彻底失败了。</p>
+    <p>日本试图用计划经济改造中国，强制推行日元区，摧毁中国的传统经济结构。结果是灾难性的：通货膨胀失控，粮食产量暴跌，数千万人在饥荒中挣扎。</p>
+    <p>中国各地的反抗运动风起云涌。从满洲到广东，从上海到重庆，地下抵抗组织如雨后春笋般涌现。日本驻军疲于奔命，宪兵队日夜不停地搜捕"叛乱分子"。</p>
+    <p>更令日本恐惧的是，中国的混乱给OFN提供了介入的机会。美国的情报机构开始秘密资助中国的抵抗运动，武器通过缅甸和印度流入中国。</p>
+    <p>共荣圈的核心——中国的资源和人口——正在从日本的手中滑走。如果日本失去中国，共荣圈就只剩下一个空壳。</p>`,
+    choices: [
+      { text: '趁火打劫，渗透中国', desc: '渔翁得利', effects: { money: 15, research: 3, deterrence: -3 }, showToast: '情报部门开始在中国活动' },
+      { text: '向日本提供经济建议', desc: '需要改革派', effects: { stability: 2, research: 5 }, condition: (s) => s.flags.reformist },
+      { text: '秘密支持中国抵抗者', desc: '削弱日本', effects: { money: -30, deterrence: 5 }, setFlags: { china_resistance_supported: true } },
+      { text: '无视中国局势', desc: '让日本自顾不暇', effects: { stability: -1 } }
+    ]
+  },
+
+  {
+    id: 'ev_manchukuo_industrialization',
+    turn: { year: 1970, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '满洲的钢铁',
+    body: `<p>在满洲国的平原上，烟囱林立，钢铁洪流涌向南方。</p>
+    <p>满洲国——日本的傀儡国——正在经历一场惊人的工业化。日本企业涌入满洲，建工厂、修铁路、开矿山。大连和奉天成了亚洲最大的工业中心之一。</p>
+    <p>但繁荣的代价是残酷的。数百万中国劳工在恶劣条件下工作，工资微薄到可以忽略不计——这不过是另一种形式的奴隶制。满洲的煤炭和铁矿被运往日本本土，而满洲人自己却在配给制下苟延残喘。</p>
+    <p>溥仪——满洲国的"皇帝"——不过是一个傀儡，在关东军的阴影中签署着一份又一份文件。但他知道，总有一天，机会会来的。</p>
+    <p>对德国来说，满洲的工业化意味着日本的军事实力在增强。这既是挑战，也是合作的机会——德国和日本在反美立场上是一致的。</p>`,
+    choices: [
+      { text: '与日本合作开发满洲', desc: '经济合作', effects: { money: 20, research: 3 } },
+      { text: '秘密接触溥仪', desc: '试图拉拢满洲', effects: { money: -10, stability: -2 }, showToast: '溥仪不敢回应' },
+      { text: '无视满洲', desc: '专注欧洲', effects: { stability: 1 } }
+    ]
+  },
+
+  {
+    id: 'ev_indonesian_resistance_1972',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '万隆之火',
+    body: `<p>荷属东印度——现在的日本傀儡"印度尼西亚"——爆发了大规模独立运动。</p>
+    <p>苏加诺的幽灵仍在游荡。年轻一代的印尼民族主义者拿起了武器，在丛林中开展游击战。日本的驻军疲于应对，热带的气候和疾病比游击队的子弹更致命。</p>
+    <p>印尼的石油和橡胶对共荣圈至关重要。失去印尼，日本就失去了最重要的能源来源之一。因此，日本不惜投入大量兵力镇压起义，甚至使用了化学武器。</p>
+    <p>但这只会让反抗更加激烈。OFN通过澳大利亚秘密向印尼抵抗者提供武器和训练。万隆的街道上，标语写着：<em>"自由或死亡——没有第三条路。"</em></p>`,
+    choices: [
+      { text: '向日本出售武器', desc: '发战争财', effects: { money: 25, deterrence: -2 } },
+      { text: '秘密支持印尼抵抗者', desc: '削弱日本', effects: { money: -20, deterrence: 3 }, setFlags: { indonesia_supported: true } },
+      { text: '不干预', desc: '中立', effects: { stability: 1 } }
+    ]
+  },
+
+  {
+    id: 'ev_korean_uprising_1975',
+    turn: { year: 1975, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '朝鲜的怒吼',
+    body: `<p>朝鲜半岛爆发了自1919年三一运动以来最大规模的独立起义。</p>
+    <p>起因是日本强制推行"创氏改名"政策——要求朝鲜人改用日本姓名。这触及了朝鲜人最后的底线。从汉城到平壤，数十万人涌上街头，高呼"独立万岁"。</p>
+    <p>日本宪兵队开枪镇压，血染汉城的钟路大街。但这只会让更多人加入起义。朝鲜的地下抵抗组织——分裂为共产主义派和民族主义派——开始协调行动，发动武装起义。</p>
+    <p>朝鲜是日本通往大陆的桥梁，也是共荣圈的北方门户。失去朝鲜，满洲就暴露在威胁之下。日本必须不惜一切代价保住朝鲜——但代价可能就是一场漫长的治安战。</p>
+    <p>在汉城南山上的日本总督府，总督望着窗下的火光和烟雾，第一次感到了恐惧。</p>`,
+    choices: [
+      { text: '趁朝鲜动荡渗透情报', desc: '渔翁得利', effects: { research: 3, deterrence: 2 } },
+      { text: '施压日本改善朝鲜待遇', desc: '需要改革派', effects: { stability: 2, deterrence: -3 }, condition: (s) => s.flags.reformist },
+      { text: '支持朝鲜抵抗者', desc: '极大削弱日本', effects: { money: -30, deterrence: 5 }, setFlags: { korea_supported: true } },
+      { text: '不干预', desc: '让日本处理', effects: { stability: 1 } }
+    ]
+  },
+
+  {
+    id: 'ev_china_warlord_era_1978',
+    turn: { year: 1978, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '中国的碎片化',
+    body: `<p>日本对中国的控制，终于彻底瓦解了。</p>
+    <p>经济崩溃、民变四起、军力不足——日本不得不从中国内陆撤退，只保留了沿海城市和满洲的控制。而在中国广大的内陆，权力真空被各路势力填补。</p>
+    <p>中国的军阀混战开始了。共产主义游击队控制了陕北的山区，民族主义者在四川建立了根据地，各地方实力派割据一方。满洲的溥仪政权摇摇欲坠，华北的合作政府名存实亡。</p>
+    <p>这是自辛亥革命以来中国最混乱的时期。没有一个中央政府，没有一支统一的军队，没有一个被所有人承认的领导人。四分五裂的中国，成了各国外交博弈的棋盘。</p>
+    <p>OFN支持民族主义者，日本扶持合作政府，而德国——帝国看到了机会。一个分裂的中国意味着日本被削弱，也意味着新的市场和新盟友。</p>`,
+    choices: [
+      { text: '支持中国的民族主义者', desc: '对抗日本', effects: { money: -30, deterrence: 5 }, setFlags: { china_nationalist_support: true } },
+      { text: '支持中国的共产主义者', desc: '对抗日本+OFN', effects: { money: -20, deterrence: 3, stability: -3 }, condition: (s) => !s.flags.reformist },
+      { text: '与日本合作维持中国秩序', desc: '维护共荣圈', effects: { money: 20, deterrence: -3 } },
+      { text: '瓜分中国势力范围', desc: '与日本分赃', effects: { money: 30, stability: -5 }, condition: (s) => s.flags.militarist }
+    ]
+  },
+
+  {
+    id: 'ev_japan_economic_reform_1980',
+    turn: { year: 1980, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '封闭经济的终结',
+    body: `<p>日元终于彻底崩溃了。日本被迫放弃共荣圈的封闭经济体系，开始与外部世界贸易。</p>
+    <p>这是一个痛苦但必要的过程。日元贬值百分之九十，日本人民多年的积蓄化为乌有。但从长远来看，开放经济让日本重获了活力——国际贸易带来了新的技术和资源，市场竞争推动了产业升级。</p>
+    <p>日本的经济改革也改变了地缘格局。一个开放的日本，意味着它可能与德国和美国建立更平等的经济关系。三极冷战的性质正在发生变化——从军事对抗转向经济竞争。</p>
+    <p>在东京，改革派官僚们日夜工作，设计着新的经济体系。而在银座的酒吧里，商人们已经开始与德国和美国的企业家碰杯。</p>`,
+    choices: [
+      { text: '与日本建立经济合作', desc: '互利共赢', effects: { money: 25, research: 5, stability: 3 } },
+      { text: '趁日元贬值抢占市场', desc: '经济侵略', effects: { money: 40, deterrence: -3, stability: -2 } },
+      { text: '与日本结成经济同盟', desc: '需要改革派', effects: { money: 15, research: 8, stability: 5 }, condition: (s) => s.flags.reformist, setFlags: { japan_economic_alliance: true } }
+    ]
+  },
+
+  {
+    id: 'ev_japan_democratization_1985',
+    turn: { year: 1985, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '樱花的春天',
+    body: `<p>没有人想到这一切会来得这么快。</p>
+    <p>日本——那个军国主义的、专制的、以天皇为神的帝国——正在民主化。经济改革带来了中产阶级，中产阶级要求政治权利。学生运动、工人罢工、知识分子联名请愿——日本社会的每一层都在震动。</p>
+    <p>天皇的地位被重新定义：从"现人神"变成了"国家象征"。议会获得了真正的权力，政党政治开始运作。军部的特权被削减——虽然海军和陆军仍然是强大的力量，但它们不再凌驾于文官政府之上。</p>
+    <p>日本的民主化对世界格局影响深远。一个民主的日本，意味着三极冷战的军事对抗可能缓和。但这也意味着，日本可能与OFN走近——毕竟，民主国家之间更容易合作。</p>
+    <p>在东京的皇宫前，樱花飘落。新时代的风，吹过樱吹雪。</p>`,
+    choices: [
+      { text: '欢迎日本民主化', desc: '需要改革派', effects: { stability: 8, research: 5, deterrence: -5 }, condition: (s) => s.flags.reformist, setFlags: { japan_democracy: true } },
+      { text: '与民主日本建立同盟', desc: '民主联盟', effects: { stability: 5, research: 8, deterrence: -3 }, condition: (s) => s.flags.reformist && s.relations.japan > 0 },
+      { text: '警惕日本的民主化', desc: '保守立场', effects: { stability: -3, deterrence: 3 } },
+      { text: '利用日本转型期扩张', desc: '军事路线', effects: { militaryPower: 5, deterrence: -8, stability: -5 }, condition: (s) => s.flags.militarist }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十幕：自由灯塔——美国与OFN事件链（1965-1990）
+   * =========================================================== */
+
+  {
+    id: 'ev_us_civil_rights_1965',
+    turn: { year: 1965, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '我有一个梦想',
+    body: `<p>在美国南方，一场改变国家的运动正在发生。</p>
+    <p>马丁·路德·金博士站在塞尔玛的桥上，身后是数以千计的游行者和无数电视镜头。他们要求投票权，要求平等，要求美国兑现它的承诺：<em>"人人生而平等。"</em></p>
+    <p>肯尼迪总统——那个在珍珠港废墟上长大的男人——正在推动民权法案。但南方的种族主义者阻挠着每一步进展，三K党在夜色中燃烧十字架，州长们在议会门口挡住黑人学生的去路。</p>
+    <p>对德国来说，美国的内部撕裂是一个机会。一个忙着处理种族问题的美国，无暇顾及欧洲。但如果民权运动成功，美国将重获道德高地——这是比核武器更可怕的武器。</p>
+    <p>在华盛顿，林肯纪念堂的倒影池中，金博士的倒影与无数游行者的倒影交织在一起。他们梦想着一个更好的美国——而那个美国，可能是帝国最大的敌人。</p>`,
+    choices: [
+      { text: '利用美国的种族矛盾', desc: '渗透和煽动', effects: { research: 3, deterrence: 2, stability: -2 }, showToast: '情报部门开始在美国南方活动' },
+      { text: '关注但不干预', desc: '观望', effects: { stability: 1 } },
+      { text: '秘密支持民权运动', desc: '需要改革派，削弱美国种族主义', effects: { money: -20, stability: 3 }, condition: (s) => s.flags.reformist, showToast: '一个更强大的美国也是更好的对手' }
+    ]
+  },
+
+  {
+    id: 'ev_us_presidential_election_1968',
+    turn: { year: 1968, quarter: 4 },
+    once: true,
+    tag: 'major',
+    title: '一九六八大选',
+    body: `<p>美国的总统大选从来都是世界的焦点，但1968年的大选格外关键。</p>
+    <p>肯尼迪不再竞选连任（他的健康在暗杀未遂后每况愈下）。民主党推出了汉弗莱，共和党推出了尼克松，而独立候选人华莱士打着种族隔离的旗号分裂了南方。</p>
+    <p>大选在美国社会的撕裂中进行。反战运动、民权运动、女权运动——所有力量都在这个选票箱前碰撞。最终，尼克松以微弱优势获胜，承诺"恢复法律与秩序"和"体面的和平"。</p>
+    <p>对德国来说，尼克松上台意味着什么？他是一个现实主义者，可能愿意与德国做交易。但他也是一个反共——反极权——的鹰派，不会容忍德国的扩张。</p>
+    <p>在大洋彼岸，白宫的灯光换了一个主人。世界在等待，新总统会做什么。</p>`,
+    choices: [
+      { text: '向尼克松示好', desc: '现实主义外交', effects: { stability: 2, deterrence: -2 }, showToast: '尼克松回应了问候' },
+      { text: '趁机扩张在欧洲的势力', desc: '美国无暇他顾', effects: { deterrence: 5, stability: -3 }, condition: (s) => s.flags.militarist },
+      { text: '准备与新一届美国政府谈判', desc: '改革派', effects: { research: 3, stability: 2 }, condition: (s) => s.flags.reformist }
+    ]
+  },
+
+  {
+    id: 'ev_us_economic_recovery_1972',
+    turn: { year: 1972, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '美国回来了',
+    body: `<p>经过二十年的蛰伏，美国经济终于复苏了。</p>
+    <p>尼克松政府推行了一系列经济改革：减税、放松管制、投资科技。硅谷开始萌芽，计算机产业蓬勃发展，航天工业在登月竞赛的刺激下突飞猛进。美国的GDP增长率再次超过了德国。</p>
+    <p>更令德国担忧的是，OFN正在扩大。加拿大、澳大利亚、新西兰已经加入，南美洲的国家也在观望。一个经济复苏、科技领先、联盟扩大的美国，正在重新成为世界的一极。</p>
+    <p>而美国的军工复合体也在膨胀。OFN的军事预算连年增长，新一代核武器、洲际导弹、战略轰炸机陆续服役。美国不再是被珍珠港吓倒的那个美国了。</p>
+    <p>自由世界的灯塔，重新亮了起来。</p>`,
+    choices: [
+      { text: '加速德国军事现代化', desc: '应对美国复苏', effects: { militaryPower: 5, money: -30 }, condition: (s) => s.flags.militarist },
+      { text: '寻求与OFN缓和', desc: '需要改革派', effects: { stability: 3, deterrence: -3, research: 3 }, condition: (s) => s.flags.reformist },
+      { text: '加强与日本的经济合作', desc: '联日抗美', effects: { money: 15, research: 2 } },
+      { text: '无视美国复苏', desc: '自大', effects: { stability: -3, deterrence: -5 }, showToast: '帝国低估了美国的潜力' }
+    ]
+  },
+
+  {
+    id: 'ev_us_space_program_1975',
+    turn: { year: 1975, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '星辰大海',
+    body: `<p>1962年，德国率先登月。十三年后，美国追上来了。</p>
+    <p>OFN的航天计划在沉默中积蓄了十年，终于在1975年实现了载人登月。美国宇航员尼尔·阿姆斯特朗——不，在这个世界里，是艾伦·谢泼德——踏上了月球的土地，插上了星条旗。</p>
+    <p>但OFN没有止步于月球。他们宣布了更宏伟的计划：空间站、火星探测、甚至太空军事化。美国的太空预算已经超过了德国的军事航天预算。</p>
+    <p>太空竞赛重新点燃了。德国曾经领先，但美国的工业实力正在缩小差距。如果德国不加大投入，太空——这最后的战略高地——也将被美国夺走。</p>`,
+    choices: [
+      { text: '加大航天投入', desc: '保持领先', effects: { research: 8, money: -50, stability: 3 } },
+      { text: '与OFN合作太空探索', desc: '需要改革派', effects: { research: 10, stability: 5, deterrence: -3 }, condition: (s) => s.flags.reformist },
+      { text: '军事化太空', desc: '太空武器化', effects: { militaryPower: 5, deterrence: 5, money: -40, stability: -3 }, condition: (s) => s.flags.militarist },
+      { text: '放弃太空竞赛', desc: '认输', effects: { stability: -8, research: -5, deterrence: -5 }, showToast: '美国在太空领域超越德国' }
+    ]
+  },
+
+  {
+    id: 'ev_ofn_intervention_africa_1976',
+    turn: { year: 1976, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '非洲的代理人战争',
+    body: `<p>OFN终于正式介入了非洲。</p>
+    <p>在南非，种族隔离政策引发了全面内战。OFN支持的非国大与南非白人政权（得到德国暗中支持）展开激战。在刚果，无政府区终于出现了几个可识别的政权，OFN和德国各自支持一方。</p>
+    <p>非洲成了三极冷战的代理人战场。OFN的特种部队、德国的军事顾问、日本的情报人员——三方在非洲大陆上角逐。代理人战争消耗着各方的资源，但也提供了测试新武器和新战术的机会。</p>
+    <p>对德国来说，非洲的矿产——特别是铀矿和钴矿——至关重要。失去非洲，德国的核武库和高科技产业就会面临原材料短缺。</p>`,
+    choices: [
+      { text: '派遣军事顾问支持亲德势力', desc: '代理人战争', effects: { militaryPower: -3, money: 10, deterrence: 3 } },
+      { text: '与OFN划分非洲势力范围', desc: '需要改革派', effects: { stability: 3, money: -20 }, condition: (s) => s.flags.reformist },
+      { text: '直接军事介入', desc: '高风险', effects: { militaryPower: -8, deterrence: 5, stability: -5 }, condition: (s) => s.flags.militarist },
+      { text: '撤出非洲', desc: '割肉止损', effects: { money: -20, stability: -3, deterrence: -5 }, showToast: 'OFN在非洲扩张' }
+    ]
+  },
+
+  {
+    id: 'ev_us_detente_1980',
+    turn: { year: 1980, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '缓和的曙光',
+    body: `<p>1980年。美国新总统——一个温和的现实主义者——在就职演说中说了一句让世界屏息的话：<em>"我们不寻求与任何国家为敌。我们寻求的是和平。"</em></p>
+    <p>缓和政策正式出台。美国提出与德国和日本进行三边裁军谈判，减少核武器库存，降低军事对抗烈度。OFN愿意在互惠的基础上与德国建立外交关系，甚至在某些领域进行合作。</p>
+    <p>这是自1945年以来，三极世界第一次出现真正和平的可能。但缓和也有敌人——军工复合体、极端民族主义者、以及勃艮第。希姆莱不需要和平，他需要末日。</p>
+    <p>对德国来说，这是一个历史性的选择。接受缓和，意味着承认冷战无法通过武力赢得；拒绝缓和，意味着继续在军备竞赛中消耗国力。</p>`,
+    choices: [
+      { text: '接受缓和，开启裁军谈判', desc: '需要改革派', effects: { stability: 10, deterrence: -8, research: 5, money: 30 }, condition: (s) => s.flags.reformist, setFlags: { detente_started: true } },
+      { text: '有条件接受', desc: '谨慎缓和', effects: { stability: 5, deterrence: -3, research: 3 } },
+      { text: '拒绝缓和', desc: '继续对抗', effects: { stability: -3, deterrence: 5, money: -20 }, condition: (s) => s.flags.militarist },
+      { text: '表面接受，暗中备战', desc: '两面派', effects: { stability: 2, deterrence: 3, research: -2 }, showToast: '世界以为和平来了...' }
+    ]
+  },
+
+  {
+    id: 'ev_us_presidential_election_1988',
+    turn: { year: 1988, quarter: 4 },
+    once: true,
+    tag: 'major',
+    title: '变革之风',
+    body: `<p>1988年的美国总统大选，成了美国未来的公投。</p>
+    <p>鹰派候选人主张重新武装，利用德国的衰落收复失地。鸽派候选人主张深化缓和，推动全球合作。而一个年轻的、充满魅力的第三方候选人——一个理想主义者——喊出了让所有人震动的口号：<em>"新世界秩序。"</em></p>
+    <p>他不是在说德国式的新秩序，也不是日本的共荣圈。他说的是一个真正的新秩序——没有冷战、没有核恐惧、没有代理人战争的世界。</p>
+    <p>这个口号打动了美国人。经历了二十多年的核恐惧和经济动荡，美国人渴望改变。最终，这位年轻候选人大获全胜，成为美国新总统。</p>
+    <p>在华盛顿，新一届政府开始规划真正的和平蓝图。而在柏林和东京，人们开始思考：如果美国不再是对手，那三国关系将走向何方？</p>`,
+    choices: [
+      { text: '与美国新政府合作', desc: '需要改革派', effects: { stability: 8, research: 5, deterrence: -5 }, condition: (s) => s.flags.reformist },
+      { text: '观望', desc: '等待美国政策明朗', effects: { stability: 2 } },
+      { text: '趁美国换届加紧军备', desc: '军事路线', effects: { militaryPower: 5, money: -30, stability: -3 }, condition: (s) => s.flags.militarist },
+      { text: '与美国新总统建立私人关系', desc: '外交', effects: { stability: 5, money: -10 }, showToast: '一封信寄往了白宫' }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十一幕：科技的黎明——科技与文化事件链（1975-1995）
+   * =========================================================== */
+
+  {
+    id: 'ev_german_internet',
+    turn: { year: 1975, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '帝国的网络',
+    body: `<p>在日耳曼尼亚的一间地下实验室里，一台计算机发出了第一声蜂鸣。它连接着另一台计算机——在两百公里外的法兰克福。</p>
+    <p>这是<strong>"帝国网络"</strong>（Reichsnetz）的开端。德国的计算机科学家们——在帝国研究委员会的资助下——建立了一个连接各大城市计算机的通信网络。最初，它只用于军事和科研目的：共享计算资源、传输加密数据、协调导弹预警系统。</p>
+    <p>但科学家们很快意识到，这个网络的潜力远超军事用途。它可以传输文字、图像、甚至声音。如果开放给公众使用，它将彻底改变信息传播的方式。</p>
+    <p>然而，帝国的审查机构闻到了危险。一个自由的网络意味着自由的信息流动——这是帝国的噩梦。党卫军要求军事化管控；改革派则看到了技术与经济的机会。</p>
+    <p>一个选择摆在帝国面前：开放网络，拥抱信息时代；还是封锁网络，维持铁幕？</p>`,
+    choices: [
+      { text: '开放帝国网络给公众', desc: '需要改革派', effects: { research: 10, stability: -5, money: 20 }, condition: (s) => s.flags.reformist, setFlags: { internet_open: true }, showToast: '信息时代来临了' },
+      { text: '军事专用，严格管控', desc: '安全至上', effects: { research: 5, militaryPower: 3, deterrence: 3 }, setFlags: { internet_military: true } },
+      { text: '有限的商业使用', desc: '折中方案', effects: { research: 5, money: 10, stability: -2 }, setFlags: { internet_limited: true } },
+      { text: '封锁网络，销毁研究', desc: '极端保守', effects: { research: -5, stability: 5 }, condition: (s) => !s.flags.reformist, showToast: '德国错过了信息时代' }
+    ]
+  },
+
+  {
+    id: 'ev_personal_computer',
+    turn: { year: 1980, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '每个人的计算机',
+    body: `<p>它只有一台打字机大小，连着一个笨重的显像管屏幕，运行速度慢得像蜗牛。但它是第一台<strong>个人电脑</strong>。</p>
+    <p>德国的工程师们把庞大的计算机缩小到了可以放在桌面上的尺寸。这台被命名为"Volksrechner"（人民计算机）的机器，售价相当于一个工人两个月的工资——贵得离谱，但比起需要一整栋大楼的大型机，已经是革命性的进步。</p>
+    <p>OFN和日本也在发展自己的个人电脑。三极竞争推动了技术的飞速进步。如果帝国不抓住这个机遇，计算机的下一代标准可能由美国或日本制定。</p>
+    <p>但个人电脑也带来了一个隐忧：一旦每个人都能拥有一台计算机，信息的传播就再也无法控制了。帝国的审查制度，将面临前所未有的挑战。</p>`,
+    choices: [
+      { text: '大力推广个人电脑', desc: '+研发 +资金 -稳定', effects: { research: 8, money: 15, stability: -3 } },
+      { text: '只允许军方和企业使用', desc: '安全', effects: { research: 3, militaryPower: 2 } },
+      { text: '与OFN合作制定标准', desc: '需要改革派', effects: { research: 10, stability: 3 }, condition: (s) => s.flags.reformist },
+      { text: '禁止个人电脑', desc: '极端保守', effects: { research: -5, stability: 3 }, showToast: '德国再次错过了技术革命' }
+    ]
+  },
+
+  {
+    id: 'ev_space_race_mars',
+    turn: { year: 1985, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '红色星球',
+    body: `<p>月球已经不够了。三极太空竞赛的新目标是<strong>火星</strong>。</p>
+    <p>德国在1962年率先登月，但OFN在1975年追平，日本也在1978年实现了登月。太空竞赛需要一个新的目标，而火星——那颗红色的星球——成了三国的执念。</p>
+    <p>载人火星任务的技术挑战是空前的：需要新型火箭、生命维持系统、数月的星际旅行。预算也是天文数字——三国各自的火星计划预算都超过了GDP的百分之一。</p>
+    <p>但太空竞赛不仅仅是科技竞争。它是软实力的较量，是意识形态的展示。哪个国家率先登上火星，就将在未来十年主导太空话语权。</p>
+    <p>在卡纳维拉尔角、在种子岛、在佩内明德，火箭工程师们日夜工作。火星在夜空中闪烁，等待着第一个访客。</p>`,
+    choices: [
+      { text: '全力冲刺火星计划', desc: '巨额投入', effects: { research: 15, money: -80, stability: 5 }, setFlags: { mars_program: true } },
+      { text: '与日本联合开发', desc: '分担成本', effects: { research: 8, money: -30, stability: 2 }, setFlags: { mars_cooperation_japan: true } },
+      { text: '与OFN联合开发', desc: '需要改革派', effects: { research: 10, money: -25, stability: 5, deterrence: -3 }, condition: (s) => s.flags.reformist },
+      { text: '放弃火星，专注地球', desc: '务实', effects: { money: 20, stability: -3 }, showToast: '德国退出了火星竞赛' }
+    ]
+  },
+
+  {
+    id: 'ev_genetic_engineering',
+    turn: { year: 1985, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '上帝的剪刀',
+    body: `<p>德国的遗传学家们完成了一项不可能的任务：他们成功地修改了人类胚胎的基因。</p>
+    <p>这项技术——基因编辑——可以消除遗传疾病，增强人体特征，甚至……"改良"人种。最后一点让帝国的高层们兴奋得发抖。</p>
+    <p>党卫军的"生命之泉"项目立刻表示了兴趣：如果基因编辑可以"制造"完美的雅利安人，那就不需要麻烦的繁殖计划了。改革派则担心这项技术的伦理后果——修改人类基因，是否走得太远了？</p>
+    <p>而OFN和日本也在竞相开发类似技术。基因工程竞赛——一场比核竞赛更隐蔽、但可能更危险的竞赛——已经开始了。</p>`,
+    choices: [
+      { text: '全面支持基因工程', desc: '+研发 -稳定', effects: { research: 10, stability: -5 }, setFlags: { genetic_engineering: true } },
+      { text: '只允许医学用途', desc: '折中', effects: { research: 5, stability: 2, manpower: 3 } },
+      { text: '与SS合作"人种改良"计划', desc: '黑暗', effects: { research: 8, stability: -10, manpower: -10 }, condition: (s) => s.flags.extremist, showToast: '党卫军开始了新的"优生"计划' },
+      { text: '禁止基因编辑', desc: '保守', effects: { research: -3, stability: 5 } }
+    ]
+  },
+
+  {
+    id: 'ev_environmental_movement',
+    turn: { year: 1986, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '绿色的觉醒',
+    body: `<p>帝国的河流在发臭，帝国的天空在变灰，帝国的森林在死去。</p>
+    <p>几十年的重工业发展——奴隶制经济不计环境成本的疯狂生产——终于到了大自然反击的时候。莱茵河的鱼死了，鲁尔区的空气让人窒息，巴伐利亚的森林在酸雨中枯萎。</p>
+    <p>帝国的公民们——尤其是年轻人——开始意识到，经济增长的代价是他们的健康和未来。一个名为"绿色觉醒"的环保运动在地下萌芽，要求政府治理污染、保护自然。</p>
+    <p>但帝国的工业巨头们拒绝任何环保限制。"污染是进步的代价，"他们这样说。而党卫军把环保主义者视为"颠覆分子"。</p>
+    <p>在纽伦堡的集会上，一个年轻女孩举着一块牌子：<em>"我们没有B计划，因为没有B地球。"</em></p>`,
+    choices: [
+      { text: '推行环保法规', desc: '需要改革派', effects: { stability: 5, money: -30, research: 3 }, condition: (s) => s.flags.reformist, setFlags: { environmental_protection: true } },
+      { text: '投资清洁能源', desc: '长远眼光', effects: { research: 5, money: -40, stability: 3 } },
+      { text: '镇压环保运动', desc: '维护工业利益', effects: { stability: -3, money: 10 }, condition: (s) => !s.flags.reformist },
+      { text: '无视环境问题', desc: '让大自然自愈（不会的）', effects: { stability: -5, manpower: -10 }, showToast: '环境持续恶化' }
+    ]
+  },
+
+  {
+    id: 'ev_chernobyl_equivalent',
+    turn: { year: 1986, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '熔毁',
+    body: `<p>凌晨1点23分。帝国东部，乌克兰专员辖区，一座核电站的反应堆失去了控制。</p>
+    <p><strong>切尔诺贝利</strong>——不，在这个世界里它叫别的名字——但灾难是一样的。反应堆堆芯熔毁，放射性物质喷向天空，随风飘散到半个欧洲。</p>
+    <p>帝国的应急响应迟缓而混乱。党卫军试图封锁消息，但辐射云不分国界。两天后，OFN的监测站检测到了异常辐射，消息传遍了世界。</p>
+    <p>数万人被疏散，但更多的人在不知情的情况下暴露在辐射中。乌克兰的农田变成了禁区，帝国的粮食供应受到打击。而在日耳曼尼亚，恐慌蔓延——如果风向往北吹，首都也在辐射范围内。</p>
+    <p>这是帝国历史上最严重的技术灾难。它暴露了帝国的核安全体系的脆弱，也暴露了极权体制在应对危机时的无能——因为信息被封锁，决策被延误，人命被轻视。</p>`,
+    choices: [
+      { text: '全面公开信息，紧急疏散', desc: '需要改革派', effects: { stability: -10, manpower: -5, money: -40 }, condition: (s) => s.flags.reformist, showToast: '人民感谢你的坦诚' },
+      { text: '封锁消息，秘密处理', desc: '掩盖灾难', effects: { stability: -3, manpower: -20, money: -20 }, setFlags: { nuclear_coverup: true }, showToast: '真相总会大白...' },
+      { text: '嫁祸给勃艮第', desc: '阴险', effects: { stability: -5, deterrence: 5, manpower: -15 }, condition: (s) => s.flags.militarist },
+      { text: '放弃核能', desc: '极端', effects: { stability: 3, money: -60, research: -5 }, showToast: '帝国关闭了所有核电站' }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十二幕：终局——冷战终局事件链（1985-2000）
+   * =========================================================== */
+
+  {
+    id: 'ev_german_economic_crisis_1985',
+    turn: { year: 1985, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '帝国的黄昏',
+    body: `<p>1985年。帝国的经济——那个靠着奴隶制、借贷和军事开支续命的畸形怪兽——终于走到了悬崖边。</p>
+    <p>通胀率百分之三百。失业率百分之二十。帝国马克在国际黑市上的汇率已经低于日本日元——而日元本身也在崩溃。工厂关门，商店空空荡荡，配给票再次成为德国人的日常。</p>
+    <p>东方总督辖区的奴隶起义此起彼伏，镇压成本已经超过了奴隶劳动的产出。党卫军和国防军的内斗消耗着最后的军事资源。而OFN——经济复苏的OFN——正在趁火打劫，用廉价商品冲击德国市场。</p>
+    <p>帝国的精英们终于意识到一个残酷的事实：<strong>奴隶制经济不是经济的未来，而是经济的坟墓。</strong>几十年的"免费"劳动，摧毁了创新动力，摧毁了市场机制，摧毁了帝国的竞争力。</p>
+    <p>现在，帝国的选择只有两个：彻底改革，或者彻底崩溃。</p>`,
+    choices: [
+      { text: '彻底废除奴隶制，推行市场经济', desc: '需要改革派', effects: { stability: -10, money: 30, research: 5, manpower: 20 }, condition: (s) => s.flags.reformist, setFlags: { slavery_abolished: true }, showToast: '一个时代结束了——奴隶制被废除' },
+      { text: '加紧镇压，维持奴隶制', desc: '军事路线', effects: { stability: 5, militaryPower: -5, money: -30 }, condition: (s) => s.flags.militarist, showToast: '帝国在奴隶的鲜血上苟延残喘' },
+      { text: '向OFN请求经济援助', desc: '屈辱但必要', effects: { money: 50, stability: -8, deterrence: -10 }, condition: (s) => s.relations.ofn > 10 },
+      { text: '通过对外战争转移矛盾', desc: '极端', effects: { militaryPower: 10, stability: -5, money: -40 }, condition: (s) => s.flags.militarist, setFlags: { war_diversion: true }, showToast: '帝国准备发动战争！' }
+    ]
+  },
+
+  {
+    id: 'ev_reform_movement_1987',
+    turn: { year: 1987, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '改革的新风',
+    body: `<p>如果帝国走上了改革之路，那么1987年将是一个转折点。</p>
+    <p>施佩尔（或他的继承人）推行了一系列被称为<strong>"帝国改革"</strong>的政策：放松言论管制、允许反对党存在（在限定范围内）、开放国际贸易、削减军费、投资民生。</p>
+    <p>改革的阻力是巨大的。党内的保守派、军方的强硬分子、党卫军的极端势力——他们联合起来阻挠每一项改革。但改革派也有盟友：中产阶级、知识分子、年轻军官、以及——最重要的是——OFN的支持。</p>
+    <p>美国明确表示：如果德国真正改革，OFN愿意结束冷战，甚至提供经济援助。这是一个历史性的机会——一个和平结束三极对抗的机会。</p>
+    <p>但机会的另一面是风险。如果改革失败，帝国将陷入比1962年更深的深渊。而勃艮第——希姆莱绝不会允许德国和平改革。他在黑暗中磨刀。</p>`,
+    choices: [
+      { text: '全力推进改革', desc: '历史性抉择', effects: { stability: -5, research: 10, money: 20, deterrence: -8 }, condition: (s) => s.flags.reformist, setFlags: { reform_1987: true } },
+      { text: '渐进式改革', desc: '更稳妥', effects: { stability: 2, research: 5, money: 10 }, condition: (s) => s.flags.reformist },
+      { text: '暂停改革，先稳定经济', desc: '务实', effects: { money: 15, stability: 3, research: -3 } },
+      { text: '改革太危险，停止', desc: '保守', effects: { stability: 5, research: -5, deterrence: 3 }, showToast: '改革的窗口关闭了' }
+    ],
+    condition: (s) => s.flags.reformist || s.flags.slavery_abolished
+  },
+
+  {
+    id: 'ev_berlin_wall_equivalent',
+    turn: { year: 1989, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '墙倒了',
+    body: `<p>1989年11月9日。一个普通的夜晚，一个不普通的决定。</p>
+    <p>帝国的改革政府宣布：取消旅行限制。帝国的公民可以自由出国——第一次，在四十六年之后。</p>
+    <p>消息传开的瞬间，柏林——不，日耳曼尼亚——的街头沸腾了。人们涌向勃兰登堡门，涌向那座分隔了帝国与世界的无形之墙。党卫军的卫兵们不知所措——他们接到的命令是"不开枪"。</p>
+    <p>人们用锤子、用凿子、用双手，拆掉了隔离墩和铁丝网。陌生人拥抱在一起，哭泣着、欢笑着。四十六年的恐惧和压抑，在这一夜倾泻而出。</p>
+    <p>OFN的记者们用摄像机记录下了这一切。画面传遍了世界——日耳曼尼亚的墙倒了。冷战的铁幕，正在撕裂。</p>
+    <p>而在勃艮第，希姆莱看着电视画面，脸色铁青。他的末日计划，不能让这堵墙倒掉。</p>`,
+    choices: [
+      { text: '拥抱这一刻', desc: '需要改革派', effects: { stability: 15, research: 5, deterrence: -5, money: 10 }, condition: (s) => s.flags.reformist, setFlags: { wall_fell: true }, showToast: '帝国的人民自由了' },
+      { text: '冷处理，不鼓励也不阻止', desc: '谨慎', effects: { stability: 5, deterrence: -2 } },
+      { text: '试图重新封锁边境', desc: '逆转改革', effects: { stability: -15, deterrence: 3 }, showToast: '人民不会允许墙重新建起来' }
+    ],
+    condition: (s) => s.flags.reformist || s.flags.reform_1987
+  },
+
+  {
+    id: 'ev_nuclear_disarmament',
+    turn: { year: 1989, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '削减',
+    body: `<p>三国的领导人坐在日内瓦的谈判桌前。桌上摆着一份文件：<strong>《核裁军条约》</strong>。</p>
+    <p>这是人类历史上最重要的文件之一。如果签署，三国将在十年内削减百分之五十的核武器库存，建立互查机制，终止核试验。这意味着——第一次——核末日的阴影真正开始消散。</p>
+    <p>谈判是艰难的。每一方都担心对方作弊，每一方都不愿意先削减。但三方也都意识到，核军备竞赛正在拖垮各自的经济。德国的核武库维护费用占了军费的百分之三十，OFN和日本也不堪重负。</p>
+    <p>而勃艮第——希姆莱的勃艮第——在暗中破坏着谈判。他需要核武器，需要恐惧，需要末日。如果三国裁军，勃艮第的核威慑就失去了意义。</p>`,
+    choices: [
+      { text: '签署裁军条约', desc: '需要改革派', effects: { stability: 10, nukeDeter: -15, research: 5, money: 40 }, condition: (s) => s.flags.reformist, setFlags: { disarmament_signed: true } },
+      { text: '有条件签署', desc: '要求互查机制', effects: { stability: 5, nukeDeter: -8, research: 3 }, setFlags: { disarmament_conditional: true } },
+      { text: '拒绝裁军', desc: '保持核威慑', effects: { stability: -3, nukeDeter: 5, money: -20 }, condition: (s) => s.flags.militarist },
+      { text: '表面签署，暗中保留', desc: '两面派', effects: { stability: 3, nukeDeter: -3, research: -2 }, showToast: '世界以为和平来了...' }
+    ]
+  },
+
+  {
+    id: 'ev_end_of_cold_war',
+    turn: { year: 1991, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '冷战的终结',
+    body: `<p>1991年。在日内瓦，三国领导人签署了一份将被载入史册的文件：<strong>《新世纪宣言》</strong>。</p>
+    <p>这份宣言宣布：三极冷战正式结束。德国、美国和日本同意在互尊互惠的基础上建立新关系，结束军事对抗，推动经济合作，共同应对全球挑战。</p>
+    <p>这不是和平——三方之间仍有分歧、竞争和不信任。但这不再是冷战——核武器不再是外交工具，代理人战争不再是常态，铁幕不再是不可逾越的。</p>
+    <p>帝国的改革者们在日耳曼尼亚举杯庆祝。OFN的领导人在华盛顿发表演讲。日本的改革派在东京街头游行。全世界——除了勃艮第——都在欢呼。</p>
+    <p>希特勒的阴影，终于开始散去。新世纪的曙光，在地平线上闪烁。</p>`,
+    choices: [
+      { text: '拥抱和平新纪元', desc: '需要改革派', effects: { stability: 20, research: 10, money: 30, deterrence: -10 }, condition: (s) => s.flags.reformist, setFlags: { cold_war_ended: true } },
+      { text: '谨慎乐观', desc: '温和', effects: { stability: 10, research: 5, deterrence: -3 } },
+      { text: '不信任，保持警惕', desc: '保守', effects: { stability: -3, deterrence: 3 } }
+    ],
+    condition: (s) => s.flags.reformist || s.flags.disarmament_signed
+  },
+
+  {
+    id: 'ev_new_world_order_1992',
+    turn: { year: 1992, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '新世界秩序',
+    body: `<p>冷战结束了。但新世界的模样，还没有人知道。</p>
+    <p>三极对抗让位给了三极合作——但合作并不意味着平等。美国的经济和科技实力最强，日本控制着亚洲的供应链，而德国——改革后的德国——拥有欧洲的市场和俄罗斯的边缘资源。</p>
+    <p>全球化成为新的关键词。跨国公司在三国之间穿梭，资本流动前所未有地自由。互联网（如果帝国开放了它）连接了全世界的信息。文化、思想、人才在三极之间流动。</p>
+    <p>但新世界也有新问题。恐怖主义、网络战、经济泡沫、气候变化——这些跨国界的威胁需要跨国界的合作。而旧时代的幽灵——民族主义、军国主义、极端主义——并没有消失，只是在等待时机。</p>
+    <p>1992年。新世界秩序的蓝图，正在绘制中。</p>`,
+    choices: [
+      { text: '积极融入全球化', desc: '需要改革派', effects: { money: 30, research: 8, stability: 5 }, condition: (s) => s.flags.reformist },
+      { text: '保护帝国经济，有限融入', desc: '务实', effects: { money: 15, stability: 3 } },
+      { text: '抗拒全球化', desc: '保守', effects: { money: -10, stability: 5, research: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_technology_revolution_1995',
+    turn: { year: 1995, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '数字革命',
+    body: `<p>1995年。互联网已经连接了数百万人，移动通信开始普及，生物科技突飞猛进。</p>
+    <p>如果帝国在1975年开放了网络，那么到1995年，德国已经有了成熟的互联网生态——电子商务、在线媒体、数字娱乐。德国的科技公司（如果它们能在帝国的体制下存活）正在与OFN和日本的企业竞争。</p>
+    <p>如果帝国封锁了网络，那么1995年的德国是一个数字荒漠——OFN和日本的企业主导着互联网，德国人只能通过走私的设备和翻墙软件窥探外面的数字世界。</p>
+    <p>技术革命不仅改变了经济，也改变了社会。信息流动加速，思想传播加快，旧体制的根基在新技术的冲刷下松动。</p>`,
+    choices: [
+      { text: '投资科技产业', desc: '拥抱数字时代', effects: { research: 10, money: 20, stability: 3 } },
+      { text: '与OFN科技合作', desc: '需要改革派', effects: { research: 15, stability: 5 }, condition: (s) => s.flags.reformist },
+      { text: '军事化科技', desc: '军事路线', effects: { research: 5, militaryPower: 5, money: -20 }, condition: (s) => s.flags.militarist },
+      { text: '限制科技发展', desc: '保守', effects: { research: -5, stability: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_millennium_celebration',
+    turn: { year: 1999, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '千年之交',
+    body: `<p>1999年12月31日。午夜的钟声即将敲响。</p>
+    <p>整个世界——从日耳曼尼亚到华盛顿，从东京到莫斯科——都在等待新千年的到来。烟花准备就绪，庆典排满日程，人们在广场上聚集，仰望着夜空。</p>
+    <p>三十八年前，你走进了帝国总理府。那时，希特勒还活着，帝国还在腐朽中苟延残喘，冷战笼罩着整个世界。三十八年后，世界已经面目全非——无论你做出了什么选择，这个世界的面貌，都有你的印记。</p>
+    <p>帝国还存在吗？它改革了吗？它崩溃了吗？它变得更强大了，还是更人道了？这些问题，都将在新千年的钟声中，找到答案。</p>
+    <p>而在勃艮第——如果它还存在——希姆莱的幽灵仍在黑暗中徘徊。新千年的曙光，并不意味着噩梦的终结。</p>
+    <p>但至少，此刻，全人类一起仰望着同一片星空，等待着同一个午夜。</p>
+    <p><strong>2000年，到了。</strong></p>`,
+    choices: [
+      { text: '迎接新千年', desc: '终局', effects: { stability: 10, research: 5, money: 10 }, showToast: '新千年快乐' }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十幕：德国内战四派系深度事件链（1963-1964）
+   * =========================================================== */
+
+  {
+    id: 'ev_speer_economic_blueprint',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '施佩尔的经济蓝图',
+    body: `<p>内战爆发不过数周，<strong>阿尔伯特·施佩尔</strong>便在埃森的工厂废墟里召集了他的经济幕僚。这位曾经的帝国建筑师摊开一张巨幅图纸，上面密密麻麻标注着煤钢产区、铁路枢纽与奴隶劳动营的分布。</p>
+    <p>"帝国不是被敌人打败的，"他对着寥寥数人说，"它是被自己的愚蠢饿死的。"他主张立刻废除东方总督辖区的奴隶制残余，将奴隶转为有偿劳工，引入有限的市场机制，让冻结的经济重新流动。这是一剂猛药——但对一个垂死的病人来说，猛药或许是唯一的生路。</p>
+    <p>问题在于，施佩尔手里既没有军队，也没有党机器。他的全部筹码，是工厂主们的暗中同情，以及OFN透过瑞士银行递来的一张空头支票。改革，从来不是请客吃饭。</p>
+    <p>而他的对手们，已经磨刀霍霍。</p>`,
+    choices: [
+      { text: '支持施佩尔的改革路线', desc: '高风险高回报', effects: { stability: -4, money: 30, research: 8, ofn_relation: 15 }, setFlags: { reformist: true, speer_path: true }, showToast: '你选择了改革之路' },
+      { text: '只采纳部分经济建议', desc: '稳健', effects: { money: 15, stability: 2, research: 3 } },
+      { text: '拒绝，改革太危险', desc: '保守', effects: { stability: 4, deterrence: 3, ofn_relation: -8 } }
+    ]
+  },
+
+  {
+    id: 'ev_speer_student_guard',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'story',
+    title: '学生卫队',
+    body: `<p>施佩尔的处境岌岌可危：鲍曼控制着党部，戈林握着空军，海德里希掌控党卫军。而他，只有一个空荡荡的总理府办公室和一群理想主义的学生。</p>
+    <p>但正是这群学生，自发组织起了"<strong>施佩尔青年护卫队</strong>"。他们佩戴白底黑鹰袖标，在施佩尔的演讲会场外围成人墙，用血肉之躯挡住泼来的墨水瓶和石块。他们印发传单，在大学里宣讲经济自由化，把施佩尔的主张翻译成工人听得懂的语言。这群从未经历过战争的孩子，把改革当成了信仰。</p>
+    <p>施佩尔望着这些年轻的脸，心中五味杂陈。他知道，这些孩子中很多人会死在内战的流弹里——而他能否配得上他们的牺牲，是一个他不敢回答的问题。</p>`,
+    choices: [
+      { text: '武装学生护卫队', desc: '+军事 -稳定', effects: { militaryPower: 4, stability: -3, manpower: -5 }, condition: (s) => s.flags.speer_path, setFlags: { student_guard_armed: true } },
+      { text: '让学生负责宣传', desc: '+稳定 +研发', effects: { stability: 5, research: 4, ofn_relation: 5 }, condition: (s) => s.flags.speer_path },
+      { text: '解散护卫队，避免流血', desc: '保守', effects: { stability: 3, manpower: 3 }, condition: (s) => s.flags.speer_path }
+    ]
+  },
+
+  {
+    id: 'ev_speer_ofn_backchannel',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'diplomacy',
+    title: '苏黎世的密使',
+    body: `<p>一列从维也纳开往苏黎世的夜车上，施佩尔的私人秘书与一位OFN的情报官相对而坐。窗帘紧闭，车厢外是阿尔卑斯山的雪线。</p>
+    <p>OFN开出的条件很明确：如果施佩尔胜出并推行实质性改革——废除奴隶制、开放市场、削减核武——美国愿意提供一笔秘密经济援助，并在外交上承认新政府。这相当于在德国四分五裂的时刻，递来一根救命稻草。但代价是：施佩尔必须在内战中幸存下来，并且不能让海德里希或戈林截获这次接触。</p>
+    <p>消息若走漏，施佩尔将被扣上"勾结外敌"的帽子，万劫不复。这是一场赌上性命的赌博。</p>`,
+    choices: [
+      { text: '接受OFN的秘密援助', desc: '+资金 +OFN关系 -威慑', effects: { money: 40, ofn_relation: 20, deterrence: -5, stability: -3 }, condition: (s) => s.flags.speer_path, setFlags: { ofn_secret_aid: true } },
+      { text: '婉拒，保持距离', desc: '稳健', effects: { ofn_relation: 5, stability: 2 } },
+      { text: '出卖这次接触换取鲍曼好感', desc: '卑鄙', effects: { stability: 6, ofn_relation: -25, money: 20 }, showToast: '你背叛了信任' }
+    ]
+  },
+
+  {
+    id: 'ev_speer_slave_reform',
+    turn: { year: 1964, quarter: 3 },
+    once: true,
+    tag: 'economy',
+    title: '枷锁的第一道裂缝',
+    body: `<p>施佩尔在鲁尔区的一座钢铁厂宣布：即日起，该厂的东方劳工将获得微薄的工资、每周一天的休息，以及——最震撼的——不再被随意鞭打的权利。</p>
+    <p>这是帝国历史上第一次对奴隶制作出实质性让步。工厂主们目瞪口呆，党部震怒，党卫军则把这视为"雅利安精神的堕落"。但工效数字不会撒谎：拿到工资的劳工产量提升了三成，逃亡率下降了七成。经济学的铁律，第一次撬动了意识形态的基石。</p>
+    <p>然而东方总督辖区的总督们联名抗议，威胁若推广此政策将"倒戈相向"。施佩尔站在岔路口：是全面推行，还是见好就收？</p>`,
+    choices: [
+      { text: '在全国推广劳工改革', desc: '历史性一步', effects: { stability: -6, money: 25, research: 5, manpower: 15 }, condition: (s) => s.flags.speer_path, setFlags: { slavery_reform_partial: true } },
+      { text: '仅在鲁尔区试行', desc: '谨慎', effects: { money: 10, stability: 2, manpower: 5 } },
+      { text: '屈服于总督压力，收回政策', desc: '保守', effects: { stability: 4, ofn_relation: -10 }, showToast: '改革胎死腹中' }
+    ]
+  },
+
+  {
+    id: 'ev_speer_old_guard_resistance',
+    turn: { year: 1964, quarter: 4 },
+    once: true,
+    tag: 'story',
+    title: '旧卫队的暗箭',
+    body: `<p>改革触动的不只是总督们。帝国的财政大臣、几大军火寡头、以及半数以上的国会老议员，联合向施佩尔发难。他们在《人民观察家报》上发表署名文章，指责改革派"出卖帝国精神"、"沦为美犹资本的马前卒"。</p>
+    <p>更阴险的是，国会对施佩尔的预算案进行了无休止的拖延。每一项改革都需要钱，而钱袋子攥在旧卫队手里。施佩尔的财政官整夜整夜地失眠——改革的窗口正在关闭，若不能在内战结束前站稳脚跟，一切都将化为泡影。</p>
+    <p>一个阴雨的午后，施佩尔独自坐在办公室，凝视着墙上希特勒的画像。他低声说："元首，你看到了吗？你留下的，是一个无法改革的帝国。"</p>`,
+    choices: [
+      { text: '绕过国会，发布紧急政令', desc: '激进', effects: { stability: -8, research: 6, money: 15, deterrence: -3 }, condition: (s) => s.flags.speer_path, setFlags: { emergency_decree: true } },
+      { text: '与旧卫队谈判妥协', desc: '稳健', effects: { stability: 4, money: -10, research: -2 } },
+      { text: '借助学生运动施压国会', desc: '冒险', effects: { stability: -5, research: 8, manpower: -3 }, condition: (s) => s.flags.student_guard_armed }
+    ]
+  },
+
+  {
+    id: 'ev_speer_victory_consolidation',
+    turn: { year: 1965, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '改革的黎明',
+    body: `<p>当内战的硝烟散去，<strong>施佩尔站在了日耳曼尼亚的废墟之上</strong>。他的胜出并非因为武力最强，而是因为另外三派在内耗中同归于尽，而他——这个最不像元首的人——成了唯一还能维持帝国运转的选择。</p>
+    <p>但胜出只是开始。新政府面临的是一个烂摊子：国库空虚、军队分裂、奴隶制摇摇欲坠、东方总督辖区半失控、勃艮第虎视眈眈。施佩尔知道，他必须用十年时间完成别人认为不可能的事——把一个腐朽的极权帝国，改造成一个能活下去的现代国家。</p>
+    <p>他在就职演说中说："我们没有赢得战争，我们只是输得比别人慢。现在，我们必须学会不再输。"台下掌声稀落，但足够真诚。</p>`,
+    choices: [
+      { text: '宣布"帝国重建"十年计划', desc: '宏伟蓝图', effects: { stability: 10, money: 20, research: 10, ofn_relation: 10 }, condition: (s) => s.flags.speer_path, setFlags: { speer_victory: true, reconstruction_plan: true }, showToast: '改革派赢得了内战' },
+      { text: '先稳定，后改革', desc: '务实', effects: { stability: 12, money: 10, research: 3 } },
+      { text: '清算另外三派残余', desc: '强硬', effects: { stability: -5, deterrence: 8, militaryPower: 5 } }
+    ],
+    condition: (s) => s.flags.speer_path
+  },
+
+  {
+    id: 'ev_bormann_party_machine',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '鲍曼的党机器',
+    body: `<p>当其他三派忙着拉拢军队和学生时，<strong>马丁·鲍曼</strong>做了一件最无聊却最致命的事——他接管了党的档案室、人事处和地方支部网络。</p>
+    <p>纳粹党经过三十年的经营，其触角深入帝国的每一个乡镇、每一座工厂、每一个家庭。支部书记控制着配给、住房和晋升；档案室掌握着每个人的黑材料。鲍曼不需要军队，他只需要一纸调令，就能让某个将军的妻子失去口粮，让某个反对者的孩子被学校开除。这是一台精密而冷酷的机器。</p>
+    <p>"元首留给我们的，不是帝国，"鲍曼对手下说，"是这台机器。谁掌握机器，谁就掌握帝国。"他微笑着，签署了第一批清洗名单。</p>`,
+    choices: [
+      { text: '支持鲍曼巩固党权', desc: '+稳定 -研发', effects: { stability: 8, deterrence: 4, research: -5, ofn_relation: -10 }, setFlags: { conservative: true, bormann_path: true } },
+      { text: '保持距离', desc: '中立', effects: { stability: 2 } },
+      { text: '暗中抵制党机器扩张', desc: '冒险', effects: { stability: -4, research: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_bormann_naval_buildup',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'military',
+    title: '铁甲的赌注',
+    body: `<p>鲍曼深知，没有枪杆子的党机器只是纸老虎。他选择了海军作为自己的武力后盾——因为陆军被斯派达尔的中立区隔开，空军忠于戈林，党卫军是海德里希的私产，唯有海军，这支被帝国冷落多年的军种，还在寻找主人。</p>
+    <p>汉堡和不来梅的船坞昼夜不停，鲍曼下令将封存的Z计划战舰重新启封，征召失业船厂工人入役。一艘艘巨舰从船台滑入北海的灰色波涛。鲍曼承诺水兵们双倍军饷和战后土地——用国库未来的钱，买当下的忠诚。</p>
+    <p>但海军烧钱如流水，国库却在流血。这是一场与破产赛跑的军备竞赛。</p>`,
+    choices: [
+      { text: '全力支持海军建设', desc: '+军事 -资金', effects: { militaryPower: 10, deterrence: 6, money: -50, stability: -3 }, condition: (s) => s.flags.bormann_path, setFlags: { naval_buildup: true } },
+      { text: '适度扩充', desc: '平衡', effects: { militaryPower: 5, money: -25 } },
+      { text: '反对海军扩张', desc: '保守', effects: { stability: 3, money: 10, militaryPower: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_bormann_conservative_coalition',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'diplomacy',
+    title: '黑袍与铁十字',
+    body: `<p>鲍曼明白，单靠党机器和海军不足以稳坐大位。他开始编织一张更广的网——拉拢教会、容克贵族、大资本家，以及那些害怕改革会让一切崩盘的中间阶层。</p>
+    <p>他在巴伐利亚与大主教密谈，承诺恢复教会的部分特权以换取天主教的沉默；在波美拉尼亚的庄园里与容克地主共进晚餐，保证不会触动他们的土地；在埃森的董事会里向克虏伯们保证，奴隶制一个都不会少。这是一场肮脏但有效的政治联姻——所有害怕改变的人，都成了鲍曼的同盟。</p>
+    <p>"稳定，"鲍曼对盟友们说，"只有稳定才能保住我们拥有的一切。"举杯声在宴会厅回荡。</p>`,
+    choices: [
+      { text: '巩固保守联盟', desc: '+稳定 +威慑', effects: { stability: 8, deterrence: 4, money: 15, ofn_relation: -8 }, condition: (s) => s.flags.bormann_path, setFlags: { conservative_coalition: true } },
+      { text: '只拉拢资本家', desc: '务实', effects: { money: 25, stability: 2 } },
+      { text: '拒绝与教会妥协', desc: '原则', effects: { stability: -3, deterrence: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_bormann_purge_reformers',
+    turn: { year: 1964, quarter: 3 },
+    once: true,
+    tag: 'story',
+    title: '深夜的名单',
+    body: `<p>鲍曼的党机器运转起来，比任何军队都可怕。一份名单在深夜被拟定，上面是一百二十七个名字——都是公开或暗中同情施佩尔改革的党内中层干部。</p>
+    <p>没有审判，没有新闻。这些人只是在一个普通的早晨"被调动工作"，发配到东方总督辖区的边远劳改营，或干脆"因公殉职"。他们的家属收到一笔抚恤金和一封措辞冰冷的慰问信。党机器吞噬自己人时，连骨头都不吐。</p>
+    <p>施佩尔得知消息时，握着茶杯的手在发抖。"这就是他所谓的稳定，"他对秘书低语，"用沉默堆砌的稳定。"</p>`,
+    choices: [
+      { text: '默许清洗', desc: '残忍但有效', effects: { stability: 6, deterrence: 5, research: -8, ofn_relation: -12 }, condition: (s) => s.flags.bormann_path, setFlags: { reformer_purge: true } },
+      { text: '清洗规模减半', desc: '妥协', effects: { stability: 3, research: -3 } },
+      { text: '阻止清洗', desc: '冒险', effects: { stability: -6, research: 4, deterrence: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_bormann_stagnation',
+    turn: { year: 1965, quarter: 1 },
+    once: true,
+    tag: 'economy',
+    title: '停滞的蜜月',
+    body: `<p>鲍曼的胜利带来了一段虚假的繁荣。党机器恢复了运转，海军撑起了门面，社会秩序回到内战前的"正常"。但正常的代价，是帝国继续在腐朽中沉睡。</p>
+    <p>经济没有改革，奴隶制原封不动，黑市依然泛滥，年轻人依然没有未来。鲍曼的"稳定"是一具涂了防腐剂的尸体——表面光鲜，内里腐烂。每一个季度，国库的赤字都在加深，每一座工厂的设备都在老化，每一代年轻人的愤懑都在累积。</p>
+    <p>鲍曼坐在总理府，翻看着粉饰太平的报告，对自己说："至少，没有比这更糟了。"他不知道，更糟的，正在地下酝酿。</p>`,
+    choices: [
+      { text: '维持现状', desc: '饮鸩止渴', effects: { stability: 5, money: -15, research: -5, efficiency: -0.05 }, condition: (s) => s.flags.bormann_path, setFlags: { bormann_stagnation: true } },
+      { text: '小幅经济刺激', desc: '治标', effects: { money: -20, stability: 4, research: 2 } },
+      { text: '秘密启动有限改革', desc: '自相矛盾', effects: { stability: -4, money: 10, research: 5, ofn_relation: 8 } }
+    ],
+    condition: (s) => s.flags.bormann_path
+  },
+
+  {
+    id: 'ev_bormann_victory_hollow',
+    turn: { year: 1965, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '空荡的王座',
+    body: `<p><strong>鲍曼赢得了内战</strong>——如果这能叫胜利的话。他坐上了元首的椅子，却发现这把椅子四面漏风。</p>
+    <p>帝国表面上统一了，但每一个总督都成了听调不听宣的土皇帝，每一支军队都心怀鬼胎，每一个公民都在假装忠诚。鲍曼用恐惧和利益编织的网，勉强兜住了一个摇摇欲坠的帝国。他知道，自己不是元首，只是一个守灵人——守着一具名为"大日耳曼国"的尸体。</p>
+    <p>就职那天，没有欢呼，没有庆典。鲍曼一个人走进空旷的总理府，关上门，对着希特勒的画像长叹："你把这个烂摊子留给了我。我会尽力。但我不保证，它能活到下一个十年。"</p>`,
+    choices: [
+      { text: '宣誓就任，维系统一', desc: '守成', effects: { stability: 12, deterrence: 6, money: -10, research: -3 }, condition: (s) => s.flags.bormann_path, setFlags: { bormann_victory: true }, showToast: '保守派赢得了内战' },
+      { text: '借机清洗其他派系残余', desc: '肃清', effects: { stability: -4, deterrence: 10, militaryPower: 4 } },
+      { text: '寻求与OFN缓和以稳经济', desc: '务实', effects: { ofn_relation: 15, money: 20, deterrence: -4 } }
+    ],
+    condition: (s) => s.flags.bormann_path
+  },
+
+  {
+    id: 'ev_goring_war_plans',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '战争计划',
+    body: `<p><strong>赫尔曼·戈林</strong>在卡林哈尔的庄园里，铺开了一张巨大的世界地图。地图上用红蓝铅笔画满了箭头——那是他的"战争计划"。</p>
+    <p>戈林的逻辑简单粗暴：帝国的经济已经死了，但战争能让它起死回生。军工订单刺激生产，征服掠夺资源，胜利凝聚人心。他计划先用空军摧毁俄罗斯残余势力，吞并乌克兰粮仓；再挥师西进，收拾三头同盟；最后与OFN和日本决战，争夺世界霸权。每一个箭头都指向"胜利"，每一个箭头都通向深渊。</p>
+    <p>"轰炸机，"戈林对着空军将领们咆哮，"轰炸机能解决一切问题——包括国内的！"他的制服上挂满勋章，腰间别着镶宝石的手枪。一个活在三十年前的胖子，妄图用旧时代的处方医治新时代的绝症。</p>`,
+    choices: [
+      { text: '支持戈林的战争路线', desc: '亡命赌徒', effects: { militaryPower: 15, deterrence: 8, stability: -8, money: -30, ofn_relation: -15 }, setFlags: { militarist: true, goring_path: true }, showToast: '你选择了战争之路' },
+      { text: '只支持有限扩张', desc: '冒险', effects: { militaryPower: 8, stability: -4, money: -15 } },
+      { text: '反对战争计划', desc: '理智', effects: { stability: 4, militaryPower: -5 } }
+    ]
+  },
+
+  {
+    id: 'ev_goring_airforce_loyalty',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'military',
+    title: '银鹰集结',
+    body: `<p>戈林唯一的筹码是空军。帝国空军在希特勒时代被陆军和党卫军压制，但内战给了它翻身的机会。戈林许诺飞行员们土地、军衔和战利品，把整支空军绑在了自己的战车上。</p>
+    <p>从挪威到奥地利，机场上停满了Me-264远程轰炸机和Ta-183喷气战斗机。地勤人员昼夜维护，飞行员们擦亮座舱。戈林亲自为王牌飞行员授勋，把镶金的飞鹰徽章别在他们胸前。空军成了戈林的私军，一支随时准备升空的钢铁利剑。</p>
+    <p>但飞机喝油如喝水，帝国早已枯竭的石油储备在战争计划面前显得可笑。戈林不在乎——他相信，下一场胜利就能解决一切。</p>`,
+    choices: [
+      { text: '全力扩充空军', desc: '+军事 -资金', effects: { militaryPower: 12, deterrence: 5, money: -45, stability: -2 }, condition: (s) => s.flags.goring_path, setFlags: { airforce_expansion: true } },
+      { text: '维持现有规模', desc: '稳健', effects: { militaryPower: 5, money: -20 } },
+      { text: '削减空军省油', desc: '务实', effects: { money: 15, militaryPower: -4, stability: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_goring_eastern_campaign',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'military',
+    title: '东方的泥潭',
+    body: `<p>戈林的第一场战争指向了俄罗斯。空军轰炸机铺天盖地扑向东线，试图一举摧毁西俄革命阵线的残余据点，夺取乌克兰的粮食和顿巴斯的煤。</p>
+    <p>起初一切顺利——俄罗斯军阀各自为战，无力抵抗帝国空军的轰炸。但很快，泥潭出现了。补给线在广袤的平原上被拉得细长，游击队像幽灵一样出没，俄罗斯的严冬吞噬了一切。轰炸机能炸毁城市，却无法守住土地；能杀死士兵，却无法征服人心。</p>
+    <p>前线传来的不再是捷报，而是求援电报。戈林在地图前暴跳如雷："为什么？我们明明赢了！"</p>`,
+    choices: [
+      { text: '增兵死磕', desc: '+军事 -稳定 -资金', effects: { militaryPower: 8, stability: -6, money: -40, manpower: -15, russia_relation: -10 }, condition: (s) => s.flags.goring_path, setFlags: { eastern_quagmire: true } },
+      { text: '见好就收，巩固占领区', desc: '务实', effects: { stability: 2, money: -20, militaryPower: -3 } },
+      { text: '全面撤退', desc: '屈辱', effects: { stability: -10, militaryPower: -8, deterrence: -8, russia_relation: 5 }, showToast: '帝国颜面尽失' }
+    ],
+    condition: (s) => s.flags.goring_path
+  },
+
+  {
+    id: 'ev_goring_economic_spiral',
+    turn: { year: 1964, quarter: 3 },
+    once: true,
+    tag: 'economy',
+    title: '燃烧的国库',
+    body: `<p>战争烧钱的速度远超戈林的想象。空军的油料、弹药的消耗、占领区的维稳费用——每一项都是无底洞。国库在三个月内见底，马克的信用在黑市上崩盘。</p>
+    <p>戈林的对策是印钞。一捆捆崭新的马克从印钞厂运出，涌入市场，换来的却是物价飞涨和民不聊生。工人的工资买不起面包，主妇们在商店前排起长队。战争的"繁荣"只属于军火商，普通人只得到通胀和死亡。</p>
+    <p>财政官跪在戈林面前："元帅，再印下去，帝国不用等敌人打来，自己就垮了。"戈林一脚踢开他："胜利就在眼前！再撑一个月！"</p>`,
+    choices: [
+      { text: '继续印钞支撑战争', desc: '饮鸩止渴', effects: { money: 30, stability: -10, efficiency: -0.1, research: -3 }, condition: (s) => s.flags.goring_path, setFlags: { hyperinflation: true } },
+      { text: '加税征粮', desc: '饮鸩止渴', effects: { money: 25, stability: -8, manpower: -10 } },
+      { text: '停战谈判', desc: '认输', effects: { stability: 4, money: 10, deterrence: -10, militaryPower: -5 } }
+    ],
+    condition: (s) => s.flags.goring_path
+  },
+
+  {
+    id: 'ev_goring_military_disaster',
+    turn: { year: 1964, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '折翼的银鹰',
+    body: `<p>灾难终于降临。一次针对莫斯科废墟的大规模空袭中，帝国空军遭遇了俄罗斯残存防空火力的伏击——这些防空武器据说是OFN通过北极航线偷偷运给俄罗斯人的。一个下午，帝国损失了四十架轰炸机和二十架战斗机，上百名飞行员阵亡或被俘。</p>
+    <p>这是西俄战争以来帝国空军最惨重的失败。消息传回国内，原本被宣传机器煽动起的战争狂热瞬间冷却。国会议员开始质询，民众开始抱怨，就连空军的飞行员们也私下嘀咕："元帅的战争计划，是不是个笑话？"</p>
+    <p>戈林躲在卡林哈尔，拒绝见任何人。他酗酒，摔东西，对着地图咒骂。一个靠虚张声势起家的元帅，终于撞上了现实这堵墙。</p>`,
+    choices: [
+      { text: '孤注一掷，发动更大规模反扑', desc: '疯狂', effects: { militaryPower: 5, stability: -12, money: -35, manpower: -20, deterrence: -5 }, condition: (s) => s.flags.goring_path, setFlags: { airforce_disaster: true } },
+      { text: '休整，重整军备', desc: '务实', effects: { stability: 3, money: -15, militaryPower: -3 } },
+      { text: '嫁祸海德里希，转移视线', desc: '阴险', effects: { stability: 4, deterrence: 3 }, showToast: '空军失败被掩盖了' }
+    ],
+    condition: (s) => s.flags.goring_path
+  },
+
+  {
+    id: 'ev_goring_downfall',
+    turn: { year: 1965, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '胖子的末日',
+    body: `<p><strong>戈林的战争计划彻底破产了。</strong>军事失败、经济崩溃、民心尽失——曾经不可一世的帝国元帅，如今成了人人喊打的过街老鼠。</p>
+    <p>空军的将领们开始倒戈，国会的盟友纷纷切割，连他最忠诚的副官也带着机密文件投奔了鲍曼。戈林困守在卡林哈尔的庄园里，身边只剩几个死忠卫士和成堆的空酒瓶。他换上最华丽的元帅服，戴上所有勋章，独自坐在壁炉前。</p>
+    <p>当抓捕他的士兵破门而入时，发现他已倒在地上——是心脏病发作，还是毒药，没人说得清。那个用战争定义一生的胖子，最终被战争吞噬。他的"战争计划"成了帝国历史上最大的笑话，也是最昂贵的墓志铭。</p>`,
+    choices: [
+      { text: '接管戈林残余势力', desc: '+军事', effects: { militaryPower: 10, deterrence: 4, stability: -3 }, setFlags: { goring_defeated: true }, showToast: '戈林派系覆灭' },
+      { text: '彻底清算戈林派', desc: '肃清', effects: { stability: 5, militaryPower: 3, deterrence: -3 } },
+      { text: '收编空军，安抚飞行员', desc: '怀柔', effects: { militaryPower: 8, stability: 4, money: -10 } }
+    ]
+  },
+
+  {
+    id: 'ev_heydrich_ss_state',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '布拉格屠夫的黑色王国',
+    body: `<p>当其他三派在明处厮杀时，<strong>莱因哈德·海德里希</strong>在暗处编织着他的网。党卫军——这支希姆莱亲手打造的黑色军队——在海德里希的指挥下，控制了波希米亚、部分波兰和帝国的心脏地带。</p>
+    <p>海德里希治下的领土，是一座精密运转的地狱。秘密警察遍布每个街角，告密者藏在每个家庭，集中营日夜不停地吞吐着"不稳定因素"。他的统治没有法律，只有命令；没有正义，只有效率。海德里希本人像一台冰冷的机器，用小提琴的旋律丈量着杀戮的节奏。</p>
+    <p>但海德里希不知道的是——他不过是希姆莱的提线木偶。那个远在勃艮第的养鸡场主，正用他做实验，测试着一个比这更疯狂的计划。</p>`,
+    choices: [
+      { text: '与海德里希合作', desc: '与魔鬼交易', effects: { deterrence: 12, stability: -10, militaryPower: 6, ofn_relation: -20 }, setFlags: { heydrich_path: true, ss_state: true }, showToast: '你选择了黑暗之路' },
+      { text: '保持中立', desc: '观望', effects: { stability: -3, deterrence: 2 } },
+      { text: '秘密联络反抗海德里希的力量', desc: '冒险', effects: { stability: 3, deterrence: -4, research: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_heydrich_terror',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'story',
+    title: '沉默的恐惧',
+    body: `<p>海德里希的恐怖统治很快蔓延到他控制区的每一个角落。夜幕降临后，黑色制服的党卫军巡逻队穿梭在街道上，警笛声划破寂静。每过几天，就有一批人"消失"——犹太人、斯拉夫人、同性恋者、异议分子，以及任何被怀疑不忠的人。</p>
+    <p>人们学会了沉默。邻里不再交谈，朋友互相提防，连夫妻之间都不敢谈论政治。恐惧像毒气一样渗透进每一道墙缝，让整个社会变成了一座巨大的、屏息凝神的牢笼。海德里希满意的看着这一切——沉默，正是效率的土壤。</p>
+    <p>但沉默之下，仇恨在累积。被压抑的怒火没有消失，只是转入地下，等待着一个引爆的火花。</p>`,
+    choices: [
+      { text: '强化恐怖统治', desc: '+威慑 -稳定', effects: { deterrence: 10, stability: -8, manpower: -10, research: -5 }, condition: (s) => s.flags.heydrich_path, setFlags: { reign_of_terror: true } },
+      { text: '恐怖与怀柔并用', desc: '平衡', effects: { deterrence: 5, stability: -3 } },
+      { text: '放松管控，争取民心', desc: '冒险', effects: { stability: 4, deterrence: -6 } }
+    ]
+  },
+
+  {
+    id: 'ev_heydrich_himmler_puppet',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '提线与傀儡',
+    body: `<p>海德里希不是傻瓜。随着内战推进，他逐渐意识到一个令他脊背发凉的事实：<strong>他的每一步行动，似乎都在为另一个人铺路。</strong></p>
+    <p>希姆莱从勃艮第发来的"建议"越来越频繁，越来越具体——该清洗谁、该扶植谁、该把核武器运到哪里。海德里希发现，自己的情报网、自己的精锐部队、甚至自己的亲信中，都有希姆莱安插的眼线。他以为自己是在争夺元首之位，却发现自己不过是希姆莱大棋盘上的一颗棋子。</p>
+    <p>一个深夜，海德里希独自在办公室，凝视着希姆莱的画像。他的手按在腰间的手枪上，眼神阴鸷。"老师，"他低声说，"你想用我做什么？而我，又能拿你怎么办？"</p>`,
+    choices: [
+      { text: '继续做希姆莱的傀儡', desc: '屈辱', effects: { deterrence: 6, stability: -4, burgundy_relation: 10 }, condition: (s) => s.flags.heydrich_path, setFlags: { himmler_puppet: true } },
+      { text: '尝试摆脱希姆莱控制', desc: '冒险', effects: { stability: -6, deterrence: 3, burgundy_relation: -15, research: 3 } },
+      { text: '与希姆莱摊牌', desc: '危险', effects: { stability: -10, deterrence: -5, burgundy_relation: -25 }, showToast: '一场黑色内战在酝酿' }
+    ],
+    condition: (s) => s.flags.heydrich_path
+  },
+
+  {
+    id: 'ev_heydrich_descent',
+    turn: { year: 1964, quarter: 3 },
+    once: true,
+    tag: 'story',
+    title: '深渊的凝视',
+    body: `<p>海德里希的精神在内战的重压下开始崩塌。他失眠、暴怒、产生幻觉。他梦见被自己送上绞刑架的捷克人，梦见布拉格教堂的血泊，梦见希姆莱在他身后冷笑。</p>
+    <p>他的统治变得越来越疯狂——清洗扩大到自己的亲信，处决的理由越来越荒谬。一个副官因为"眼神不正"被枪决，一个秘书因为"打字太慢"被送进集中营。海德里希在疯狂的边缘徘徊，既是最危险的猎手，也是最脆弱的猎物。</p>
+    <p>党卫军的军官们开始窃窃私语："海德里希疯了。"而疯子的手里，握着核武器的密码。</p>`,
+    choices: [
+      { text: '任由海德里希癫狂', desc: '危险', effects: { deterrence: 8, stability: -12, militaryPower: -3, research: -5 }, condition: (s) => s.flags.heydrich_path, setFlags: { heydrich_mad: true } },
+      { text: '联合军官限制海德里希权力', desc: '冒险', effects: { stability: 3, deterrence: -4, militaryPower: -2 } },
+      { text: '暗杀海德里希', desc: '极端', effects: { stability: 6, deterrence: -8, militaryPower: -5 }, showToast: '布拉格屠夫死了' }
+    ],
+    condition: (s) => s.flags.heydrich_path
+  },
+
+  {
+    id: 'ev_heydrich_collapse',
+    turn: { year: 1964, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '黑色王国的崩塌',
+    body: `<p><strong>海德里希的统治终于在内耗中土崩瓦解。</strong>当他的疯狂失去控制，党卫军内部哗变，军官们联合起来将他软禁。海德里希控制区陷入一片混乱——核武器下落不明，集中营的囚犯暴动，黑色军队自相残杀。</p>
+    <p>更可怕的是，希姆莱趁乱派勃艮第的党卫军"接管"了部分核武器库。那些足以毁灭欧洲的武器，落入了那个梦想着核末日的疯子手中。海德里希在软禁中得知这个消息时，发出了一声凄厉的大笑："老师……你赢了。从头到尾，都是你在赢。"</p>
+    <p>黑色王国崩塌了，但它留下的废墟，比任何战场都更危险。</p>`,
+    choices: [
+      { text: '趁乱收编党卫军残部', desc: '+军事 -稳定', effects: { militaryPower: 10, stability: -8, deterrence: -5 }, setFlags: { heydrich_defeated: true, burgundy_got_nukes: true }, showToast: '海德里希派系覆灭，但核武器流落勃艮第' },
+      { text: '全力追查流失的核武器', desc: '+研发 -资金', effects: { research: 8, money: -30, burgundy_relation: -20 } },
+      { text: '宣布大赦，稳定党卫军人心', desc: '怀柔', effects: { stability: 6, militaryPower: 5, deterrence: -3 } }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十一幕：斯派达尔中立区与霍费尔克里米亚（1963-1967）
+   * =========================================================== */
+
+  {
+    id: 'ev_speidal_neutral_zone',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '日耳曼尼亚保护区',
+    body: `<p>当内战的炮火在首都四周炸响时，<strong>汉斯·斯派达尔元帅</strong>做出了一个大胆的决定。这位西俄战争的英雄率领日耳曼尼亚卫戍部队，控制了首都核心区域——政府区、各国大使馆、总参谋部大楼——宣布建立"日耳曼尼亚保护区"，对内战各方保持中立。</p>
+    <p>年迈的隆美尔——"沙漠之狐"——拄着拐杖站在斯派达尔身旁，为他背书。两位老将的威望，让四方势力都不敢轻举妄动。进攻日耳曼尼亚，意味着摧毁帝国的象征，意味着失去继承的合法性——这是一个谁都不敢承担的罪名。</p>
+    <p>于是，在硝烟弥漫的帝国心脏，出现了一片诡异的净土。斯派达尔坐在总理府的办公桌前，望着窗外的火光，长叹一声。他不想当元首，他只想守住最后一点秩序。</p>`,
+    choices: [
+      { text: '支持斯派达尔的中立', desc: '+稳定', effects: { stability: 8, deterrence: 3, money: -10 }, setFlags: { neutral_zone: true, speidal_ally: true }, showToast: '日耳曼尼亚保护区建立' },
+      { text: '向保护区输送物资', desc: '+稳定 -资金', effects: { stability: 5, money: -25, manpower: 5 } },
+      { text: '中立无关紧要', desc: '冷漠', effects: { stability: -2 } }
+    ]
+  },
+
+  {
+    id: 'ev_rommel_mediation',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'diplomacy',
+    title: '沙漠之狐的斡旋',
+    body: `<p>隆美尔虽已年迈，但他的智慧未曾褪色。在这片中立区内，这位老元帅开始秘密斡旋——他邀请各派的代表前来"喝茶"，在茶杯与雪茄之间，试探和解的可能。</p>
+    <p>隆美尔的方案是组建一个"摄政委员会"，由四派代表与军方共同执政，过渡到新的元首选举。这是一个理性的方案——但理性在内战中是最稀缺的 commodity。施佩尔感兴趣，鲍曼敷衍，戈林嗤之以鼻，海德里希则派来了一个带着录音笔的"代表"。</p>
+    <p>隆美尔在日记中写道："我试图用理智挽救一个被疯狂撕裂的国家。或许我太老了，还相信理智有用。"</p>`,
+    choices: [
+      { text: '积极推动摄政委员会', desc: '+稳定 +研发', effects: { stability: 6, research: 4, deterrence: -2 }, condition: (s) => s.flags.neutral_zone, setFlags: { regency_council: true } },
+      { text: '只在保护区内部推行', desc: '有限', effects: { stability: 3 } },
+      { text: '斡旋无望，放弃', desc: '悲观', effects: { stability: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_neutral_zone_diplomats',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'diplomacy',
+    title: '大使馆的灯火',
+    body: `<p>保护区内的各国大使馆成了乱世中的奇景。OFN、日本、意大利、甚至俄罗斯的流亡代表，都挤在这片中立区内，密切关注着内战的走向。大使们的晚宴成了情报交易市场，香槟杯里盛的是各国的阴谋与算计。</p>
+    <p>斯派达尔巧妙地利用这些外交渠道——他让OFN的大使向施佩尔传话，让意大利的代表与鲍曼接触，甚至默许俄罗斯的流亡者与各派商谈东方边境问题。保护区成了帝国的"非正式外交部"，在战火中维持着摇摇欲坠的外交脉搏。</p>
+    <p>一位OFN外交官在电报中写道："在这个疯狂的国家，唯一清醒的地方，是几个老军人守住的一片废墟。"</p>`,
+    choices: [
+      { text: '利用外交渠道争取OFN支持', desc: '+OFN关系', effects: { ofn_relation: 12, stability: 3, money: 10 }, condition: (s) => s.flags.neutral_zone },
+      { text: '与意大利三头同盟接触', desc: '+意大利关系', effects: { italy_relation: 10, stability: 2 } },
+      { text: '保持等距外交', desc: '稳健', effects: { stability: 4, deterrence: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_hofer_crimea_navy',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '克里米亚的割据者',
+    body: `<p>当内战爆发时，<strong>海军上将迈尔·霍费尔</strong>率领一部分舰队东赴克里米亚，接管了塞瓦斯托波尔的海军基地和周边政权。他宣布"待机而动"，拒绝效忠任何一派，自立为克里米亚的实际统治者。</p>
+    <p>霍费尔手里有一支可观的舰队——几艘巡洋舰、一打驱逐舰，以及若干潜艇。他控制着黑海的咽喉，向过往商船"征收保护费"，俨然一个海上的割据王国。无论谁是内战的胜利者，战后都必须解决这个"霍费尔问题"。</p>
+    <p>霍费尔在塞瓦斯托波尔的司令部里，一边品着克里米亚葡萄酒，一边对副官说："让他们打去吧。等他们打累了，自然会来找我和谈。海权，永远比陆权值钱。"</p>`,
+    choices: [
+      { text: '承认霍费尔的割据，换取海军支持', desc: '+军事', effects: { militaryPower: 8, deterrence: 4, stability: -5, money: -20 }, setFlags: { hofer_recognized: true } },
+      { text: '秘密联络霍费尔谈判', desc: '外交', effects: { stability: 2, militaryPower: 3, money: -10 } },
+      { text: '准备武力解决霍费尔', desc: '强硬', effects: { stability: -3, militaryPower: 4, deterrence: 3 }, setFlags: { hofer_hostile: true } }
+    ]
+  },
+
+  {
+    id: 'ev_hofer_pirate_kingdom',
+    turn: { year: 1964, quarter: 3 },
+    once: true,
+    tag: 'economy',
+    title: '黑海的海盗王',
+    body: `<p>霍费尔的"克里米亚王国"逐渐演变成了一个怪胎。他不仅向商船收保护费，还开始经营黑市贸易——把帝国的军火卖给俄罗斯军阀，把俄罗斯的石油卖给三头同盟，把三头同盟的奢侈品卖给帝国各派。克里米亚成了一个巨大的走私中转站。</p>
+    <p>塞瓦斯托波尔港日夜繁忙，挂着各种旗帜的船只进进出出。霍费尔的海军建设突飞猛进——他用走私利润扩充舰队，修建海岸要塞，甚至组建了一支小型空军。这个昔日的帝国海军上将，如今活脱脱是一个穿着军装的海盗王。</p>
+    <p>而黑海沿岸的居民们对这个"海盗王国"感情复杂——它带来了就业和物资，也带来了腐败和混乱。</p>`,
+    choices: [
+      { text: '与霍费尔合作走私牟利', desc: '+资金 -稳定', effects: { money: 35, stability: -6, deterrence: -3 }, condition: (s) => s.flags.hofer_recognized, setFlags: { black_market_ally: true } },
+      { text: '要求霍费尔停止走私', desc: '外交', effects: { stability: 3, money: -10 } },
+      { text: '封锁黑海，切断霍费尔财路', desc: '强硬', effects: { stability: -4, militaryPower: 5, money: -20 }, condition: (s) => s.flags.hofer_hostile }
+    ]
+  },
+
+  {
+    id: 'ev_neutral_zone_blackmarket',
+    turn: { year: 1964, quarter: 4 },
+    once: true,
+    tag: 'economy',
+    title: '废墟上的集市',
+    body: `<p>保护区成了黑市的圣地。四面八方的人涌入这片中立区——逃避战火的难民、投机倒把的商人、各派的情报员、寻找亲人的家属。在弹坑与废墟之间，一个庞大的黑市自发形成了。</p>
+    <p>这里什么都有卖：美国罐头、日本收音机、意大利皮鞋、俄罗斯伏特加、被各派遗弃的军火、甚至伪造的各派通行证。货币混乱——马克、美元、日元、黄金、甚至香烟都在流通。斯派达尔睁一只眼闭一只眼，因为黑市养活了保护区的十几万人口，也带来了珍贵的物资。</p>
+    <p>但黑市也滋生了犯罪、瘟疫和间谍。保护区在繁荣与混乱之间走钢丝。</p>`,
+    choices: [
+      { text: '规范黑市，征税维生', desc: '+资金 +稳定', effects: { money: 25, stability: 4, manpower: 5 }, condition: (s) => s.flags.neutral_zone, setFlags: { blackmarket_regulated: true } },
+      { text: '取缔黑市', desc: '失策', effects: { stability: -8, money: -10, manpower: -5 } },
+      { text: '放任自流', desc: '混乱', effects: { money: 10, stability: -5 } }
+    ]
+  },
+
+  {
+    id: 'ev_neutral_zone_refugees',
+    turn: { year: 1965, quarter: 1 },
+    once: true,
+    tag: 'story',
+    title: '逃亡者的洪流',
+    body: `<p>内战的战火逼出了数以百万计的难民。他们拖家带口，从鲁尔、从巴伐利亚、从波兰涌向传说中"安全"的日耳曼尼亚保护区。保护区的入口前排起了绵延数公里的长队——饥饿的、受伤的、绝望的脸。</p>
+    <p>斯派达尔面临着残酷的抉择：保护区只有有限的粮食和医疗资源。收容所有人，意味着大家一起饿死；拒绝难民，意味着见死不救。他选择了折中——优先收容妇孺和伤员，青壮年男子则被组织起来修筑工事、清理废墟，以工代赈。</p>
+    <p>一个母亲抱着孩子挤进保护区时，对斯派达尔说："将军，谢谢你。你是这个国家里最后一个还像人的人。"斯派达尔别过脸，不敢让她看到自己的眼泪。</p>`,
+    choices: [
+      { text: '全力收容难民', desc: '+人力 -资金 -稳定', effects: { manpower: 20, money: -35, stability: -4 }, condition: (s) => s.flags.neutral_zone, setFlags: { refugees_sheltered: true } },
+      { text: '有选择地收容', desc: '平衡', effects: { manpower: 10, money: -15, stability: 2 } },
+      { text: '关闭边界', desc: '残忍', effects: { stability: 3, manpower: -8, ofn_relation: -10 } }
+    ]
+  },
+
+  {
+    id: 'ev_neutral_zone_resolution',
+    turn: { year: 1966, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '中立区的归宿',
+    body: `<p>内战接近尾声，保护区的历史使命也将结束。斯派达尔面临着一个新的问题：<strong>这片中立区，该交还给谁？</strong></p>
+    <p>胜利者要求斯派达尔交出保护区和其中的档案、外交渠道、以及霍费尔的谈判权。斯派达尔没有野心，但他担心——交出保护区，意味着交出他苦心维系的最后一点制衡。他希望能以"交权"换取胜利者对某些底线承诺：不追究中立人员、保护外交档案、与霍费尔和平解决。</p>
+    <p>这是一场尊严与现实的博弈。老元帅在隆美尔的病榻前长谈了一夜——沙漠之狐已时日无多，他最后的建议是："汉斯，你已经做了你能做的。剩下的，交给命运吧。"</p>`,
+    choices: [
+      { text: '有条件交出保护区', desc: '+稳定 +研发', effects: { stability: 10, research: 6, money: 15, deterrence: 3 }, condition: (s) => s.flags.neutral_zone, setFlags: { neutral_zone_resolved: true }, showToast: '保护区和平移交' },
+      { text: '无条件交权', desc: '妥协', effects: { stability: 6, deterrence: -2 } },
+      { text: '保留保护区作为特区', desc: '冒险', effects: { stability: -3, research: 8, money: -10 } }
+    ],
+    condition: (s) => s.flags.neutral_zone
+  },
+
+  /* ===========================================================
+   * 第十二幕：勃艮第阴谋与希姆莱核末日计划（1964-1985）
+   * =========================================================== */
+
+  {
+    id: 'ev_burgundy_knights_state',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '骑士团国的铁幕',
+    body: `<p>在内战的混乱中，<strong>海因里希·希姆莱</strong>在勃艮第加紧巩固他的"骑士团国"。这片从法国东部到莱茵河畔的土地，被改造成了一个与世隔绝的黑色堡垒。</p>
+    <p>勃艮第的边界被铁丝网、地雷和瞭望塔封锁，外人不得进入，内人不得离开。党卫军的精锐——"党卫军全国领袖警卫旗队"——日夜巡逻。国内实行军事化管理，每个公民都是士兵，每个士兵都是间谍。希姆莱自封为"团长"，穿着黑色制服，住在城堡里，像中世纪的骑士团长一样统治着他的领地。</p>
+    <p>而在这座铁幕之后，一个比任何人想象的都更疯狂的计划，正在悄然成型。</p>`,
+    choices: [
+      { text: '加强边境监视', desc: '+威慑 -资金', effects: { deterrence: 5, money: -25, burgundy_relation: -10 } },
+      { text: '派遣间谍渗透勃艮第', desc: '+研发 -资金', effects: { research: 5, money: -20, burgundy_relation: -15 }, setFlags: { burgundy_infiltration: true } },
+      { text: '假装勃艮第不存在', desc: '鸵鸟', effects: { stability: 2, deterrence: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_burgundy_deep_infiltration',
+    turn: { year: 1965, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '无处不在的影子',
+    body: `<p>情报机关的一次深度排查，揭开了令人胆寒的真相：<strong>勃艮第对帝国的渗透，深到了骨子里。</strong></p>
+    <p>从总理府的清洁工到国防军的参谋军官，从核研究机构的警卫到国会议员的秘书——党卫军的暗线遍布帝国的每一个角落。他们潜伏了五年、十年，平时是普通的帝国公民，战时则是希姆莱的提线木偶。一份名单上，赫然列着三百多个"潜伏者"的真实身份。</p>
+    <p>更可怕的是，这些间谍并不只是窃取情报——他们在为某个更大的计划做准备。他们的指令里反复出现一个代号："<em>终末之夜</em>"。没有人知道这是什么，但每个人都感到脊背发凉。</p>`,
+    choices: [
+      { text: '发起全国大清洗', desc: '+威慑 -稳定 -资金', effects: { deterrence: 10, stability: -8, money: -40, research: 3 }, setFlags: { burgundy_purge: true } },
+      { text: '秘密逐一清除', desc: '稳健', effects: { deterrence: 5, stability: -2, money: -20 } },
+      { text: '反渗透，策反间谍', desc: '+研发', effects: { research: 8, stability: 3, money: -15, burgundy_relation: -5 }, setFlags: { double_agents: true } }
+    ]
+  },
+
+  {
+    id: 'ev_burgundy_nuclear_theft',
+    turn: { year: 1966, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '失窃的死神',
+    body: `<p>一份绝密报告送到你的案头：<strong>帝国核武器库的一次盘点，发现少了三枚战术核弹头。</strong></p>
+    <p>调查线索全部指向海德里希派系崩溃时的混乱——当时党卫军哗变，核武器库一度失控。而现在，这三枚核弹头据信已流入勃艮第手中。这是噩梦般的场景：希姆莱——那个梦想着核末日的疯子——手里握着真正的核武器。</p>
+    <p>帝国不敢公开此事，以免引发恐慌；但又不能坐视不理。情报机关建议派遣特种部队潜入勃艮第，夺回核弹头——但成功率估计不到两成。一场与末日的赛跑，开始了。</p>`,
+    choices: [
+      { text: '派遣特种部队夺回', desc: '冒险', effects: { militaryPower: 5, stability: -5, money: -30, deterrence: 3, burgundy_relation: -25 }, condition: (s) => s.flags.burgundy_got_nukes, setFlags: { nuke_recovery_mission: true }, showToast: '一场危险的秘密行动' },
+      { text: '通过外交施压要回', desc: '低概率', effects: { stability: 2, burgundy_relation: -10, deterrence: -2 } },
+      { text: '加强自身核武库以防万一', desc: '+核威慑 -资金', effects: { nukeDeter: 10, nukes: 1, money: -40 } }
+    ]
+  },
+
+  {
+    id: 'ev_burgundy_agents_ofn',
+    turn: { year: 1968, quarter: 2 },
+    once: true,
+    tag: 'diplomacy',
+    title: '华盛顿的勃艮第影子',
+    body: `<p>OFN的情报机关向帝国传来一份令人震惊的情报：<strong>勃艮第的间谍已经渗透进了美国政府的高层。</strong></p>
+    <p>一名白宫的国安顾问助理、两名五角大楼的参谋、若干国会山的游说者——他们都是希姆莱安插的棋子。他们的任务是煽动美国内部的种族对立，推动美国走向第二次内战，从而让OFN自顾不暇，无法干预勃艮第的计划。</p>
+    <p>OFN请求帝国协助共享情报，共同清除这些间谍。但合作意味着向OFN暴露帝国自己的情报能力，也意味着公开承认勃艮第的威胁——而这可能引发全面战争。一个两难的抉择。</p>`,
+    choices: [
+      { text: '与OFN全面情报合作', desc: '+OFN关系 +研发', effects: { ofn_relation: 15, research: 6, stability: -3, burgundy_relation: -20 }, setFlags: { ofn_intel_sharing: true } },
+      { text: '只提供部分情报', desc: '谨慎', effects: { ofn_relation: 5, research: 3 } },
+      { text: '拒绝合作，独自行动', desc: '孤立', effects: { ofn_relation: -8, stability: 3, research: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_burgundy_doomsday_discovery',
+    turn: { year: 1972, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '终末之夜',
+    body: `<p>一名从勃艮第叛逃的高级军官，带来了一个让所有人血液凝固的真相。<strong>希姆莱的"终末之夜"计划，是一个全球核战争的剧本。</strong></p>
+    <p>根据叛逃者的供述，希姆莱相信国家社会主义已经失败，唯有通过核火焰"净化"世界，才能重建雅利安人的纯洁秩序。他的计划是：伪造证据，挑起帝国、OFN与日本之间的核战争，让三方互相毁灭；而勃艮第则保留核武库，在废墟上建立"千年骑士国"。希姆莱甚至自认血统不够纯正，计划在净化完成后与勃艮第一同自焚。</p>
+    <p>这是疯狂的——但疯子手里有核武器。整个文明，悬在一个养鸡场主的妄想之上。</p>`,
+    choices: [
+      { text: '联合OFN与日本，先发制人打击勃艮第', desc: '极端', effects: { militaryPower: 10, stability: -15, deterrence: -10, ofn_relation: 10, japan_relation: 10, burgundy_relation: -50 }, setFlags: { doomsday_known: true, anti_burgundy_alliance: true } },
+      { text: '秘密准备反制计划', desc: '+研发 -资金', effects: { research: 12, money: -50, stability: -5, nukeDeter: 5 }, setFlags: { doomsday_known: true } },
+      { text: '尝试与希姆莱谈判', desc: '天真', effects: { stability: 3, burgundy_relation: 5, deterrence: -3 }, showToast: '与末日谈判，可能吗？' }
+    ]
+  },
+
+  {
+    id: 'ev_burgundy_nuclear_test',
+    turn: { year: 1975, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '沙漠中的闪光',
+    body: `<p>撒哈拉腹地传来一阵地震波。各国的地震监测站很快确认——<strong>这是一次核试验。</strong>而试验者，是勃艮第。</p>
+    <p>勃艮第在阿尔及利亚沙漠深处（通过其非洲据点）引爆了一枚当量可观的核装置。这是赤裸裸的炫耀——希姆莱在向世界宣告，他不仅有从帝国偷来的核弹，还有自己制造的核武器。末日的钟声，又向前拨动了一格。</p>
+    <p>OFN和日本震怒，帝国也陷入恐慌。三国的情报机关紧急磋商——希姆莱的核能力，比所有人估计的都强。"终末之夜"不再是纸上谈兵，它正在变成现实。</p>`,
+    choices: [
+      { text: '三国联合谴责并制裁勃艮第', desc: '+外交 -稳定', effects: { ofn_relation: 10, japan_relation: 8, stability: -5, burgundy_relation: -30 }, condition: (s) => s.flags.doomsday_known },
+      { text: '加速自身核武库现代化', desc: '+核威慑 -资金', effects: { nukeDeter: 12, nukes: 1, money: -45 } },
+      { text: '派遣特工破坏勃艮第核设施', desc: '冒险', effects: { militaryPower: 4, stability: -4, money: -25, burgundy_relation: -20, research: 4 } }
+    ]
+  },
+
+  {
+    id: 'ev_burgundy_confrontation',
+    turn: { year: 1979, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '黑暗的对峙',
+    body: `<p>局势在1979年到达沸点。<strong>帝国、OFN、日本的联合情报确认：勃艮第的核武库已具备发动"终末之夜"的能力。</strong></p>
+    <p>三方秘密商定了一个代号"黎明之锤"的行动计划——一场针对勃艮第核设施的精确打击，旨在瘫痪其核能力，同时不引发全面战争。但行动风险极高：若失败，勃艮第可能狗急跳墙，提前发动核战争；若成功，希姆莱或许会孤注一掷。</p>
+    <p>整个文明屏息以待。决策者的手指悬在按钮上——按下，可能拯救世界，也可能毁灭世界。这是人类历史上最危险的时刻。</p>`,
+    choices: [
+      { text: '执行"黎明之锤"行动', desc: '豪赌', effects: { militaryPower: 12, stability: -12, deterrence: -8, money: -60, ofn_relation: 12, japan_relation: 12, burgundy_relation: -60 }, condition: (s) => s.flags.doomsday_known, setFlags: { dawn_hammer: true }, showToast: '末日行动启动' },
+      { text: '继续威慑，不主动打击', desc: '保守', effects: { stability: -3, nukeDeter: 8, deterrence: 5 } },
+      { text: '寻求最后的外交解决', desc: '和平', effects: { stability: 4, burgundy_relation: 8, ofn_relation: -5 }, showToast: '与疯子讲理...' }
+    ],
+    condition: (s) => s.flags.doomsday_known
+  },
+
+  {
+    id: 'ev_burgundy_aftermath',
+    turn: { year: 1980, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '黑色堡垒的黄昏',
+    body: `<p>"黎明之锤"行动的结果，取决于命运。无论成败，<strong>勃艮第——这个笼罩欧洲近二十年的噩梦——终于走到了十字路口。</strong></p>
+    <p>如果行动成功，勃艮第的核设施被摧毁，希姆莱的末日计划搁浅。但党卫军残部可能四散逃亡，把核技术和恐怖主义带到全世界。如果行动失败，三国将面临与一个疯子的全面核对峙。无论哪种结局，世界都不会再是原来的样子。</p>
+    <p>而在勃艮第的城堡深处，希姆莱对着世界地图，眼神空洞。他的"净化"梦想，正在被现实一点点撕碎。这个养鸡场主出身的恶魔，第一次显露出疲态。</p>`,
+    choices: [
+      { text: '彻底铲除勃艮第政权', desc: '+威慑 -稳定', effects: { deterrence: 15, stability: -8, militaryPower: 8, money: -40, burgundy_relation: -40 }, condition: (s) => s.flags.dawn_hammer, setFlags: { burgundy_destroyed: true }, showToast: '勃艮第覆灭' },
+      { text: '扶持勃艮第内部反对派', desc: '+研发', effects: { research: 8, stability: -3, money: -25, burgundy_relation: -10 } },
+      { text: '维持对峙， containment', desc: '稳健', effects: { stability: 3, deterrence: 5, money: -20 } }
+    ],
+    condition: (s) => s.flags.dawn_hammer
+  },
+
+  {
+    id: 'ev_burgundy_remnant_terror',
+    turn: { year: 1983, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '幽灵的复仇',
+    body: `<p>勃艮第政权即使覆灭，其幽灵仍在游荡。<strong>逃亡的党卫军残部，化整为零，成为遍布全球的恐怖网络。</strong></p>
+    <p>他们在帝国制造爆炸，在OFN刺杀政要，在日本投放毒气，在三头同盟煽动叛乱。这些昔日的"骑士"，如今成了无国界的死神。他们没有了国家，却有了更危险的目标——既然不能"净化"世界，那就让世界永远不得安宁。</p>
+    <p>各国被迫联合反恐，但对付一个没有领土、没有旗帜、只有仇恨的敌人，比对付一个国家难上百倍。希姆莱的遗产，是最难根除的毒瘤。</p>`,
+    choices: [
+      { text: '组建国际反恐联盟', desc: '+外交 -资金', effects: { ofn_relation: 12, japan_relation: 10, italy_relation: 8, stability: 3, money: -35 }, condition: (s) => s.flags.burgundy_destroyed, setFlags: { anti_terror_alliance: true } },
+      { text: '加强国内安保', desc: '+稳定 -资金', effects: { stability: 5, money: -25, deterrence: 3 } },
+      { text: '以暴制暴，暗杀其首领', desc: '+威慑', effects: { deterrence: 8, stability: -4, money: -20, research: 3 } }
+    ],
+    condition: (s) => s.flags.burgundy_destroyed
+  },
+
+  {
+    id: 'ev_burgundy_final_shadow',
+    turn: { year: 1988, quarter: 3 },
+    once: true,
+    tag: 'story',
+    title: '最后的骑士',
+    body: `<p>岁月流转，勃艮第的阴影渐渐淡去。曾经的党卫军残部或被剿灭，或被招安，或老死在异乡的地下室。希姆莱本人——如果他还活着——也已是风烛残年的老人，蜷缩在某个不为人知的角落。</p>
+    <p>但"终末之夜"的恐惧，烙印在了整整一代人的记忆里。它改变了一切——核裁军、国际合作、对极端主义的警惕，都源于那场与末日的擦肩而过。人类第一次真切地意识到，文明是何等脆弱，而疯狂是何等接近。</p>
+    <p>在日耳曼尼亚的一座纪念馆里，一块黑色的纪念碑上刻着："致那些在黑暗岁月里阻止了终末之夜的人。"没有名字，没有勋章——只有这句朴素的话，和一个永远警醒的问号。</p>`,
+    choices: [
+      { text: '铭记历史，警惕未来', desc: '+稳定 +研发', effects: { stability: 8, research: 6, ofn_relation: 5 }, setFlags: { burgundy_shadow_passed: true } },
+      { text: '继续追剿残余', desc: '+威慑 -资金', effects: { deterrence: 5, money: -20, stability: 2 } },
+      { text: '翻过这一页，向前看', desc: '+稳定', effects: { stability: 6, money: 5 } }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十三幕：俄罗斯统一战争（1965-1985）
+   * =========================================================== */
+
+  {
+    id: 'ev_russia_tomsk_yagoda',
+    turn: { year: 1965, quarter: 3 },
+    once: true,
+    tag: 'story',
+    title: '托木斯克的红旗',
+    body: `<p>在西伯利亚的冻土上，<strong>托木斯克</strong>的红旗依然飘扬。这里是雅戈达的NKVD流亡政权——苏联秘密警察的最后堡垒。</p>
+    <p>雅戈达，这位斯大林时代的老牌秘密警察头子，在内战和西俄战争的混乱中率残部东撤，以西西伯利亚为根据地重建了一个"微型苏联"。他的统治冷酷而高效——秘密警察控制一切，异议者消失在冻土里，但工业和秩序也在恐怖中重建。托木斯克的工厂烟囱日夜冒烟，为统一战争生产着武器。</p>
+    <p>雅戈达的梦想是重建苏联——但一个比斯大林更纯粹的苏联，一个由秘密警察统治的苏联。俄罗斯的统一，在他看来，只是手段；目的，是让红旗重新飘扬在克里姆林宫的废墟上。</p>`,
+    choices: [
+      { text: '暗中支持托木斯克以制衡其他军阀', desc: '+研发', effects: { research: 4, stability: -2, russia_relation: 5, money: -15 }, setFlags: { tomsk_contact: true } },
+      { text: '扶植其他军阀对抗托木斯克', desc: '+威慑', effects: { deterrence: 4, russia_relation: -8, money: -20 } },
+      { text: '不干预，让俄国人自相残杀', desc: '观望', effects: { stability: 2, deterrence: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_omsk_black_league',
+    turn: { year: 1966, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '黑林的复仇者',
+    body: `<p>在乌拉尔山麓的<strong>鄂木斯克</strong>，一股比托木斯克更可怕的力量崛起了——"黑林"。</p>
+    <p>黑林，正式名称"黑俄罗斯联盟"，是一群极端民族主义军官建立的军事政权。他们的意识形态只有一个核心：<strong>复仇</strong>。对德国的刻骨仇恨，对二战失败的屈辱，对俄罗斯破碎的愤怒——这些情绪被锻造成了一把嗜血的剑。黑林的目标不是重建苏联，而是建立一个纯粹军事化的俄罗斯，用尽一切手段——包括核武器——向德国复仇。</p>
+    <p>黑林的军官们穿着黑色制服，挂着骷髅徽章，在操场上嘶吼着复仇的口号。他们是俄罗斯统一战争中最危险的一支力量——因为他们不在乎代价，只在乎仇恨的宣泄。</p>`,
+    choices: [
+      { text: '加强东线防御', desc: '+军事 -资金', effects: { militaryPower: 8, money: -30, stability: -3, russia_relation: -10 }, setFlags: { black_league_threat: true } },
+      { text: '扶植其他军阀对抗黑林', desc: '+研发 -资金', effects: { research: 4, money: -25, russia_relation: 5 } },
+      { text: '尝试与黑林秘密接触', desc: '危险', effects: { stability: -4, deterrence: 3, russia_relation: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_komi_taboritsky',
+    turn: { year: 1967, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '科米的沙皇之影',
+    body: `<p>在北方的<strong>科米</strong>，一个令人毛骨悚然的神权政权诞生了——塔博里茨基的"神圣俄罗斯"。</p>
+    <p>塔博里茨基，一个痴迷于末世论的狂热教士，宣称沙皇皇储阿列克谢（已死去半个世纪）"即将复活"，并将领导俄罗斯走向"净化"。他的统治是中世纪神权与现代极权的恐怖结合——异教徒被烧死，"不洁者"被清洗，整个社会陷入了一种集体癫狂。科米的森林里回荡着忏悔者的哭嚎和审判者的咒语。</p>
+    <p>这不是政治，这是疯狂。但疯狂有时比理智更有力量——塔博里茨基的信徒们视死如归，渴望着"净化"的到来。如果科米的疯狂扩散，整个俄罗斯都将堕入深渊。</p>`,
+    choices: [
+      { text: '支持科米邻邦抵抗塔博里茨基', desc: '+研发 -资金', effects: { research: 5, money: -20, stability: 2, russia_relation: 8 } },
+      { text: '冷眼旁观俄罗斯堕落', desc: '残忍', effects: { stability: 3, deterrence: 2, russia_relation: -5 } },
+      { text: '派遣特工刺杀塔博里茨基', desc: '冒险', effects: { stability: -3, money: -15, russia_relation: 10, deterrence: 4 }, setFlags: { taboritsky_targeted: true } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_magadan',
+    turn: { year: 1968, quarter: 1 },
+    once: true,
+    tag: 'diplomacy',
+    title: '马加丹的港口',
+    body: `<p>在远东的冰封港口<strong>马加丹</strong>，另一股势力悄然壮大。这里靠近日本势力范围，军阀们或与日本勾结，或借日本之利渔利。</p>
+    <p>马加丹的统治者是一个务实的机会主义者——他不谈主义，只谈生意。他向日本出卖资源，从日本进口武器，然后向东扩张，吞并周边的小军阀。他的"统一"不是基于信仰，而是基于利益——这反而让他比那些狂热者更难对付。</p>
+    <p>日本暗中支持马加丹，希望在西伯利亚扶植一个亲日政权。这引发了帝国的警觉——一个亲日的俄罗斯，对帝国的东线是巨大威胁。</p>`,
+    choices: [
+      { text: '与日本争夺远东影响力', desc: '+威慑 -稳定', effects: { deterrence: 6, stability: -4, japan_relation: -12, money: -25 } },
+      { text: '默许日本渗透远东', desc: '妥协', effects: { stability: 3, japan_relation: 8, russia_relation: -5 } },
+      { text: '支持反马加丹的军阀', desc: '+研发 -资金', effects: { research: 4, money: -20, russia_relation: 5, japan_relation: -8 } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_wrrf',
+    turn: { year: 1969, quarter: 2 },
+    once: true,
+    tag: 'story',
+    title: '西俄革命阵线的余烬',
+    body: `<p>在北方的阿尔汉格尔斯克，<strong>西俄革命阵线</strong>的旗帜仍在飘扬。这是西俄战争的残部——那支几乎击败德国、最终功败垂成的军队。</p>
+    <p>革命阵线由一位老布尔什维克将军领导，他信奉的是正统的苏联军事共产主义。他的部队是俄罗斯各军阀中战斗力最强的——他们经历过与德军的血战，有着最丰富的实战经验。但他们的意识形态已经过时，对年轻一代缺乏吸引力。</p>
+    <p>革命阵线是俄罗斯的"老资格"，但老资格在乱世中未必是优势。他们能否放下教条，团结其他力量，将决定俄罗斯的统一由谁完成。</p>`,
+    choices: [
+      { text: '与革命阵线秘密停火', desc: '+稳定', effects: { stability: 4, russia_relation: 8, money: -10 }, setFlags: { wrrf_truce: true } },
+      { text: '支持革命阵线以稳定东线', desc: '+研发 -资金', effects: { research: 5, money: -25, russia_relation: 12 } },
+      { text: '趁虚打击革命阵线', desc: '+军事 -稳定', effects: { militaryPower: 6, stability: -5, russia_relation: -15, deterrence: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_unification_war',
+    turn: { year: 1972, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '统一之战',
+    body: `<p>经过近十年的混战，俄罗斯的军阀们开始相互吞并，统一战争进入了白热化阶段。<strong>几个强大的军阀邦国在西伯利亚的雪原上厮杀，争夺统一俄罗斯的主导权。</strong></p>
+    <p>这场战争牵动着所有大国的神经——OFN暗中支持民主派，日本扶植远东代理人，帝国则害怕一个统一而复仇心切的俄罗斯。每一方都在下注，每一方都担心押错宝。而俄罗斯的命运，最终将由俄国人自己决定。</p>
+    <p>炮火从乌拉尔烧到太平洋，鲜血染红了冻土。无论谁胜出，一个新的俄罗斯即将诞生——而它的样子，将重塑整个世界格局。</p>`,
+    choices: [
+      { text: '扶植亲帝国的俄罗斯势力', desc: '+威慑 -资金', effects: { deterrence: 6, money: -40, russia_relation: 10, stability: -3 }, setFlags: { russia_intervention: true } },
+      { text: '与OFN协调俄罗斯政策', desc: '+OFN关系', effects: { ofn_relation: 12, russia_relation: 5, stability: 2 } },
+      { text: '严守中立，加固东线防线', desc: '+军事 -资金', effects: { militaryPower: 8, money: -30, deterrence: 4 } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_unified_emergence',
+    turn: { year: 1978, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '巨熊苏醒',
+    body: `<p><strong>俄罗斯，统一了。</strong>经过十六年的混战，一个统一的俄罗斯国家从废墟中站起。新的统治者（无论他是谁）站在莫斯科的废墟上，向世界宣告：俄罗斯回来了。</p>
+    <p>统一的俄罗斯不再是那个被德国践踏、被军阀撕裂的破碎之国。它拥有广袤的领土、丰富的资源、久经沙场的军队，以及——最重要的——对德国刻骨铭心的仇恨。一个复仇的巨人，正从东方崛起，凝视着乌拉尔山以西。</p>
+    <p>帝国的东线，第一次真正感受到了压力。冷战的三极格局，正在变成四极——而新的一极，是带着血海深仇的。</p>`,
+    choices: [
+      { text: '与统一俄罗斯缓和关系', desc: '+稳定 -威慑', effects: { stability: 6, russia_relation: 15, deterrence: -5, money: 10 }, setFlags: { russia_unified: true, russia_detente: true } },
+      { text: '加强东线，准备对抗', desc: '+军事 -资金', effects: { militaryPower: 12, money: -45, deterrence: 8, russia_relation: -15 }, setFlags: { russia_unified: true, russia_confrontation: true } },
+      { text: '与OFN联手遏制俄罗斯', desc: '+OFN关系', effects: { ofn_relation: 15, russia_relation: -20, deterrence: 5, money: -20 }, setFlags: { russia_unified: true } }
+    ]
+  },
+
+  {
+    id: 'ev_russia_superpower',
+    turn: { year: 1985, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '第四极',
+    body: `<p>统一的俄罗斯在八十年代迅速崛起，成为名副其实的<strong>世界第四极</strong>。它的工业从废墟中重建，它的军队在统一战争中百炼成钢，它的核武库从无到有——据说，俄罗斯已经从某些渠道获得了核武器技术。</p>
+    <p>俄罗斯开始在国际舞台上发声——它要求收回被德国占领的西部领土，要求在东欧事务上有发言权，要求被承认为平等的大国。这不再是那个被欺凌的破碎之国，而是一个自信、强大、危险的邻居。</p>
+    <p>帝国的决策者们夜不能寐。一个复仇的俄罗斯，是帝国挥之不去的噩梦。而如何与这个新巨人共处——对抗、缓和、还是制衡——将定义未来几十年的世界。</p>`,
+    choices: [
+      { text: '承认俄罗斯的大国地位', desc: '+稳定 -威慑', effects: { stability: 8, russia_relation: 20, deterrence: -8, money: 15 }, condition: (s) => s.flags.russia_unified },
+      { text: '与俄罗斯进行军备竞赛', desc: '+军事 -资金', effects: { militaryPower: 10, money: -50, deterrence: 6, russia_relation: -10 }, condition: (s) => s.flags.russia_unified },
+      { text: '推动多边和谈，建立新均势', desc: '+外交', effects: { ofn_relation: 8, japan_relation: 5, russia_relation: 10, stability: 4, research: 4 }, condition: (s) => s.flags.russia_unified }
+    ],
+    condition: (s) => s.flags.russia_unified
+  },
+
+  {
+    id: 'ev_russia_border_tension',
+    turn: { year: 1982, quarter: 3 },
+    once: true,
+    tag: 'military',
+    title: '乌拉尔山的枪声',
+    body: `<p>乌拉尔山边境线上，一次小规模的武装冲突震惊了世界。<strong>俄罗斯巡逻队与帝国边防军在争议地区交火，双方各有伤亡。</strong></p>
+    <p>事件的起因众说纷纭——俄方称是帝国越界，帝国称是俄罗斯挑衅。但无论如何，这是俄罗斯统一以来与帝国的第一次正面冲突。双方都在边境集结军队，战争的阴云笼罩着乌拉尔山。</p>
+    <p>OFN和日本紧急斡旋，呼吁双方克制。但仇恨的火种一旦点燃，扑灭它需要的不只是外交辞令。这是对帝国决心的第一次考验。</p>`,
+    choices: [
+      { text: '强硬回应，增兵边境', desc: '+军事 -稳定', effects: { militaryPower: 8, stability: -6, deterrence: 5, russia_relation: -12 }, condition: (s) => s.flags.russia_unified },
+      { text: '通过外交途径降级', desc: '+稳定', effects: { stability: 5, russia_relation: 8, deterrence: -3 } },
+      { text: '要求国际调停', desc: '+外交', effects: { ofn_relation: 6, russia_relation: 5, stability: 3 } }
+    ],
+    condition: (s) => s.flags.russia_unified
+  },
+
+  {
+    id: 'ev_russia_reconciliation',
+    turn: { year: 1990, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '东方的和解',
+    body: `<p>随着冷战的终结，<strong>帝国与统一俄罗斯的关系也迎来了转机。</strong>两国的领导人在喀山（一座边境城市）举行了历史性会晤。</p>
+    <p>会晤的议程沉重而漫长——领土争端、历史仇恨、战争赔偿、核裁军。每一个议题都浸透了鲜血。但双方都意识到，仇恨的循环必须打破——否则，两个核大国迟早会走向同归于尽。在OFN的斡旋下，两国签署了《喀山宣言》，承诺通过和平方式解决争端，逐步实现关系正常化。</p>
+    <p>这不是和解——仇恨太深，不可能轻易和解。但这是和解的开始。乌拉尔山的两边，第一次有人谈论"和平共处"而非"复仇"。</p>`,
+    choices: [
+      { text: '真诚推动俄德和解', desc: '+稳定 +研发', effects: { stability: 12, research: 8, russia_relation: 25, ofn_relation: 8, money: 20 }, condition: (s) => s.flags.russia_unified && s.flags.reformist, setFlags: { russia_reconciliation: true } },
+      { text: '谨慎改善关系', desc: '+稳定', effects: { stability: 6, russia_relation: 12, money: 10 } },
+      { text: '只谈经济，不谈历史', desc: '务实', effects: { money: 25, russia_relation: 8, stability: 3 } }
+    ],
+    condition: (s) => s.flags.russia_unified
+  },
+
+  /* ===========================================================
+   * 第十四幕：美国民权运动与二次内战（1962-1972）
+   * =========================================================== */
+
+  {
+    id: 'ev_us_civil_rights_1963',
+    turn: { year: 1963, quarter: 3 },
+    once: true,
+    tag: 'diplomacy',
+    title: '华盛顿的游行',
+    body: `<p>大洋彼岸，<strong>美国的民权运动正如火如荼。</strong>二十五万人在华盛顿林肯纪念堂前集会，一位黑人牧师发表了震动世界的演讲："我有一个梦想。"</p>
+    <p>肯尼迪政府试图推动民权立法，但南方的种族主义者拼死抵抗。种族隔离、警察暴力、三K党恐怖——美国社会的伤口在撕裂。而更阴险的是，勃艮第的间谍在暗中煽风点火，企图把种族矛盾推向内战。</p>
+    <p>帝国的情报机关冷眼旁观——一个被内乱撕裂的美国，对帝国是有利的。但一个陷入第二次内战的美国，可能让OFN瘫痪，从而让勃艮第的核末日计划得逞。这是一个微妙的平衡。</p>`,
+    choices: [
+      { text: '暗中支持美国种族隔离派，削弱OFN', desc: '+威慑', effects: { deterrence: 5, ofn_relation: -15, stability: 2, money: -15 }, setFlags: { us_destabilize: true } },
+      { text: '保持中立', desc: '观望', effects: { stability: 2, ofn_relation: -2 } },
+      { text: '秘密向肯尼迪提供勃艮第渗透情报', desc: '+OFN关系', effects: { ofn_relation: 12, research: 4, stability: -2, money: -10 }, condition: (s) => s.flags.reformist }
+    ]
+  },
+
+  {
+    id: 'ev_us_kennedy_assassination',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '达拉斯的枪声',
+    body: `<p>1963年11月，<strong>达拉斯</strong>。一声枪响，肯尼迪倒在敞篷车的后座上。美国总统遇刺身亡。</p>
+    <p>凶手被捕，但真相很快被阴谋论淹没。有人说是种族主义者干的，有人说是勃艮第的特工，有人说是国内的极右翼。美国社会本就因民权运动而撕裂，肯尼迪之死让裂痕变成了鸿沟。继任的约翰逊誓言继承肯尼迪的遗志，但局势已经失控。</p>
+    <p>OFN陷入短暂的混乱，帝国和日本趁机在欧洲和亚太加紧布局。但暗流之下，一个更可怕的危机正在酝酿——美国的第二次内战，已经隐约可见。</p>`,
+    choices: [
+      { text: '趁OFN混乱扩张势力', desc: '+威慑', effects: { deterrence: 6, ofn_relation: -12, stability: 3, money: 10 } },
+      { text: '观望，不轻举妄动', desc: '稳健', effects: { stability: 3, ofn_relation: -3 } },
+      { text: '向新政府示好', desc: '+OFN关系', effects: { ofn_relation: 8, stability: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_us_race_riots',
+    turn: { year: 1965, quarter: 3 },
+    once: true,
+    tag: 'diplomacy',
+    title: '燃烧的城市',
+    body: `<p>美国的种族冲突在1965年达到新高。<strong>从洛杉矶到底特律，从纽瓦克到芝加哥，一座座城市在种族暴乱中燃烧。</strong></p>
+    <p>黑人社区愤怒于警察暴力和系统性歧视，白人种族主义者则以暴力回击。国民警卫队开进城市，街头成了战场。约翰逊政府疲于奔命，民权法案在国会搁浅，极端组织——三K党、黑豹党——招兵买马。</p>
+    <p>OFN的力量被内耗蚕食，帝国在东欧的压力减轻。但情报机关警告：如果美国真的爆发第二次内战，全球均势将彻底崩溃——而崩溃的受益者，可能不是帝国，而是勃艮第。</p>`,
+    choices: [
+      { text: '继续暗中煽动美国动荡', desc: '+威慑', effects: { deterrence: 5, ofn_relation: -18, stability: 2, money: -20 }, condition: (s) => s.flags.us_destabilize },
+      { text: '减少干预，避免引火烧身', desc: '稳健', effects: { stability: 3, ofn_relation: -5 } },
+      { text: '与OFN共享反极端情报', desc: '+OFN关系', effects: { ofn_relation: 10, research: 4, stability: -2 } }
+    ]
+  },
+
+  {
+    id: 'ev_us_second_civil_war',
+    turn: { year: 1968, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '第二次美国内战',
+    body: `<p>最可怕的事情发生了。<strong>美国，这个OFN的领袖、自由世界的灯塔，陷入了第二次内战。</strong></p>
+    <p>起因是复杂的——种族矛盾、政治极化、经济不平等、勃艮第的暗中操弄——所有火种在1968年同时点燃。南方的种族主义民兵宣布"独立"，西部的极右翼揭竿而起，左翼的城市游击队占领大学，联邦政府的权威在多个州崩溃。星条旗被撕成碎片，每一片都沾着同胞的血。</p>
+    <p>OFN陷入瘫痪。加拿大、澳大利亚等成员不得不自立门户。帝国、日本、勃艮第各怀鬼胎地注视着这场混乱。自由世界的崩溃，让黑暗势力看到了机会——而人类文明，又向末日滑近了一步。</p>`,
+    choices: [
+      { text: '趁OFN瘫痪大举扩张', desc: '+威慑 -稳定', effects: { deterrence: 10, stability: -5, ofn_relation: -25, money: 15, militaryPower: 5 }, setFlags: { us_civil_war: true } },
+      { text: '保持中立，专注自身', desc: '稳健', effects: { stability: 5, deterrence: 3 } },
+      { text: '秘密支持联邦政府以制衡勃艮第', desc: '+OFN关系', effects: { ofn_relation: 15, money: -30, stability: -3, research: 3 }, condition: (s) => s.flags.doomsday_known }
+    ]
+  },
+
+  {
+    id: 'ev_us_ofn_paralysis',
+    turn: { year: 1970, quarter: 1 },
+    once: true,
+    tag: 'diplomacy',
+    title: '瘫痪的灯塔',
+    body: `<p>第二次美国内战让<strong>OFN陷入了史无前例的瘫痪。</strong>美国自顾不暇，OFN失去了主心骨，各成员国陷入恐慌。</p>
+    <p>加拿大被迫承担起OFN的部分职能，但它的实力远不及美国。欧洲的民主流亡者、非洲的反殖民运动、亚洲的抵抗组织——所有依赖OFN支持的力量，都陷入了孤立。帝国和日本趁机填补真空，勃艮第则在美国的混乱中加紧渗透。</p>
+    <p>这是自由世界最黑暗的时刻。但黑暗中也有微光——美国的联邦政府仍在抵抗，民主的火种仍在燃烧。问题是，它还能撑多久？</p>`,
+    choices: [
+      { text: '利用OFN瘫痪扩张影响力', desc: '+威慑', effects: { deterrence: 8, ofn_relation: -20, stability: 3, money: 20 }, condition: (s) => s.flags.us_civil_war },
+      { text: '与加拿大建立务实关系', desc: '+外交', effects: { ofn_relation: 5, stability: 2, money: 10 } },
+      { text: '准备应对美国崩溃的难民潮', desc: '+稳定 -资金', effects: { stability: 4, money: -20, manpower: 5 } }
+    ],
+    condition: (s) => s.flags.us_civil_war
+  },
+
+  {
+    id: 'ev_us_recovery',
+    turn: { year: 1972, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '合众国的重生',
+    body: `<p>经过四年的血腥内战，<strong>美国的联邦政府终于重新控制了局势。</strong>叛乱被逐一平定，星条旗重新在叛乱州升起。但代价是惨重的——数十万人死亡，经济重创，社会撕裂的伤痕将延续几代人。</p>
+    <p>新上台的美国政府（无论是谁）带着满身伤痕重新执掌OFN，但美国的国力已今非昔比。它不再是那个不可一世的世界领袖，而是一个需要疗伤的 wounded giant。OFN重新运转，但更加谨慎、更加内向。</p>
+    <p>对帝国而言，这是一个复杂的信号——OFN的复苏意味着制衡力量的回归，但也意味着一个更稳定的世界，一个更不易被勃艮第利用的世界。</p>`,
+    choices: [
+      { text: '趁美国虚弱巩固欧洲霸权', desc: '+威慑', effects: { deterrence: 6, ofn_relation: -10, stability: 2, money: 10 } },
+      { text: '向恢复的美国示好', desc: '+OFN关系', effects: { ofn_relation: 12, stability: 4, money: 15 } },
+      { text: '推动新的三极均势', desc: '+外交', effects: { ofn_relation: 8, japan_relation: 5, stability: 5, research: 4 } }
+    ],
+    condition: (s) => s.flags.us_civil_war
+  },
+
+  {
+    id: 'ev_us_civil_rights_legacy',
+    turn: { year: 1975, quarter: 2 },
+    once: true,
+    tag: 'culture',
+    title: '民权的遗产',
+    body: `<p>内战结束后，<strong>美国的民权问题终于迎来了历史性的解决。</strong>无论内战的过程多么血腥，它最终摧毁了种族隔离的制度根基。新的民权法案被写入宪法修正案，少数族裔的权利得到了前所未有的保障。</p>
+    <p>但伤痕是深的。内战的创伤、种族仇恨的余烬、政治极化的遗产——这些都需要几代人去愈合。美国社会在痛苦中转型，从一个种族分化的国家，缓慢地走向一个更包容（但也更疲惫）的合众国。</p>
+    <p>OFN的意识形态因此更加鲜明——自由、平等、人权——这些词不再是空洞的口号，而是用鲜血换来的信条。这让OFN在与极权帝国的意识形态对抗中，重新占据了道德高地。</p>`,
+    choices: [
+      { text: '借鉴美国改革，改善帝国人权', desc: '+稳定 +研发', effects: { stability: 6, research: 5, ofn_relation: 10, money: -10 }, condition: (s) => s.flags.reformist },
+      { text: '嘲笑美国的混乱', desc: '+威慑', effects: { deterrence: 4, ofn_relation: -8, stability: 2 } },
+      { text: '研究OFN的新意识形态', desc: '+研发', effects: { research: 6, stability: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_us_new_era',
+    turn: { year: 1980, quarter: 3 },
+    once: true,
+    tag: 'diplomacy',
+    title: '美国的新时代',
+    body: `<p>八十年代的美国，从内战的废墟中艰难走出。<strong>一个新的美国正在成型</strong>——它更内向、更务实、更关注国内重建，但也在重新审视自己在世界中的角色。</p>
+    <p>OFN不再是那个咄咄逼人的世界警察，而是一个更注重"软实力"和"价值观同盟"的组织。美国开始用文化、科技、经济而非单纯的武力，来对抗极权帝国。好莱坞的电影、硅谷的芯片、华尔街的资本——这些成了OFN新的武器。</p>
+    <p>帝国面对的，不再是一个会派兵干预的OFN，而是一个会用文化和经济渗透的OFN。这种新型对抗，比冷战更隐蔽，也更致命。</p>`,
+    choices: [
+      { text: '加强文化审查，抵御渗透', desc: '+稳定 -研发', effects: { stability: 5, research: -4, ofn_relation: -8 } },
+      { text: '发展自己的文化软实力', desc: '+稳定 +研发', effects: { stability: 4, research: 6, money: -15 } },
+      { text: '与OFN进行文化交流', desc: '+OFN关系 +研发', effects: { ofn_relation: 12, research: 8, stability: -3 }, condition: (s) => s.flags.reformist }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十五幕：日本经济危机与共荣圈反抗（1964-1990）
+   * =========================================================== */
+
+  {
+    id: 'ev_japan_economic_crisis',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'economy',
+    title: '日元的失信',
+    body: `<p>东京的股票交易所里，<strong>日元正在暴跌。</strong>日本实行的封闭经济——只与共荣圈内傀儡国贸易——终于露出了致命的破绽。</p>
+    <p>封闭经济让日元失去了国际信用，共荣圈内的国家开始暗中用黄金、美元甚至帝国马克进行贸易。日本的出口机器停滞，工厂裁员，失业率飙升。军部的高官们还在吹嘘"共荣圈的繁荣"，但东京街头的家庭主妇已经买不起米。</p>
+    <p>海军和陆军互相指责——海军说陆军在中国的驻军耗费了财政，陆军说海军的造舰计划拖垮了经济。三足金乌的光芒，正在黯淡。</p>`,
+    choices: [
+      { text: '趁日本危机扩张亚太影响力', desc: '+威慑', effects: { deterrence: 5, japan_relation: -15, stability: 2, money: 10 } },
+      { text: '向日本提供经济援助换取让步', desc: '+外交', effects: { japan_relation: 12, money: -30, stability: 3 } },
+      { text: '冷眼旁观', desc: '观望', effects: { stability: 2, japan_relation: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_japan_navy_army_split',
+    turn: { year: 1966, quarter: 1 },
+    once: true,
+    tag: 'military',
+    title: '海陆的对立',
+    body: `<p>日本的<strong>海军与陆军对立</strong>，由来已久。但在经济危机的催化下，这种对立演变成了公开的权力斗争。两派都握有核武器，谁也不敢轻举妄动，但谁也不愿妥协。</p>
+    <p>海军主张"海洋战略"——巩固太平洋霸权，控制海上交通线；陆军主张"大陆战略"——强化对中国和东南亚的控制，攫取陆地资源。两派的预算争夺白热化，甚至出现了互相截留对方物资的丑闻。天皇的居中调停收效甚微。</p>
+    <p>一个内部分裂的日本，对帝国是好消息——但一个拥有核武器且内斗的日本，对全世界都是噩梦。一旦海陆矛盾失控，核武器可能被用于内斗。</p>`,
+    choices: [
+      { text: '暗中煽动海陆对立', desc: '+威慑', effects: { deterrence: 5, japan_relation: -12, stability: 2, money: -15 }, setFlags: { japan_split_exploit: true } },
+      { text: '与海军派建立秘密渠道', desc: '+研发', effects: { research: 5, japan_relation: 5, money: -10 } },
+      { text: '呼吁日本保持稳定', desc: '+稳定', effects: { stability: 3, japan_relation: 8 } }
+    ]
+  },
+
+  {
+    id: 'ev_cps_manchuria_resistance',
+    turn: { year: 1968, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '满洲的火种',
+    body: `<p>在共荣圈的核心——<strong>满洲</strong>，抵抗运动如火如荼。日本的傀儡"满洲国"早已民怨沸腾，汉人与满人、蒙古人的反抗组织在山林中扎下根基。</p>
+    <p>这些抵抗者有的是旧中国的残部，有的是民族主义者，有的是共产主义者——他们之间也互相倾轧，但对日本的共同仇恨让他们暂时结盟。他们袭击铁路、炸毁桥梁、暗杀日本军官，让关东军疲于奔命。OFN和帝国都暗中向他们提供武器——敌人的敌人，就是朋友。</p>
+    <p>满洲的火种，正在燎原。如果日本失去满洲，共荣圈的经济动脉将被切断——那里的煤、铁、粮食，养活着整个日本帝国。</p>`,
+    choices: [
+      { text: '暗中武装满洲抵抗者', desc: '+威慑 -资金', effects: { deterrence: 6, japan_relation: -20, money: -30, stability: 2, research: 3 }, setFlags: { manchuria_armed: true } },
+      { text: '与日本合作镇压以换取利益', desc: '+日本关系', effects: { japan_relation: 12, stability: -3, money: 15 } },
+      { text: '不介入共荣圈内部', desc: '观望', effects: { stability: 2, japan_relation: -2 } }
+    ]
+  },
+
+  {
+    id: 'ev_cps_korea_uprising',
+    turn: { year: 1970, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '朝鲜的怒火',
+    body: `<p><strong>朝鲜半岛爆发了大规模反日起义。</strong>从汉城到平壤，学生、工人、农民走上街头，高喊"独立"、"自由"、"滚出去"。</p>
+    <p>日本对朝鲜的殖民统治残酷而高压——强制日语教育、征用慰安妇、掠夺粮食。起义的导火索是一名朝鲜学生被日本宪兵殴打致死。愤怒的人群冲击总督府，日本军队开枪镇压，血流成河。但这只会让怒火更烈——起义从城市蔓延到农村，游击队在太白山区建立根据地。</p>
+    <p>朝鲜的火药桶爆炸了。日本疲于镇压，共荣圈的"繁荣"神话彻底破灭。OFN在幕后窃喜，帝国也在盘算如何利用这场混乱。</p>`,
+    choices: [
+      { text: '向朝鲜起义者提供武器', desc: '+威慑 -资金', effects: { deterrence: 5, japan_relation: -18, money: -25, stability: 2 }, condition: (s) => s.flags.manchuria_armed },
+      { text: '收容朝鲜流亡者', desc: '+研发 +人力', effects: { research: 4, manpower: 8, japan_relation: -8, stability: 3 } },
+      { text: '保持中立', desc: '稳健', effects: { stability: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_cps_china_inferno',
+    turn: { year: 1973, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '中国腹地的怒火',
+    body: `<p>共荣圈的噩梦全面降临——<strong>中国腹地的反抗汇成了燎原大火。</strong>从华北到华南，无数武装力量揭竿而起，打出"驱逐倭寇、复兴中华"的旗帜。</p>
+    <p>这些力量鱼龙混杂——民族主义者、共产主义者、地方军阀、民间会党——但他们的矛头一致指向日本。日本占领军陷入了人民战争的汪洋大海，每一座城镇、每一条铁路、每一片稻田都成了战场。共荣圈的"共荣"成了笑柄，"三光政策"的报复只会激起更烈的反抗。</p>
+    <p>日本在亚洲的霸权，正在崩塌。一个脱离日本控制的中国，将彻底改变亚洲乃至世界的格局。</p>`,
+    choices: [
+      { text: '大规模武装中国反抗军', desc: '+威慑 -资金', effects: { deterrence: 8, japan_relation: -25, money: -40, stability: 3, research: 4 }, setFlags: { china_armed: true } },
+      { text: '与日本瓜分中国利益', desc: '+日本关系', effects: { japan_relation: 10, stability: -5, money: 20 } },
+      { text: '呼吁亚洲民族自决', desc: '+外交', effects: { ofn_relation: 8, japan_relation: -10, stability: 2 } }
+    ]
+  },
+
+  {
+    id: 'ev_japan_yen_collapse',
+    turn: { year: 1975, quarter: 3 },
+    once: true,
+    tag: 'economy',
+    title: '日元的崩盘',
+    body: `<p>共荣圈的反抗、海陆的对立、财政的枯竭——所有问题在1975年汇成了<strong>日元的彻底崩盘</strong>。日元成了废纸，共荣圈内的贸易体系崩溃。</p>
+    <p>东京的街头出现了抢购潮，银行被挤兑，企业大批破产。军部试图用强硬手段稳定局势，但连军队的军饷都发不出来。日本帝国的经济基础，正在瓦解。曾经不可一世的三足金乌，如今像一只褪毛的老鸡。</p>
+    <p>这对帝国是机遇，也是风险——一个经济崩溃但拥核的日本，可能做出任何疯狂的事。世界的稳定，又多了一个变量。</p>`,
+    choices: [
+      { text: '趁日本崩溃抢占亚洲市场', desc: '+资金 +威慑', effects: { money: 30, deterrence: 5, japan_relation: -20, stability: 3 } },
+      { text: '牵头国际援助日本以防核扩散', desc: '+外交 -资金', effects: { ofn_relation: 10, japan_relation: 15, money: -40, stability: 4 } },
+      { text: '准备应对日本难民潮', desc: '+稳定 -资金', effects: { stability: 3, money: -15, manpower: 5 } }
+    ]
+  },
+
+  {
+    id: 'ev_japan_reform',
+    turn: { year: 1982, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '东京之春',
+    body: `<p>在崩溃的边缘，<strong>日本迎来了改革。</strong>一批改革派军官和文官联合发动政变，推翻了僵化的军部独裁，建立了"开明内阁"。</p>
+    <p>新政府开放经济、与共荣圈外的国家恢复贸易、放松对殖民地的管控、甚至开始与反抗力量谈判。这是一个痛苦但必要的转型——日本终于承认，封闭的军国主义帝国走不通了。共荣圈被改组为更松散、更平等的"亚太合作组织"，日本从霸主变成了伙伴（虽然仍是最大的伙伴）。</p>
+    <p>一个改革的日本，与一个改革的德国，有可能成为合作伙伴——也可能成为更强劲的竞争对手。冷战格局，又一次松动。</p>`,
+    choices: [
+      { text: '与改革后的日本建立伙伴关系', desc: '+外交 +研发', effects: { japan_relation: 18, research: 8, stability: 5, money: 20 }, condition: (s) => s.flags.reformist, setFlags: { japan_reform_partner: true } },
+      { text: '趁机抢占日本退出的真空', desc: '+资金 +威慑', effects: { money: 25, deterrence: 6, japan_relation: -10, stability: 2 } },
+      { text: '观望日本改革成效', desc: '稳健', effects: { stability: 3, japan_relation: 5 } }
+    ]
+  },
+
+  {
+    id: 'ev_cps_decolonization',
+    turn: { year: 1988, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '共荣圈的解体',
+    body: `<p>随着日本的改革和亚洲反抗的持续，<strong>共荣圈作为一个殖民体系，走向了解体。</strong>一个又一个傀儡国获得独立或自治。</p>
+    <p>满洲、朝鲜、中国各地——这些昔日的"共荣圈成员"，如今成了独立（或半独立）的国家。日本的势力范围退缩回本土和少数岛屿。亚洲的民族解放运动，在经历了半个世纪的抗争后，终于看到了胜利的曙光。一个多极的亚洲正在诞生。</p>
+    <p>这对世界格局是深远的冲击——日本不再是亚太的霸主，新独立的国家在帝国、OFN、日本之间寻求平衡。亚洲的冷战，进入了新阶段。</p>`,
+    choices: [
+      { text: '与新独立的亚洲国家建交', desc: '+外交 +资金', effects: { ofn_relation: 8, japan_relation: 5, money: 25, stability: 4, research: 4 } },
+      { text: '趁乱扩张在亚洲的势力', desc: '+威慑 -稳定', effects: { deterrence: 6, stability: -4, japan_relation: -12, money: 15 } },
+      { text: '推动亚洲多边合作机制', desc: '+外交', effects: { ofn_relation: 10, japan_relation: 8, stability: 5, research: 5 } }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十六幕：地中海三头同盟与亚特兰特罗帕后遗症（1962-1980）
+   * =========================================================== */
+
+  {
+    id: 'ev_atlantropa_aftermath',
+    turn: { year: 1962, quarter: 3 },
+    once: true,
+    tag: 'economy',
+    title: '亚特兰特罗帕的伤疤',
+    body: `<p>德国的<strong>亚特兰特罗帕计划</strong>——排干地中海、重塑欧亚大陆的宏伟工程——已经停摆，但它留下的伤疤触目惊心。</p>
+    <p>地中海的海平面下降了数十米，沿岸的港口变成了内陆城市，渔业崩溃，气候异变。更糟糕的是，这个计划逼走了地中海盟友——意大利、伊比利亚、土耳其——它们联合起来，组成了"三头同盟"，以对抗德国日益增长的敌意。德国不仅耗尽了国库，还亲手造就了一个对手。</p>
+    <p>如今，三头同盟控制着地中海的咽喉，德国的南翼暴露在敌意之下。亚特兰特罗帕——这个本应让德国"千秋万代"的工程——成了帝国最昂贵的失败。</p>`,
+    choices: [
+      { text: '尝试修复亚特兰特罗帕的损害', desc: '+研发 -资金', effects: { research: 5, money: -40, stability: -3, italy_relation: 5 } },
+      { text: '与三头同盟谈判赔偿', desc: '+外交 -资金', effects: { italy_relation: 12, money: -30, stability: 3 } },
+      { text: '否认责任，强硬以对', desc: '+威慑 -稳定', effects: { deterrence: 4, stability: -4, italy_relation: -10 } }
+    ]
+  },
+
+  {
+    id: 'ev_triumvirate_formation',
+    turn: { year: 1963, quarter: 1 },
+    once: true,
+    tag: 'diplomacy',
+    title: '三头同盟的诞生',
+    body: `<p>在罗马，<strong>意大利、伊比利亚联邦、土耳其</strong>的领导人签署了同盟条约，"三头同盟"正式诞生。</p>
+    <p>这是对德国霸权的直接挑战。意大利的齐亚诺、伊比利亚的弗朗哥与萨拉查、土耳其的将军们——这些人曾是轴心国的盟友，如今却因亚特兰特罗帕的背叛和德国的衰败而联合起来，成为冷战格局中第四股力量。他们控制着地中海，扼守着苏伊士和直布罗陀，让德国的南翼如芒在背。</p>
+    <p>三头同盟不亲OFN，也不亲德国——它只为自己。这种独立性，让它成为各方拉拢的对象，也让地中海成了大国博弈的棋盘。</p>`,
+    choices: [
+      { text: '承认三头同盟，缓和关系', desc: '+意大利关系', effects: { italy_relation: 15, stability: 4, deterrence: -3 } },
+      { text: '试图分化三头同盟', desc: '+研发', effects: { research: 4, italy_relation: -5, stability: 2 } },
+      { text: '加强南翼军力以威慑', desc: '+军事 -稳定', effects: { militaryPower: 6, deterrence: 4, italy_relation: -12, stability: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_italy_ciano',
+    turn: { year: 1965, quarter: 1 },
+    once: true,
+    tag: 'story',
+    title: '齐亚诺的意大利',
+    body: `<p>在罗马，<strong>加莱亚佐·齐亚诺</strong>——墨索里尼的女婿——领导着意大利社会共和国。这位精明的贵族外交官，正在法西斯的遗产与民主的压力之间走钢丝。</p>
+    <p>齐亚诺比他的岳父务实得多。他知道法西斯主义在战后的世界已无前途，但他也不愿轻易放弃权力。他推动经济现代化，放松言论管制，允许有限的反对派存在——同时维持着法西斯党的外壳。意大利在齐亚诺治下繁荣起来，成了三头同盟中最稳定的一员。</p>
+    <p>但民主的呼声日益高涨。工人罢工、学生游行、地下政党的活动——齐亚诺的"开明法西斯"还能维持多久，是个问号。</p>`,
+    choices: [
+      { text: '与齐亚诺建立友好关系', desc: '+意大利关系', effects: { italy_relation: 12, stability: 3, money: 10 } },
+      { text: '暗中支持意大利民主运动', desc: '+OFN关系 -意大利关系', effects: { ofn_relation: 8, italy_relation: -10, research: 3 } },
+      { text: '拉拢意大利对抗OFN', desc: '+意大利关系 -OFN关系', effects: { italy_relation: 10, ofn_relation: -8, deterrence: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_iberia_strain',
+    turn: { year: 1967, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '伊比利亚的裂痕',
+    body: `<p><strong>伊比利亚联邦</strong>——弗朗哥的西班牙与萨拉查的葡萄牙的联合——正在繁荣与内爆之间摇摆。两位独裁者年事已高，继承危机暗流涌动。</p>
+    <p>西班牙的工业发展与葡萄牙的殖民战争形成尖锐矛盾。葡萄牙在非洲的殖民地在反抗，军费压垮了里斯本的财政；西班牙的工人和学生则要求民主。联邦的两个部分，一个想改革，一个想守旧，裂痕越来越深。三头同盟的"伊比利亚支柱"，正在松动。</p>
+    <p>如果伊比利亚崩溃，三头同盟将失去一角，地中海的均势将被打破。各方都在押注——是支持联邦维系，还是支持它分裂？</p>`,
+    choices: [
+      { text: '支持伊比利亚联邦维系', desc: '+稳定 +意大利关系', effects: { stability: 4, italy_relation: 8, money: -15 } },
+      { text: '暗中支持伊比利亚民主派', desc: '+OFN关系', effects: { ofn_relation: 10, italy_relation: -5, research: 3 } },
+      { text: '趁伊比利亚动荡扩张北非影响', desc: '+威慑', effects: { deterrence: 5, italy_relation: -8, money: 10 } }
+    ]
+  },
+
+  {
+    id: 'ev_turkey_colonies',
+    turn: { year: 1969, quarter: 1 },
+    once: true,
+    tag: 'story',
+    title: '土耳其的炸药桶',
+    body: `<p>三头同盟的第三极——<strong>土耳其</strong>——正坐在它自己的殖民地的炸药桶上。土耳其控制着中东的大片领土，但阿拉伯人的反抗从未停息。</p>
+    <p>从伊拉克到叙利亚，从黎巴嫩到约旦，阿拉伯民族主义者袭击土耳其驻军，发动起义。石油——这个工业的血液——让中东成了大国角逐的焦点。土耳其的统治摇摇欲坠，它需要的不仅是武力，还有金钱和盟友。</p>
+    <p>帝国、OFN、日本都觊觎中东的石油。土耳其的困境，成了各方介入的契机。而阿拉伯人的命运，将在大国的博弈中被决定——除非他们能决定自己的命运。</p>`,
+    choices: [
+      { text: '与土耳其合作获取石油', desc: '+资金 +意大利关系', effects: { money: 30, italy_relation: 8, stability: 2 } },
+      { text: '暗中支持阿拉伯反抗者', desc: '+威慑 -意大利关系', effects: { deterrence: 4, italy_relation: -12, money: 10, research: 3 } },
+      { text: '推动中东和谈', desc: '+外交', effects: { ofn_relation: 8, italy_relation: 5, stability: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_triumvirate_fracture',
+    turn: { year: 1973, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '三头的裂变',
+    body: `<p>七十年代初，<strong>三头同盟出现了明显的裂痕。</strong>伊比利亚的动荡、土耳其的殖民困境、意大利的民主压力——三个伙伴各自为战，同盟的凝聚力下降。</p>
+    <p>更关键的是，三国对德国和OFN的态度出现分歧。意大利倾向与改革中的德国缓和；伊比利亚的民主派想靠拢OFN；土耳其则想利用日本制衡各方。三头同盟从"第四极"变成了"三个第一极"，地中海的均势岌岌可危。</p>
+    <p>这是帝国插手的好机会——分化瓦解，逐个拉拢，把地中海变成自己的后院。但操作不慎，可能把三国推回一起，甚至推向OFN。</p>`,
+    choices: [
+      { text: '分化三头同盟，逐个拉拢', desc: '+威慑 +研发', effects: { deterrence: 6, research: 5, italy_relation: 8, stability: 2, money: -15 }, setFlags: { triumvirate_divide: true } },
+      { text: '推动三头同盟整体靠拢帝国', desc: '+意大利关系', effects: { italy_relation: 15, stability: 4, money: -20 } },
+      { text: '支持三头同盟的独立性', desc: '+稳定', effects: { stability: 5, italy_relation: 6, ofn_relation: 4 } }
+    ]
+  },
+
+  {
+    id: 'ev_italy_democratization',
+    turn: { year: 1978, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '意大利之春',
+    body: `<p>齐亚诺去世（或退位）后，<strong>意大利迎来了民主化浪潮。</strong>法西斯党的统治在民众的压力下瓦解，自由选举恢复，意大利重返民主国家行列。</p>
+    <p>这是一个历史性的转折——第一个轴心国成员国，主动抛弃了法西斯主义。意大利的民主化鼓舞了伊比利亚和土耳其的改革派，三头同盟的性质发生了根本变化——从"法西斯同盟"变成了"地中海民主共同体"。它开始向OFN靠拢，地中海的天平倾斜了。</p>
+    <p>对帝国而言，这是一个危险的信号——法西斯主义的多米诺骨牌，可能从意大利开始倒下。但也可能是一个机会——一个民主的地中海，可能成为制衡OFN和日本的第三种力量。</p>`,
+    choices: [
+      { text: '与民主意大利建立新关系', desc: '+意大利关系 +研发', effects: { italy_relation: 12, research: 6, stability: 4, ofn_relation: 5 }, condition: (s) => s.flags.reformist },
+      { text: '敌视民主化，加强南翼军力', desc: '+威慑 -稳定', effects: { deterrence: 6, italy_relation: -15, stability: -4 } },
+      { text: '推动三头同盟成为独立一极', desc: '+外交', effects: { italy_relation: 10, ofn_relation: 5, japan_relation: 4, stability: 3 } }
+    ]
+  },
+
+  {
+    id: 'ev_mediterranean_new_order',
+    turn: { year: 1985, quarter: 3 },
+    once: true,
+    tag: 'diplomacy',
+    title: '地中海新秩序',
+    body: `<p>随着三头同盟的民主化和亚特兰特罗帕伤痕的逐渐愈合，<strong>地中海迎来了新的秩序。</strong></p>
+    <p>民主化的意大利、伊比利亚、土耳其组成了"地中海联盟"，与OFN建立了松散的伙伴关系，但保持了战略自主。地中海的贸易繁荣起来，沿岸的港口重新繁忙，被排干的海岸线在生态修复中缓慢复苏。这片曾因德国的野心而破碎的海洋，正在重新成为文明的摇篮。</p>
+    <p>帝国与地中海联盟的关系，取决于帝国的选择——改革，则合作；保守，则对抗。地中海的未来，是欧洲未来的缩影。</p>`,
+    choices: [
+      { text: '与地中海联盟建立伙伴关系', desc: '+稳定 +资金', effects: { stability: 6, money: 25, italy_relation: 15, ofn_relation: 8 }, condition: (s) => s.flags.reformist },
+      { text: '维持距离，有限合作', desc: '稳健', effects: { stability: 3, money: 10, italy_relation: 5 } },
+      { text: '对抗地中海联盟', desc: '+威慑 -稳定', effects: { deterrence: 5, stability: -5, italy_relation: -12 } }
+    ]
+  },
+
+  /* ===========================================================
+   * 第十七幕：太空竞赛、核裁军、冷战终局（1965-1995）
+   * =========================================================== */
+
+  {
+    id: 'ev_space_race_mars',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'tech',
+    title: '红色的星球',
+    body: `<p>登月十年之后，<strong>太空竞赛进入了新阶段——火星。</strong>帝国、OFN、日本都在筹划载人火星任务，争夺"第一个踏上火星"的荣誉。</p>
+    <p>冯·布劳恩（如果他还在）的继任者们设计了巨型火箭，日耳曼尼亚的航天中心日夜运转。但火星任务比登月复杂百倍——更远的距离、更长的周期、更大的风险。这是一场烧钱的无底洞，但也是国家荣誉的象征。谁能第一个到达火星，谁就能宣称自己是人类文明的领袖。</p>
+    <p>而在科学的旗帜下，太空竞赛也掩盖着军事意图——能到达火星的火箭，也能投送核弹头。</p>`,
+    choices: [
+      { text: '全力投入火星计划', desc: '+研发 -资金', effects: { research: 12, money: -50, stability: 5, deterrence: 4 }, setFlags: { mars_program: true } },
+      { text: '与OFN联合开发火星', desc: '+OFN关系 +研发', effects: { ofn_relation: 12, research: 10, money: -30, stability: 3 }, condition: (s) => s.flags.reformist },
+      { text: '放弃火星，专注地球', desc: '+资金', effects: { money: 20, stability: 2, research: -3 } }
+    ]
+  },
+
+  {
+    id: 'ev_nuclear_near_miss',
+    turn: { year: 1976, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '千钧一发',
+    body: `<p>一个秋日的清晨，<strong>帝国的早期预警系统发出了骇人的警报——数枚洲际导弹正在飞向日耳曼尼亚。</strong></p>
+    <p>核反击的指令已经下达，元首的手指悬在发射钮上。倒计时三十分钟——这是文明存续的最后三十分钟。万幸的是，一名清醒的军官发现了异常——那是一颗出故障的间谍卫星，被误判为导弹。警报取消，世界在悬崖边收回了一脚。</p>
+    <p>但这次虚惊让所有人惊出一身冷汗。如果那个军官迟疑一秒，如果元首按下按钮，文明就终结了。核威慑的"相互保证毁灭"，比任何人想象的都更脆弱。</p>`,
+    choices: [
+      { text: '推动核危机沟通热线', desc: '+稳定 +外交', effects: { stability: 8, ofn_relation: 10, japan_relation: 8, deterrence: -3, research: 4 } },
+      { text: '升级预警系统', desc: '+研发 -资金', effects: { research: 8, money: -30, nukeDeter: 5 } },
+      { text: '借机扩充核武库', desc: '+核威慑 -稳定', effects: { nukeDeter: 10, nukes: 1, stability: -5, ofn_relation: -8 } }
+    ]
+  },
+
+  {
+    id: 'ev_disarmament_geneva',
+    turn: { year: 1984, quarter: 2 },
+    once: true,
+    tag: 'diplomacy',
+    title: '日内瓦的谈判桌',
+    body: `<p>在日内瓦，<strong>帝国、OFN、日本的三国代表团坐在了核裁军的谈判桌前。</strong>核武库的维护费用正在拖垮三国经济，而勃艮第的核威胁让三国意识到——是该减少核武器了。</p>
+    <p>谈判艰难而漫长。每一方都想让对方先裁，每一方都担心对方作弊。核查机制、裁减比例、监督程序——每一个细节都争论不休。但共识在缓慢形成：核武器不再是外交工具，而是文明的负担。</p>
+    <p>而勃艮第——希姆莱绝不会欢迎裁军。他的末日计划，需要核武器，需要恐惧。谈判桌上的暗流，比台面上的争论更危险。</p>`,
+    choices: [
+      { text: '积极推动裁军', desc: '+稳定 -核威慑', effects: { stability: 8, nukeDeter: -10, research: 5, money: 30, ofn_relation: 10 }, condition: (s) => s.flags.reformist, setFlags: { disarmament_push: true } },
+      { text: '有条件裁军', desc: '稳健', effects: { stability: 4, nukeDeter: -5, money: 15 } },
+      { text: '拒绝裁军，保持核威慑', desc: '+核威慑 -稳定', effects: { nukeDeter: 8, stability: -4, money: -20 }, condition: (s) => s.flags.militarist }
+    ]
+  },
+
+  {
+    id: 'ev_space_station',
+    turn: { year: 1986, quarter: 2 },
+    once: true,
+    tag: 'tech',
+    title: '天空之城',
+    body: `<p>在地球轨道上，<strong>第一座永久性空间站落成。</strong>这是太空竞赛从对抗走向合作的象征——如果三国愿意合作的话。</p>
+    <p>空间站凝聚了航天技术的精华——生命维持、轨道对接、太空科研。它既是科学的殿堂，也是军事的制高点。三国都希望建造自己的空间站，但成本的高昂让合作变得诱人。一个国际空间站，可能成为冷战缓和的标志；各自为战的空间站，则可能把军备竞赛推向太空。</p>
+    <p>太空，是人类最后的疆界，也可能是新的战场。</p>`,
+    choices: [
+      { text: '提议共建国际空间站', desc: '+研发 +外交', effects: { research: 10, ofn_relation: 12, japan_relation: 10, money: -25, stability: 4 }, condition: (s) => s.flags.reformist },
+      { text: '独建帝国空间站', desc: '+研发 -资金', effects: { research: 8, money: -45, deterrence: 4, stability: 3 } },
+      { text: '军用化太空', desc: '+威慑 -外交', effects: { deterrence: 8, militaryPower: 5, money: -40, ofn_relation: -10, research: 4 }, condition: (s) => s.flags.militarist }
+    ]
+  },
+
+  {
+    id: 'env_cold_war_thaw',
+    turn: { year: 1989, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '解冻',
+    body: `<p>八十年代末，<strong>三极冷战出现了明显的解冻迹象。</strong>核裁军谈判取得进展，太空合作展开，经济往来增加。</p>
+    <p>三国的领导人都意识到，持续的对抗正在拖垮各自的国家。帝国（如果改革）需要和平来巩固成果；OFN（如果从内战中恢复）需要稳定来重建；日本（如果改革）需要开放来复苏。冷战的逻辑——对抗、军备、代理人战争——正在被新的逻辑——合作、裁军、共同发展——取代。</p>
+    <p>但解冻不等于结束。旧势力的抵抗、互信的缺失、勃艮第的破坏——都让和平的脚步蹒跚。能否抓住这个窗口，决定了人类能否避免最坏的结局。</p>`,
+    choices: [
+      { text: '全面推动冷战缓和', desc: '+稳定 +研发', effects: { stability: 10, research: 8, ofn_relation: 12, japan_relation: 10, deterrence: -5, money: 20 }, condition: (s) => s.flags.reformist, setFlags: { cold_war_thaw: true } },
+      { text: '谨慎缓和', desc: '+稳定', effects: { stability: 5, ofn_relation: 5, japan_relation: 4 } },
+      { text: '保持警惕，不轻信', desc: '+威慑', effects: { deterrence: 4, stability: -2, ofn_relation: -5 } }
+    ]
+  },
+
+  {
+    id: 'ev_mars_landing',
+    turn: { year: 1990, quarter: 3 },
+    once: true,
+    tag: 'tech',
+    title: '火星之上',
+    body: `<p><strong>人类，第一次踏上了火星。</strong>无论这个宇航员来自帝国、OFN还是日本，这都是全人类的里程碑。</p>
+    <p>红色的荒原上，宇航员插下旗帜，留下脚印。这一刻，地球上的所有纷争都显得渺小——人类，这个起源于非洲草原的物种，终于走出了摇篮，触摸到了另一颗星球。消息传回地球，全世界屏息凝神，然后爆发出欢呼。</p>
+    <p>火星计划耗资巨大，但它带来的科技突破、灵感与希望，是无法用金钱衡量的。更重要的是，它证明了——在对抗之外，人类还有合作的可能性。</p>`,
+    choices: [
+      { text: '庆祝这一人类壮举', desc: '+稳定 +研发', effects: { stability: 8, research: 10, money: 10, ofn_relation: 8, japan_relation: 8 } },
+      { text: '宣称这是帝国的胜利', desc: '+威慑 -外交', effects: { deterrence: 5, stability: 4, ofn_relation: -8, japan_relation: -8 } },
+      { text: '推动火星国际合作', desc: '+研发 +外交', effects: { research: 12, ofn_relation: 10, japan_relation: 10, stability: 5 }, condition: (s) => s.flags.reformist }
+    ]
+  },
+
+  {
+    id: 'env_nuclear_free_world',
+    turn: { year: 1993, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '无核世界的远景',
+    body: `<p>冷战终结后，<strong>一个更激进的议题浮上水面——彻底销毁核武器。</strong>三国的领导人在雷克雅未克签署了一份意向性宣言，探讨"无核世界"的可能性。</p>
+    <p>在数十年的核恐怖平衡之后，人类第一次认真地考虑：是否可以不再把自己的命运绑在核弹头发射井上？帝国的核武库如果是改革路线，将率先承诺削减；OFN与日本也会跟进。但军方与保守派激烈反对——他们警告说，"当你放下枪，敌人的枪仍在手上"。</p>
+    <p>这是一个赌局。赌注是人类下一个千年的安全。</p>`,
+    choices: [
+      { text: '率先签署无核条约', desc: '改革派路线 -大幅削减核威慑', effects: { nukeDeter: -15, deterrence: -8, stability: 8, research: 5, ofn_relation: 15, japan_relation: 12, money: 30 }, condition: (s) => s.flags.reformist, setFlags: { nuclear_free: true }, showToast: '帝国率先拥抱无核世界' },
+      { text: '分阶段渐进削减', desc: '稳健路线', effects: { nukeDeter: -6, deterrence: -3, stability: 4, ofn_relation: 6, japan_relation: 5, money: 15 }, showToast: '渐进式核裁军启动' },
+      { text: '拒绝裁军，维持核威慑', desc: '保守路线', effects: { nukeDeter: 3, deterrence: 5, stability: -4, ofn_relation: -8, japan_relation: -6 }, showToast: '帝国拒绝核裁军' }
+    ]
+  },
+
+  {
+    id: 'ev_information_age',
+    turn: { year: 1995, quarter: 1 },
+    once: true,
+    tag: 'tech',
+    title: '信息时代',
+    body: `<p>九十年代中期，<strong>互联网、个人电脑、移动通讯——一场新的革命席卷全球。</strong>如果帝国选择了开放，光缆将从日耳曼尼亚延伸到里昂，从高加索延伸到基辅；如果封闭，则"信息铁幕"将比政治铁幕更加坚固。</p>
+    <p>年轻人开始上网，帝国的宣传机器第一次遇到真正意义上的竞争对手。BBS、聊天室、加密邮件——每一种新技术都是对审查制度的挑战。而对OFN与日本来说，信息的自由流动是不流血的渗透。</p>`,
+    choices: [
+      { text: '建设帝国互联网，有限开放', desc: '改革派', effects: { research: 15, stability: 2, money: -20, ofn_relation: 5 }, condition: (s) => s.flags.reformist, showToast: '帝国互联网建设启动' },
+      { text: '严格管控，信息隔离', desc: '保守路线', effects: { research: 5, stability: 5, ofn_relation: -5 }, showToast: '信息铁幕已落下' },
+      { text: '发展军工网络技术', desc: '军事路线', effects: { research: 10, deterrence: 3, militaryPower: 3, money: -25 }, showToast: '网络战部队组建' }
+    ]
+  },
+
+  {
+    id: 'ev_2000_finale',
+    turn: { year: 2000, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '终章 · 千年之后',
+    body: `<p>2000年1月1日。烟火冲上天空，全世界——从日耳曼尼亚的勃兰登堡门到华盛顿的国家广场，从东京的涩谷到莫斯科的红场（如果它已被收复）——百万人齐声欢呼。</p>
+    <p>你坐在总理府的办公室里，窗外是璀璨的夜空。三十八年。你在这里待了三十八年。从希特勒葬礼那天开始，从内战的硝烟开始，从斯派达尔的保护区开始——你走过了一条漫长而曲折的路。</p>
+    <p>帝国——现在叫什么名字，由你决定。改革也好，保守也好，军国也好，崩溃也好——它都是你亲手刻画的作品。在新千年的第一个清晨，你只需要回答一个问题：</p>
+    <p><strong>这一切，值得吗？</strong></p>`,
+    choices: [
+      { text: '一切都值得。', desc: '迎接终局', effects: { stability: 10 }, showToast: '新千年已开启' }
+    ]
   }
 
 ];
 
-// 导出
 if (typeof window !== 'undefined') {
   window.STORY_EVENTS = STORY_EVENTS;
 }
