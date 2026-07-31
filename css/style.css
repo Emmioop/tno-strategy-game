@@ -1303,3 +1303,57 @@ body {
   .timeline-milestone .tm-desc { display: none; }
   .timeline-milestone .tm-label { font-size: 8px; }
 }
+
+/* ===== 国策树 ===== */
+.focus-current {
+  background: var(--bg-panel);
+  border: 1px solid var(--accent-gold);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fc-name { font-family: var(--font-serif); font-size: 14px; color: var(--accent-gold-bright); white-space: nowrap; }
+.fc-progress-bar { flex: 1; height: 10px; background: var(--bg-elevated); border-radius: 5px; overflow: hidden; }
+.fc-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-bright)); transition: width 0.5s; }
+.fc-turns { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; }
+
+.focus-branch { margin-bottom: 20px; }
+.fb-title { font-family: var(--font-serif); color: var(--accent-gold); font-size: 14px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
+.fb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+
+.focus-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  transition: all 0.2s;
+  position: relative;
+}
+.focus-card.available { border-color: var(--accent-gold); cursor: pointer; }
+.focus-card.available:hover { border-color: var(--accent-gold-bright); background: var(--bg-elevated); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.focus-card.completed { opacity: 0.5; border-color: var(--accent-toxic); }
+.focus-card.current { border-color: var(--accent-gold-bright); box-shadow: 0 0 8px rgba(232,200,96,0.3); }
+.focus-card.locked { opacity: 0.4; }
+
+.fc-title { font-family: var(--font-serif); font-size: 13px; color: var(--text-primary); margin-bottom: 4px; }
+.focus-card.completed .fc-title { color: var(--accent-toxic); }
+.focus-card.locked .fc-title { color: var(--text-muted); }
+
+.fc-info { display: flex; gap: 10px; font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 6px; }
+.fc-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px; }
+.fc-effects { display: flex; flex-wrap: wrap; gap: 4px; }
+.fe-tag { font-size: 10px; padding: 2px 6px; border-radius: 2px; font-family: var(--font-mono); }
+.fe-tag.pos { background: rgba(106,176,76,0.15); color: var(--accent-toxic); }
+.fe-tag.neg { background: rgba(168,50,50,0.15); color: var(--accent-blood-bright); }
+.fc-cur { font-size: 10px; color: var(--accent-gold-bright); margin-top: 6px; font-family: var(--font-mono); }
+.fc-lock { font-size: 10px; color: var(--accent-blood-bright); margin-top: 6px; font-style: italic; }
+.fc-done { font-size: 10px; color: var(--accent-toxic); margin-top: 6px; font-weight: bold; }
+
+@media (max-width: 768px) {
+  .fb-cards { grid-template-columns: 1fr; }
+  .focus-current { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .fc-progress-bar { width: 100%; }
+}

@@ -1515,15 +1515,15 @@ const STORY_EVENTS = [
     id: 'ev_russia_recovery_1',
     turn: { year: 1975, quarter: 3 },
     once: true,
-    tag: 'major',
-    title: '俄罗斯重建',
-    body: `<p>统一后的俄罗斯从战争的废墟中站起来了。</p>
-    <p>第一阶段重建完成：军工综合体重新运转，军队开始整编训练，乌拉尔山区的工厂开足了马力。这只是开始，但趋势已经不可逆转。</p>
-    <p>如果帝国还没准备好，那么现在是时候了。</p>`,
+    tag: 'critical',
+    title: '俄罗斯重建：钢铁复苏',
+    body: `<p>统一后的俄罗斯以惊人速度从废墟中站起。</p>
+    <p>乌拉尔的军工厂昼夜不停，T-72坦克从流水线上成批驶下。情报显示，俄军已重建30个师，并在AA线附近修建了前沿机场和导弹阵地。更可怕的是——他们似乎从勃艮第获得了核技术。</p>
+    <p style="color:var(--accent-blood-bright)">这是明确的战争信号。帝国必须做出回应。</p>`,
     choices: [
-      { text: '加速东方防线建设', desc: '+威慑 -资金', effects: { deterrence: 8, money: -45 } },
-      { text: '增加军备生产', desc: '+军力 -资金', effects: { militaryPower: 10, money: -40, manpower: -5 } },
-      { text: '保持观望', desc: '无成本', effects: { deterrence: -3, russia_relation: -3 } }
+      { text: '紧急加速东方防线', desc: '+威慑 -大量资金 -稳定', effects: { deterrence: 12, money: -60, stability: -5, manpower: -5 } },
+      { text: '对等扩军备战', desc: '+军力 +威慑 -大量资金 -人力', effects: { militaryPower: 15, deterrence: 8, money: -70, manpower: -10, stability: -3 } },
+      { text: '试图外交拖延（风险）', desc: '+关系 但-威慑', effects: { russia_relation: 8, deterrence: -8, stability: 2 }, setFlags: { russia_detente_attempt: true } }
     ],
     condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman'
   },
@@ -1532,17 +1532,57 @@ const STORY_EVENTS = [
     id: 'ev_russia_recovery_2',
     turn: { year: 1978, quarter: 1 },
     once: true,
-    tag: 'major',
-    title: '俄罗斯重新武装',
-    body: `<p>卫星照片显示了令人不安的画面：俄罗斯在AA线一侧建造了数百座新军事设施，坦克师的数量是三年前的三倍。</p>
-    <p>俄罗斯官方声明这是"内部防御需求"，但任何有理智的人都能看出——他们正在为战争做准备。</p>
-    <p>距离战争，还有最后几年。</p>`,
+    tag: 'critical',
+    title: '俄罗斯重新武装：铁幕降临',
+    body: `<p>卫星照片令人不寒而栗。</p>
+    <p>俄军在AA线集结了超过120个师、4000辆坦克、6000门火炮。核弹头数量估计已达到200枚。他们的空军规模是帝国的两倍。</p>
+    <p>俄罗斯外长公开发表声明：<em>"东方总督辖区是被非法占领的俄罗斯领土。我们有权利以任何手段收回。"</em></p>
+    <p style="color:var(--accent-blood-bright)">战争倒计时已经开始。</p>`,
     choices: [
-      { text: '对等部署军队', desc: '+军力 +威慑 -资金 -人力', effects: { militaryPower: 12, deterrence: 10, money: -55, manpower: -8 } },
-      { text: '提出裁军谈判', desc: '+关系 -威慑', effects: { russia_relation: 10, deterrence: -5, stability: 2 } },
-      { text: '联合美国发表联合声明', desc: '+美国关系 +威慑', effects: { ofn_relation: 10, deterrence: 8, russia_relation: -8 } }
+      { text: '全国总动员', desc: '+大量军力 +威慑 -稳定 -资金 -人力', effects: { militaryPower: 20, deterrence: 15, stability: -10, money: -80, manpower: -15 }, setFlags: { total_mobilization: true } },
+      { text: '构筑马奇诺式防线', desc: '+威慑 -大量资金', effects: { deterrence: 18, money: -90, stability: 3 }, setFlags: { eastern_wall: true } },
+      { text: '寻求美国军事同盟', desc: '+美国关系 +威慑 -俄罗斯关系', effects: { ofn_relation: 20, deterrence: 10, russia_relation: -15, stability: -2 }, setFlags: { ofn_alliance: true } },
+      { text: '继续拖延谈判（危险）', desc: '+关系 但大幅-威慑', effects: { russia_relation: 10, deterrence: -12, stability: 1 } }
     ],
     condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman'
+  },
+
+  // ===== 俄罗斯持续施压（1979） =====
+  {
+    id: 'ev_russia_pressure_1979',
+    turn: { year: 1979, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '最后通牒的前奏',
+    body: `<p>俄罗斯在AA线发动了"军事演习"——80万军队、3000辆坦克参与。这不是演习，这是战争预演。</p>
+    <p>同时，俄罗斯情报机构开始在东方总督辖区煽动叛乱。当地斯拉夫人开始质疑帝国的统治。三个总督辖区已有两个爆发了游击战。</p>
+    <p style="color:var(--accent-blood-bright)">帝国的东方防线正在从内部瓦解。</p>`,
+    choices: [
+      { text: '残酷镇压游击队', desc: '-人力 -稳定 +威慑', effects: { manpower: -12, stability: -8, deterrence: 5, militaryPower: 3 } },
+      { text: '拉拢当地斯拉夫人', desc: '-资金 +稳定 +人力', effects: { money: -50, stability: 5, manpower: 8, russia_relation: 3 } },
+      { text: '无视，专注军事准备', desc: '-稳定 +军力', effects: { stability: -6, militaryPower: 8, deterrence: 3 } }
+    ],
+    condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman' && s.flags.russia_unifier !== 'monarchist'
+  },
+
+  // ===== 俄罗斯核威胁（1983） =====
+  {
+    id: 'ev_russia_nuclear_threat',
+    turn: { year: 1983, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '核阴影',
+    body: `<p>帝国情报部门截获了一份可怕的通信。</p>
+    <p>俄罗斯已部署了超过500枚核弹头，瞄准帝国的每一座主要城市。他们的洲际导弹可以在15分钟内抵达柏林。</p>
+    <p>更糟糕的是，俄罗斯总统/沙皇/摄政在公开讲话中暗示：<em>"如果帝国不归还领土，我们不排除使用核武器。"</em></p>
+    <p style="color:var(--accent-blood-bright)">这是人类文明最接近毁灭的时刻。</p>`,
+    choices: [
+      { text: '升级核威慑（军备竞赛）', desc: '+大量核慑 -大量资金 -稳定', effects: { nukeDeter: 25, deterrence: 10, money: -100, stability: -8 }, setFlags: { nuclear_arms_race: true } },
+      { text: '秘密谈判降低核风险', desc: '+关系 +稳定 -核慑', effects: { russia_relation: 15, stability: 8, nukeDeter: -10, deterrence: -5 }, setFlags: { nuclear_detente: true } },
+      { text: '准备先发制人打击', desc: '+军力 大幅-稳定 -美国关系', effects: { militaryPower: 15, nukeDeter: 8, stability: -15, ofn_relation: -20 }, setFlags: { first_strike_prep: true } },
+      { text: '全民民防建设', desc: '-资金 +稳定', effects: { money: -60, stability: 6, manpower: -5 } }
+    ],
+    condition: (s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman' && !s.flags.permanent_peace
   },
 
   // ===== 塔博里茨基崩溃事件（好分支） =====
@@ -1663,33 +1703,99 @@ const STORY_EVENTS = [
     turn: { year: 1985, quarter: 2 },
     once: true,
     tag: 'critical',
-    title: '命运的抉择',
-    body: `<p>四年时间到了。俄军完成了全面动员，外交谈判破裂。现在他们再次发出外交照会，而这一次，没有再商量的余地。</p>
-    <p>帝国的军力与威慑能否抵挡住威胁？或者，和平条约的条款是否已经生效？</p>`,
+    title: '命运的抉择：战争与和平',
+    body: `<p>四年时间到了。120万俄军压境，核武器蓄势待发。</p>
+    <p>外交谈判彻底破裂。俄罗斯发出最后通牒：<em>24小时内归还东方总督辖区，否则——全面战争。"</em></p>
+    <p>帝国的命运在此一举。选择战争需要威慑≥70、军力≥50；选择核战争需要核慑≥60。如果都不够，唯一的选择是投降。</p>
+    <p style="color:var(--accent-blood-bright);font-weight:bold">错误的选择意味着帝国的终结。</p>`,
     choices: [
       {
-        text: '全面战争（威慑≥80可获胜）',
-        desc: '高风险 高回报',
-        effects: { militaryPower: 8, deterrence: 5, stability: -10, money: -60, manpower: -15 },
-        setFlags: { final_war: true },
+        text: '全面战争（需威慑≥70 军力≥50）',
+        desc: '胜利：帝国存续 +大量威慑；失败：帝国崩溃',
+        effects: { militaryPower: 10, deterrence: 15, stability: -15, money: -80, manpower: -25 },
+        setFlags: { final_war: true, total_war_fought: true },
+        condition: (s) => !s.flags.permanent_peace && !s.flags.territory_returned && s.resources.deterrence >= 70 && s.resources.militaryPower >= 50
+      },
+      {
+        text: '核战争（需核慑≥60）',
+        desc: '毁灭性胜利：世界末日 但帝国"幸存"',
+        effects: { nukeDeter: -40, deterrence: -30, stability: -30, militaryPower: -20, money: -150, manpower: -40, nukes: -2 },
+        setFlags: { final_war: true, nuclear_war_fought: true, world_devastated: true },
+        condition: (s) => !s.flags.permanent_peace && !s.flags.territory_returned && s.resources.nukeDeter >= 60
+      },
+      {
+        text: '仓促应战（威慑/军力不足）',
+        desc: '灾难性失败：帝国遭受重创',
+        effects: { militaryPower: -15, deterrence: -25, stability: -25, money: -120, manpower: -35, russia_relation: -30 },
+        setFlags: { final_war: true, war_disaster: true },
+        condition: (s) => !s.flags.permanent_peace && !s.flags.territory_returned && (s.resources.deterrence < 70 || s.resources.militaryPower < 50) && s.resources.nukeDeter < 60
+      },
+      {
+        text: '投降：归还全部领土',
+        desc: '屈辱但存活：大幅-威慑 -稳定',
+        effects: { russia_relation: 30, deterrence: -25, stability: -20, money: -50, militaryPower: -10, manpower: -15 },
+        setFlags: { territory_returned: true, humiliating_surrender: true },
         condition: (s) => !s.flags.permanent_peace && !s.flags.territory_returned
       },
       {
-        text: '接受最终妥协',
-        desc: '永久避免战争',
-        effects: { russia_relation: 25, deterrence: -10, stability: 3, money: -20 },
-        setFlags: { final_peace: true },
-        condition: (s) => !s.flags.permanent_peace
+        text: '接受最终妥协条约',
+        desc: '永久避免战争 中等代价',
+        effects: { russia_relation: 25, deterrence: -12, stability: -5, money: -40 },
+        setFlags: { final_peace: true, compromise_peace: true },
+        condition: (s) => !s.flags.permanent_peace && !s.flags.territory_returned
       },
       {
         text: '和平条约已签署',
         desc: '两国进入永久和平时代',
-        effects: { stability: 10, money: 30, russia_relation: 15 },
+        effects: { stability: 12, money: 40, russia_relation: 20 },
         setFlags: { final_peace: true, golden_age: true },
         condition: (s) => s.flags.permanent_peace
       }
     ],
     condition: (s) => s.flags.west_russian_war && s.year === 1985
+  },
+
+  // ===== 战后余波（1987） =====
+  {
+    id: 'ev_war_aftermath',
+    turn: { year: 1987, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '战后余波',
+    body: `<p>战争的尘埃落定。帝国的选择带来了不同的后果。</p>`,
+    choices: [
+      {
+        text: '胜利者的和平',
+        desc: '战争胜利后的重建',
+        effects: { stability: 15, money: 60, deterrence: 10, militaryPower: 5 },
+        condition: (s) => s.flags.total_war_fought
+      },
+      {
+        text: '核废土中的挣扎',
+        desc: '核战争后的废墟重建',
+        effects: { stability: -10, money: -80, manpower: -20, research: 5 },
+        condition: (s) => s.flags.nuclear_war_fought
+      },
+      {
+        text: '战败国的屈辱',
+        desc: '仓促应战失败的代价',
+        effects: { stability: -15, deterrence: -10, money: -60, manpower: -10, russia_relation: -10 },
+        condition: (s) => s.flags.war_disaster
+      },
+      {
+        text: '投降后的低语',
+        desc: '归还领土后的动荡',
+        effects: { stability: -8, deterrence: -5, money: -30, russia_relation: 5 },
+        condition: (s) => s.flags.humiliating_surrender
+      },
+      {
+        text: '妥协后的平静',
+        desc: '和平条约带来的稳定',
+        effects: { stability: 8, money: 20, russia_relation: 10 },
+        condition: (s) => s.flags.compromise_peace || s.flags.final_peace
+      }
+    ],
+    condition: (s) => s.flags.final_war || s.flags.final_peace || s.flags.territory_returned
   },
 
   // ===== 终局结算：俄罗斯威胁是否真正导致崩溃 =====

@@ -1297,46 +1297,73 @@ const UI = {
     return html;
   },
 
-  // ===== 政策页 =====
+  // ===== 国策树页（沿用 policy 标签） =====
   renderPolicy() {
     const s = Game.state;
+    const branches = { '经济': [], '军事': [], '政治': [], '外交': [], '科技': [] };
+    for (const f of Object.values(NATIONAL_FOCI)) {
+      if (branches[f.branch]) branches[f.branch].push(f);
+    }
 
-    const renderPolicyCard = (p) => {
-      const current = s.policies[p.id];
-      const options = p.options.map(opt => {
-        const active = current === opt.id;
-        const canChoose = Game.canChoosePolicy(p.id, opt.id);
-        const lockedReason = !canChoose ? this.getPolicyLockReason(opt) : '';
-        return `<button class="policy-opt ${active ? 'active' : ''}" data-policy="${p.id}" data-opt="${opt.id}" ${canChoose ? '' : 'disabled'} title="${lockedReason}">
-          ${opt.name}
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${opt.desc}</div>
-        </button>`;
-      }).join('');
-
-      return `
-        <div class="policy-card">
-          <h4>${p.name}</h4>
-          <div class="p-desc">${p.desc}</div>
-          <div class="policy-options">${options}</div>
+    // 当前国策进度
+    let currentFocusHtml = '';
+    if (s.currentFocus) {
+      const f = NATIONAL_FOCI[s.currentFocus];
+      const pct = (s.focusProgress / f.turns) * 100;
+      currentFocusHtml = `
+        <div class="focus-current">
+          <div class="fc-name">${f.name}</div>
+          <div class="fc-progress-bar">
+            <div class="fc-progress-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="fc-turns">${s.focusProgress}/${f.turns} 回合</div>
         </div>`;
+    }
+
+    // 渲染每个分支
+    const renderBranch = (branchName, foci) => {
+      const cards = foci.map(f => {
+        const completed = s.completedFoci.includes(f.id);
+        const current = s.currentFocus === f.id;
+        const canStart = Game.canStartFocus(f.id);
+        const lockReason = !canStart && !completed && !current ? Game.getFocusLockReason(f.id) : '';
+        const cls = completed ? 'completed' : current ? 'current' : canStart ? 'available' : 'locked';
+        const labels = {money:'资金',manpower:'人力',stability:'稳定',deterrence:'威慑',militaryPower:'军力',nukeDeter:'核慑',research:'研发',nukes:'核弹'};
+        return `
+          <div class="focus-card ${cls}" data-focus="${f.id}">
+            <div class="fc-title">${f.name}</div>
+            <div class="fc-info">
+              <span>${f.cost}金</span>
+              <span>${f.turns}回合</span>
+            </div>
+            <div class="fc-desc">${f.desc}</div>
+            <div class="fc-effects">
+              ${Object.entries(f.effects).map(([k,v]) => {
+                const sign = v > 0 ? '+' : '';
+                return `<span class="fe-tag ${v>0?'pos':'neg'}">${labels[k]||k} ${sign}${v}</span>`;
+              }).join('')}
+            </div>
+            ${current ? `<div class="fc-cur">进行中 ${s.focusProgress}/${f.turns}</div>` : ''}
+            ${lockReason ? `<div class="fc-lock">${lockReason}</div>` : ''}
+            ${completed ? '<div class="fc-done">✓ 已完成</div>' : ''}
+          </div>`;
+      }).join('');
+      return `<div class="focus-branch"><h4 class="fb-title">${branchName}</h4><div class="fb-cards">${cards}</div></div>`;
     };
 
     const html = `
       <div class="industry-header">
-        <h2>帝国政策</h2>
-        <div style="font-size:12px;color:var(--text-muted)">${s.leader.ideology === 'reformist' ? '改革派路线' : s.leader.ideology === 'militarist' ? '军国派路线' : s.leader.ideology === 'conservative' ? '保守派路线' : s.leader.ideology === 'extremist' ? '极端派路线' : '路线未定'}</div>
+        <h2>国策树</h2>
+        <div style="font-size:12px;color:var(--text-muted)">选择国策执行，完成后获得加成</div>
       </div>
-      ${s.chosenPath ? '' : '<div style="padding:14px;background:var(--bg-panel);border:1px dashed var(--border);color:var(--text-muted);font-size:13px;margin-bottom:14px">⚠ 内战尚未结束，部分政策需待路线确定后解锁。</div>'}
-      <div class="policy-list">
-        ${Object.values(POLICIES).map(renderPolicyCard).join('')}
-      </div>
+      ${currentFocusHtml}
+      ${Object.entries(branches).map(([name, foci]) => renderBranch(name, foci)).join('')}
     `;
 
     setTimeout(() => {
-      document.querySelectorAll('[data-policy]').forEach(btn => {
-        btn.onclick = () => {
-          if (btn.disabled) return;
-          const result = Game.setPolicy(btn.dataset.policy, btn.dataset.opt);
+      document.querySelectorAll('.focus-card.available').forEach(card => {
+        card.onclick = () => {
+          const result = Game.startFocus(card.dataset.focus);
           this.toast(result.msg, result.ok ? 'success' : 'error');
           this.renderAll();
         };

@@ -162,6 +162,11 @@ const Game = {
       // 政策选择 {policyId: optionId}
       policies: {},
 
+      // 国策树系统
+      currentFocus: null,      // 当前正在执行的国策id
+      focusProgress: 0,        // 已完成回合数
+      completedFoci: [],       // 已完成的国策id列表
+
       // 标记位
       flags: {
         nuclear_tech: true
@@ -474,6 +479,66 @@ const Game = {
     return true;
   },
 
+  // ===== 国策树系统 =====
+  startFocus(focusId) {
+    const f = NATIONAL_FOCI[focusId];
+    if (!f) return { ok: false, msg: '国策不存在' };
+    if (this.state.currentFocus) return { ok: false, msg: '正在执行其他国策' };
+    if (this.state.completedFoci.includes(focusId)) return { ok: false, msg: '该国策已完成' };
+    if (this.state.resources.money < f.cost) return { ok: false, msg: '资金不足' };
+    // 检查前置
+    for (const req of (f.requires || [])) {
+      if (!this.state.completedFoci.includes(req)) return { ok: false, msg: '需要前置国策' };
+    }
+    // 检查路线
+    if (f.ideology && this.state.leader.ideology !== f.ideology && !this.state.flags[f.ideology]) {
+      return { ok: false, msg: '路线不符' };
+    }
+    // 检查requiresFlag
+    if (f.requiresFlag && !this.state.flags[f.requiresFlag]) {
+      return { ok: false, msg: '需要前置条件' };
+    }
+
+    this.state.resources.money -= f.cost;
+    this.state.currentFocus = focusId;
+    this.state.focusProgress = 0;
+    return { ok: true, msg: `开始执行: ${f.name}` };
+  },
+
+  canStartFocus(focusId) {
+    const f = NATIONAL_FOCI[focusId];
+    if (!f) return false;
+    if (this.state.currentFocus) return false;
+    if (this.state.completedFoci.includes(focusId)) return false;
+    if (this.state.resources.money < f.cost) return false;
+    for (const req of (f.requires || [])) {
+      if (!this.state.completedFoci.includes(req)) return false;
+    }
+    if (f.ideology && this.state.leader.ideology !== f.ideology && !this.state.flags[f.ideology]) return false;
+    if (f.requiresFlag && !this.state.flags[f.requiresFlag]) return false;
+    return true;
+  },
+
+  getFocusLockReason(focusId) {
+    const f = NATIONAL_FOCI[focusId];
+    if (!f) return '国策不存在';
+    if (this.state.completedFoci.includes(focusId)) return '已完成';
+    if (this.state.currentFocus) return '正在执行其他国策';
+    if (this.state.resources.money < f.cost) return `需要 ${f.cost} 资金`;
+    for (const req of (f.requires || [])) {
+      if (!this.state.completedFoci.includes(req)) {
+        const reqFocus = NATIONAL_FOCI[req];
+        return `需要先完成: ${reqFocus ? reqFocus.name : req}`;
+      }
+    }
+    if (f.ideology && this.state.leader.ideology !== f.ideology && !this.state.flags[f.ideology]) {
+      const ideologyNames = { reformist: '改革派', militarist: '军国派', conservative: '保守派', extremist: '极端派' };
+      return `需要${ideologyNames[f.ideology] || f.ideology}路线`;
+    }
+    if (f.requiresFlag && !this.state.flags[f.requiresFlag]) return '需要前置科技或条件';
+    return '';
+  },
+
   // ===== 检查选项（事件）是否可用 =====
   canChooseEventOption(ev, choice) {
     if (choice.condition && !choice.condition(this.state)) return false;
@@ -523,9 +588,9 @@ const Game = {
     // 核武库衰减（维护）
     income.nukeDeter -= 1;
 
-    // 基础收入 —— 只有人力和少量钱被动增加
-    income.money += 10;
-    income.manpower += 2;
+    // 基础收入 —— 只有人力和少量钱被动增加（大幅减少）
+    income.money += 5;
+    income.manpower += 3;
 
     // 难度修正：正面收入受incomeMod影响，负面受penMod影响
     for (const key in income) {
@@ -593,14 +658,31 @@ const Game = {
       this.addNews(`${name} 建造完成`, 'economy');
     });
 
-    // 2. 计算并应用收入
+    // 2. 推进国策
+    if (this.state.currentFocus) {
+      this.state.focusProgress++;
+      const f = NATIONAL_FOCI[this.state.currentFocus];
+      if (this.state.focusProgress >= f.turns) {
+        // 国策完成
+        this.applyEffects(f.effects);
+        if (f.setFlags) { Object.assign(this.state.flags, f.setFlags); }
+        this.state.completedFoci.push(this.state.currentFocus);
+        const doneName = f.name;
+        this.state.currentFocus = null;
+        this.state.focusProgress = 0;
+        this.addNews(`国策完成: ${doneName}`, 'world');
+        // 可以在这里添加事件触发逻辑
+      }
+    }
+
+    // 3. 计算并应用收入
     const income = this.calculateIncome();
     for (const key in income) {
       this.state.resources[key] = (this.state.resources[key] || 0) + income[key];
     }
     this.clampResources();
 
-    // 3. 推进时间
+    // 4. 推进时间
     this.state.turn++;
     this.state.quarter++;
     if (this.state.quarter > 4) {
@@ -608,16 +690,16 @@ const Game = {
       this.state.year++;
     }
 
-    // 4. 检查事件
+    // 5. 检查事件
     const turnEvents = this.getEventsForTurn();
     if (turnEvents.length > 0 && onEvent) {
       onEvent(turnEvents);
     }
 
-    // 5. 检查结局
+    // 6. 检查结局
     this.checkEnding();
 
-    // 6. 添加随机新闻
+    // 7. 添加随机新闻
     if (Math.random() < 0.4) {
       this.generateRandomNews();
     }
