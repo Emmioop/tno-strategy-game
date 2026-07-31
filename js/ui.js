@@ -478,16 +478,52 @@ const UI = {
         regions.forEach(path => {
           const isSpecial = specialClasses.some(cls => path.classList.contains(cls));
           if (isSpecial) {
-            // 特殊区域：稍微加粗自身彩色边框，并在外面再套一个间隙
             path.setAttribute('stroke-width', (parseFloat(path.getAttribute('stroke-width')) || 1.5) + 1.5);
             path.setAttribute('stroke-linejoin', 'round');
-            // 外层间隙：通过 filter / 伪元素不好做，这里简化：原彩色边框 + 比普通稍大的外扩
           } else {
-            // 普通区域：深色间隙
             path.setAttribute('stroke', '#1a2030');
             path.setAttribute('stroke-width', '3.5');
             path.setAttribute('stroke-linejoin', 'round');
           }
+        });
+
+        // ===== 分区查看: viewBox 切换
+        const ZOOM_VIEWS = {
+          global:   '0 0 1200 750',
+          europe:   '300 100 500 420',
+          america:  '10 60 300 600',
+          eastasia: '740 160 460 500',
+          africa:   '410 350 350 400'
+        };
+        const svg = document.getElementById('world-map-svg');
+        const btns = document.querySelectorAll('.zm-btn');
+        const applyStyle = (btn) => {
+          btns.forEach(b => {
+            if (b === btn) {
+              b.style.background = 'linear-gradient(135deg,#2a1a1a,#3a2a2a)';
+              b.style.color = '#e8c860';
+              b.style.border = '1px solid #6a5a3a';
+              b.style.fontWeight = 'bold';
+              b.classList.add('active');
+            } else {
+              b.style.background = 'rgba(30,30,40,0.8)';
+              b.style.color = '#b8b8c0';
+              b.style.border = '1px solid #3a3a4a';
+              b.style.fontWeight = 'normal';
+              b.classList.remove('active');
+            }
+          });
+        };
+        btns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const zv = btn.getAttribute('data-zv');
+            const vb = ZOOM_VIEWS[zv];
+            if (svg && vb) {
+              svg.style.transition = 'viewBox 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+              svg.setAttribute('viewBox', vb);
+            }
+            applyStyle(btn);
+          });
         });
       }, 0);
     }
@@ -686,7 +722,7 @@ const UI = {
     `;
     // 生成SVG地图
     const mapSvg = `
-      <svg viewBox="0 0 1200 750" class="world-map" xmlns="http://www.w3.org/2000/svg">
+      <svg id="world-map-svg" viewBox="0 0 1200 750" class="world-map" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="waves" x="0" y="0" width="48" height="24" patternUnits="userSpaceOnUse">
             <path d="M 0 12 Q 12 6, 24 12 T 48 12" stroke="#0f1520" fill="none" stroke-width="0.5"/>
@@ -1287,7 +1323,14 @@ const UI = {
       <div class="map-page">
         <div class="map-header">
           <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em">三极世界势力图</h2>
-          <div style="font-size:12px;color:var(--text-muted)">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="zm-btn active" data-zv="global" style="padding:4px 12px;font-size:12px;background:linear-gradient(135deg,#2a1a1a,#3a2a2a);color:#e8c860;border:1px solid #6a5a3a;border-radius:4px;cursor:pointer;font-weight:bold">🌍 全球</button>
+            <button class="zm-btn" data-zv="europe" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇪🇺 欧洲</button>
+            <button class="zm-btn" data-zv="america" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇺🇸 美洲</button>
+            <button class="zm-btn" data-zv="eastasia" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇯🇵 东亚</button>
+            <button class="zm-btn" data-zv="africa" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇪🇬 非洲</button>
+            <div style="font-size:12px;color:var(--text-muted);margin-left:8px">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
+          </div>
         </div>
         <div class="map-container">${mapSvg}</div>
         <div class="map-factions">${factionHtml}${satelliteHtml}</div>
