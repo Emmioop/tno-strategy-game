@@ -189,7 +189,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 2px;
 }
-.resource .icon { font-size: 14px; }
+.resource .icon { font-size: 11px; color: var(--text-muted); letter-spacing: 0.02em; }
 .resource .value { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
 .resource .delta { font-size: 11px; color: var(--text-muted); }
 .resource .delta.positive { color: var(--accent-toxic); }
@@ -324,15 +324,15 @@ body {
 #tab-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 24px;
+  padding: 16px 20px;
 }
 
 /* 概览页 */
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 .overview-card {
   background: var(--bg-panel);
@@ -596,7 +596,7 @@ body {
 
 /* 事件弹窗 */
 #event-modal {
-  position: fixed; inset: 0; z-index: 500;
+  position: fixed; inset: 0; z-index: 750;
   display: none;
   align-items: center; justify-content: center;
   background: rgba(0,0,0,0.85);
@@ -776,12 +776,173 @@ body {
 .choice-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 .choice-btn.disabled:hover { border-color: var(--border); background: var(--bg-panel-2); }
 
-/* 响应式 */
+/* ===== 移动端导航按钮（默认隐藏，手机端显示） ===== */
+.mobile-nav-btn {
+  display: none;
+}
+
+/* 移动端底部操作栏（默认隐藏） */
+.mobile-action-bar { display: none; }
+
+/* 遮罩层（默认隐藏） */
+.drawer-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 680;
+}
+
+/* 响应式 - 平板 */
 @media (max-width: 1100px) {
   #left-panel { width: 220px; }
   #right-panel { width: 260px; }
+  #tab-content { padding: 16px; }
+  .overview-grid { grid-template-columns: 1fr; }
 }
-@media (max-width: 900px) {
-  #left-panel, #right-panel { display: none; }
-  #topbar .resources { justify-content: flex-start; }
+
+/* 响应式 - 手机端（核心重构） */
+@media (max-width: 768px) {
+  html, body { font-size: 13px; }
+
+  /* 启动画面适配 */
+  #splash { padding: 6vh 16px 24px; }
+  #splash .title-main { font-size: clamp(26px, 7vw, 40px); }
+  #splash .prologue { padding: 16px; font-size: 13px; line-height: 1.7; }
+  #splash .disclaimer { font-size: 10px; padding: 10px; }
+  #splash .btn-enter { padding: 12px 32px; font-size: 15px; }
+
+  /* 主布局改为纵向 */
+  #game { height: 100vh; height: 100dvh; }
+  #main { flex-direction: column; overflow: visible; }
+
+  /* 顶栏 - 资源横向滚动，不换行 */
+  #topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  #topbar .faction-emblem { font-size: 13px; padding-right: 10px; }
+  #topbar .leader-info { display: none; }
+  #topbar .resources {
+    order: 3;
+    width: 100%;
+    gap: 6px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  #topbar .resources::-webkit-scrollbar { display: none; }
+  .resource { flex-shrink: 0; padding: 3px 8px; font-size: 12px; gap: 4px; }
+  .resource .delta { font-size: 10px; }
+  #topbar .date-block { padding-left: 10px; }
+  #topbar .date { font-size: 14px; }
+
+  /* 左右面板改为可滑出抽屉，默认隐藏 */
+  #left-panel, #right-panel {
+    position: fixed;
+    top: 0; bottom: 0;
+    width: 85vw;
+    max-width: 320px;
+    z-index: 700;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow-deep);
+  }
+  #right-panel { right: 0; transform: translateX(100%); }
+  #left-panel.drawer-open { transform: translateX(0); }
+  #right-panel.drawer-open { transform: translateX(0); }
+
+  /* 中央内容区全宽，底部留出固定操作栏空间 */
+  #center { width: 100%; overflow: visible; }
+  #tabs { overflow-x: auto; flex-wrap: nowrap; }
+  #tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 14px; font-size: 12px; flex-shrink: 0; }
+  #tab-content {
+    padding: 12px;
+    padding-bottom: 80px;
+    height: calc(100dvh - 140px);
+    overflow-y: auto;
+  }
+
+  /* 移动端底部固定操作栏 */
+  .mobile-action-bar {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 650;
+    background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+    gap: 8px;
+    align-items: center;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.5);
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .mobile-action-bar .btn-next-turn {
+    flex: 1;
+    font-size: 14px;
+    padding: 12px;
+    letter-spacing: 0.1em;
+  }
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    width: 48px; height: 48px;
+    border-radius: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  .mobile-nav-btn:active { background: var(--bg-elevated); }
+  .mobile-nav-btn .nav-icon { font-size: 18px; line-height: 1; }
+
+  /* 遮罩层激活态（手机端） */
+  .drawer-overlay.active { display: block; }
+
+  /* 右面板内的操作按钮在手机端隐藏（已移到底部栏） */
+  #action-bar { display: none; }
+  #news-ticker { padding-bottom: 12px; }
+
+  /* 概览卡片紧凑化 */
+  .overview-card { padding: 12px; }
+  .overview-card .big-num { font-size: 22px; }
+  .building-grid { grid-template-columns: 1fr; gap: 10px; }
+  .building-card { padding: 12px; }
+  .building-card .b-desc { min-height: auto; }
+
+  /* 事件弹窗全屏化 */
+  .modal-box { width: 94%; max-height: 90vh; padding: 18px; }
+  .modal-box .modal-title { font-size: 18px; }
+  .modal-box .modal-desc { font-size: 13px; line-height: 1.7; }
+  .choice-btn { padding: 12px; }
+
+  /* 结局画面 */
+  #ending-screen { padding: 20px 16px; }
+  #ending-screen .ending-text { padding: 18px; font-size: 14px; line-height: 1.8; }
+  #ending-screen .ending-stats { gap: 12px; }
+  #ending-screen .ending-stat { padding: 8px 14px; }
+
+  /* Toast 避免被底部栏遮挡 */
+  #toast-container { top: 10px; right: 10px; left: 10px; }
+  .toast { max-width: none; }
+
+  /* 教程模态框 */
+  .tutorial-modal { width: 94%; max-height: 88vh; padding: 18px; }
+}
+
+/* 超小屏幕 */
+@media (max-width: 380px) {
+  html, body { font-size: 12px; }
+  .resource { padding: 3px 6px; }
+  #topbar .date { font-size: 13px; }
+  .tab { padding: 8px 10px; font-size: 11px; }
 }

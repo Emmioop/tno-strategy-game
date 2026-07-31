@@ -144,41 +144,41 @@ const UI = {
       </div>
       <div class="resources">
         <div class="resource" title="帝国马克">
-          <span class="icon">◈</span>
+          <span class="icon">资金</span>
           <span class="value">${fmt(r.money)}</span>
           ${fmtDelta(income.money)}
         </div>
         <div class="resource" title="人力">
-          <span class="icon">▣</span>
+          <span class="icon">人力</span>
           <span class="value">${fmt(r.manpower)}</span>
           ${fmtDelta(income.manpower)}
         </div>
         <div class="resource" title="稳定度">
-          <span class="icon">◆</span>
+          <span class="icon">稳定</span>
           <span class="value">${fmt(r.stability)}</span>
           ${fmtDelta(income.stability)}
         </div>
         <div class="resource" title="综合威慑">
-          <span class="icon">⊞</span>
+          <span class="icon">威慑</span>
           <span class="value">${fmt(r.deterrence)}</span>
           ${fmtDelta(income.deterrence)}
         </div>
         <div class="resource" title="军事实力">
-          <span class="icon">⚔</span>
+          <span class="icon">军力</span>
           <span class="value">${fmt(r.militaryPower)}</span>
           ${fmtDelta(income.militaryPower)}
         </div>
         <div class="resource" title="核威慑">
-          <span class="icon">☢</span>
+          <span class="icon">核慑</span>
           <span class="value">${fmt(r.nukeDeter)}</span>
           ${fmtDelta(income.nukeDeter)}
         </div>
         <div class="resource" title="核武器">
-          <span class="icon">●</span>
+          <span class="icon">核弹</span>
           <span class="value">${fmt(r.nukes)}</span>
         </div>
         <div class="resource" title="研发点数">
-          <span class="icon">✦</span>
+          <span class="icon">研发</span>
           <span class="value">${fmt(r.research)}</span>
           ${fmtDelta(income.research)}
         </div>
@@ -304,6 +304,127 @@ const UI = {
         location.reload();
       }
     };
+
+    // 移动端底部操作栏
+    this.renderMobileActionBar();
+  },
+
+  // ===== 移动端底部操作栏 =====
+  renderMobileActionBar() {
+    const bar = document.getElementById('mobile-action-bar');
+    if (!bar) return;
+    bar.innerHTML = `
+      <button class="mobile-nav-btn" id="m-btn-left" aria-label="势力面板">
+        <span class="nav-icon">☰</span>
+        <span>势力</span>
+      </button>
+      <button class="btn-next-turn" id="m-btn-next">下一季度 ▸</button>
+      <button class="mobile-nav-btn" id="m-btn-news" aria-label="新闻">
+        <span class="nav-icon">📰</span>
+        <span>新闻</span>
+      </button>
+      <button class="mobile-nav-btn" id="m-btn-help" aria-label="教程">
+        <span class="nav-icon">？</span>
+        <span>教程</span>
+      </button>
+    `;
+    document.getElementById('m-btn-next').onclick = () => this.nextTurn();
+    document.getElementById('m-btn-left').onclick = () => this.toggleDrawer('left-panel');
+    document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
+    document.getElementById('m-btn-help').onclick = () => this.showTutorial();
+  },
+
+  // ===== 抽屉切换（手机端） =====
+  toggleDrawer(panelId) {
+    const panel = document.getElementById(panelId);
+    const overlay = document.getElementById('drawer-overlay');
+    const isOpen = panel.classList.contains('drawer-open');
+    // 先关闭所有
+    document.getElementById('left-panel').classList.remove('drawer-open');
+    document.getElementById('right-panel').classList.remove('drawer-open');
+    overlay.classList.remove('active');
+    if (!isOpen) {
+      panel.classList.add('drawer-open');
+      overlay.classList.add('active');
+    }
+  },
+
+  // ===== 教程/帮助系统 =====
+  showTutorial() {
+    const modal = document.getElementById('tutorial-modal');
+    modal.innerHTML = `
+      <div style="position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;" onclick="if(event.target===this){document.getElementById('tutorial-modal').innerHTML='';}">
+        <div class="tutorial-modal" style="background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:4px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;margin:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:20px;letter-spacing:0.1em;">游戏教程</h2>
+            <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;line-height:1;">×</button>
+          </div>
+
+          <div style="color:var(--text-secondary);font-size:13px;line-height:1.8;">
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">一、游戏目标</h3>
+            <p>你扮演大日耳曼国权力核心的一员，从1962年希特勒垂危之际开始，在三十八年间为帝国的未来做出抉择，直到2000年迎来终局。根据你的路线与决策，将走向<strong style="color:var(--accent-gold-bright);">15种不同结局</strong>之一。</p>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">二、核心资源（顶栏）</h3>
+            <p>顶部状态栏显示八项关键资源，每季度会增减：</p>
+            <ul style="margin:6px 0 6px 18px;">
+              <li><strong style="color:var(--text-primary);">资金</strong> — 建造与研发的基础，由民工业产出</li>
+              <li><strong style="color:var(--text-primary);">人力</strong> — 建造所需，由住宅与农业产出</li>
+              <li><strong style="color:var(--text-primary);">稳定</strong> — 低于0帝国崩溃，影响结局</li>
+              <li><strong style="color:var(--text-primary);">威慑</strong> — 综合威慑力，过低会被敌国入侵</li>
+              <li><strong style="color:var(--text-primary);">军力</strong> — 常规军事力量，由军工业产出</li>
+              <li><strong style="color:var(--text-primary);">核慑</strong> — 核威慑力，由核武器设施产出</li>
+              <li><strong style="color:var(--text-primary);">核弹</strong> — 核武器数量，终极威慑</li>
+              <li><strong style="color:var(--text-primary);">研发</strong> — 科技研发点数，由研发中心产出</li>
+            </ul>
+            <p style="font-size:12px;color:var(--text-muted);">括号内的 <span style="color:var(--accent-toxic);">+数字</span> / <span style="color:var(--accent-blood-bright);">-数字</span> 表示每季度变化量。</p>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">三、工业建设（核心玩法）</h3>
+            <p>切换到「工业建设」标签，可建造两类建筑：</p>
+            <p style="margin:8px 0;"><strong style="color:var(--accent-steel);">民工业</strong>（蓝色边框）— 产出资金、人力、稳定、研发，保障经济：</p>
+            <ul style="margin:4px 0 8px 18px;">
+              <li>消费品工厂 → 资金</li>
+              <li>工人住宅区 → 人力与稳定</li>
+              <li>研发中心 → 研发点数</li>
+              <li>基础设施 → 降低建造成本</li>
+            </ul>
+            <p style="margin:8px 0;"><strong style="color:var(--accent-blood-bright);">军工业</strong>（红色边框）— 产出威慑、军力、核武，震慑敌国：</p>
+            <ul style="margin:4px 0 8px 18px;">
+              <li>兵工厂 → 军事实力</li>
+              <li>核武器设施 → 核弹与核威慑</li>
+              <li>奇迹武器实验室 → 高级研发</li>
+              <li>国土防空网 → 防御与威慑</li>
+            </ul>
+            <p style="background:rgba(168,50,50,0.1);padding:8px 12px;border-radius:2px;font-size:12px;">建议：前期平衡发展，保证资金与稳定不为负；中期重点军工业提升威慑；后期视路线决定核武或民生。</p>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">四、国策与科技</h3>
+            <p><strong>国策政策</strong> — 通过立法影响帝国走向（如奴隶制存废、军事改革等），不同路线解锁不同政策。</p>
+            <p><strong>科技研发</strong> — 消耗研发点数解锁永久增益，如「核聚变研究」「计算机革命」等。</p>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">五、事件与抉择</h3>
+            <p>剧情事件会自动触发并弹窗，每个选择都有不同后果。关键节点：</p>
+            <ul style="margin:6px 0 6px 18px;">
+              <li><strong>1963 希特勒之死</strong> — 选择继任者（施佩尔/鲍曼/戈林/海德里希），决定四条路线</li>
+              <li><strong>1963-65 德国内战</strong> — 勃艮第可能窃取核武器</li>
+              <li><strong>1989 核危机</strong> — 午夜差一分钟，抉择决定存亡</li>
+            </ul>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">六、操作方式</h3>
+            <ul style="margin:6px 0 6px 18px;">
+              <li><strong>电脑端</strong>：按 <code style="background:var(--bg-elevated);padding:1px 5px;border-radius:2px;">空格键</code> 推进下一季度</li>
+              <li><strong>手机端</strong>：点底部「下一季度」按钮推进；点「势力」「新闻」打开侧边面板</li>
+              <li>事件弹窗出现时，必须做出选择才能继续</li>
+              <li>威慑过低时敌国可能入侵，稳定为负则帝国崩溃</li>
+            </ul>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">七、结局判定</h3>
+            <p>2000年游戏结束（或提前触发结局），根据<strong>稳定度、威慑、核弹、路线</strong>综合判定。从「帝国之春」（民主化改革成功）到「诸神黄昏」（核子末日），命运在你手中。</p>
+
+          </div>
+
+          <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="display:block;width:100%;margin-top:20px;padding:12px;background:linear-gradient(180deg,rgba(168,50,50,0.25),rgba(168,50,50,0.08));border:1px solid var(--accent-blood);color:var(--accent-gold-bright);font-family:var(--font-serif);font-size:15px;letter-spacing:0.15em;cursor:pointer;border-radius:2px;">明白了，开始游戏</button>
+        </div>
+      </div>
+    `;
   },
 
   // ===== 标签页内容 =====
@@ -609,7 +730,9 @@ const UI = {
   nextTurn() {
     if (Game.state.ended) return;
     const btn = document.getElementById('btn-next-turn');
+    const mBtn = document.getElementById('m-btn-next');
     if (btn) { btn.disabled = true; btn.textContent = '处理中...'; }
+    if (mBtn) { mBtn.disabled = true; mBtn.textContent = '处理中...'; }
 
     // 暂存待处理事件队列
     this.pendingEvents = [];
@@ -628,6 +751,7 @@ const UI = {
       this.showEnding();
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
+      if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
     }
   },
 
@@ -651,7 +775,9 @@ const UI = {
         this.showEnding();
       } else {
         const btn = document.getElementById('btn-next-turn');
+        const mBtn = document.getElementById('m-btn-next');
         if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
+        if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
         this.renderAll();
       }
       return;
@@ -719,8 +845,8 @@ const UI = {
 
   renderEffectsPreview(effects) {
     const labels = {
-      money: '◈', manpower: '▣', stability: '◆', deterrence: '⊞',
-      militaryPower: '⚔', nukeDeter: '☢', nukes: '●', research: '✦',
+      money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑',
+      militaryPower: '军力', nukeDeter: '核慑', nukes: '核弹', research: '研发',
       ofn_relation: 'OFN', japan_relation: '日本', italy_relation: '意大利',
       burgundy_relation: '勃艮第', russia_relation: '俄罗斯'
     };

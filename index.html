@@ -29,7 +29,14 @@
     </div>
 
     <button class="btn-enter" id="btn-start">进入帝国总理府 ▸</button>
+    <button class="btn-secondary" id="btn-tutorial-splash" style="margin-top:10px;background:transparent;border-color:var(--border);color:var(--text-secondary);padding:8px 24px;font-size:13px;">阅读教程</button>
   </div>
+
+  <!-- 遮罩层（手机端抽屉） -->
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+
+  <!-- 移动端底部固定操作栏 -->
+  <div class="mobile-action-bar" id="mobile-action-bar"></div>
 
   <!-- ===== 主游戏界面 ===== -->
   <div id="game">
@@ -64,6 +71,9 @@
   <!-- 事件弹窗 -->
   <div id="event-modal"></div>
 
+  <!-- 教程模态框 -->
+  <div id="tutorial-modal"></div>
+
   <!-- 结局画面 -->
   <div id="ending-screen"></div>
 
@@ -81,6 +91,16 @@
       UI.start();
     });
 
+    // 教程按钮（启动画面）
+    document.getElementById('btn-tutorial-splash').addEventListener('click', () => {
+      UI.showTutorial();
+    });
+
+    // 遮罩层点击关闭抽屉（手机端）
+    document.getElementById('drawer-overlay').addEventListener('click', () => {
+      UI.toggleDrawer('');
+    });
+
     // 标签页切换
     document.addEventListener('click', (e) => {
       const tab = e.target.closest('.tab');
@@ -93,7 +113,8 @@
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && document.getElementById('game').classList.contains('active')) {
         if (!document.getElementById('event-modal').classList.contains('active') &&
-            !document.getElementById('ending-screen').classList.contains('active')) {
+            !document.getElementById('ending-screen').classList.contains('active') &&
+            !document.getElementById('tutorial-modal').classList.contains('active')) {
           e.preventDefault();
           UI.nextTurn();
         }
