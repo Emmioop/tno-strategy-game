@@ -155,31 +155,31 @@ const UI = {
           <span class="value">${fmt(r.manpower)}</span>
           ${fmtDelta(income.manpower)}
         </div>
-        <div class="resource" title="稳定度">
+        <div class="resource" title="稳定度：只能通过事件恢复，持续衰减">
           <span class="icon">稳定</span>
           <span class="value">${fmt(r.stability)}</span>
           ${fmtDelta(income.stability)}
         </div>
-        <div class="resource" title="综合威慑">
+        <div class="resource" title="威慑：只能通过事件提升，持续衰减">
           <span class="icon">威慑</span>
           <span class="value">${fmt(r.deterrence)}</span>
           ${fmtDelta(income.deterrence)}
         </div>
-        <div class="resource" title="军事实力">
+        <div class="resource" title="军力：只能通过事件提升，持续衰减">
           <span class="icon">军力</span>
           <span class="value">${fmt(r.militaryPower)}</span>
           ${fmtDelta(income.militaryPower)}
         </div>
-        <div class="resource" title="核威慑">
+        <div class="resource" title="核慑：只能通过事件提升，持续衰减">
           <span class="icon">核慑</span>
           <span class="value">${fmt(r.nukeDeter)}</span>
           ${fmtDelta(income.nukeDeter)}
         </div>
-        <div class="resource" title="核武器">
+        <div class="resource" title="核武器：通过核设施建造，或事件获得">
           <span class="icon">核弹</span>
           <span class="value">${fmt(r.nukes)}</span>
         </div>
-        <div class="resource" title="研发点数">
+        <div class="resource" title="研发：只能通过事件获得，持续老化衰减">
           <span class="icon">研发</span>
           <span class="value">${fmt(r.research)}</span>
           ${fmtDelta(income.research)}

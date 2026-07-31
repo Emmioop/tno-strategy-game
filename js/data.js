@@ -7,7 +7,7 @@
 // type: civilian(民工业) / military(军工业)
 // effects: 每回合产出/消耗
 const BUILDINGS = {
-  // ---- 民工业 ----
+  // ---- 民工业（只产钱、人力、效率） ----
   consumer_factory: {
     id: 'consumer_factory',
     name: '消费品工厂',
@@ -15,7 +15,7 @@ const BUILDINGS = {
     desc: '生产从收音机到合成香皂的一切。让帝国的人民暂时忘记饥饿——也让黑市商贩失去生意。',
     cost: 120,
     buildTime: 2,
-    effects: { money: 36, stability: 2.0 },
+    effects: { money: 36, manpower: 3 },
     maint: 4,
     category: '经济'
   },
@@ -23,7 +23,7 @@ const BUILDINGS = {
     id: 'infrastructure',
     name: '基础设施',
     type: 'civilian',
-    desc: '高速公路、铁路与电网。让帝国的血管重新跳动，也让军队调遣更快。',
+    desc: '高速公路、铁路与电网。让帝国的血管重新跳动，也让工业效率提升。',
     cost: 180,
     buildTime: 3,
     effects: { money: 8, manpower: 2, efficiency: 0.08 },
@@ -34,10 +34,10 @@ const BUILDINGS = {
     id: 'agriculture',
     name: '农业公社',
     type: 'civilian',
-    desc: '在东方总督辖区开垦的土地。粮食是稳定的第一块基石。',
+    desc: '在东方总督辖区开垦的土地。粮食是一切的基础——包括人的生命。',
     cost: 105,
     buildTime: 2,
-    effects: { manpower: 10, stability: 1.5 },
+    effects: { manpower: 10 },
     maint: 2,
     category: '民生'
   },
@@ -45,10 +45,10 @@ const BUILDINGS = {
     id: 'research_lab',
     name: '研发中心',
     type: 'civilian',
-    desc: '从火箭燃料到晶体管的实验室。奇迹诞生于这里，但经费也烧在这里。',
+    desc: '从火箭燃料到晶体管的实验室。技术专利卖钱，也为事件中的研发突破打基础。',
     cost: 240,
     buildTime: 3,
-    effects: { research: 6 },
+    effects: { money: 20, manpower: 4 },
     maint: 4,
     category: '科技'
   },
@@ -56,10 +56,10 @@ const BUILDINGS = {
     id: 'university',
     name: '帝国大学',
     type: 'civilian',
-    desc: '培养工程师与官僚。当然，也包括那些危险的、会读禁书的年轻人。',
+    desc: '培养工程师与官僚。毕业生进入工厂和政府，提供额外的人力。',
     cost: 165,
     buildTime: 3,
-    effects: { research: 3, manpower: 3, stability: 0.5 },
+    effects: { money: 10, manpower: 6 },
     maint: 3,
     category: '民生'
   },
@@ -70,7 +70,7 @@ const BUILDINGS = {
     desc: '为帝国工人提供的住所。比奴隶营房好——至少理论上如此。',
     cost: 90,
     buildTime: 1,
-    effects: { stability: 2, manpower: 2 },
+    effects: { money: 5, manpower: 4 },
     maint: 1,
     category: '民生'
   },
@@ -81,7 +81,7 @@ const BUILDINGS = {
     desc: '管控黑市、发行马克。让腐烂的经济机器再转一会儿。',
     cost: 210,
     buildTime: 3,
-    effects: { money: 30, stability: 0.5 },
+    effects: { money: 50 },
     maint: 2,
     category: '经济'
   },
@@ -89,23 +89,24 @@ const BUILDINGS = {
     id: 'propaganda',
     name: '宣传总局',
     type: 'civilian',
-    desc: '戈培尔的遗产。谎言重复一千遍，就成了真理——至少能撑过这个季度。',
+    desc: '戈培尔的遗产。印刷所雇用数百人，报纸带来收入。思想的控制需要钱。',
     cost: 135,
     buildTime: 2,
-    effects: { stability: 2.5 },
+    effects: { money: 15, manpower: 3 },
     maint: 2,
     category: '政治'
   },
 
-  // ---- 军工业 ----
+  // ---- 军工业（只产钱、人力、核弹） ----
+  // 军备生产 = 就业+军火出口收入；军力/威慑/核慑/研发 必须通过事件获得
   arms_factory: {
     id: 'arms_factory',
     name: '兵工厂',
     type: 'military',
-    desc: '从毛瑟步枪到突击步枪。军火是帝国唯一仍能拿得出手的出口品。',
+    desc: '从毛瑟步枪到突击步枪。军火出口是帝国重要的硬通货来源。',
     cost: 150,
     buildTime: 2,
-    effects: { deterrence: 8, militaryPower: 2 },
+    effects: { money: 22, manpower: 6 },
     maint: 6,
     category: '陆军'
   },
@@ -113,10 +114,10 @@ const BUILDINGS = {
     id: 'tank_factory',
     name: '装甲车辆厂',
     type: 'military',
-    desc: '豹式、虎式，以及那些永远造不完的超级坦克图纸。',
+    desc: '豹式、虎式，以及那些永远造不完的超级坦克图纸。重型工业，高薪就业。',
     cost: 270,
     buildTime: 4,
-    effects: { deterrence: 6, militaryPower: 10 },
+    effects: { money: 38, manpower: 10 },
     maint: 5,
     category: '陆军'
   },
@@ -124,10 +125,10 @@ const BUILDINGS = {
     id: 'aircraft_factory',
     name: '航空工业',
     type: 'military',
-    desc: 'Me-262的后代们。制空权意味着三极世界中的生存权。',
+    desc: 'Me-262的后代们。飞机制造是高附加值产业，也提供大量技术岗位。',
     cost: 300,
     buildTime: 4,
-    effects: { deterrence: 7, militaryPower: 4, nukeDeter: 2 },
+    effects: { money: 35, manpower: 12 },
     maint: 8,
     category: '空军'
   },
@@ -135,10 +136,10 @@ const BUILDINGS = {
     id: 'shipyard',
     name: '造船厂',
     type: 'military',
-    desc: 'U型潜艇与水面舰艇。海军是帝国最薄弱的一环——也是最该补强的一环。',
+    desc: 'U型潜艇与水面舰艇。大型造船厂直接雇用数千人。',
     cost: 360,
     buildTime: 5,
-    effects: { deterrence: 8, militaryPower: 9 },
+    effects: { money: 45, manpower: 15 },
     maint: 7,
     category: '海军'
   },
@@ -146,10 +147,10 @@ const BUILDINGS = {
     id: 'missile_base',
     name: '导弹发射基地',
     type: 'military',
-    desc: '冯·布劳恩的孩子们。从佩内明德到月球，再到——敌人的首都。',
+    desc: '冯·布劳恩的孩子们。基地建设提供就业，维护也带来收入。',
     cost: 450,
     buildTime: 5,
-    effects: { deterrence: 12, nukeDeter: 5 },
+    effects: { money: 30, manpower: 8 },
     maint: 8,
     category: '战略'
   },
@@ -157,10 +158,10 @@ const BUILDINGS = {
     id: 'nuclear_facility',
     name: '核武器设施',
     type: 'military',
-    desc: '铀浓缩车间与组装工厂。这是让世界敬畏帝国的最后一根稻草。',
+    desc: '铀浓缩车间与组装工厂。这是帝国最后的底牌——也是唯一能直接产出核弹的设施。',
     cost: 675,
     buildTime: 6,
-    effects: { nukes: 0.4, nukeDeter: 8 },
+    effects: { nukes: 0.4, money: 15, manpower: 6 },
     maint: 12,
     category: '战略',
     requires: 'nuclear_tech'
@@ -169,10 +170,10 @@ const BUILDINGS = {
     id: 'ss_barracks',
     name: '党卫军兵营',
     type: 'military',
-    desc: '精锐——也是隐患。希姆莱的人，未必是元首的人。',
+    desc: '精锐——也是隐患。兵营建设和维护创造就业，但需要大量资金。',
     cost: 195,
     buildTime: 3,
-    effects: { deterrence: 10, militaryPower: 15, stability: -2 },
+    effects: { money: 20, manpower: 18 },
     maint: 8,
     category: '陆军'
   },
@@ -180,10 +181,10 @@ const BUILDINGS = {
     id: 'air_defense',
     name: '国土防空网',
     type: 'military',
-    desc: '雷达、高炮、地空导弹。让敌人的轰炸机三思而后行。',
+    desc: '雷达、高炮、地空导弹。防空系统维护提供技术岗位。',
     cost: 225,
     buildTime: 3,
-    effects: { deterrence: 4, militaryPower: 3 },
+    effects: { money: 18, manpower: 7 },
     maint: 4,
     category: '空军'
   },
@@ -191,10 +192,10 @@ const BUILDINGS = {
     id: 'wunderwaffe',
     name: '奇迹武器实验室',
     type: 'military',
-    desc: '从飞碟到死光。多数是幻想，但偶尔——偶尔会改变战争。',
+    desc: '从飞碟到死光。多数是幻想，但偶尔——偶尔会改变战争。（不直接产出，等事件突破）',
     cost: 525,
     buildTime: 6,
-    effects: { deterrence: 10, research: 4, militaryPower: 4 },
+    effects: { money: 40, manpower: 10 },
     maint: 10,
     category: '战略',
     requires: 'advanced_tech'

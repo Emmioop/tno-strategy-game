@@ -488,14 +488,17 @@ const Game = {
     let income = { money: 0, manpower: 0, stability: 0, deterrence: 0,
                    militaryPower: 0, nukeDeter: 0, nukes: 0, research: 0 };
 
-    // 建筑产出（受难度收入修正影响）
+    // 建筑产出：只允许 money/manpower/efficiency/nukes（其他资源只能通过事件获得）
+    const passiveKeys = { money: 1, manpower: 1, efficiency: 1, nukes: 1 };
     for (const bid in this.state.buildings) {
       const count = this.state.buildings[bid];
       const b = BUILDINGS[bid];
       if (!b) continue;
       const eff_multi = b.type === 'civilian' ? eff : 1.0;
       for (const key in b.effects) {
-        income[key] = (income[key] || 0) + b.effects[key] * count * eff_multi;
+        if (passiveKeys[key]) {
+          income[key] = (income[key] || 0) + b.effects[key] * count * eff_multi;
+        }
       }
       // 维护成本
       income.money -= b.maint * count;
@@ -504,10 +507,9 @@ const Game = {
     // 政策影响
     this.applyPolicyEffects(income);
 
-    // 稳定度衰减（回归中值）
+    // 稳定度衰减（只降不回，必须通过事件恢复）
     if (r.stability > 60) income.stability -= (r.stability - 60) * 0.05;
     if (r.stability > 30) income.stability -= 0.5;
-    if (r.stability < 30) income.stability += (30 - r.stability) * 0.05;
 
     // 威慑衰减（加大力度）
     income.deterrence -= 2;
@@ -521,10 +523,9 @@ const Game = {
     // 核武库衰减（维护）
     income.nukeDeter -= 1;
 
-    // 基础收入
+    // 基础收入 —— 只有人力和少量钱被动增加
     income.money += 10;
     income.manpower += 2;
-    income.research += 1;
 
     // 难度修正：正面收入受incomeMod影响，负面受penMod影响
     for (const key in income) {
@@ -547,29 +548,30 @@ const Game = {
   // ===== 应用政策效果到收入 =====
   applyPolicyEffects(income) {
     const s = this.state;
+    // 政策只影响 money 和 manpower，其他（稳定/威慑/军力/核慑/研发）只能通过事件获得
     const econ = s.policies.economy;
-    if (econ === 'slave_economy') { income.money += 15; income.stability -= 1; }
-    if (econ === 'mixed_reform') { income.money += 8; income.stability += 1; income.research += 2; }
-    if (econ === 'war_economy') { income.militaryPower += 5; income.money -= 10; }
-    if (econ === 'free_market') { income.money += 30; income.stability -= 2; }
+    if (econ === 'slave_economy') { income.money += 15; }
+    if (econ === 'mixed_reform') { income.money += 8; }
+    if (econ === 'war_economy') { income.money -= 10; }
+    if (econ === 'free_market') { income.money += 30; }
 
     const slave = s.policies.slave_policy;
-    if (slave === 'maintain_slaves') { income.money += 10; income.stability -= 1; income.manpower -= 1; }
-    if (slave === 'limited_rights') { income.money -= 5; income.stability += 1; }
-    if (slave === 'gradual_emancipation') { income.money -= 15; income.stability += 2; income.manpower += 3; }
-    if (slave === 'harsher_rule') { income.money += 15; income.stability -= 2; income.manpower -= 2; }
+    if (slave === 'maintain_slaves') { income.money += 10; }
+    if (slave === 'limited_rights') { income.money -= 5; income.manpower += 2; }
+    if (slave === 'gradual_emancipation') { income.money -= 15; income.manpower += 3; }
+    if (slave === 'harsher_rule') { income.money += 15; income.manpower -= 2; }
 
     const mil = s.policies.military_doctrine;
     if (mil === 'defensive') { income.money += 5; }
-    if (mil === 'expansionist') { income.deterrence += 3; income.money -= 10; }
-    if (mil === 'modernization') { income.militaryPower += 3; income.research += 2; }
-    if (mil === 'nuclear_first') { income.nukeDeter += 3; income.money -= 15; }
+    if (mil === 'expansionist') { income.money -= 10; }
+    if (mil === 'modernization') { income.money += 8; }
+    if (mil === 'nuclear_first') { income.money -= 15; }
 
     const youth = s.policies.youth_policy;
-    if (youth === 'suppress_youth') { income.stability += 2; income.manpower -= 2; }
-    if (youth === 'coopt_youth') { income.stability += 1; }
-    if (youth === 'dialogue') { income.stability += 1; income.research += 2; }
-    if (youth === 'militarize_youth') { income.militaryPower += 3; income.stability -= 1; }
+    if (youth === 'suppress_youth') { income.manpower -= 2; }
+    if (youth === 'coopt_youth') { income.money += 5; }
+    if (youth === 'dialogue') { income.money += 5; }
+    if (youth === 'militarize_youth') { income.manpower += 5; income.money -= 5; }
   },
 
   // ===== 推进一回合 =====
