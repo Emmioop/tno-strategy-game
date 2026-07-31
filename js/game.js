@@ -2,19 +2,108 @@
  * 千年帝国的最后一息 - 核心游戏逻辑
  * ============================================================ */
 
+// ===== 难度定义 =====
+const DIFFICULTIES = {
+  easy: {
+    id: 'easy',
+    name: '简单',
+    desc: '帝国根基尚稳，适合熟悉剧情',
+    color: '#4a9',
+    resMod: 1.5,      // 资源倍率
+    penMod: 0.5,      // 惩罚倍率
+    incomeMod: 1.3,   // 收入倍率
+    stabFloor: 5,     // 稳定度下限保护
+    deterFloor: 10,   // 威慑下限保护
+    crisisChance: 0.25, // 随机危机概率
+    unlocked: true
+  },
+  normal: {
+    id: 'normal',
+    name: '普通',
+    desc: '标准难度，帝国面临真实挑战',
+    color: '#c93',
+    resMod: 1.0,
+    penMod: 1.0,
+    incomeMod: 1.0,
+    stabFloor: 0,
+    deterFloor: 5,
+    crisisChance: 0.4,
+    unlocked: true
+  },
+  hard: {
+    id: 'hard',
+    name: '困难',
+    desc: '帝国摇摇欲坠，步步惊心',
+    color: '#e60',
+    resMod: 0.7,
+    penMod: 1.4,
+    incomeMod: 0.8,
+    stabFloor: 0,
+    deterFloor: 0,
+    crisisChance: 0.55,
+    unlocked: true
+  },
+  hell: {
+    id: 'hell',
+    name: '地狱',
+    desc: '帝国的末日已至。你确定吗？',
+    color: '#a00',
+    resMod: 0.5,
+    penMod: 1.8,
+    incomeMod: 0.6,
+    stabFloor: 0,
+    deterFloor: 0,
+    crisisChance: 0.7,
+    unlocked: false  // 需通关困难难度解锁
+  }
+};
+
 const Game = {
 
   // ===== 游戏状态 =====
   state: null,
+  difficulty: 'normal',
+
+  // ===== 检查地狱难度是否解锁 =====
+  isHellUnlocked() {
+    try {
+      return localStorage.getItem('tno_hell_unlocked') === 'true';
+    } catch(e) { return false; }
+  },
+
+  // ===== 标记困难/地狱难度通关 =====
+  checkDifficultyUnlock() {
+    try {
+      // 只有到达2000年终局（非中途崩溃）才算通关
+      const goodEndings = ['democratic_reform', 'peaceful_coexistence', 'reformist_survival',
+                           'militarist_victory', 'militarist_stalemate', 'conservative_survival',
+                           'dark_victory', 'terror_state', 'reformist_failure', 'militarist_collapse',
+                           'conservative_decay'];
+      if (this.difficulty === 'hard' && goodEndings.includes(this.state.endingId)) {
+        localStorage.setItem('tno_hell_unlocked', 'true');
+      }
+    } catch(e) {}
+  },
+
+  // ===== 获取当前难度配置 =====
+  getDiff() {
+    return DIFFICULTIES[this.difficulty] || DIFFICULTIES.normal;
+  },
 
   // ===== 初始化新游戏 =====
   init() {
+    const diff = this.getDiff();
+    const rm = diff.resMod;
+
     this.state = {
       // 时间：1962Q1 开始，2000Q4 结束（共156回合）
       year: 1962,
       quarter: 1,
       turn: 1,
       totalTurns: 156, // (2000-1962)*4
+
+      // 难度
+      difficulty: this.difficulty,
 
       // 当前路线与领导人
       leader: {
@@ -25,17 +114,17 @@ const Game = {
       },
       chosenPath: null,
 
-      // 资源
+      // 资源（受难度影响）
       resources: {
-        money: 500,         // 帝国马克（百万元）
-        manpower: 100,      // 可用人力
-        stability: 45,      // 稳定度 0-100
-        deterrence: 60,     // 综合威慑
-        militaryPower: 80,  // 军事实力
-        nukeDeter: 30,      // 核威慑
-        nukes: 2,           // 核武器数量
-        research: 20,       // 研发点数
-        efficiency: 1.0     // 工业效率系数
+        money: Math.round(500 * rm),         // 帝国马克（百万元）
+        manpower: Math.round(100 * rm),      // 可用人力
+        stability: Math.round(45 * rm),      // 稳定度 0-100
+        deterrence: Math.round(60 * rm),     // 综合威慑
+        militaryPower: Math.round(80 * rm),  // 军事实力
+        nukeDeter: Math.round(30 * rm),      // 核威慑
+        nukes: 2,                             // 核武器数量
+        research: Math.round(20 * rm),       // 研发点数
+        efficiency: 1.0                       // 工业效率系数
       },
 
       // 国际关系 -100(敌对) ~ +100(友好)
@@ -81,6 +170,9 @@ const Game = {
 
       // 新闻流
       newsLog: [],
+
+      // 俄罗斯统一状态
+      russiaState: 'fragmented', // fragmented / unifying / unified
 
       // 游戏是否结束
       ended: false,
@@ -150,7 +242,7 @@ const Game = {
     const randomCandidates = STORY_EVENTS.filter(ev =>
       !ev.turn && ev.weight && this.checkEventCondition(ev)
     );
-    if (randomCandidates.length > 0 && Math.random() < 0.55) {
+    if (randomCandidates.length > 0 && Math.random() < this.getDiff().crisisChance) {
       const totalWeight = randomCandidates.reduce((s, e) => s + e.weight, 0);
       let r = Math.random() * totalWeight;
       for (const ev of randomCandidates) {
@@ -169,14 +261,20 @@ const Game = {
   applyEffects(effects) {
     if (!effects) return [];
     const changes = [];
+    const diff = this.getDiff();
     for (const key in effects) {
       const val = effects[key];
+      let actualVal = val;
+      // 负面效果受难度惩罚倍率影响
+      if (val < 0 && (key in this.state.resources || key in this.state.relations)) {
+        actualVal = Math.round(val * diff.penMod);
+      }
       if (key in this.state.resources) {
-        this.state.resources[key] += val;
-        changes.push({ key, val });
+        this.state.resources[key] += actualVal;
+        changes.push({ key, val: actualVal });
       } else if (key in this.state.relations) {
-        this.state.relations[key] = Math.max(-100, Math.min(100, this.state.relations[key] + val));
-        changes.push({ key, val });
+        this.state.relations[key] = Math.max(-100, Math.min(100, this.state.relations[key] + actualVal));
+        changes.push({ key, val: actualVal });
       } else if (key === 'stability' || key === 'deterrence') {
         // 已在 resources 中处理
       }
@@ -239,6 +337,7 @@ const Game = {
   // ===== 限制资源范围 =====
   clampResources() {
     const r = this.state.resources;
+    const diff = this.getDiff();
     r.stability = Math.max(0, Math.min(100, r.stability));
     r.deterrence = Math.max(0, Math.min(150, r.deterrence));
     r.nukeDeter = Math.max(0, Math.min(150, r.nukeDeter));
@@ -363,10 +462,11 @@ const Game = {
   calculateIncome() {
     const r = this.state.resources;
     const eff = r.efficiency;
+    const diff = this.getDiff();
     let income = { money: 0, manpower: 0, stability: 0, deterrence: 0,
                    militaryPower: 0, nukeDeter: 0, nukes: 0, research: 0 };
 
-    // 建筑产出
+    // 建筑产出（受难度收入修正影响）
     for (const bid in this.state.buildings) {
       const count = this.state.buildings[bid];
       const b = BUILDINGS[bid];
@@ -393,6 +493,21 @@ const Game = {
     income.money += 10;
     income.manpower += 2;
     income.research += 1;
+
+    // 难度修正：正面收入受incomeMod影响，负面受penMod影响
+    for (const key in income) {
+      if (income[key] > 0) {
+        income[key] = income[key] * diff.incomeMod;
+      } else if (income[key] < 0) {
+        income[key] = income[key] * diff.penMod;
+      }
+    }
+
+    // 地狱难度额外惩罚
+    if (this.difficulty === 'hell') {
+      income.stability -= 0.5;   // 持续动荡
+      income.deterrence -= 0.5;  // 威慑持续衰减
+    }
 
     return income;
   },
@@ -480,7 +595,7 @@ const Game = {
   generateRandomNews() {
     const newsPool = [
       { text: '日耳曼尼亚证券交易所开盘，马克汇率波动', type: 'economy' },
-      { text: 'OFN太平洋舰队在夏威夷海域演习', type: 'world' },
+      { text: '美国太平洋舰队在夏威夷海域演习', type: 'world' },
       { text: '日本宣布新的"共荣圈"经济计划', type: 'world' },
       { text: '俄罗斯军阀在乌拉尔发生冲突', type: 'world' },
       { text: '意大利电影在帝国地下流行', type: 'world' },
@@ -493,7 +608,22 @@ const Game = {
       { text: '东方总督辖区发生小规模骚乱', type: 'crisis' },
       { text: '帝国航天局发布新火箭设计', type: 'tech' },
       { text: '奥地利发生反奴隶制示威', type: 'crisis' },
-      { text: '日本天皇接见共荣圈代表', type: 'world' }
+      { text: '日本天皇接见共荣圈代表', type: 'world' },
+      { text: '科米共和国举行秘密选举，结果未知', type: 'world' },
+      { text: '西伯利亚黑军宣布新经济政策', type: 'world' },
+      { text: '远东军阀在赤塔举行会谈', type: 'world' },
+      { text: '伊比利亚联盟爆发反弗朗哥示威', type: 'crisis' },
+      { text: '法国地下报纸《自由报》在巴黎散发', type: 'crisis' },
+      { text: '英国抵抗组织炸毁曼彻斯特铁路', type: 'crisis' },
+      { text: '土耳其军方与文官政府关系紧张', type: 'world' },
+      { text: '意大利东非殖民地发生土著起义', type: 'crisis' },
+      { text: '帝国马克对美元汇率持续下跌', type: 'economy' },
+      { text: '美国宣布新一代洲际导弹试射成功', type: 'world' },
+      { text: '日本海军在太平洋试射反舰导弹', type: 'world' },
+      { text: '乌拉尔山脉以东发现新矿藏', type: 'economy' },
+      { text: '帝国统计局报告：生育率再创新低', type: 'crisis' },
+      { text: '勃艮第边境加强巡逻，原因不明', type: 'crisis' },
+      { text: '罗马教皇发表复活节讲话，呼吁和平', type: 'world' }
     ];
     const n = newsPool[Math.floor(Math.random() * newsPool.length)];
     this.addNews(n.text, n.type);
@@ -503,6 +633,7 @@ const Game = {
   checkEnding() {
     const s = this.state;
     const r = s.resources;
+    const diff = this.getDiff();
 
     // 核毁灭结局
     if (s.flags.nuclear_holocaust) {
@@ -510,20 +641,28 @@ const Game = {
       return;
     }
 
-    // 稳定度归零 - 崩溃
-    if (r.stability <= 0) {
+    // 稳定度归零 - 崩溃（简单难度有保护）
+    if (r.stability <= diff.stabFloor && r.stability <= 0) {
       this.endGame('collapse');
       return;
     }
 
     // 资金极度负债 - 经济崩溃
-    if (r.money <= -150) {
+    const debtLimit = this.difficulty === 'hell' ? -100 : (this.difficulty === 'hard' ? -120 : -150);
+    if (r.money <= debtLimit) {
       this.endGame('economic_collapse');
       return;
     }
 
     // 威慑过低且敌对 - 被入侵
-    if (r.deterrence <= 5 && (s.relations.russia < -50 || s.relations.ofn < -50)) {
+    const deterThreshold = diff.deterFloor;
+    if (r.deterrence <= deterThreshold && (s.relations.russia < -50 || s.relations.ofn < -50)) {
+      this.endGame('invasion');
+      return;
+    }
+
+    // 地狱难度额外：威慑极低直接崩溃
+    if (this.difficulty === 'hell' && r.deterrence <= 0) {
       this.endGame('invasion');
       return;
     }
@@ -599,10 +738,13 @@ const Game = {
   endGame(endingId) {
     this.state.ended = true;
     this.state.endingId = endingId;
+    // 检查难度解锁：通关困难难度解锁地狱难度
+    this.checkDifficultyUnlock();
   }
 };
 
 // 导出
 if (typeof window !== 'undefined') {
   window.Game = Game;
+  window.DIFFICULTIES = DIFFICULTIES;
 }

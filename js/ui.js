@@ -135,8 +135,10 @@ const UI = {
       return '';
     };
 
+    const diffInfo = DIFFICULTIES[s.difficulty] || DIFFICULTIES.normal;
+
     document.getElementById('topbar').innerHTML = `
-      <div class="faction-emblem">大日耳曼国</div>
+      <div class="faction-emblem">大日耳曼国 <span style="font-size:10px;color:${diffInfo.color};border:1px solid ${diffInfo.color};padding:1px 5px;border-radius:2px;margin-left:6px">${diffInfo.name}</span></div>
       <div class="leader-info">
         <div>元首</div>
         <div class="leader-name">${s.leader.name}</div>
@@ -892,7 +894,7 @@ const UI = {
 
     const screen = document.getElementById('ending-screen');
     screen.innerHTML = `
-      <div class="ending-tag">${ending.tag} · ${s.year}年</div>
+      <div class="ending-tag">${ending.tag} · ${s.year}年 · ${DIFFICULTIES[s.difficulty]?.name || '普通'}难度</div>
       <div class="ending-title">${ending.title}</div>
       <div class="ending-stats">
         <div class="ending-stat"><div class="es-val">${s.turn}</div><div class="es-label">历经回合</div></div>
@@ -934,6 +936,10 @@ const UI = {
       const saved = localStorage.getItem('tno_game_save');
       if (saved) {
         Game.state = JSON.parse(saved);
+        // 恢复难度设置
+        if (Game.state.difficulty) {
+          Game.difficulty = Game.state.difficulty;
+        }
         // 兼容性修复：如果有核弹但没有核武技术，自动解锁
         if (Game.state.resources.nukes > 0 && !Game.state.techs['nuclear_tech']) {
           Game.state.techs['nuclear_tech'] = true;

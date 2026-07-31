@@ -112,6 +112,60 @@ body {
   background: rgba(0,0,0,0.3);
 }
 
+/* 难度选择 */
+.difficulty-select {
+  max-width: 640px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.diff-label {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+  letter-spacing: 0.1em;
+}
+.diff-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.diff-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.diff-btn:hover:not(.locked) {
+  background: var(--bg-panel-2);
+  transform: translateY(-1px);
+}
+.diff-btn.selected {
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 1px currentColor inset;
+}
+.diff-btn.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.diff-name {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+.diff-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 #splash .btn-enter {
   font-family: var(--font-serif);
   font-size: 18px;
@@ -840,6 +894,7 @@ body {
   #splash .prologue { padding: 16px; font-size: 13px; line-height: 1.7; }
   #splash .disclaimer { font-size: 10px; padding: 10px; }
   #splash .btn-enter { padding: 12px 32px; font-size: 15px; }
+  .diff-options { grid-template-columns: 1fr; }
 
   /* 主布局改为纵向，允许内容区滚动 */
   #game { height: 100vh; height: 100dvh; }

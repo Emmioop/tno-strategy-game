@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>千年帝国的最后一息 · TNO策略游戏</title>
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 
@@ -20,6 +20,12 @@
       <p>但1962年的帝国已是风中残烛——1950年代的经济奇迹化为泡沫，奴隶种姓支撑着全部工业，青年走上街头抗议，而<strong>在贝格霍夫的元首</strong>，身体一天比一天虚弱。</p>
       <p>您将扮演帝国权力核心的一员。从希特勒之死到新世纪的钟声，在长达三十八年的岁月中，为德国的未来做出抉择——设计军工业以威慑敌国，发展民工业以延续经济，在内战的废墟上重建，在三极冷战中周旋，直至2000年的终局。</p>
       <p>或至少，在黑暗中找到一个不那么黑暗的出口。</p>
+    </div>
+
+    <!-- 难度选择 -->
+    <div class="difficulty-select" id="difficulty-select">
+      <div class="diff-label">选择难度：</div>
+      <div class="diff-options" id="diff-options"></div>
     </div>
 
     <div class="disclaimer">
@@ -81,11 +87,43 @@
   <div id="toast-container"></div>
 
   <!-- ===== 脚本 ===== -->
-  <script src="js/data.js?v=6"></script>
-  <script src="js/events.js?v=6"></script>
-  <script src="js/game.js?v=6"></script>
-  <script src="js/ui.js?v=6"></script>
+  <script src="js/data.js?v=7"></script>
+  <script src="js/events.js?v=7"></script>
+  <script src="js/game.js?v=7"></script>
+  <script src="js/ui.js?v=7"></script>
   <script>
+    // 难度选择初始化
+    (function initDifficultySelect() {
+      const container = document.getElementById('diff-options');
+      if (!container) return;
+      const hellUnlocked = Game.isHellUnlocked();
+      let html = '';
+      for (const key in DIFFICULTIES) {
+        const d = DIFFICULTIES[key];
+        const locked = key === 'hell' && !hellUnlocked;
+        const lockedCls = locked ? 'locked' : '';
+        const lockText = locked ? ' 🔒 (通关困难难度解锁)' : '';
+        html += `<button class="diff-btn ${lockedCls}" data-diff="${key}" ${locked ? 'disabled' : ''} style="border-color:${d.color};">
+          <span class="diff-name" style="color:${d.color}">${d.name}</span>
+          <span class="diff-desc">${d.desc}${lockText}</span>
+        </button>`;
+      }
+      container.innerHTML = html;
+
+      // 默认选中普通
+      Game.difficulty = 'normal';
+      container.querySelector('[data-diff="normal"]').classList.add('selected');
+
+      container.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.onclick = () => {
+          if (btn.disabled) return;
+          container.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          Game.difficulty = btn.dataset.diff;
+        };
+      });
+    })();
+
     // 启动逻辑
     document.getElementById('btn-start').addEventListener('click', () => {
       UI.start();

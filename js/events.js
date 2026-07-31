@@ -1311,6 +1311,589 @@ const STORY_EVENTS = [
       { text: '投入民用', desc: '+资金 +稳定', effects: { money: 50, stability: 3 } },
       { text: '保密储备', desc: '+研发', effects: { research: 10 } }
     ]
+  },
+
+  /* ===========================================================
+   * 俄罗斯分裂与统一事件链
+   * =========================================================== */
+
+  {
+    id: 'ev_russia_warlords_1968',
+    turn: { year: 1968, quarter: 3 },
+    once: true,
+    tag: 'critical',
+    title: '群雄逐鹿',
+    body: `<p>1968年，东方废土上的军阀混战进入新阶段。</p>
+    <p>西俄罗斯革命阵线（朱可夫）、科米共和国、乌拉尔军阀、西伯利亚黑军、远东的各路势力——每一方都梦想着重新统一俄罗斯。情报机关报告，几个军阀正在秘密谈判结盟，一个统一的俄罗斯可能在未来十年内出现。</p>
+    <p>但最令人不安的是：没有人知道谁会赢。可能是民主派，可能是共产党，甚至可能是某种疯子。</p>`,
+    choices: [
+      {
+        text: '派遣间谍渗透各派系',
+        desc: '-资金 获取情报',
+        effects: { money: -40, russia_relation: -5 },
+        setFlags: { russia_infiltrated: true }
+      },
+      {
+        text: '资助亲德军阀',
+        desc: '让俄国人打俄国人',
+        effects: { money: -60, deterrence: 5, russia_relation: -15 },
+        setFlags: { russia_proxies: true }
+      },
+      {
+        text: '加强东方防线',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 8, money: -70, militaryPower: 5 },
+        setFlags: { eastern_wall: true }
+      },
+      {
+        text: '忽略，专注内政',
+        desc: '等内战结束再说',
+        effects: { stability: -3 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_russia_unification_type',
+    turn: { year: 1972, quarter: 1 },
+    once: true,
+    tag: 'critical',
+    title: '东方的曙光——或暗夜',
+    body: `<p>经过十年的混战，一个军阀开始在俄罗斯脱颖而出。</p>
+    <p>情报来源纷乱而矛盾：有人说是一个民主派物理学家，有人说是一个共产党的老元帅，有人甚至说是一个为"失踪皇子"摄政的狂信徒。但所有人都同意一件事——<strong>俄罗斯即将统一</strong>。</p>
+    <p>帝国的命运，取决于东方是谁统一了俄罗斯。而此刻，你什么都做不了，只能等待。</p>`,
+    choices: [
+      {
+        text: '等待命运的宣判',
+        desc: '随机决定俄罗斯统一者',
+        effects: { stability: -5 },
+        showToast: '俄罗斯的统一者即将揭晓'
+      }
+    ],
+    onTrigger: (s) => {
+      const types = ['democratic', 'communist', 'fascist', 'madman', 'monarchist'];
+      s.flags.russia_unifier = types[Math.floor(Math.random() * types.length)];
+    }
+  },
+
+  {
+    id: 'ev_russia_democratic_unified',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '新俄罗斯的曙光',
+    body: `<p>萨哈罗夫——一个物理学家出身的理想主义者——统一了俄罗斯。</p>
+    <p>他建立了一个民主共和国，承诺改革与开放。新俄罗斯向帝国伸出了橄榄枝，愿意以和平谈判解决领土争端。这不是最好的结局，但绝对不是最坏的。</p>
+    <p>然而，一个民主的、强大的俄罗斯，本身就是对帝国意识形态的最大威胁——它的存在证明了，没有奴隶制、没有极权，也能建立强国。</p>`,
+    choices: [
+      {
+        text: '积极回应，建立外交关系',
+        desc: '+俄罗斯关系 +稳定 -威慑',
+        effects: { russia_relation: 30, stability: 8, deterrence: -8 },
+        setFlags: { russia_democratic: true, russia_peace: true }
+      },
+      {
+        text: '谨慎接触',
+        desc: '+俄罗斯关系微 -研发',
+        effects: { russia_relation: 10, research: -3 },
+        setFlags: { russia_cautious: true }
+      },
+      {
+        text: '保持警惕，加强军备',
+        desc: '+威慑 -俄罗斯关系',
+        effects: { deterrence: 10, russia_relation: -10, militaryPower: 5 },
+        setFlags: { russia_suspicious: true }
+      }
+    ],
+    condition: (s) => s.flags.russia_unifier === 'democratic'
+  },
+
+  {
+    id: 'ev_russia_communist_unified',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '红色巨熊的归来',
+    body: `<p>朱可夫元帅——或他的继承者——以铁拳统一了俄罗斯。</p>
+    <p>新苏联的红旗再次飘扬在莫斯科上空。红军的坦克轰鸣着开向西方边境，三十年前的仇恨从未消散。这个统一的俄罗斯拥有数亿人口、无尽的资源、以及核武器。</p>
+    <p>帝国面对的不再是分散的军阀，而是一个复仇的巨人。第二次西俄战争，似乎只是时间问题。</p>`,
+    choices: [
+      {
+        text: '全面备战',
+        desc: '+军力 +威慑 -资金 -稳定',
+        effects: { militaryPower: 20, deterrence: 15, money: -80, stability: -8 },
+        setFlags: { russia_communist: true, russia_war_preparing: true }
+      },
+      {
+        text: '寻求外交缓和',
+        desc: '+俄罗斯关系 -威慑 -稳定',
+        effects: { russia_relation: 20, deterrence: -10, stability: -5 },
+        setFlags: { russia_detente: true }
+      },
+      {
+        text: '联合美国遏制红色威胁',
+        desc: '+美国关系 -俄罗斯关系 +威慑',
+        effects: { ofn_relation: 20, russia_relation: -25, deterrence: 10 },
+        setFlags: { russia_containment: true }
+      }
+    ],
+    condition: (s) => s.flags.russia_unifier === 'communist'
+  },
+
+  {
+    id: 'ev_russia_fascist_unified',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '黑色俄罗斯的崛起',
+    body: `<p>奥克坦——一个前合作者、法西斯狂热者——统一了俄罗斯。</p>
+    <p>他的"俄罗斯民族国"建立在前德国盟友和纯粹的暴力之上。这个俄罗斯对德国怀有复杂的感情：既模仿又仇恨，既想结盟又想复仇。它比苏联更危险，因为它不受任何意识形态束缚——它只有赤裸裸的权力欲望。</p>
+    <p>更可怕的是，这个法西斯俄罗斯可能拥有从勃艮第或内战中流失的核武器。</p>`,
+    choices: [
+      {
+        text: '结盟，共同对抗美国',
+        desc: '+俄罗斯关系 +威慑 -美国关系 -稳定',
+        effects: { russia_relation: 15, deterrence: 10, ofn_relation: -20, stability: -8 },
+        setFlags: { russia_fascist: true, russia_alliance: true }
+      },
+      {
+        text: '先发制人打击',
+        desc: '+军力 -稳定 -资金 -国际声誉',
+        effects: { militaryPower: 15, stability: -15, money: -60, ofn_relation: -15 },
+        setFlags: { russia_preemptive: true }
+      },
+      {
+        text: '加强防御，静观其变',
+        desc: '+威慑 -资金',
+        effects: { deterrence: 12, money: -50, stability: 3 },
+        setFlags: { russia_fascist: true }
+      }
+    ],
+    condition: (s) => s.flags.russia_unifier === 'fascist'
+  },
+
+  {
+    id: 'ev_russia_madman_unified',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '摄政的疯狂',
+    body: `<p>塔博里茨基——一个为"失踪"的沙皇皇子摄政的狂信徒——统一了俄罗斯。</p>
+    <p>他相信阿列克谢皇子仍然活着，终将归来。在等待皇子的过程中，他用核火和死亡"净化"一切不洁。这不是一个国家，这是一个末日教派——一个拥有核武器的末日教派。</p>
+    <p>情报显示，塔博里茨基的俄罗斯正在崩溃。但在崩溃之前，他可能拉着整个世界一起毁灭。</p>`,
+    choices: [
+      {
+        text: '紧急备战',
+        desc: '+军力 +威慑 -稳定 -资金',
+        effects: { militaryPower: 25, deterrence: 20, stability: -12, money: -70 },
+        setFlags: { russia_madman: true }
+      },
+      {
+        text: '试图与疯子谈判',
+        desc: '-稳定 -资金 可能无效',
+        effects: { stability: -8, money: -30 },
+        setFlags: { russia_madman: true, russia_negotiation: true }
+      },
+      {
+        text: '封锁边境，静待其崩溃',
+        desc: '+威慑 -资金 -稳定',
+        effects: { deterrence: 8, money: -50, stability: -5 },
+        setFlags: { russia_madman: true, russia_quarantine: true }
+      },
+      {
+        text: '联合世界，暗杀塔博里茨基',
+        desc: '-资金 高风险',
+        effects: { money: -80, ofn_relation: 15, stability: -3 },
+        setFlags: { russia_madman: true, tabi_assassination: true },
+        showToast: '暗杀行动已启动——这是拯救世界的最后手段'
+      }
+    ],
+    condition: (s) => s.flags.russia_unifier === 'madman'
+  },
+
+  {
+    id: 'ev_russia_monarchist_unified',
+    turn: { year: 1972, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '双头鹰的重生',
+    body: `<p>赤塔的罗曼诺夫家族——弗拉基米尔大公的继承者——统一了俄罗斯，恢复了沙皇制度。</p>
+    <p>这个新帝国既不像苏联那样仇恨德国，也不像民主俄罗斯那样友好。它是一个骄傲的、古老的、充满复仇欲望的帝国。沙皇要求归还所有被占领的俄罗斯领土——包括东方总督辖区。</p>
+    <p>两个帝国面对面站着：一个宣称千年，一个已经重生。</p>`,
+    choices: [
+      {
+        text: '承认沙皇政权',
+        desc: '+俄罗斯关系 -威慑',
+        effects: { russia_relation: 15, deterrence: -5 },
+        setFlags: { russia_monarchist: true, russia_recognized: true }
+      },
+      {
+        text: '拒绝承认',
+        desc: '-俄罗斯关系 +威慑 +稳定',
+        effects: { russia_relation: -15, deterrence: 8, stability: 5 },
+        setFlags: { russia_monarchist: true }
+      },
+      {
+        text: '提出君主制同盟',
+        desc: '+俄罗斯关系 -美国关系 +威慑',
+        effects: { russia_relation: 20, ofn_relation: -15, deterrence: 5 },
+        setFlags: { russia_monarchist: true, monarchist_alliance: true }
+      }
+    ],
+    condition: (s) => s.flags.russia_unifier === 'monarchist'
+  },
+
+  {
+    id: 'ev_second_west_russian_war',
+    turn: { year: 1981, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '第二次西俄战争',
+    body: `<p>统一的俄罗斯向帝国发出了最后通牒：归还被占领的东方总督辖区领土，否则战争。</p>
+    <p>无论统一者是民主派还是共产党，是法西斯还是沙皇——他们都要求同一件事：俄罗斯的领土完整。红军/俄军的集结在AA线东侧展开，帝国东方边境硝烟弥漫。</p>
+    <p>这是帝国生死存亡的时刻。三十年前，帝国在第一次西俄战争中险胜。这一次，对手更强大，而帝国更虚弱。</p>`,
+    choices: [
+      {
+        text: '全面战争，寸土不让',
+        desc: '+军力 +威慑 -稳定 -资金 -人力',
+        effects: { militaryPower: 25, deterrence: 15, stability: -15, money: -100, manpower: -20 },
+        setFlags: { west_russian_war: true, total_war: true }
+      },
+      {
+        text: '部分让步，避免全面战争',
+        desc: '+俄罗斯关系 -威慑 -稳定 -资金',
+        effects: { russia_relation: 15, deterrence: -12, stability: -8, money: -50 },
+        setFlags: { west_russian_war: true, partial_concession: true }
+      },
+      {
+        text: '核威慑，逼退俄罗斯',
+        desc: '+核威慑 -稳定 -资金 -国际声誉',
+        effects: { nukeDeter: 25, stability: -10, money: -60, ofn_relation: -10 },
+        setFlags: { west_russian_war: true, nuclear_brinkmanship: true }
+      },
+      {
+        text: '归还领土，求和',
+        desc: '+俄罗斯关系 -威慑 -稳定',
+        effects: { russia_relation: 30, deterrence: -20, stability: -12, money: -30 },
+        setFlags: { west_russian_war: true, territory_returned: true },
+        condition: (s) => s.flags.reformist || s.flags.russia_detente
+      }
+    ],
+    condition: (s) => s.flags.russia_democratic || s.flags.russia_communist ||
+                     s.flags.russia_fascist || s.flags.russia_madman || s.flags.russia_monarchist
+  },
+
+  /* ===========================================================
+   * 欧洲事件链
+   * =========================================================== */
+
+  {
+    id: 'ev_iberian_crisis',
+    turn: { year: 1969, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '伊比利亚的黄昏',
+    body: `<p>弗朗哥老了。西班牙-葡萄牙联盟（伊比利亚）这个不自然的婚姻正在瓦解。</p>
+    <p>葡萄牙的萨拉查独撑残局，西班牙的王子们蠢蠢欲动，军方暗中密谋。三头同盟的南翼正在崩溃，而意大利对此无能为力。</p>
+    <p>伊比利亚的崩溃将改变南欧的力量平衡——是机会，还是灾难？</p>`,
+    choices: [
+      {
+        text: '支持伊比利亚维持统一',
+        desc: '+意大利关系 -资金 +稳定',
+        effects: { italy_relation: 10, money: -40, stability: 4 },
+        setFlags: { iberia_supported: true }
+      },
+      {
+        text: '暗中支持葡萄牙独立',
+        desc: '+意大利关系 -稳定',
+        effects: { italy_relation: 5, stability: -3 },
+        setFlags: { portugal_backed: true }
+      },
+      {
+        text: '趁机吞并直布罗陀',
+        desc: '+威慑 -意大利关系 -稳定',
+        effects: { deterrence: 8, italy_relation: -10, stability: -4 },
+        setFlags: { gibraltar_seized: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_iberian_collapse',
+    turn: { year: 1971, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '伊比利亚的崩溃',
+    body: `<p>弗朗哥死了。伊比利亚联盟在一夜之间分崩离析。</p>
+    <p>西班牙陷入内战——保皇派、军方、共和派残余互相厮杀。葡萄牙宣布独立，萨拉查独撑残局。三头同盟失去了南翼，意大利不得不独自面对德国的压力。</p>
+    <p>南欧的地图正在被重新绘制，而帝国有机会在这场混乱中渔利。</p>`,
+    choices: [
+      {
+        text: '干预西班牙内战',
+        desc: '+威慑 -资金 -稳定 -意大利关系',
+        effects: { deterrence: 10, money: -60, stability: -5, italy_relation: -10 },
+        setFlags: { spain_intervention: true }
+      },
+      {
+        text: '支持葡萄牙独立',
+        desc: '+意大利关系 -资金',
+        effects: { italy_relation: 12, money: -30 },
+        setFlags: { portugal_independent: true }
+      },
+      {
+        text: '放任不管',
+        desc: '+稳定 -意大利关系',
+        effects: { stability: 3, italy_relation: -8 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_french_resistance',
+    turn: { year: 1970, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '法兰西的幽灵',
+    body: `<p>法国——被德国肢解、被勃艮第恐怖统治的国家——从未真正屈服。</p>
+    <p>地下抵抗组织"自由法国"在废墟中重建，他们的口号穿越了三十年：liberté, égalité, fraternité。从巴黎的地下印刷所到布列塔尼的森林，从马赛的码头到里昂的工厂，法国人在用一切方式反抗。</p>
+    <p>情报显示，自由法国正在与美国的情报机构合作，获得资金与武器。帝国的西翼正在被掏空。</p>`,
+    choices: [
+      {
+        text: '全面镇压抵抗运动',
+        desc: '+稳定 -资金 -美国关系',
+        effects: { stability: 6, money: -40, ofn_relation: -10 },
+        setFlags: { french_resistance_crushed: true }
+      },
+      {
+        text: '与抵抗组织秘密谈判',
+        desc: '+美国关系 -稳定 -资金',
+        effects: { ofn_relation: 15, stability: -4, money: -30 },
+        setFlags: { french_negotiation: true },
+        condition: (s) => s.flags.reformist
+      },
+      {
+        text: '忽视，专注于其他事务',
+        desc: '-稳定',
+        effects: { stability: -4 }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_british_resistance',
+    turn: { year: 1973, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '不列颠的怒火',
+    body: `<p>英格兰合作国——德国的傀儡——的统治下，英国抵抗运动从未停止。</p>
+    <p>从苏格兰高地到威尔士山谷，从伦敦地下到乡村的酒馆，"不列颠自由军"在进行游击战。他们炸毁铁路，暗杀合作者，散发传单。帝国驻英部队疲于奔命，而英国人的仇恨只会越来越深。</p>
+    <p>华盛顿的电台每天向不列颠广播："坚持下去，解放终将到来。"</p>`,
+    choices: [
+      {
+        text: '增援驻英部队',
+        desc: '+威慑 -资金 -人力',
+        effects: { deterrence: 8, money: -50, manpower: -10 },
+        setFlags: { britain_reinforced: true }
+      },
+      {
+        text: '与抵抗组织谈判',
+        desc: '+美国关系 -稳定',
+        effects: { ofn_relation: 12, stability: -5 },
+        setFlags: { britain_negotiation: true },
+        condition: (s) => s.flags.reformist
+      },
+      {
+        text: '撤退部分驻军，减少损失',
+        desc: '-威慑 +资金 +人力',
+        effects: { deterrence: -10, money: 30, manpower: 8 },
+        setFlags: { britain_withdrawn: true }
+      }
+    ]
+  },
+
+  {
+    id: 'ev_italy_leaves_sphere',
+    turn: { year: 1975, quarter: 2 },
+    once: true,
+    tag: 'major',
+    title: '意大利的背叛',
+    body: `<p>三头同盟崩溃后，意大利终于摆脱了德国的阴影。</p>
+    <p>齐亚诺（或其继承者）宣布意大利退出德国势力范围，转向美国寻求安全保障。这是帝国在南欧的重大挫败——意大利的倒戈意味着地中海不再是帝国的内湖。</p>
+    <p>更糟糕的是，意大利的背叛可能引发连锁反应：土耳其、匈牙利、罗马尼亚都可能效仿。</p>`,
+    choices: [
+      {
+        text: '武力威胁，迫使其回头',
+        desc: '+威慑 -意大利关系 -稳定 -资金',
+        effects: { deterrence: 12, italy_relation: -20, stability: -6, money: -40 },
+        setFlags: { italy_threatened: true }
+      },
+      {
+        text: '经济制裁',
+        desc: '+威慑 -意大利关系 -资金',
+        effects: { deterrence: 5, italy_relation: -12, money: -30 },
+        setFlags: { italy_sanctioned: true }
+      },
+      {
+        text: '接受现实，维持贸易',
+        desc: '+稳定 -威慑',
+        effects: { stability: 5, deterrence: -8 },
+        setFlags: { italy_accepted: true }
+      }
+    ],
+    condition: (s) => s.flags.iberian_collapse || s.flags.italy_abandoned || s.flags.italy_threatened || s.flags.spain_intervention
+  },
+
+  {
+    id: 'ev_turkey_revolt',
+    turn: { year: 1974, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '土耳其的怒火',
+    body: `<p>土耳其军方发动政变，推翻了亲德政府。</p>
+    <p>新政权的军官们宣称要恢复"泛突厥主义"荣光，将目光投向中亚和高加索——那片德国东方总督辖区的软腹。土耳其退出三头同盟，转向与俄罗斯（如果统一）和美国同时示好。</p>
+    <p>帝国在高加索的油田和巴库的输油管，突然变得不安全了。</p>`,
+    choices: [
+      {
+        text: '支持政变政府，换取石油利益',
+        desc: '+威慑 -资金 -稳定',
+        effects: { deterrence: 5, money: -40, stability: -3 },
+        setFlags: { turkey_junta: true }
+      },
+      {
+        text: '支持流亡政府复辟',
+        desc: '+资金 -威慑 -稳定',
+        effects: { money: 30, deterrence: -5, stability: -5 },
+        setFlags: { turkey_restoration: true }
+      },
+      {
+        text: '忽视，专注东方',
+        desc: '-威慑 -稳定',
+        effects: { deterrence: -5, stability: -3 }
+      }
+    ]
+  },
+
+  /* ===========================================================
+   * 更多随机事件
+   * =========================================================== */
+
+  {
+    id: 'rnd_russian_refugees',
+    once: false,
+    weight: 5,
+    minTurn: { year: 1970 },
+    tag: 'major',
+    title: '俄罗斯难民潮',
+    body: `<p>俄罗斯统一战争的难民涌入帝国东方边境。数十万人饥寒交迫，帝国边境城镇不堪重负。</p>`,
+    choices: [
+      { text: '接纳难民', desc: '+人力 -稳定 -资金', effects: { manpower: 15, stability: -5, money: -30 } },
+      { text: '驱逐难民', desc: '+稳定 -美国关系 -人力', effects: { stability: 4, ofn_relation: -8, manpower: -5 } },
+      { text: '建立难民营', desc: '-资金 +稳定微', effects: { money: -40, stability: 2 } }
+    ]
+  },
+
+  {
+    id: 'rnd_economic_sanctions',
+    once: false,
+    weight: 4,
+    minTurn: { year: 1972 },
+    tag: 'major',
+    title: '国际制裁',
+    body: `<p>美国主导的国际联盟对帝国实施经济制裁，限制高科技出口与金融交易。帝国的对外贸易受到严重冲击。</p>`,
+    choices: [
+      { text: '反制裁', desc: '+威慑 -资金 -美国关系', effects: { deterrence: 5, money: -50, ofn_relation: -10 } },
+      { text: '寻求日本斡旋', desc: '+日本关系 -资金', effects: { japan_relation: 10, money: -30 } },
+      { text: '忍受制裁', desc: '-资金 -研发', effects: { money: -40, research: -5 } }
+    ]
+  },
+
+  {
+    id: 'rnd_plague_outbreak',
+    once: false,
+    weight: 3,
+    minTurn: { year: 1980 },
+    tag: 'major',
+    title: '瘟疫',
+    body: `<p>一种新型流感在东方总督辖区爆发，正在向帝国核心蔓延。奴隶聚居区的卫生条件让疫情雪上加霜。</p>`,
+    choices: [
+      { text: '全面封锁疫区', desc: '+稳定 -资金 -人力', effects: { stability: 4, money: -50, manpower: -10 } },
+      { text: '研发疫苗', desc: '+研发 -资金', effects: { research: 10, money: -40 } },
+      { text: '忽视疫情', desc: '-稳定 -人力', effects: { stability: -8, manpower: -15 } }
+    ]
+  },
+
+  {
+    id: 'rnd_assassination_attempt',
+    once: false,
+    weight: 4,
+    minTurn: { year: 1970 },
+    tag: 'major',
+    title: '暗杀阴谋',
+    body: `<p>安全机关破获了一起针对元首的暗杀阴谋。刺客是国防军内部的反对派军官，他们认为帝国正在走向毁灭。</p>`,
+    choices: [
+      { text: '大清洗', desc: '+威慑 -稳定 -军力', effects: { deterrence: 6, stability: -8, militaryPower: -10 } },
+      { text: '秘密处决', desc: '+威慑 -稳定', effects: { deterrence: 3, stability: -3 } },
+      { text: '公开审判', desc: '+稳定 -威慑', effects: { stability: 5, deterrence: -3 } }
+    ]
+  },
+
+  {
+    id: 'rnd_spain_refugees',
+    once: false,
+    weight: 3,
+    minTurn: { year: 1972 },
+    tag: 'minor',
+    title: '西班牙难民',
+    body: `<p>伊比利亚内战的难民涌入法国和低地国家，帝国不得不面对新一轮的人道危机。</p>`,
+    choices: [
+      { text: '接纳', desc: '+人力 -稳定 -资金', effects: { manpower: 8, stability: -3, money: -20 } },
+      { text: '封锁边境', desc: '+稳定 -资金 -美国关系', effects: { stability: 3, money: -15, ofn_relation: -5 } }
+    ]
+  },
+
+  {
+    id: 'rnd_civil_unrest',
+    once: false,
+    weight: 6,
+    minTurn: { year: 1975 },
+    tag: 'major',
+    title: '民众骚乱',
+    body: `<p>物价飞涨引发了多个城市的民众骚乱。工人罢工、学生示威、家庭主妇上街——帝国的社会契约正在瓦解。</p>`,
+    choices: [
+      { text: '镇压', desc: '+稳定 -人力 -美国关系', effects: { stability: 5, manpower: -8, ofn_relation: -8 } },
+      { text: '发放补贴', desc: '+稳定 -资金', effects: { stability: 4, money: -50 } },
+      { text: '承诺改革', desc: '+稳定 -威慑', effects: { stability: 6, deterrence: -3 }, condition: (s) => s.flags.reformist }
+    ]
+  },
+
+  {
+    id: 'rnd_nuclear_accident',
+    once: false,
+    weight: 3,
+    minTurn: { year: 1975 },
+    tag: 'major',
+    title: '核事故',
+    body: `<p>一座核武器设施发生意外泄漏，放射性物质扩散到周边地区。掩盖还是公开？</p>`,
+    choices: [
+      { text: '全力隐瞒', desc: '+稳定 -研发', effects: { stability: 3, research: -8 } },
+      { text: '公开并处理', desc: '-稳定 +研发', effects: { stability: -6, research: 5 } },
+      { text: '疏散居民', desc: '-资金 -稳定', effects: { money: -60, stability: -4 } }
+    ]
+  },
+
+  {
+    id: 'rnd_coup_attempt',
+    once: false,
+    weight: 3,
+    minTurn: { year: 1980 },
+    tag: 'critical',
+    title: '政变企图',
+    body: `<p>一群军官试图发动政变，企图推翻现政府。虽然政变已被镇压，但其背后牵涉的势力远未清除。</p>`,
+    choices: [
+      { text: '严惩主谋', desc: '+威慑 -军力 -稳定', effects: { deterrence: 8, militaryPower: -8, stability: -5 } },
+      { text: '宽大处理', desc: '+军力 -威慑', effects: { militaryPower: 5, deterrence: -5 } },
+      { text: '深入调查', desc: '-资金 +稳定', effects: { money: -40, stability: 4 } }
+    ]
   }
 
 ];
