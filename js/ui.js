@@ -472,7 +472,6 @@ const UI = {
       <button class="btn-secondary" id="btn-save">保存</button>
       <button class="btn-secondary" id="btn-load">读取</button>
       <button class="btn-secondary" id="btn-restart">重启</button>
-      <button class="btn-secondary" id="btn-quick-start" style="border-color:var(--accent-gold);color:var(--accent-gold);">⚡速开</button>
       ${this.isDebugMode() ? '<button class="btn-secondary" id="btn-debug" style="border-color:var(--accent-gold);color:var(--accent-gold);">DEBUG</button>' : ''}
     `;
 
@@ -484,7 +483,6 @@ const UI = {
         location.reload();
       }
     };
-    document.getElementById('btn-quick-start').onclick = () => this.quickStart();
     const dbgBtn = document.getElementById('btn-debug');
     if (dbgBtn) dbgBtn.onclick = () => this.toggleDebugPanel();
 
@@ -508,10 +506,6 @@ const UI = {
         ${crisisBadge}
       </button>
       <button class="btn-next-turn" id="m-btn-next">下一季度 ▸</button>
-      <button class="mobile-nav-btn" id="m-btn-quick" aria-label="速开" style="color:var(--accent-gold);">
-        <span class="nav-icon">⚡</span>
-        <span>速开</span>
-      </button>
       <button class="mobile-nav-btn" id="m-btn-save" aria-label="存档">
         <span class="nav-icon">💾</span>
         <span>存档</span>
@@ -523,7 +517,6 @@ const UI = {
     `;
     document.getElementById('m-btn-next').onclick = () => this.nextTurn();
     document.getElementById('m-btn-left').onclick = () => this.toggleDrawer('left-panel');
-    document.getElementById('m-btn-quick').onclick = () => this.quickStart();
     document.getElementById('m-btn-save').onclick = () => this.showSavePanel('save');
     document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
 

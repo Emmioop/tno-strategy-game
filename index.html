@@ -80,6 +80,7 @@
     </div>
 
     <button class="btn-enter" id="btn-start">进入帝国总理府 ▸</button>
+    <button class="btn-secondary" id="btn-quick-start-splash" style="margin-top:10px;border-color:var(--accent-gold);color:var(--accent-gold);padding:10px 24px;font-size:14px;">⚡ 快速开始（普通·历史模式）</button>
     <button class="btn-secondary" id="btn-continue" style="margin-top:10px;display:none;">继续游戏 ▸</button>
     <button class="btn-secondary" id="btn-tutorial-splash" style="margin-top:10px;background:transparent;border-color:var(--border);color:var(--text-secondary);padding:8px 24px;font-size:13px;">阅读教程</button>
   </div>
@@ -249,6 +250,13 @@
     // 启动逻辑
     document.getElementById('btn-start').addEventListener('click', () => {
       UI.start(Game.gameMode);
+    });
+
+    // 快速开始：普通难度 + 历史模式
+    document.getElementById('btn-quick-start-splash').addEventListener('click', () => {
+      Game.difficulty = 'normal';
+      Game.gameMode = 'historical';
+      UI.start('historical');
     });
 
     // 继续游戏
