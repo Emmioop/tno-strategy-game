@@ -253,8 +253,9 @@
 
       for (const [cid, cdata] of Object.entries(data.countries)) {
         const combinedPath = new Path2D();
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         let totalArea = 0;
+        let largestPathBBox = null;
+        let largestPathArea = 0;
 
         for (const dStr of cdata.p) {
           try {
@@ -263,14 +264,13 @@
             try { combinedPath.addPath(new Path2D(dStr)); } catch (_) {}
           }
 
-          // 解析路径数据计算边界
           const bbox = this._computePathBBox(dStr);
           if (bbox) {
-            minX = Math.min(minX, bbox.minX);
-            minY = Math.min(minY, bbox.minY);
-            maxX = Math.max(maxX, bbox.maxX);
-            maxY = Math.max(maxY, bbox.maxY);
             totalArea += bbox.area;
+            if (bbox.area > largestPathArea) {
+              largestPathArea = bbox.area;
+              largestPathBBox = bbox;
+            }
           }
         }
 
@@ -282,10 +282,10 @@
           mapId
         });
 
-        // 计算标签位置（中心点 + 面积）
-        if (isFinite(minX) && isFinite(minY)) {
-          const cx = (minX + maxX) / 2;
-          const cy = (minY + maxY) / 2;
+        // 用面积最大的子路径作为标签位置（避免飞地/殖民地偏移中心点）
+        if (largestPathBBox) {
+          const cx = (largestPathBBox.minX + largestPathBBox.maxX) / 2;
+          const cy = (largestPathBBox.minY + largestPathBBox.maxY) / 2;
           this._labelCache[cid] = { x: cx, y: cy, area: totalArea };
         }
       }
@@ -294,27 +294,131 @@
 
     _computePathBBox(dStr) {
       try {
-        // 提取路径中的所有坐标
-        const nums = [];
-        const matches = dStr.match(/-?[\d.]+/g);
-        if (!matches || matches.length < 2) return null;
+        // 正确解析 SVG path 命令，提取顶点坐标
+        const points = [];
+        let cx = 0, cy = 0;
+        // 用正则匹配：命令字母 + 后面跟的数字
+        const tokens = dStr.match(/[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]?\d+)?/g);
+        if (!tokens) return null;
 
-        for (let i = 0; i < matches.length; i += 2) {
-          const x = parseFloat(matches[i]);
-          const y = parseFloat(matches[i + 1]);
-          if (isFinite(x) && isFinite(y)) {
-            nums.push(x, y);
+        let i = 0;
+        while (i < tokens.length) {
+          const t = tokens[i];
+          if (/^[MmLlHhVvCcSsQqTtAaZz]$/.test(t)) {
+            const cmd = t;
+            const isRelative = cmd === cmd.toLowerCase();
+            switch (cmd.toUpperCase()) {
+              case 'M': case 'L': {
+                // M/L: x,y 对
+                if (i + 2 < tokens.length) {
+                  const x = parseFloat(tokens[i + 1]);
+                  const y = parseFloat(tokens[i + 2]);
+                  if (isRelative) { cx += x; cy += y; } else { cx = x; cy = y; }
+                  points.push([cx, cy]);
+                  i += 3;
+                  // 后续的连续 x,y 对（隐式 L）
+                  while (i + 1 < tokens.length && !/^[MmLlHhVvCcSsQqTtAaZz]$/.test(tokens[i])) {
+                    const nx = parseFloat(tokens[i]);
+                    const ny = parseFloat(tokens[i + 1]);
+                    if (isRelative) { cx += nx; cy += ny; } else { cx = nx; cy = ny; }
+                    points.push([cx, cy]);
+                    i += 2;
+                  }
+                } else { i++; }
+                break;
+              }
+              case 'H': {
+                // H: 水平直线
+                if (i + 1 < tokens.length) {
+                  const v = parseFloat(tokens[i + 1]);
+                  if (isRelative) { cx += v; } else { cx = v; }
+                  points.push([cx, cy]);
+                  i += 2;
+                } else { i++; }
+                break;
+              }
+              case 'V': {
+                // V: 垂直直线
+                if (i + 1 < tokens.length) {
+                  const v = parseFloat(tokens[i + 1]);
+                  if (isRelative) { cy += v; } else { cy = v; }
+                  points.push([cx, cy]);
+                  i += 2;
+                } else { i++; }
+                break;
+              }
+              case 'C': case 'S': {
+                // C/S: 3 对坐标（控制点+终点）
+                if (i + 6 < tokens.length) {
+                  for (let k = 0; k < 3; k++) {
+                    const x = parseFloat(tokens[i + 1 + k * 2]);
+                    const y = parseFloat(tokens[i + 2 + k * 2]);
+                    let px, py;
+                    if (isRelative) { px = cx + x; py = cy + y; } else { px = x; py = y; }
+                    points.push([px, py]);
+                  }
+                  cx = points[points.length - 1][0];
+                  cy = points[points.length - 1][1];
+                  i += 7;
+                } else { i++; }
+                break;
+              }
+              case 'Q': case 'T': {
+                // Q/T: 2 对坐标
+                if (i + 4 < tokens.length) {
+                  for (let k = 0; k < 2; k++) {
+                    const x = parseFloat(tokens[i + 1 + k * 2]);
+                    const y = parseFloat(tokens[i + 2 + k * 2]);
+                    let px, py;
+                    if (isRelative) { px = cx + x; py = cy + y; } else { px = x; py = y; }
+                    points.push([px, py]);
+                  }
+                  cx = points[points.length - 1][0];
+                  cy = points[points.length - 1][1];
+                  i += 5;
+                } else { i++; }
+                break;
+              }
+              case 'Z': {
+                i++;
+                break;
+              }
+              case 'A': {
+                // A: rx,ry,x-rotation,large-arc, sweep, x,y
+                if (i + 7 < tokens.length) {
+                  const x = parseFloat(tokens[i + 6]);
+                  const y = parseFloat(tokens[i + 7]);
+                  if (isRelative) { cx += x; cy += y; } else { cx = x; cy = y; }
+                  points.push([cx, cy]);
+                  i += 8;
+                } else { i++; }
+                break;
+              }
+              default:
+                i++;
+            }
+          } else {
+            // 可能是隐式 M 后的坐标
+            const x = parseFloat(t);
+            const y = parseFloat(tokens[i + 1]);
+            if (isFinite(x) && isFinite(y)) {
+              cx = x; cy = y;
+              points.push([cx, cy]);
+              i += 2;
+            } else {
+              i++;
+            }
           }
         }
 
-        if (nums.length < 4) return null;
+        if (points.length < 2) return null;
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        for (let i = 0; i < nums.length; i += 2) {
-          minX = Math.min(minX, nums[i]);
-          minY = Math.min(minY, nums[i + 1]);
-          maxX = Math.max(maxX, nums[i]);
-          maxY = Math.max(maxY, nums[i + 1]);
+        for (const [px, py] of points) {
+          minX = Math.min(minX, px);
+          minY = Math.min(minY, py);
+          maxX = Math.max(maxX, px);
+          maxY = Math.max(maxY, py);
         }
 
         const w = maxX - minX;
