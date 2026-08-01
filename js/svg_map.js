@@ -166,6 +166,9 @@
       this._animId = null;
       this._dirty = true;
       this._destroyed = false;
+      this._renderScale = 1;
+      this._renderOffsetX = 0;
+      this._renderOffsetY = 0;
 
       this._bindPointer();
       this._bindResize();
@@ -441,9 +444,15 @@
 
     _screenToWorld(sx, sy) {
       const r = this._getCssRect(); if (!r) return [0, 0];
+      const dpr = Math.min(window.devicePixelRatio || 1, this.options.dprMax);
+      const scale = this._renderScale || 1;
+      const offX = this._renderOffsetX || 0;
+      const offY = this._renderOffsetY || 0;
+      const pxX = sx * dpr;
+      const pxY = sy * dpr;
       return [
-        this.view.x + (sx / r.width) * this.view.w,
-        this.view.y + (sy / r.height) * this.view.h
+        (pxX - offX) / scale,
+        (pxY - offY) / scale
       ];
     }
 
@@ -520,9 +529,26 @@
       ctx.fillStyle = this.options.bgColor;
       ctx.fillRect(0, 0, targetW, targetH);
 
-      const sx = targetW / this.view.w;
-      const sy = targetH / this.view.h;
-      ctx.setTransform(sx, 0, 0, sy, -this.view.x * sx, -this.view.y * sy);
+      const mapAspect = this.view.w / this.view.h;
+      const canvasAspect = targetW / targetH;
+      let scale, offsetX, offsetY;
+
+      if (canvasAspect > mapAspect) {
+        scale = targetH / this.view.h;
+        offsetX = (targetW - this.view.w * scale) / 2;
+        offsetY = 0;
+      } else {
+        scale = targetW / this.view.w;
+        offsetX = 0;
+        offsetY = (targetH - this.view.h * scale) / 2;
+      }
+      this._renderScale = scale;
+      this._renderOffsetX = offsetX;
+      this._renderOffsetY = offsetY;
+
+      ctx.setTransform(scale, 0, 0, scale,
+        offsetX - this.view.x * scale,
+        offsetY - this.view.y * scale);
 
       if (!this.currentMapData) {
         ctx.fillStyle = this.options.oceanColor;
@@ -536,8 +562,8 @@
       }
 
       ctx.fillStyle = this.options.oceanColor;
-      ctx.fillRect(this.view.x - this.view.w, this.view.y - this.view.h,
-                   this.view.w * 3, this.view.h * 3);
+      ctx.fillRect(this.view.x - 1000, this.view.y - 1000,
+                   this.view.w + 2000, this.view.h + 2000);
 
       for (const [cid, path] of this.pathCache) {
         const colors = getFactionColor(cid);
