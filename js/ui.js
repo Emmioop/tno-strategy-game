@@ -2337,8 +2337,15 @@ const UI = {
     const modal = document.getElementById('event-modal');
     const dateStr = Game.getDateStr();
 
+    // 检查所有选项可用性，若全禁用则启用第一个作为兜底
+    const results = ev.choices.map((c) => Game.canChooseEventOption(ev, c));
+    const allDisabled = results.every((ok) => !ok);
+    if (allDisabled && ev.choices.length > 0) {
+      results[0] = true;
+    }
+
     const choicesHtml = ev.choices.map((c, i) => {
-      const canChoose = Game.canChooseEventOption(ev, c);
+      const canChoose = results[i];
       const cls = canChoose ? '' : 'disabled';
       const effectsHtml = c.effects ? this.renderEffectsPreview(c.effects) : '';
       return `

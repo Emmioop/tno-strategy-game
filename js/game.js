@@ -758,8 +758,13 @@ const Game = {
 
   // ===== 检查选项（事件）是否可用 =====
   canChooseEventOption(ev, choice) {
-    if (choice.condition && !choice.condition(this.state)) return false;
-    return true;
+    if (!choice.condition) return true;
+    try {
+      return !!choice.condition(this.state);
+    } catch (e) {
+      console.warn('[事件选项] condition执行异常，视为可用:', e.message);
+      return true;
+    }
   },
 
   // ===== 计算每回合收支 =====
