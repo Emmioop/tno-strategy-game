@@ -533,15 +533,19 @@
     _renderLabels(ctx) {
       if (!this.currentMapData || !this._labelCache) return;
 
-      // 计算当前缩放级别下的字体大小
-      const zoomLevel = this._getZoomLevel();
+      const cssW = this._cssW || this.canvas.width;
+      const cssH = this._cssH || this.canvas.height;
+      const scale = this._renderScale || 1;
+      if (!scale) return;
 
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
+      // 基础字体大小（CSS像素）：根据屏幕尺寸动态调整
+      const baseSizeCss = Math.min(cssW, cssH) * 0.028;
+
       for (const [cid, pos] of Object.entries(this._labelCache)) {
-        // 获取中文名
         let name = null;
         const feature = this.featureIndex.get(cid);
         if (feature && feature.zh) {
@@ -551,50 +555,47 @@
         }
         if (!name) continue;
 
-        // 跳过太小的国家（在高缩放下才显示）
+        // 跳过太小的国家
         const area = pos.area || 0;
-        const minArea = zoomLevel < 0.5 ? 5000 : zoomLevel < 1 ? 1500 : 300;
-        if (area < minArea) continue;
+        if (area < 500) continue;
 
-        const fontSize = this._getFontSize(area, zoomLevel, name);
-        ctx.font = `bold ${fontSize}px 'PingFang SC', 'Microsoft YaHei', sans-serif`;
+        // 根据国家面积和名字长度计算CSS像素下的字体大小
+        const charLen = name.length;
+        const charFactor = Math.max(0.55, 1.0 - (charLen - 2) * 0.1);
+        const areaFactor = Math.sqrt(Math.min(area / 30000, 2.5));
+        const fontSizeCss = Math.max(7, Math.min(28, baseSizeCss * areaFactor * charFactor));
+
+        // 转换为世界坐标字体大小
+        const fontSizeWorld = fontSizeCss / scale;
+
+        ctx.font = `bold ${fontSizeWorld}px 'PingFang SC', 'Microsoft YaHei', sans-serif`;
 
         // 检查标签是否在可见区域内
         if (pos.x < this.view.x || pos.x > this.view.x + this.view.w ||
             pos.y < this.view.y || pos.y > this.view.y + this.view.h) continue;
 
-        // 背景阴影描边效果
-        ctx.lineWidth = Math.max(2, fontSize * 0.28);
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-        ctx.strokeText(name, pos.x, pos.y);
-
-        // 主文字
+        const strokeW = Math.max(0.5, fontSizeWorld * 0.18);
+        ctx.lineWidth = strokeW;
+        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(name, pos.x, pos.y);
+
+        // 超过6字换行显示
+        if (name.length > 6) {
+          const mid = Math.ceil(name.length / 2);
+          const line1 = name.substring(0, mid);
+          const line2 = name.substring(mid);
+          const lineH = fontSizeWorld * 0.9;
+          ctx.strokeText(line1, pos.x, pos.y - lineH);
+          ctx.fillText(line1, pos.x, pos.y - lineH);
+          ctx.strokeText(line2, pos.x, pos.y + lineH);
+          ctx.fillText(line2, pos.x, pos.y + lineH);
+        } else {
+          ctx.strokeText(name, pos.x, pos.y);
+          ctx.fillText(name, pos.x, pos.y);
+        }
       }
 
       ctx.restore();
-    }
-
-    _getZoomLevel() {
-      if (!this.currentMapData) return 1;
-      const v = this.currentMapData.view;
-      const scaleX = this.view.w / v.w;
-      const scaleY = this.view.h / v.h;
-      return Math.min(scaleX, scaleY);
-    }
-
-    _getBaseFontSize(zoomLevel) {
-      const base = 10;
-      return Math.max(5, base / Math.max(zoomLevel, 0.3));
-    }
-
-    _getFontSize(area, zoomLevel, name) {
-      const charLen = name.length;
-      const widthFactor = Math.min(1, 8 / Math.max(charLen, 3));
-      const areaFactor = Math.sqrt(Math.min(area / 20000, 2));
-      const zoomFactor = 1 / Math.max(zoomLevel, 0.3);
-      return Math.max(4, 8 * widthFactor * areaFactor * zoomFactor);
     }
 
     _getCountryName(id) {
@@ -877,6 +878,9 @@
       const cssH = Math.max(1, Math.floor(rect.height));
       const targetW = cssW * dpr;
       const targetH = cssH * dpr;
+      this._cssW = cssW;
+      this._cssH = cssH;
+      this._dpr = dpr;
       if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
         this.canvas.width = targetW;
         this.canvas.height = targetH;
