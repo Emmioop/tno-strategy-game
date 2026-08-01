@@ -861,6 +861,98 @@ const UI = {
           }
         }
       }
+
+      // --------- F. TNO SVG区域地图 切换 ---------
+      const headerDiv = document.querySelector('.map-header > div');
+      const svgMapBtn = document.getElementById('btn-svgmap-toggle');
+      if (svgMapBtn && !svgMapBtn._bound) {
+        svgMapBtn._bound = true;
+        svgMapBtn.addEventListener('click', () => {
+          const isActive = svgMapBtn.classList.contains('active');
+          const container = document.querySelector('.map-container');
+          const existingCanvas = document.getElementById('svg-regional-canvas');
+
+          if (isActive) {
+            svgMapBtn.classList.remove('active');
+            svgMapBtn.style.background = '';
+            existingCanvas && existingCanvas.remove();
+            if (UI._svgMapInstance) { UI._svgMapInstance.destroy(); UI._svgMapInstance = null; }
+            // 恢复原地图
+            const svgW = document.getElementById('svg-map-wrap');
+            const canvasW = document.getElementById('canvas-map-wrap');
+            if (svgW) svgW.style.display = '';
+            if (canvasW) canvasW.style.display = '';
+            return;
+          }
+
+          svgMapBtn.classList.add('active');
+          svgMapBtn.style.background = 'linear-gradient(135deg,#1a3a5a,#2a4a6a)';
+
+          // 隐藏原地图
+          const svgW = document.getElementById('svg-map-wrap');
+          const canvasW = document.getElementById('canvas-map-wrap');
+          if (svgW) svgW.style.display = 'none';
+          if (canvasW) canvasW.style.display = 'none';
+
+          // 创建SVG区域地图canvas
+          if (!existingCanvas) {
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'svg-regional-canvas';
+            newCanvas.style.cssText = 'width:100%;height:100%;display:block;touch-action:none;cursor:grab;background:#0e1520;border-radius:4px;';
+            container.appendChild(newCanvas);
+          }
+
+          // 显示地图选择器
+          let selector = document.getElementById('svg-map-selector');
+          if (!selector) {
+            const mapNames = SVGMap.MAP_NAMES;
+            const options = Object.entries(mapNames).map(([id, name]) =>
+              `<option value="${id}">${name}</option>`
+            ).join('');
+            selector = document.createElement('select');
+            selector.id = 'svg-map-selector';
+            selector.style.cssText = 'margin-left:8px;padding:3px 8px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;font-size:11px;cursor:pointer;';
+            selector.innerHTML = options;
+            headerDiv.appendChild(selector);
+          }
+
+          // 初始化SVGMap
+          if (!UI._svgMapInstance && typeof SVGMap !== 'undefined') {
+            const sc = document.getElementById('svg-regional-canvas');
+            const currentMapId = selector.value;
+            UI._svgMapInstance = new SVGMap(sc, {
+              dataDir: 'data/svg_maps',
+              autoLoad: false,
+            });
+
+            const tooltipDiv = document.createElement('div');
+            tooltipDiv.id = 'svg-map-tooltip';
+            tooltipDiv.style.cssText = 'position:absolute;pointer-events:none;background:rgba(10,14,22,0.92);border:1px solid #4a4030;color:#f0e8c8;padding:4px 8px;border-radius:3px;font-size:11px;line-height:1.4;white-space:nowrap;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.6);';
+            container.appendChild(tooltipDiv);
+
+            UI._svgMapInstance.on('hover', (evt) => {
+              const f = evt && evt.feature;
+              if (!f) { tooltipDiv.style.display = 'none'; return; }
+              const rect = container.getBoundingClientRect();
+              tooltipDiv.innerHTML = `<b>${f.zh}</b><br><span style="color:#a0a0b0">ID: ${f.id}</span>`;
+              tooltipDiv.style.left = Math.min(rect.width - 80, evt.x - rect.left + 12) + 'px';
+              tooltipDiv.style.top = Math.min(rect.height - 40, evt.y - rect.top + 12) + 'px';
+              tooltipDiv.style.display = 'block';
+            });
+            UI._svgMapInstance.on('hoverout', () => { tooltipDiv.style.display = 'none'; });
+            UI._svgMapInstance.on('click', (evt) => {
+              const f = evt && evt.feature;
+              if (f) UI.toast(`${f.zh} [${f.id}]`, 'info');
+            });
+
+            UI._svgMapInstance.loadMap(currentMapId);
+          }
+
+          selector.onchange = () => {
+            if (UI._svgMapInstance) UI._svgMapInstance.loadMap(selector.value);
+          };
+        });
+      }
     }, 0);
   },
 
@@ -1223,6 +1315,7 @@ const UI = {
             <button class="zm-btn" data-zv="africa" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇪🇬 非洲</button>
             <button id="btn-lvl-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(50,40,20,0.7);color:${userLevel === 1 ? '#a0c8e0' : '#ffe8a0'};border:1px solid #6a5a3a;border-radius:4px;cursor:pointer" title="显示层级：国家级 vs 战区级/军阀">Lv ${userLevel}</button>
             <button id="btn-renderer-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(30,35,50,0.7);color:${useCanvas ? '#8ad0ff' : '#f0c890'};border:1px solid #4a5a6a;border-radius:4px;cursor:pointer" title="渲染器切换：Canvas(性能优先，省11MB) / SVG(细节完整)">${useCanvas ? 'Canvas' : 'SVG'}</button>
+            <button id="btn-svgmap-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(40,60,80,0.7);color:#8ac8e8;border:1px solid #4a6a7a;border-radius:4px;cursor:pointer" title="TNO区域矢量地图 (lilaui作品)">🗺 TNO地图</button>
             <div style="font-size:12px;color:var(--text-muted);margin-left:8px">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
           </div>
         </div>

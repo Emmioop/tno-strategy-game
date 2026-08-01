@@ -26,3 +26,8 @@ map_*.png
 
 # 启动测试临时文件
 _startup_test.js
+
+# 大型合并文件/源文件
+data/svg_maps/svg_countries.json
+OneDrive_2026-08-01.zip
+map_source/
