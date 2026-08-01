@@ -665,7 +665,7 @@ const UI = {
         this._bindMapPostRender.bind(this)();
         break;
       case 'industry':
-        if (!this._tabCache.industry || tab === 'industry' && Game.state._dirtyIndustry) {
+        if (!this._tabCache.industry || Game.state._dirtyIndustry) {
           content.innerHTML = this.renderIndustry();
           this._tabCache.industry = { html: content.innerHTML };
           delete Game.state._dirtyIndustry;

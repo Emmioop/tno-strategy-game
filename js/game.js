@@ -638,6 +638,8 @@ const Game = {
       name: b.name,
       turnsLeft: b.buildTime
     });
+    this.state._dirtyIndustry = true;
+    this.state._dirtyNation = true;
 
     return { ok: true, msg: `${b.name} 开始建造，${b.buildTime}季度后完成` };
   },
@@ -653,6 +655,8 @@ const Game = {
     this.state.buildings[buildingId]--;
     // 返还少量资金
     this.state.resources.money += Math.floor(b.cost * 0.3);
+    this.state._dirtyIndustry = true;
+    this.state._dirtyNation = true;
     return { ok: true, msg: `${b.name} 已拆除，返还部分资金` };
   },
 
@@ -1012,6 +1016,10 @@ const Game = {
     if (Math.random() < 0.4) {
       this.generateRandomNews();
     }
+
+    // 标记所有需要刷新的Tab
+    this.state._dirtyIndustry = true;
+    this.state._dirtyNation = true;
 
     return { income, completed, turnEvents };
   },
