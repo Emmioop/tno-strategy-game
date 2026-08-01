@@ -359,7 +359,8 @@ const UI = {
     // 增量更新：只更新数值文本，不重建DOM（性能提升~10x）
     const c = this._topbarCache;
     ['money','manpower','stability','deterrence','militaryPower','nukeDeter','nukes','research'].forEach(k => {
-      if (c.vals[k]) c.vals[k].firstChild.nodeValue = String(fmt(r[k]));
+      const newVal = String(fmt(r[k]));
+      if (c.vals[k] && c.vals[k].textContent !== newVal) c.vals[k].textContent = newVal;
       if (c.dels[k]) c.dels[k].innerHTML = fmtDelta(income[k]);
     });
     if (c.leader && c.leader.textContent !== s.leader.name) c.leader.textContent = s.leader.name;
@@ -665,11 +666,7 @@ const UI = {
         this._bindMapPostRender.bind(this)();
         break;
       case 'industry':
-        if (!this._tabCache.industry || Game.state._dirtyIndustry) {
-          content.innerHTML = this.renderIndustry();
-          this._tabCache.industry = { html: content.innerHTML };
-          delete Game.state._dirtyIndustry;
-        } else content.innerHTML = this._tabCache.industry.html;
+        content.innerHTML = this.renderIndustry();
         break;
       case 'policy':
         content.innerHTML = this.renderPolicy();
