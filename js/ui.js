@@ -2952,8 +2952,14 @@ const UI = {
         </button>`;
     }).join('');
 
+    const imgSrc = this._getEventImage(ev);
+
     modal.innerHTML = `
       <div class="modal-box">
+        <div class="event-image-banner-wrap">
+          <img class="event-image-banner" src="${imgSrc}" alt="" loading="eager" decoding="async"
+               onerror="this.style.opacity='0'" />
+        </div>
         <div class="modal-header">
           <div class="m-date">${dateStr}</div>
           <div class="m-title">${ev.title}</div>

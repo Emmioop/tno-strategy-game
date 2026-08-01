@@ -740,26 +740,18 @@ body {
 .event-image-banner-wrap {
   position: relative;
   width: 100%;
-  height: 220px;
+  height: 200px;
   overflow: hidden;
   border-bottom: 2px solid var(--accent-blood);
   background: #1a1a20;
 }
 .event-image-banner {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #1a1a20;
-}
-.event-image-banner.event-image-real {
   object-fit: cover;
-  opacity: 1;
+  display: block;
 }
-.event-image-banner::after {
+.event-image-banner-wrap::after {
   content: '';
   position: absolute;
   inset: 0;
