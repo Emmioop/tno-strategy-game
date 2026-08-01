@@ -2584,7 +2584,8 @@ const UI = {
     const noise = `<filter xmlns='http://www.w3.org/2000/svg' id='noise'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' result='n'/><feColorMatrix in='n' type='matrix' values='0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0 0.15  0 0 0 0.15 0'/></filter>`;
     const svgWithNoise = svg.replace("<defs>", "<defs>" + noise).replace(/<rect width='480' height='180' fill='url\(#g\)'\/>/, "<rect width='480' height='180' fill='url(#g)'/><rect width='480' height='180' filter='url(#noise)' opacity='0.4'/>");
 
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgWithNoise);
+    // encodeURIComponent 不编码单引号，需手动转义，否则 CSS url('...') 会被 SVG 内部单引号截断
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgWithNoise).replace(/'/g, '%27');
   },
 
   showEventModal(ev) {
