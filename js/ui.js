@@ -508,6 +508,10 @@ const UI = {
         ${crisisBadge}
       </button>
       <button class="btn-next-turn" id="m-btn-next">下一季度 ▸</button>
+      <button class="mobile-nav-btn" id="m-btn-quick" aria-label="速开" style="color:var(--accent-gold);">
+        <span class="nav-icon">⚡</span>
+        <span>速开</span>
+      </button>
       <button class="mobile-nav-btn" id="m-btn-save" aria-label="存档">
         <span class="nav-icon">💾</span>
         <span>存档</span>
@@ -519,6 +523,7 @@ const UI = {
     `;
     document.getElementById('m-btn-next').onclick = () => this.nextTurn();
     document.getElementById('m-btn-left').onclick = () => this.toggleDrawer('left-panel');
+    document.getElementById('m-btn-quick').onclick = () => this.quickStart();
     document.getElementById('m-btn-save').onclick = () => this.showSavePanel('save');
     document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
 
