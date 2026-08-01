@@ -2513,158 +2513,357 @@ const UI = {
 
     // 优先使用真实历史风格图片（按事件ID精确映射）
     const realImages = {
+      // 登月/太空
       'ev_moon_landing': 'img/events/ev_moon_landing.jpg',
+      'ev_space_race_2': 'img/events/ev_moon_landing.jpg',
+      'ev_us_space_program_1975': 'img/events/ev_moon_landing.jpg',
+      'ev_space_race_mars': 'img/events/ev_moon_landing.jpg',
+      'ev_mars_landing': 'img/events/ev_moon_landing.jpg',
+      'ev_space_station': 'img/events/ev_moon_landing.jpg',
+      // 刺杀/死亡
       'ev_hitler_assassinated': 'img/events/ev_hitler_assassinated.jpg',
       'ev_hitler_death': 'img/events/ev_hitler_death.jpg',
+      'ev_us_kennedy_assassination': 'img/events/ev_hitler_assassinated.jpg',
+      // 继承
       'ev_succession_announcement': 'img/events/ev_succession_announcement.jpg',
       'ev_choose_successor': 'img/events/ev_succession_announcement.jpg',
+      // 内战
       'ev_civil_war_battles': 'img/events/ev_civil_war_battles.jpg',
       'ev_civil_war_burgundy': 'img/events/ev_civil_war_burgundy.jpg',
       'ev_civil_war_climax': 'img/events/ev_civil_war_battles.jpg',
       'ev_civil_war_end': 'img/events/ev_civil_war_battles.jpg',
+      'ev_civil_war_colonial_crack': 'img/events/ev_civil_war_battles.jpg',
+      'ev_us_second_civil_war': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_french_civil_war': 'img/events/ev_civil_war_battles.jpg',
+      'ev_iberian_civil_war_1978': 'img/events/ev_iberian_crisis.jpg',
+      // 勃艮第
       'ev_burgundian_crisis': 'img/events/ev_civil_war_burgundy.jpg',
       'ev_burgundian_war_result': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundian_infiltration': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_knights_state': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_deep_infiltration': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_nuclear_theft': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_agents_ofn': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_doomsday_discovery': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_nuclear_test': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_burgundy_confrontation': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_aftermath': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_remnant_terror': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundy_final_shadow': 'img/events/ev_civil_war_burgundy.jpg',
+      // 经济
       'ev_economic_miracle_1970': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_economic_bubble_1982': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_economic_collapse_1975': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_economic_globalization': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_global_boom_1985': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_brazil_economic_miracle': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_french_occupation_costs': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_manchukuo_industrialization': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_black_market': 'img/events/ev_black_market.jpg',
+      'ev_neutral_zone_blackmarket': 'img/events/ev_black_market.jpg',
+      // 核武
       'ev_nuclear_arms_race': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_nuclear_accident_germany': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_chernobyl_equivalent': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_nuclear_disarmament': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_disarmament_geneva': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_nuclear_near_miss': 'img/events/ev_third_world_war_crisis.jpg',
+      'ev_third_world_war_crisis': 'img/events/ev_third_world_war_crisis.jpg',
+      'ev_russia_nuclear_threat': 'img/events/ev_third_world_war_crisis.jpg',
+      // 俄罗斯
       'ev_russia_reunification_threat': 'img/events/ev_russia_reunification_threat.jpg',
       'ev_russia_unified': 'img/events/ev_russia_unified.jpg',
       'ev_russia_warlords_1968': 'img/events/ev_russia_reunification_threat.jpg',
-      'ev_us_civil_unrest': 'img/events/ev_us_civil_unrest.jpg',
-      'ev_oil_crisis_1975': 'img/events/ev_oil_crisis_1975.jpg',
-      'ev_computer_revolution': 'img/events/ev_computer_revolution.jpg',
-      'ev_student_protests_1962': 'img/events/ev_student_protests_1962.jpg',
-      'ev_black_market': 'img/events/ev_black_market.jpg',
-      'ev_west_russia_remnants': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_unification_type': 'img/events/ev_russia_reunification_threat.jpg',
+      'ev_russia_democratic_unified': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_communist_unified': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_fascist_unified': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_madman_unified': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_recovery_1': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_recovery_2': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_pressure_1979': 'img/events/ev_russia_reunification_threat.jpg',
+      'ev_taboritsky_collapses': 'img/events/ev_russia_reunification_threat.jpg',
+      'ev_russia_monarchist_unified': 'img/events/ev_russia_unified.jpg',
       'ev_second_west_russian_war': 'img/events/ev_west_russia_remnants.jpg',
-      'ev_ofn_diplomacy_1967': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_west_russia_final': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_war_aftermath': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_final_resolve': 'img/events/ev_russia_unified.jpg',
+      'ev_wrrf_consolidation': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_komi_democratic_experiment': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_omsk_black_league': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_sverdlovsk_rokossovsky': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_tomsk_scholar_republic': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_siberian_black_army': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_magadan_warlord': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_amur_white_army': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_chita_monarchist': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_buryat_sablin': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_irktusk_yagoda': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_kemerovo_rurik': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_vyatka_monarchy': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_samara_vlasov': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_aryan_brotherhood': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_ural_border_war': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_superregional_war': 'img/events/ev_russia_unified.jpg',
+      'ev_tabortsy_purge': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_tomsk_yagoda': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_omsk_black_league': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_komi_taboritsky': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_magadan': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_wrrf': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_russia_unification_war': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_unified_emergence': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_superpower': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_border_tension': 'img/events/ev_russia_reunification_threat.jpg',
+      'ev_russia_reconciliation': 'img/events/ev_russia_unified.jpg',
+      'ev_moscow_front_crisis': 'img/events/ev_west_russia_remnants.jpg',
+      // 美国
+      'ev_us_civil_unrest': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_civil_rights_1965': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_civil_rights_1963': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_presidential_election_1968': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_economic_recovery_1972': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_detente_1980': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_us_presidential_election_1988': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_race_riots': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_ofn_paralysis': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_recovery': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_civil_rights_legacy': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_us_new_era': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_ofn_intervention_africa_1976': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      // 日本
       'ev_japan_sphere_1968': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_economic_collapse': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_military_coup_1965': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_economic_reform_1980': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_democratization_1985': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_economic_crisis': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_navy_army_split': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_yen_collapse': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_japan_reform': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_cps_manchuria_resistance': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_cps_korea_uprising': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_cps_china_inferno': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_cps_decolonization': 'img/events/ev_japan_sphere_1968.jpg',
+      // 意大利
       'ev_italy_triumvirate': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italy_leaves_sphere': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italy_leaves_german_sphere': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italian_democracy_movement': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italian_economic_crisis': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italian_colonial_wars': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italy_ciano': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italy_democratization': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_italian_africa_collapse': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_triumvirate_formation': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_triumvirate_fracture': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_mediterranean_new_order': 'img/events/ev_italy_triumvirate.jpg',
+      // 奴隶
       'ev_slave_question': 'img/events/ev_slave_question.jpg',
+      'ev_slave_revolt_cycle': 'img/events/ev_slave_question.jpg',
+      'ev_slave_rebellion_east': 'img/events/ev_slave_question.jpg',
+      'ev_speer_slave_reform': 'img/events/ev_slave_question.jpg',
+      'ev_german_economic_crisis_1985': 'img/events/ev_slave_question.jpg',
+      // 改革/重建
       'ev_reconstruction_plan': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_speer_reforms_deep': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_reform_movement_1987': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_berlin_wall_equivalent': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_speer_economic_blueprint': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_speer_ofn_backchannel': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_speer_old_guard_resistance': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_speer_victory_consolidation': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_speer_student_guard': 'img/events/ev_student_protests_1962.jpg',
+      'ev_bormann_stagnation': 'img/events/ev_reconstruction_plan.jpg',
+      // 外交
+      'ev_ofn_diplomacy_1967': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_rommel_mediation': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_neutral_zone_diplomats': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_neutral_zone_resolution': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_end_of_cold_war': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_new_world_order_1992': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      // 抗议/学生
+      'ev_student_protests_1962': 'img/events/ev_student_protests_1962.jpg',
+      'ev_student_movement_1968': 'img/events/ev_student_protests_1962.jpg',
+      // 伊比利亚
       'ev_iberian_crisis': 'img/events/ev_iberian_crisis.jpg',
       'ev_iberian_collapse': 'img/events/ev_iberian_crisis.jpg',
+      'ev_iberian_federation_strain': 'img/events/ev_iberian_crisis.jpg',
+      'ev_iberia_strain': 'img/events/ev_iberian_crisis.jpg',
+      'ev_spanish_civil_unrest': 'img/events/ev_iberian_crisis.jpg',
+      // 法国
       'ev_french_resistance': 'img/events/ev_french_resistance.jpg',
-      'ev_north_africa_rising': 'img/events/ev_north_africa_rising.jpg',
-      'ev_internet_era': 'img/events/ev_internet_era.jpg',
-      'ev_environmental_crisis': 'img/events/ev_environmental_crisis.jpg',
-      'ev_third_world_war_crisis': 'img/events/ev_third_world_war_crisis.jpg',
+      'ev_free_france_rallying': 'img/events/ev_french_resistance.jpg',
+      'ev_degaulle_return': 'img/events/ev_french_resistance.jpg',
+      'ev_bretagne_revolt': 'img/events/ev_french_resistance.jpg',
+      'ev_british_resistance': 'img/events/ev_french_resistance.jpg',
+      'ev_british_underground': 'img/events/ev_french_resistance.jpg',
+      // 殖民地/去殖民
       'ev_decolonization_wave': 'img/events/ev_decolonization_wave.jpg',
-      'ev_demographic_winter': 'img/events/ev_demographic_winter.jpg',
+      'ev_ukraine_independence': 'img/events/ev_decolonization_wave.jpg',
+      'ev_ostland_collapse': 'img/events/ev_decolonization_wave.jpg',
+      'ev_caucasus_uprising': 'img/events/ev_decolonization_wave.jpg',
+      'ev_bohemia_annex': 'img/events/ev_decolonization_wave.jpg',
+      'ev_danish_sovereignty': 'img/events/ev_decolonization_wave.jpg',
+      'ev_norway_sovereignty': 'img/events/ev_decolonization_wave.jpg',
+      'ev_dutch_annex': 'img/events/ev_decolonization_wave.jpg',
+      'ev_colonial_revolts_summary': 'img/events/ev_decolonization_wave.jpg',
+      'ev_indonesian_independence': 'img/events/ev_decolonization_wave.jpg',
+      // 非洲
+      'ev_north_africa_rising': 'img/events/ev_north_africa_rising.jpg',
+      'ev_africa_scramble': 'img/events/ev_north_africa_rising.jpg',
+      'ev_south_africa_crisis': 'img/events/ev_north_africa_rising.jpg',
+      'ev_south_african_war': 'img/events/ev_north_africa_rising.jpg',
+      'ev_first_nile_war': 'img/events/ev_north_africa_rising.jpg',
+      'ev_saharan_war': 'img/events/ev_north_africa_rising.jpg',
+      'ev_somali_ethiopian_war': 'img/events/ev_north_africa_rising.jpg',
+      'ev_congo_dam_crisis': 'img/events/ev_north_africa_rising.jpg',
+      'ev_anarchy_west_africa': 'img/events/ev_north_africa_rising.jpg',
+      'ev_mediterranean_crisis': 'img/events/ev_north_africa_rising.jpg',
+      'ev_suez_crisis': 'img/events/ev_oil_crisis_1975.jpg',
+      // 石油/中东
+      'ev_oil_crisis_1975': 'img/events/ev_oil_crisis_1975.jpg',
+      'ev_oil_crisis_1979': 'img/events/ev_oil_crisis_1975.jpg',
+      'ev_iranian_revolution': 'img/events/ev_oil_crisis_1975.jpg',
+      'ev_lebanon_civil_war': 'img/events/ev_oil_crisis_1975.jpg',
+      // 科技/互联网
+      'ev_computer_revolution': 'img/events/ev_computer_revolution.jpg',
+      'ev_internet_era': 'img/events/ev_internet_era.jpg',
+      'ev_german_internet': 'img/events/ev_internet_era.jpg',
+      'ev_personal_computer': 'img/events/ev_computer_revolution.jpg',
+      'ev_technology_revolution_1995': 'img/events/ev_internet_era.jpg',
+      'ev_information_age': 'img/events/ev_internet_era.jpg',
+      // 环境
+      'ev_environmental_crisis': 'img/events/ev_environmental_crisis.jpg',
+      'ev_environmental_movement': 'img/events/ev_environmental_crisis.jpg',
+      'ev_atlantropa_consequences': 'img/events/ev_environmental_crisis.jpg',
+      'ev_atlantropa_aftermath': 'img/events/ev_environmental_crisis.jpg',
+      'ev_gibraltar_dam_maintenance': 'img/events/ev_environmental_crisis.jpg',
+      'ev_mediterranean_draining': 'img/events/ev_environmental_crisis.jpg',
+      // 千禧年/终局
       'ev_millennium_anxiety': 'img/events/ev_millennium_anxiety.jpg',
+      'ev_millennium_celebration': 'img/events/ev_millennium_anxiety.jpg',
+      'ev_final_five_years': 'img/events/ev_millennium_anxiety.jpg',
+      'ev_2000_finale': 'img/events/ev_millennium_anxiety.jpg',
     };
     if (realImages[ev.id]) return realImages[ev.id];
 
-    // 主题匹配规则：关键词 → 主题id
-    const rules = [
-      { id: 'moon',     kw: ['登月','月球','火箭','宇航','冯·布劳恩','太空','moon','rocket'] },
-      { id: 'assassin', kw: ['刺杀','刺客','遇刺','枪声','暗杀','贝格霍夫','assassin'] },
-      { id: 'death',    kw: ['元首之死','希特勒之死','死讯','葬礼','悼念','死亡','阿道夫'] },
-      { id: 'succession', kw: ['继承','继位','继承人','接班','权力','succession','successor','施佩尔','鲍曼','戈林','海德里希'] },
-      { id: 'civilwar', kw: ['内战','战火','战役','交火','战线','巷战','civil war','国防军','党卫军','叛乱','兵变'] },
-      { id: 'burgundy', kw: ['勃艮第','希姆莱','burgundy','himmler','党卫军','黑骑士'] },
-      { id: 'russia',   kw: ['俄罗斯','苏联','红军','西俄','莫斯科','军阀','russia','soviet','siberia','西伯利亚','鄂木斯克'] },
-      { id: 'america',  kw: ['美国','ofn','肯尼迪','华盛顿','美洲','america','usa','白宫','太平洋'] },
-      { id: 'japan',    kw: ['日本','共荣圈','天皇','东京','japan','共荣','太平洋战争','珍珠港'] },
-      { id: 'italy',    kw: ['意大利','地中海','罗马','墨索里尼','italy','italian','齐亚诺'] },
-      { id: 'economy',  kw: ['经济','工厂','马克','鲁尔','工业','失业','通胀','市场','economy'] },
-      { id: 'nuclear',  kw: ['核','原子','蘑菇云','核弹','核武','nuclear','原子弹','核战争'] },
-      { id: 'colony',   kw: ['殖民地','独立','总督辖区','乌克兰专员','奥斯兰','高加索','叛乱','起义','colony'] },
-      { id: 'diplomacy', kw: ['外交','谈判','会议','协定','条约','访问','会晤','diplomacy','summit'] },
-      { id: 'protest',  kw: ['抗议','学生','示威','游行','罢工','抗议','protest','riot'] },
-      { id: 'slave',    kw: ['奴隶','奴役','解放','slave','奴隶制'] },
-      { id: 'reform',   kw: ['改革','自由化','开放','reform','改革派'] },
-      { id: 'military', kw: ['军队','军备','军事','国防','建军','military','军力'] },
-    ];
+    // 复用共享主题匹配逻辑
+    const theme = this._matchEventTheme(ev);
 
-    let theme = 'default';
-    for (const r of rules) {
-      if (r.kw.some(k => text.includes(k) || id.includes(k))) { theme = r.id; break; }
-    }
-
-    // SVG 插画库：每个主题一个16:6宽幅历史风格剪影画
-    const svgs = {
-      moon: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a2e'/><stop offset='0.7' stop-color='#16213e'/><stop offset='1' stop-color='#0f0f1a'/></linearGradient><radialGradient id='moon' cx='0.5' cy='0.5'><stop offset='0' stop-color='#e8e0c0'/><stop offset='0.7' stop-color='#a89868'/><stop offset='1' stop-color='#605030'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='360' cy='60' r='28' fill='url(#moon)'/><circle cx='355' cy='55' r='4' fill='#605030' opacity='0.5'/><circle cx='365' cy='68' r='3' fill='#605030' opacity='0.5'/><circle cx='350' cy='70' r='2' fill='#605030' opacity='0.5'/><g fill='#e8c860'><circle cx='40' cy='30' r='1'/><circle cx='100' cy='20' r='1'/><circle cx='200' cy='15' r='1.5'/><circle cx='280' cy='25' r='1'/><circle cx='80' cy='50' r='1'/><circle cx='160' cy='40' r='1'/></g><path d='M180 160 L190 120 L200 100 L205 90 L210 100 L215 85 L220 95 L225 110 L240 160 Z' fill='#3a3a4a'/><path d='M190 120 L200 100 L210 110 L225 130 L240 160 L195 160 Z' fill='#2a2a3a' opacity='0.7'/><rect x='195' y='100' width='3' height='8' fill='#a83232'/><path d='M188 105 Q195 95 202 105' fill='none' stroke='#d44848' stroke-width='2'/><rect x='50' y='140' width='380' height='40' fill='#0a0a14'/><g fill='#5a5a6a' opacity='0.6'><rect x='60' y='120' width='15' height='30'/><rect x='90' y='110' width='20' height='40'/><rect x='120' y='115' width='12' height='35'/><rect x='380' y='118' width='18' height='32'/><rect x='410' y='112' width='14' height='38'/></g></svg>`,
-
-      assassin: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a0a0a'/><stop offset='1' stop-color='#0a0505'/></linearGradient><radialGradient id='blood' cx='0.5' cy='0.5'><stop offset='0' stop-color='#8a2020' stop-opacity='0.8'/><stop offset='1' stop-color='#3a0a0a' stop-opacity='0'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='120' rx='100' ry='40' fill='url(#blood)'/><path d='M180 60 L180 140 L300 140 L300 60 Q300 50 290 50 L190 50 Q180 50 180 60 Z' fill='#2a1a1a'/><path d='M180 60 L300 60 L290 50 L190 50 Z' fill='#3a2a2a'/><rect x='200' y='70' width='80' height='60' fill='#1a0a0a'/><circle cx='240' cy='100' r='12' fill='#5a2a2a' opacity='0.6'/><path d='M230 95 L250 105' stroke='#a83232' stroke-width='2'/><path d='M250 95 L230 105' stroke='#a83232' stroke-width='2'/><rect x='150' y='130' width='180' height='20' fill='#0a0505'/><g fill='#3a1a1a'><circle cx='245' cy='125' r='8'/><circle cx='260' cy='135' r='5'/><circle cx='225' cy='138' r='4'/></g><circle cx='340' cy='40' r='15' fill='#4a3a2a' opacity='0.7'/><path d='M330 35 Q340 25 350 35' fill='none' stroke='#6a5a4a' stroke-width='1'/></svg>`,
-
-      death: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a1a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='100' y='40' width='280' height='120' fill='#1c1c1c' stroke='#3a3a3a'/><rect x='100' y='40' width='280' height='15' fill='#2a2a2a'/><path d='M110 160 L110 55 L370 55 L370 160' fill='none' stroke='#4a4a4a' stroke-width='2'/><rect x='220' y='80' width='40' height='80' fill='#0a0a0a'/><circle cx='240' cy='110' r='18' fill='#1a1a1a' stroke='#4a4a4a' stroke-width='1.5'/><circle cx='234' cy='107' r='3' fill='#0a0a0a'/><circle cx='246' cy='107' r='3' fill='#0a0a0a'/><path d='M232 118 Q240 122 248 118' fill='none' stroke='#4a4a4a' stroke-width='1'/><path d='M238 105 L242 105 M240 103 L240 107' stroke='#4a4a4a' stroke-width='0.5'/><g fill='#5a4a3a' opacity='0.7'><circle cx='160' cy='100' r='4'/><circle cx='320' cy='100' r='4'/><rect x='155' y='105' width='10' height='3'/><rect x='315' y='105' width='10' height='3'/></g><rect x='150' y='125' width='180' height='3' fill='#3a2a1a'/><path d='M195 128 L285 128' stroke='#6a5a3a' stroke-width='1'/><g fill='#3a3a3a'><rect x='80' y='160' width='320' height='15'/><rect x='60' y='170' width='360' height='10'/></g></svg>`,
-
-      succession: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2014'/><stop offset='1' stop-color='#0f0a08'/></linearGradient><linearGradient id='gold' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#e8c860'/><stop offset='1' stop-color='#8a6a20'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M220 40 L260 40 L270 30 L210 30 Z' fill='url(#gold)'/><circle cx='240' cy='35' r='8' fill='#c93232'/><path d='M232 38 L248 38 L245 50 L235 50 Z' fill='url(#gold)'/><rect x='225' y='50' width='30' height='80' fill='#3a2a1a'/><rect x='230' y='55' width='20' height='70' fill='#5a4a2a'/><path d='M150 60 L330 60 L320 55 L160 55 Z' fill='#6a5a3a' opacity='0.6'/><path d='M180 70 L300 70' stroke='#8a7a4a' stroke-width='2' opacity='0.5'/><g fill='#8a7a4a' opacity='0.4'><rect x='80' y='130' width='320' height='40'/><rect x='80' y='130' width='320' height='5' fill='#a89060'/></g><g fill='#c9a84a' opacity='0.3'><circle cx='120' cy='100' r='2'/><circle cx='360' cy='100' r='2'/><circle cx='100' cy='90' r='1.5'/><circle cx='380' cy='90' r='1.5'/></g></svg>`,
-
-      civilwar: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a2a1a'/><stop offset='0.5' stop-color='#2a1a0a'/><stop offset='1' stop-color='#1a0a05'/></linearGradient><radialGradient id='fire' cx='0.5' cy='1'><stop offset='0' stop-color='#e85a20' stop-opacity='0.9'/><stop offset='0.5' stop-color='#a83210' stop-opacity='0.5'/><stop offset='1' stop-color='#3a0a00' stop-opacity='0'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='120' cy='160' rx='80' ry='40' fill='url(#fire)'/><ellipse cx='360' cy='160' rx='80' ry='40' fill='url(#fire)'/><ellipse cx='240' cy='165' rx='100' ry='30' fill='url(#fire)' opacity='0.7'/><g fill='#1a1a1a'><rect x='60' y='80' width='30' height='80'/><rect x='95' y='70' width='25' height='90'/><rect x='125' y='90' width='20' height='70'/><path d='M60 80 L90 70 L75 80 Z'/><rect x='350' y='85' width='28' height='75'/><rect x='385' y='75' width='22' height='85'/><rect x='412' y='90' width='18' height='70'/><path d='M350 85 L378 75 L364 85 Z'/></g><g fill='#3a3a3a'><rect x='200' y='100' width='80' height='60'/><rect x='210' y='90' width='15' height='20'/><rect x='255' y='85' width='18' height='25'/></g><path d='M210 85 Q215 70 220 85' fill='#d44848' opacity='0.6'/><path d='M258 80 Q263 65 268 80' fill='#d44848' opacity='0.6'/><g fill='#5a5a5a' opacity='0.8'><path d='M160 160 L165 130 L170 135 L175 125 L180 135 L185 130 L190 160 Z'/><path d='M300 160 L305 135 L310 140 L315 125 L320 140 L325 135 L330 160 Z'/></g><circle cx='380' cy='30' r='10' fill='#c9a84a' opacity='0.4'/></svg>`,
-
-      burgundy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a0a1a'/><stop offset='1' stop-color='#050208'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#0a0508'><path d='M180 160 L180 80 L200 60 L280 60 L300 80 L300 160 Z'/><path d='M195 90 L195 70 L215 55 L265 55 L285 70 L285 90 Z' fill='#1a0a14'/><rect x='225' y='100' width='30' height='60' fill='#000'/><path d='M225 100 L255 100 L250 95 L230 95 Z' fill='#2a1a24'/><g fill='#3a1a3a' opacity='0.6'><rect x='205' y='105' width='12' height='15'/><rect x='263' y='105' width='12' height='15'/></g><path d='M180 80 L200 60 L280 60 L300 80' fill='none' stroke='#4a2a4a' stroke-width='1'/><rect x='175' y='155' width='130' height='10' fill='#1a0a14'/></g><g fill='#4a2a4a' opacity='0.5'><circle cx='150' cy='120' r='3'/><circle cx='340' cy='120' r='3'/><rect x='145' y='125' width='10' height='2'/><rect x='335' y='125' width='10' height='2'/></g><path d='M240 30 L245 20 L250 30 L255 25 L250 35 L245 35 L240 30' fill='#6a3a6a' opacity='0.7'/><circle cx='247' cy='28' r='1.5' fill='#8a4a8a'/><g fill='#3a2a3a' opacity='0.3'><rect x='50' y='140' width='80' height='30'/><rect x='370' y='140' width='80' height='30'/></g></svg>`,
-
-      russia: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a5a6a'/><stop offset='0.6' stop-color='#3a4a5a'/><stop offset='1' stop-color='#1a2a3a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#e8e8e8' opacity='0.8'><circle cx='100' cy='30' r='1'/><circle cx='200' cy='20' r='1.5'/><circle cx='350' cy='25' r='1'/><circle cx='80' cy='50' r='1'/><circle cx='280' cy='40' r='1.5'/><circle cx='420' cy='35' r='1'/><circle cx='150' cy='55' r='1'/><circle cx='380' cy='55' r='1'/></g><path d='M0 140 Q120 110 240 120 Q360 130 480 115 L480 180 L0 180 Z' fill='#e8e8e8'/><path d='M0 150 Q120 130 240 135 Q360 140 480 125 L480 180 L0 180 Z' fill='#f8f8f8'/><g fill='#2a3a4a'><path d='M160 140 L165 115 L170 120 L175 105 L180 120 L185 115 L190 140 Z'/><path d='M300 145 L305 120 L310 125 L315 110 L320 125 L325 120 L330 145 Z'/><path d='M380 140 L385 118 L390 122 L395 108 L400 122 L405 118 L410 140 Z'/></g><g fill='#8a2a2a'><path d='M230 100 L240 80 L250 100 L245 105 L235 105 Z' opacity='0.7'/><path d='M237 85 L243 85 L240 75 Z' fill='#d44848'/></g><g fill='#1a1a2a' opacity='0.6'><rect x='60' y='130' width='15' height='20'/><rect x='78' y='125' width='12' height='25'/><rect x='92' y='132' width='10' height='18'/></g></svg>`,
-
-      america: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a2a4a'/><stop offset='1' stop-color='#0a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#3a5a8a' opacity='0.3'><rect x='0' y='0' width='240' height='90'/><rect x='0' y='0' width='120' height='45'/></g><g stroke='#e8e8e8' stroke-width='0.5' opacity='0.4'><line x1='0' y1='30' x2='240' y2='30'/><line x1='0' y1='60' x2='240' y2='60'/><line x1='40' y1='0' x2='40' y2='90'/><line x1='80' y1='0' x2='80' y2='90'/><line x1='120' y1='0' x2='120' y2='90'/><line x1='160' y1='0' x2='160' y2='90'/><line x1='200' y1='0' x2='200' y2='90'/></g><g transform='translate(320,100)'><path d='M0 60 L0 30 L5 25 L10 30 L10 60 Z' fill='#5a6a7a'/><path d='M-5 30 L15 30 L5 10 Z' fill='#6a7a8a'/><path d='M5 10 L5 0' stroke='#c9a84a' stroke-width='1'/><path d='M5 0 L20 -5 L25 5 L20 15 Z' fill='#3a6a9a' opacity='0.8'/><path d='M5 0 L-10 -3 L-15 7 L-10 12 Z' fill='#3a6a9a' opacity='0.8'/><path d='M5 0 L5 -15 L10 -10' fill='#3a6a9a' opacity='0.8'/></g><g fill='#6a8aba' opacity='0.5'><circle cx='80' cy='140' r='2'/><circle cx='150' cy='150' r='1.5'/><circle cx='200' cy='145' r='1'/><circle cx='100' cy='160' r='1'/></g></svg>`,
-
-      japan: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a3a1a'/><stop offset='1' stop-color='#1a1408'/></linearGradient><radialGradient id='sun' cx='0.5' cy='0.5'><stop offset='0' stop-color='#e84030'/><stop offset='0.7' stop-color='#a82020'/><stop offset='1' stop-color='#6a1010'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='60' r='30' fill='url(#sun)'/><g stroke='#c93232' stroke-width='1' opacity='0.5'><line x1='240' y1='20' x2='240' y2='5'/><line x1='280' y1='60' x2='295' y2='60'/><line x1='200' y1='60' x2='185' y2='60'/><line x1='270' y1='30' x2='280' y2='20'/><line x1='210' y1='30' x2='200' y2='20'/></g><g fill='#8a2a2a' opacity='0.8'><path d='M180 160 L180 110 L190 100 L290 100 L300 110 L300 160 Z'/><path d='M195 115 L195 105 L285 105 L285 115' fill='#6a1a1a'/><rect x='225' y='120' width='30' height='40' fill='#3a0a0a'/><path d='M225 120 L255 120 L250 115 L230 115 Z' fill='#5a1a1a'/></g><g fill='#c9a84a' opacity='0.3'><circle cx='100' cy='40' r='1'/><circle cx='380' cy='35' r='1'/><circle cx='420' cy='50' r='1'/><circle cx='60' cy='45' r='1'/></g></svg>`,
-
-      italy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a1a'/><stop offset='1' stop-color='#0f0f08'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#5a4a2a' opacity='0.6'><rect x='120' y='40' width='20' height='120'/><rect x='340' y='40' width='20' height='120'/><path d='M120 40 L140 40 L130 25 Z'/><path d='M340 40 L360 40 L350 25 Z'/></g><g fill='#8a7a4a' opacity='0.7'><rect x='125' y='45' width='3' height='110'/><rect x='132' y='45' width='3' height='110'/><rect x='345' y='45' width='3' height='110'/><rect x='352' y='45' width='3' height='110'/></g><path d='M200 160 L200 80 Q200 60 240 60 Q280 60 280 80 L280 160 Z' fill='#6a5a3a'/><path d='M200 80 Q220 50 240 60 Q260 50 280 80' fill='none' stroke='#8a7a4a' stroke-width='2'/><rect x='230' y='100' width='20' height='60' fill='#3a2a1a'/><circle cx='240' cy='70' r='8' fill='#c9a84a' opacity='0.6'/><g fill='#4a3a1a' opacity='0.5'><rect x='60' y='150' width='360' height='20'/></g></svg>`,
-
-      economy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a3a2a'/><stop offset='0.5' stop-color='#2a2a1a'/><stop offset='1' stop-color='#1a1a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#1a1a1a'><rect x='40' y='80' width='40' height='80'/><rect x='90' y='60' width='50' height='100'/><rect x='150' y='70' width='35' height='90'/><rect x='300' y='75' width='45' height='85'/><rect x='355' y='55' width='55' height='105'/><rect x='420' y='70' width='40' height='90'/></g><g fill='#3a3a2a'><rect x='45' y='90' width='8' height='10'/><rect x='60' y='90' width='8' height='10'/><rect x='45' y='110' width='8' height='10'/><rect x='60' y='110' width='8' height='10'/><rect x='100' y='75' width='8' height='10'/><rect x='115' y='75' width='8' height='10'/><rect x='100' y='95' width='8' height='10'/><rect x='115' y='95' width='8' height='10'/><rect x='365' y='70' width='10' height='12'/><rect x='385' y='70' width='10' height='12'/><rect x='365' y='95' width='10' height='12'/><rect x='385' y='95' width='10' height='12'/></g><g><rect x='55' y='40' width='12' height='45' fill='#2a2a2a'/><rect x='105' y='20' width='15' height='50' fill='#2a2a2a'/><rect x='165' y='30' width='10' height='45' fill='#2a2a2a'/><rect x='320' y='35' width='12' height='45' fill='#2a2a2a'/><rect x='375' y='10' width='18' height='50' fill='#2a2a2a'/></g><ellipse cx='60' cy='40' rx='8' ry='12' fill='#5a5a4a' opacity='0.7'/><ellipse cx='112' cy='20' rx='10' ry='15' fill='#6a6a5a' opacity='0.7'/><ellipse cx='170' cy='30' rx='7' ry='10' fill='#5a5a4a' opacity='0.6'/><ellipse cx='326' cy='35' rx='8' ry='12' fill='#6a6a5a' opacity='0.7'/><ellipse cx='384' cy='10' rx='12' ry='18' fill='#7a7a6a' opacity='0.8'/><g fill='#4a4a3a' opacity='0.4'><circle cx='240' cy='130' r='30'/><circle cx='250' cy='140' r='20'/></g></svg>`,
-
-      nuclear: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a0a'/><stop offset='0.5' stop-color='#2a2a1a'/><stop offset='1' stop-color='#0a0a05'/></linearGradient><radialGradient id='cloud' cx='0.5' cy='0.7'><stop offset='0' stop-color='#f8f0d8'/><stop offset='0.3' stop-color='#e8c860'/><stop offset='0.6' stop-color='#c98820'/><stop offset='0.9' stop-color='#5a3a10'/><stop offset='1' stop-color='#2a1a05'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='90' rx='70' ry='60' fill='url(#cloud)'/><ellipse cx='210' cy='80' rx='35' ry='30' fill='url(#cloud)' opacity='0.8'/><ellipse cx='275' cy='85' rx='40' ry='35' fill='url(#cloud)' opacity='0.9'/><ellipse cx='240' cy='100' rx='50' ry='25' fill='#e8a830' opacity='0.6'/><path d='M235 150 Q240 110 245 150 Q250 120 255 150' fill='#e85a20' opacity='0.7'/><path d='M225 150 Q230 120 235 150' fill='#d44848' opacity='0.5'/><path d='M255 150 Q260 120 265 150' fill='#d44848' opacity='0.5'/><rect x='0' y='150' width='480' height='30' fill='#1a1a0a'/><g fill='#3a3a2a' opacity='0.6'><rect x='30' y='130' width='20' height='25'/><rect x='60' y='125' width='15' height='30'/><rect x='400' y='128' width='18' height='27'/><rect x='430' y='125' width='20' height='30'/></g></svg>`,
-
-      colony: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a2a1a'/><stop offset='1' stop-color='#1a0f08'/></linearGradient><radialGradient id='fire' cx='0.5' cy='1'><stop offset='0' stop-color='#e85a20' stop-opacity='0.8'/><stop offset='1' stop-color='#3a0a00' stop-opacity='0'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#5a4a3a'><path d='M0 140 Q100 120 200 130 Q300 140 400 125 Q450 120 480 125 L480 180 L0 180 Z'/></g><g fill='#3a2a1a'><rect x='60' y='100' width='25' height='45'/><path d='M60 100 L85 100 L72 85 Z'/><rect x='160' y='95' width='30' height='50'/><path d='M160 95 L190 95 L175 80 Z'/><rect x='340' y='100' width='28' height='48'/><path d='M340 100 L368 100 L354 85 Z'/></g><g fill='#8a6a3a' opacity='0.6'><rect x='65' y='110' width='6' height='8'/><rect x='75' y='110' width='6' height='8'/><rect x='165' y='105' width='7' height='9'/><rect x='177' y='105' width='7' height='9'/></g><ellipse cx='240' cy='160' rx='60' ry='25' fill='url(#fire)'/><ellipse cx='120' cy='165' rx='40' ry='15' fill='url(#fire)' opacity='0.6'/><ellipse cx='380' cy='165' rx='40' ry='15' fill='url(#fire)' opacity='0.6'/><g fill='#2a1a0a'><path d='M220 140 L225 110 L230 115 L235 100 L240 115 L245 100 L250 115 L255 110 L260 140 Z'/></g><circle cx='400' cy='30' r='12' fill='#c9a84a' opacity='0.5'/></svg>`,
-
-      diplomacy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a3a'/><stop offset='1' stop-color='#0f0f1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#3a3a4a' opacity='0.7'><rect x='80' y='40' width='40' height='120'/><rect x='360' y='40' width='40' height='120'/><path d='M80 40 L120 40 L100 20 Z'/><path d='M360 40 L400 40 L380 20 Z'/></g><g fill='#5a5a6a' opacity='0.5'><rect x='85' y='50' width='4' height='100'/><rect x='92' y='50' width='4' height='100'/><rect x='99' y='50' width='4' height='100'/><rect x='106' y='50' width='4' height='100'/><rect x='113' y='50' width='4' height='100'/><rect x='365' y='50' width='4' height='100'/><rect x='372' y='50' width='4' height='100'/><rect x='379' y='50' width='4' height='100'/><rect x='386' y='50' width='4' height='100'/><rect x='393' y='50' width='4' height='100'/></g><g transform='translate(240,90)'><rect x='-30' y='-25' width='60' height='50' fill='#2a2a3a' stroke='#5a5a6a'/><rect x='-30' y='-25' width='60' height='10' fill='#3a3a4a'/><circle cx='0' cy='5' r='12' fill='#1a1a2a' stroke='#8a7a4a'/><path d='M-8 0 L8 0 M0 -8 L0 8' stroke='#c9a84a' stroke-width='0.5' opacity='0.5'/></g><g fill='#c9a84a' opacity='0.4'><circle cx='240' cy='40' r='3'/><path d='M237 43 L243 43 L240 48 Z'/></g><g fill='#4a4a5a' opacity='0.3'><rect x='140' y='150' width='200' height='15'/></g></svg>`,
-
-      protest: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#1a1a1a'><rect x='30' y='100' width='30' height='60'/><rect x='80' y='95' width='35' height='65'/><rect x='130' y='105' width='28' height='55'/><rect x='180' y='100' width='32' height='60'/><rect x='270' y='98' width='30' height='62'/><rect x='320' y='103' width='35' height='57'/><rect x='380' y='100' width='30' height='60'/><rect x='425' y='105' width='28' height='55'/></g><g fill='#3a3a3a'><circle cx='45' cy='90' r='8'/><circle cx='97' cy='85' r='9'/><circle cx='144' cy='95' r='8'/><circle cx='196' cy='90' r='9'/><circle cx='285' cy='88' r='8'/><circle cx='337' cy='93' r='9'/><circle cx='395' cy='90' r='8'/><circle cx='439' cy='95' r='8'/></g><g fill='#5a5a5a' opacity='0.6'><rect x='40' y='70' width='4' height='20'/><rect x='50' y='70' width='4' height='20'/><rect x='92' y='65' width='4' height='20'/><rect x='102' y='65' width='4' height='20'/></g><g><rect x='155' y='55' width='20' height='3' fill='#a83232'/><rect x='160' y='48' width='10' height='10' fill='#a83232'/></g><g><rect x='305' y='50' width='25' height='3' fill='#c9a84a'/><rect x='312' y='42' width='12' height='12' fill='#c9a84a'/></g><g stroke='#e8e8e8' stroke-width='0.3' opacity='0.3'><line x1='150' y1='40' x2='155' y2='30'/><line x1='160' y1='40' x2='165' y2='28'/><line x1='170' y1='40' x2='175' y2='32'/><line x1='300' y1='35' x2='305' y2='25'/><line x1='310' y1='35' x2='315' y2='22'/><line x1='320' y1='35' x2='325' y2='28'/></g></svg>`,
-
-      slave: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a1a14'/><stop offset='1' stop-color='#0f0808'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#1a1a1a' opacity='0.8'><rect x='60' y='80' width='50' height='80'/><rect x='120' y='70' width='60' height='90'/><rect x='300' y='75' width='55' height='85'/><rect x='370' y='80' width='50' height='80'/></g><g stroke='#3a3a3a' stroke-width='2' fill='none'><line x1='70' y1='60' x2='110' y2='60'/><circle cx='70' cy='60' r='4' fill='#5a4a3a'/><circle cx='110' cy='60' r='4' fill='#5a4a3a'/><line x1='130' y1='50' x2='170' y2='50'/><circle cx='130' cy='50' r='4' fill='#5a4a3a'/><circle cx='170' cy='50' r='4' fill='#5a4a3a'/><line x1='310' y1='55' x2='345' y2='55'/><circle cx='310' cy='55' r='4' fill='#5a4a3a'/><circle cx='345' cy='55' r='4' fill='#5a4a3a'/></g><g fill='#4a3a2a' opacity='0.6'><circle cx='240' cy='90' r='25'/><path d='M220 110 Q240 130 260 110 L260 140 L220 140 Z' fill='#3a2a1a'/></g><path d='M230 75 Q240 65 250 75' stroke='#8a6a3a' stroke-width='1.5' fill='none' opacity='0.7'/><g stroke='#8a6a3a' stroke-width='1' fill='none' opacity='0.5'><line x1='240' y1='95' x2='240' y2='115'/><line x1='232' y1='100' x2='248' y2='100'/></g><g fill='#3a2a1a' opacity='0.5'><rect x='0' y='150' width='480' height='30'/></g></svg>`,
-
-      reform: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a2a1a'/><stop offset='1' stop-color='#0a140a'/></linearGradient><radialGradient id='light' cx='0.5' cy='0.3'><stop offset='0' stop-color='#e8e0a0' stop-opacity='0.4'/><stop offset='1' stop-color='#e8e0a0' stop-opacity='0'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='60' rx='120' ry='50' fill='url(#light)'/><g fill='#1a1a1a' opacity='0.7'><path d='M100 160 L100 80 Q100 60 140 60 L340 60 Q380 60 380 80 L380 160 Z'/></g><g fill='#3a3a3a' opacity='0.6'><rect x='130' y='90' width='30' height='50'/><rect x='180' y='90' width='30' height='50'/><rect x='270' y='90' width='30' height='50'/><rect x='320' y='90' width='30' height='50'/></g><g stroke='#c9a84a' stroke-width='1' fill='none' opacity='0.5'><path d='M150 130 Q220 110 240 115 Q260 110 330 130'/><circle cx='240' cy='115' r='3' fill='#e8c860'/></g><g fill='#6a8a4a' opacity='0.5'><path d='M230 160 L235 130 L240 135 L245 125 L250 135 L255 130 L260 160 Z'/></g><g fill='#8a8a6a' opacity='0.4'><circle cx='100' cy='40' r='1.5'/><circle cx='380' cy='35' r='1.5'/><circle cx='200' cy='30' r='1'/><circle cx='300' cy='25' r='1'/></g></svg>`,
-
-      military: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g fill='#1a1a1a'><path d='M100 160 L100 100 L105 95 L115 95 L120 100 L120 160 Z'/><rect x='95' y='105' width='30' height='15'/><circle cx='110' cy='85' r='12' fill='#2a2a2a'/><rect x='105' y='70' width='10' height='20' fill='#3a3a3a'/><path d='M120 95 L140 100 L140 110 L120 105 Z' fill='#2a2a2a'/></g><g fill='#2a2a2a'><path d='M180 160 L180 110 L185 105 L195 105 L200 110 L200 160 Z'/><rect x='175' y='115' width='30' height='12'/><circle cx='190' cy='95' r='10' fill='#1a1a1a'/></g><g fill='#1a1a1a'><path d='M260 160 L260 100 L265 95 L275 95 L280 100 L280 160 Z'/><rect x='255' y='105' width='30' height='15'/><circle cx='270' cy='85' r='12' fill='#2a2a2a'/></g><g fill='#2a2a2a'><path d='M340 160 L340 110 L345 105 L355 105 L360 110 L360 160 Z'/><rect x='335' y='115' width='30' height='12'/></g><g fill='#3a3a3a' opacity='0.6'><rect x='50' y='140' width='380' height='25'/><rect x='50' y='140' width='380' height='3' fill='#5a5a5a'/></g><g fill='#5a5a5a' opacity='0.4'><circle cx='80' cy='50' r='1'/><circle cx='200' cy='40' r='1'/><circle cx='380' cy='45' r='1'/><circle cx='440' cy='50' r='1'/></g></svg>`,
-
-      default: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2014'/><stop offset='1' stop-color='#0a0808'/></linearGradient><radialGradient id='halo' cx='0.5' cy='0.5'><stop offset='0' stop-color='#c9a84a' stop-opacity='0.3'/><stop offset='1' stop-color='#c9a84a' stop-opacity='0'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='90' rx='80' ry='50' fill='url(#halo)'/><g fill='#1a1a1a' opacity='0.8'><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(45 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(90 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(135 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(180 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(225 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(270 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(315 240 75)'/></g><circle cx='240' cy='75' r='15' fill='#3a2a1a'/><circle cx='240' cy='75' r='8' fill='#5a4a2a'/><g fill='#8a7a4a' opacity='0.3'><circle cx='100' cy='50' r='1'/><circle cx='380' cy='40' r='1'/><circle cx='150' cy='30' r='1'/><circle cx='330' cy='30' r='1'/></g><g fill='#3a2a1a' opacity='0.5'><rect x='60' y='140' width='360' height='25'/></g></svg>`,
+    // 主题→真实历史图片映射（覆盖所有匹配该主题的事件，确保每个事件都有历史图片）
+    const themeImages = {
+      moon: 'img/events/ev_moon_landing.jpg',
+      assassin: 'img/events/ev_hitler_assassinated.jpg',
+      death: 'img/events/ev_hitler_death.jpg',
+      succession: 'img/events/ev_succession_announcement.jpg',
+      civilwar: 'img/events/ev_civil_war_battles.jpg',
+      burgundy: 'img/events/ev_civil_war_burgundy.jpg',
+      heydrich: 'img/events/ev_heydrich_ss.jpg',
+      bormann: 'img/events/ev_bormann_stagnation.jpg',
+      goring: 'img/events/ev_goring_war.jpg',
+      speer: 'img/events/ev_speer_reforms.jpg',
+      neutral_zone: 'img/events/ev_neutral_zone.jpg',
+      atlantropa: 'img/events/ev_atlantropa.jpg',
+      china: 'img/events/ev_china_occupation.jpg',
+      korea: 'img/events/ev_korea.jpg',
+      india: 'img/events/ev_india.jpg',
+      indonesia: 'img/events/ev_indonesia.jpg',
+      africa: 'img/events/ev_north_africa_rising.jpg',
+      middle_east: 'img/events/ev_middle_east.jpg',
+      iberia: 'img/events/ev_iberian_crisis.jpg',
+      france: 'img/events/ev_french_resistance.jpg',
+      britain: 'img/events/ev_french_resistance.jpg',
+      turkey: 'img/events/ev_turkey.jpg',
+      latin: 'img/events/ev_latin_america.jpg',
+      technology: 'img/events/ev_internet_era.jpg',
+      biotech: 'img/events/ev_biotech.jpg',
+      environment: 'img/events/ev_environmental_crisis.jpg',
+      plague: 'img/events/ev_plague.jpg',
+      refugee: 'img/events/ev_refugee.jpg',
+      demographics: 'img/events/ev_demographics.jpg',
+      millennium: 'img/events/ev_millennium_anxiety.jpg',
+      cold_war_finale: 'img/events/ev_cold_war_finale.jpg',
+      military: 'img/events/ev_military_coup.jpg',
+      oil: 'img/events/ev_oil_crisis_1975.jpg',
+      russia: 'img/events/ev_russia_unified.jpg',
+      america: 'img/events/ev_us_civil_unrest.jpg',
+      japan: 'img/events/ev_japan_sphere_1968.jpg',
+      italy: 'img/events/ev_italy_triumvirate.jpg',
+      economy: 'img/events/ev_economic_miracle_1970.jpg',
+      nuclear: 'img/events/ev_nuclear_arms_race.jpg',
+      colony: 'img/events/ev_decolonization_wave.jpg',
+      diplomacy: 'img/events/ev_ofn_diplomacy_1967.jpg',
+      protest: 'img/events/ev_student_protests_1962.jpg',
+      slave: 'img/events/ev_slave_question.jpg',
+      reform: 'img/events/ev_reconstruction_plan.jpg',
     };
+    if (themeImages[theme]) return themeImages[theme];
 
-    const raw = svgs[theme] || svgs.default;
-    // 在背景 rect 后注入半透明白色叠加层，整体提亮（SVG 原色过暗）
-    const svg = raw.replace(
-      /(<rect width='480' height='180' fill='url\(#g\)'\/>)/,
-      "$1<rect width='480' height='180' fill='#f0e8d8' opacity='0.12'/>"
-    );
-
-    // encodeURIComponent 不编码单引号，需手动转义，否则 CSS url('...') 会被 SVG 内部单引号截断
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg).replace(/'/g, '%27');
+    // 默认真实图片（兜底，确保所有事件都返回真实图片而非SVG）
+    return 'img/events/ev_millennium_anxiety.jpg';
   },
 
   // ===== SVG 占位图（用于真实图片加载前的秒开占位） =====
   _getEventSvgFallback(ev) {
-    // 复用 _getEventImage 的主题匹配，但跳过 realImages 表
+    // 复用 _getEventImage 的主题匹配逻辑（跳过 realImages 表）
+    return this._buildEventSvg(this._matchEventTheme(ev));
+  },
+
+  // ===== 主题匹配（共享逻辑，供 _getEventImage 和 _getEventSvgFallback 调用） =====
+  _matchEventTheme(ev) {
     const text = ((ev.title || '') + ' ' + (ev.body || '')).toLowerCase();
     const id = (ev.id || '').toLowerCase();
     const rules = [
-      { id: 'moon',     kw: ['登月','月球','火箭','宇航','冯·布劳恩','太空','moon','rocket'] },
-      { id: 'assassin', kw: ['刺杀','刺客','遇刺','枪声','暗杀','贝格霍夫','assassin'] },
-      { id: 'death',    kw: ['元首之死','希特勒之死','死讯','葬礼','悼念','死亡','阿道夫'] },
-      { id: 'succession', kw: ['继承','继位','继承人','接班','权力','succession','successor','施佩尔','鲍曼','戈林','海德里希'] },
-      { id: 'civilwar', kw: ['内战','战火','战役','交火','战线','巷战','civil war','国防军','党卫军','叛乱','兵变'] },
-      { id: 'burgundy', kw: ['勃艮第','希姆莱','burgundy','himmler','党卫军','黑骑士'] },
-      { id: 'russia',   kw: ['俄罗斯','苏联','红军','西俄','莫斯科','军阀','russia','soviet','siberia','西伯利亚','鄂木斯克'] },
-      { id: 'america',  kw: ['美国','ofn','肯尼迪','华盛顿','美洲','america','usa','白宫','太平洋'] },
-      { id: 'japan',    kw: ['日本','共荣圈','天皇','东京','japan','共荣','太平洋战争','珍珠港'] },
-      { id: 'italy',    kw: ['意大利','地中海','罗马','墨索里尼','italy','italian','齐亚诺'] },
-      { id: 'economy',  kw: ['经济','工厂','马克','鲁尔','工业','失业','通胀','市场','economy'] },
-      { id: 'nuclear',  kw: ['核','原子','蘑菇云','核弹','核武','nuclear','原子弹','核战争'] },
-      { id: 'colony',   kw: ['殖民地','独立','总督辖区','乌克兰专员','奥斯兰','高加索','叛乱','起义','colony'] },
-      { id: 'diplomacy', kw: ['外交','谈判','会议','协定','条约','访问','会晤','diplomacy','summit'] },
-      { id: 'protest',  kw: ['抗议','学生','示威','游行','罢工','抗议','protest','riot'] },
-      { id: 'slave',    kw: ['奴隶','奴役','解放','slave','奴隶制'] },
-      { id: 'reform',   kw: ['改革','自由化','开放','reform','改革派'] },
-      { id: 'military', kw: ['军队','军备','军事','国防','建军','military','军力'] },
+      { id: 'moon',     kw: ['登月','月球','火箭','宇航','冯·布劳恩','太空','星辰大海','火星','太空站','moon','rocket','mars','space'] },
+      { id: 'assassin', kw: ['刺杀','刺客','遇刺','枪声','暗杀','贝格霍夫','达拉斯','assassin','枪击'] },
+      { id: 'death',    kw: ['元首之死','希特勒之死','死讯','葬礼','悼念','死亡','阿道夫','恶魔之死'] },
+      { id: 'succession', kw: ['继承','继位','继承人','接班','succession','successor','新元首','选择你的元首'] },
+      { id: 'burgundy', kw: ['勃艮第','希姆莱','burgundy','himmler','黑骑士','骑士团','黑太阳','终末'] },
+      { id: 'heydrich', kw: ['海德里希','heydrich','布拉格屠夫','党卫军国家','ss state','黑色王国'] },
+      { id: 'bormann',  kw: ['鲍曼','bormann','党机器','黑袍','空荡的王座'] },
+      { id: 'goring',   kw: ['戈林','goring','银鹰','空军','胖子的末日','铁血经济'] },
+      { id: 'speer',    kw: ['施佩尔','speer','建筑师','四步改革','学生卫队','经济蓝图'] },
+      { id: 'neutral_zone', kw: ['中立区','斯派达尔','speidal','隆美尔','rommel','霍费尔','hofer','克里米亚','黑海','海盗王'] },
+      { id: 'atlantropa', kw: ['亚特兰特罗帕','atlantropa','直布罗陀大坝','干涸的海洋','地中海','排水','gibraltar'] },
+      { id: 'china',    kw: ['中国','中原','满洲','溥仪','关东军','china','manchuria','manchukuo'] },
+      { id: 'korea',    kw: ['朝鲜','韩国','korea','汉城','创氏改名'] },
+      { id: 'india',    kw: ['印度','次大陆','india','恒河','德里'] },
+      { id: 'indonesia', kw: ['印尼','印度尼西亚','爪哇','苏门答腊','万隆','indonesia','香料群岛'] },
+      { id: 'africa',   kw: ['非洲','刚果','撒哈拉','尼罗河','南非','africa','congo','sahara','nile','好望角','非洲之角','无政府区'] },
+      { id: 'middle_east', kw: ['波斯','伊朗','黎巴嫩','雪松','以色列','阿拉伯','iran','lebanon','suez','苏伊士','中东'] },
+      { id: 'iberia',   kw: ['伊比利亚','西班牙','葡萄牙','弗朗哥','萨拉查','iberia','iberian','加泰罗尼亚'] },
+      { id: 'france',   kw: ['法国','法兰西','戴高乐','自由法国','布列塔尼','france','french','degaulle'] },
+      { id: 'britain',  kw: ['英国','不列颠','britain','british','英吉利','地下女王'] },
+      { id: 'turkey',   kw: ['土耳其','安卡拉','凯末尔','turkey','turkish','博斯普鲁斯'] },
+      { id: 'latin',    kw: ['南美','阿根廷','巴西','银之河','拉美','argentina','brazil','肮脏战争'] },
+      { id: 'technology', kw: ['互联网','计算机','数据网','信息时代','数字革命','internet','computer','硅','个人电脑','科技'] },
+      { id: 'biotech',  kw: ['基因','遗传','优生','生命之泉','genetic','biotech','上帝的剪刀'] },
+      { id: 'environment', kw: ['环境','环保','污染','酸雨','生态','绿色','environment','自然灾害','燃烧的地球'] },
+      { id: 'plague',   kw: ['瘟疫','流感','病毒','传染病','隔离','plague','pandemic','白色瘟疫'] },
+      { id: 'refugee',  kw: ['难民','流民','庇护','逃亡','移民','refugee','巴尔干的流民'] },
+      { id: 'demographics', kw: ['人口寒冬','人口危机','生育率','老龄化','人口结构','demographic'] },
+      { id: 'millennium', kw: ['千禧','千年','2000','终章','结局','新千年','millennium'] },
+      { id: 'cold_war_finale', kw: ['冷战终结','新世界秩序','解冻','cold war','world order','无核世界'] },
+      { id: 'civilwar', kw: ['内战','战火','战役','交火','战线','巷战','civil war','国防军','党卫军','叛乱','兵变','兄弟相残'] },
+      { id: 'russia',   kw: ['俄罗斯','苏联','红军','西俄','莫斯科','军阀','russia','soviet','siberia','西伯利亚','鄂木斯克','托木斯克','科米','萨马拉','乌拉尔','双头鹰'] },
+      { id: 'america',  kw: ['美国','ofn','肯尼迪','华盛顿','美洲','america','usa','白宫','太平洋','合众国'] },
+      { id: 'japan',    kw: ['日本','共荣圈','天皇','东京','japan','共荣','太平洋战争','珍珠港','日元'] },
+      { id: 'italy',    kw: ['意大利','地中海','罗马','墨索里尼','italy','italian','齐亚诺','三头同盟'] },
+      { id: 'economy',  kw: ['经济','工厂','马克','鲁尔','工业','失业','通胀','市场','economy','繁荣','泡沫','黑市'] },
+      { id: 'nuclear',  kw: ['核','原子','蘑菇云','核弹','核武','nuclear','原子弹','核战争','熔毁'] },
+      { id: 'oil',      kw: ['石油','oil','能源危机','黑金','opec'] },
+      { id: 'colony',   kw: ['殖民地','独立','总督辖区','乌克兰专员','奥斯兰','高加索','叛乱','起义','colony','去殖民'] },
+      { id: 'diplomacy', kw: ['外交','谈判','会议','协定','条约','访问','会晤','diplomacy','summit','斡旋','密使'] },
+      { id: 'protest',  kw: ['抗议','学生','示威','游行','罢工','protest','riot','骚乱'] },
+      { id: 'slave',    kw: ['奴隶','奴役','解放','slave','奴隶制','枷锁'] },
+      { id: 'reform',   kw: ['改革','自由化','开放','reform','改革派','重建','蓝图'] },
+      { id: 'military', kw: ['军队','军备','军事','国防','建军','military','军力','军靴','政变'] },
     ];
-    let theme = 'default';
     for (const r of rules) {
-      if (r.kw.some(k => text.includes(k) || id.includes(k))) { theme = r.id; break; }
+      if (r.kw.some(k => text.includes(k) || id.includes(k))) return r.id;
     }
-    // 返回简化 SVG 占位（与 _getEventImage 共享主题逻辑，但用简化版避免代码重复）
-    // 直接调用 _getEventImage 的 SVG 生成逻辑（传一个 fake ev 跳过 realImages）
-    return this._buildEventSvg(theme);
+    return 'default';
   },
 
   // ===== 根据主题构建 SVG data URI =====
@@ -2680,25 +2879,51 @@ const UI = {
 
   _buildEventSvgLib() {
     return {
-      moon: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a1a2e'/><circle cx='360' cy='60' r='28' fill='#a89868'/><circle cx='40' cy='30' r='1' fill='#e8c860'/><circle cx='100' cy='20' r='1' fill='#e8c860'/><circle cx='200' cy='15' r='1.5' fill='#e8c860'/><path d='M180 160 L200 100 L210 100 L225 110 L240 160 Z' fill='#3a3a4a'/></svg>`,
-      assassin: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a0a0a'/><ellipse cx='240' cy='120' rx='100' ry='40' fill='#8a2020' opacity='0.6'/><rect x='180' y='60' width='120' height='80' fill='#2a1a1a'/><circle cx='240' cy='100' r='12' fill='#5a2a2a'/></svg>`,
-      death: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a1a1a'/><rect x='100' y='40' width='280' height='120' fill='#1c1c1c'/><rect x='220' y='80' width='40' height='80' fill='#0a0a0a'/><circle cx='240' cy='110' r='18' fill='#1a1a1a' stroke='#4a4a4a'/></svg>`,
-      succession: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2014'/><rect x='225' y='50' width='30' height='80' fill='#5a4a2a'/><circle cx='240' cy='35' r='8' fill='#c93232'/></svg>`,
-      civilwar: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#3a2a1a'/><ellipse cx='240' cy='165' rx='100' ry='30' fill='#e85a20' opacity='0.6'/><rect x='60' y='80' width='30' height='80' fill='#1a1a1a'/><rect x='350' y='85' width='28' height='75' fill='#1a1a1a'/></svg>`,
-      burgundy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a0a1a'/><path d='M180 160 L180 80 L200 60 L280 60 L300 80 L300 160 Z' fill='#0a0508'/><rect x='225' y='100' width='30' height='60' fill='#000'/></svg>`,
-      russia: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#4a5a6a'/><path d='M0 140 Q240 110 480 115 L480 180 L0 180 Z' fill='#e8e8e8'/><circle cx='240' cy='80' r='15' fill='#8a2a2a' opacity='0.7'/></svg>`,
-      america: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='90' fill='#1a2a4a'/><rect width='120' height='45' fill='#3a5a8a' opacity='0.6'/><rect x='0' y='90' width='480' height='90' fill='#0a1a2a'/></svg>`,
-      japan: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#4a3a1a'/><circle cx='240' cy='60' r='30' fill='#e84030'/><rect x='180' y='110' width='120' height='50' fill='#8a2a2a' opacity='0.8'/></svg>`,
-      italy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a1a'/><rect x='120' y='40' width='20' height='120' fill='#5a4a2a'/><rect x='340' y='40' width='20' height='120' fill='#5a4a2a'/><path d='M200 160 L200 80 Q240 60 280 80 L280 160 Z' fill='#6a5a3a'/></svg>`,
-      economy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#3a3a2a'/><rect x='40' y='80' width='40' height='80' fill='#1a1a1a'/><rect x='90' y='60' width='50' height='100' fill='#1a1a1a'/><rect x='355' y='55' width='55' height='105' fill='#1a1a1a'/><rect x='105' y='20' width='15' height='50' fill='#2a2a2a'/><rect x='375' y='10' width='18' height='50' fill='#2a2a2a'/></svg>`,
-      nuclear: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a1a0a'/><ellipse cx='240' cy='90' rx='70' ry='60' fill='#e8c860'/><ellipse cx='240' cy='100' rx='50' ry='25' fill='#e8a830' opacity='0.6'/><path d='M235 150 Q240 110 245 150' fill='#e85a20' opacity='0.7'/></svg>`,
-      colony: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#3a2a1a'/><path d='M0 140 Q240 120 480 125 L480 180 L0 180 Z' fill='#5a4a3a'/><ellipse cx='240' cy='160' rx='60' ry='25' fill='#e85a20' opacity='0.6'/></svg>`,
-      diplomacy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a3a'/><rect x='80' y='40' width='40' height='120' fill='#3a3a4a'/><rect x='360' y='40' width='40' height='120' fill='#3a3a4a'/><rect x='210' y='65' width='60' height='50' fill='#2a2a3a' stroke='#5a5a6a'/></svg>`,
-      protest: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a2a'/><rect x='30' y='100' width='30' height='60' fill='#1a1a1a'/><rect x='80' y='95' width='35' height='65' fill='#1a1a1a'/><rect x='270' y='98' width='30' height='62' fill='#1a1a1a'/><rect x='155' y='55' width='20' height='3' fill='#a83232'/></svg>`,
-      slave: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a1a14'/><circle cx='240' cy='90' r='25' fill='#4a3a2a' opacity='0.6'/><line x1='70' y1='60' x2='110' y2='60' stroke='#3a3a3a' stroke-width='2'/></svg>`,
-      reform: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a2a1a'/><ellipse cx='240' cy='60' rx='120' ry='50' fill='#e8e0a0' opacity='0.3'/><path d='M230 160 L240 130 L250 160 Z' fill='#6a8a4a' opacity='0.5'/></svg>`,
-      military: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a2a'/><path d='M100 160 L100 100 L120 160 Z' fill='#1a1a1a'/><circle cx='110' cy='85' r='12' fill='#2a2a2a'/><path d='M260 160 L260 100 L280 160 Z' fill='#1a1a1a'/></svg>`,
-      default: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2014'/><ellipse cx='240' cy='90' rx='80' ry='50' fill='#c9a84a' opacity='0.2'/><circle cx='240' cy='75' r='15' fill='#3a2a1a'/></svg>`,
+      moon: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a2e'/><stop offset='1' stop-color='#0f0f1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='360' cy='60' r='28' fill='#a89868'/><circle cx='200' cy='15' r='1.5' fill='#e8c860'/><path d='M180 160 L200 100 L225 110 L240 160 Z' fill='#3a3a4a'/></svg>`,
+      assassin: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a0a0a'/><stop offset='1' stop-color='#0a0505'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='120' rx='100' ry='40' fill='#8a2020' opacity='0.6'/><rect x='180' y='60' width='120' height='80' fill='#2a1a1a'/><circle cx='240' cy='100' r='12' fill='#5a2a2a'/></svg>`,
+      death: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a1a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='220' y='80' width='40' height='80' fill='#0a0a0a'/><circle cx='240' cy='110' r='18' fill='#1a1a1a' stroke='#4a4a4a'/></svg>`,
+      succession: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2014'/><stop offset='1' stop-color='#0f0a08'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='225' y='50' width='30' height='80' fill='#5a4a2a'/><circle cx='240' cy='35' r='8' fill='#c93232'/></svg>`,
+      civilwar: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a2a1a'/><stop offset='1' stop-color='#1a0a05'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='165' rx='100' ry='30' fill='#e85a20' opacity='0.6'/><rect x='60' y='80' width='30' height='80' fill='#1a1a1a'/><rect x='350' y='85' width='28' height='75' fill='#1a1a1a'/></svg>`,
+      burgundy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a0a1a'/><stop offset='1' stop-color='#050208'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M180 160 L180 80 L200 60 L280 60 L300 80 L300 160 Z' fill='#0a0508'/><rect x='225' y='100' width='30' height='60' fill='#000'/></svg>`,
+      heydrich: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#0a0a14'/><stop offset='1' stop-color='#000005'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M180 160 L180 70 L200 50 L280 50 L300 70 L300 160 Z' fill='#1a1a1a'/><circle cx='240' cy='95' r='8' fill='none' stroke='#c9a84a' opacity='0.6'/></svg>`,
+      bormann: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2418'/><stop offset='1' stop-color='#0a0805'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M120 160 L120 80 L240 50 L360 80 L360 160 Z' fill='#1a1a1a'/><circle cx='240' cy='90' r='6' fill='#c9a84a' opacity='0.5'/></svg>`,
+      goring: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a3a4a'/><stop offset='1' stop-color='#1a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M80 90 L100 70 L120 90 Z' fill='#5a5a5a'/><path d='M280 90 L300 70 L320 90 Z' fill='#5a5a5a'/><path d='M0 130 Q240 120 480 120 L480 180 L0 180 Z' fill='#1a1a1a'/></svg>`,
+      speer: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a3a'/><stop offset='1' stop-color='#0f0f1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M80 160 L80 80 Q80 50 140 50 Q200 50 200 80 L200 160 Z' fill='#3a3a4a'/><path d='M280 160 L280 80 Q280 50 340 50 Q400 50 400 80 L400 160 Z' fill='#3a3a4a'/></svg>`,
+      neutral_zone: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a4a3a'/><stop offset='1' stop-color='#1a2a1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='80' y='90' width='40' height='40' fill='#2a3a2a'/><rect x='360' y='95' width='35' height='35' fill='#2a3a2a'/><path d='M0 120 Q240 110 480 115 L480 130 L0 130 Z' fill='#5a6a5a' opacity='0.5'/></svg>`,
+      atlantropa: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#5a4a3a'/><stop offset='0.5' stop-color='#3a3a4a'/><stop offset='1' stop-color='#1a2a3a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M0 95 L480 95 L480 110 L0 110 Z' fill='#2a2a3a'/><rect x='180' y='60' width='120' height='35' fill='#5a5a6a' opacity='0.8'/></svg>`,
+      china: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a2a1a'/><stop offset='1' stop-color='#1a0a08'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='100' cy='50' r='25' fill='#8a2a2a' opacity='0.8'/><path d='M150 160 L150 90 L210 90 L210 160 Z' fill='#3a2a1a'/><rect x='250' y='100' width='80' height='60' fill='#2a2a2a'/></svg>`,
+      korea: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a3a4a'/><stop offset='1' stop-color='#0a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='90' r='15' fill='none' stroke='#c9a84a' stroke-width='2' opacity='0.7'/><path d='M225 90 L255 90 M240 75 L240 105' stroke='#c9a84a' opacity='0.7'/></svg>`,
+      india: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a3a2a'/><stop offset='1' stop-color='#1a1408'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='55' r='22' fill='#e88030' opacity='0.8'/><path d='M180 160 L180 100 L300 100 L300 160 Z' fill='#3a2a1a'/></svg>`,
+      indonesia: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a3a4a'/><stop offset='1' stop-color='#0a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M60 100 Q240 90 420 95 L420 110 L60 110 Z' fill='#3a5a4a' opacity='0.7'/><circle cx='240' cy='60' r='18' fill='#8a6a3a' opacity='0.6'/></svg>`,
+      africa: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a4a5a'/><stop offset='1' stop-color='#2a1a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='100' cy='40' r='20' fill='#e8a030' opacity='0.8'/><path d='M0 130 Q240 115 480 120 L480 180 L0 180 Z' fill='#8a6a3a' opacity='0.8'/></svg>`,
+      middle_east: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a3a1a'/><stop offset='1' stop-color='#1a1408'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='400' cy='40' r='18' fill='#e88030' opacity='0.8'/><path d='M150 160 L150 80 Q240 60 330 80 L330 160 Z' fill='#3a2a1a'/></svg>`,
+      iberia: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a2a1a'/><stop offset='1' stop-color='#1a0f08'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='100' y='70' width='40' height='50' fill='#8a2a2a' opacity='0.7'/><path d='M0 100 Q240 90 480 90 L480 130 L0 130 Z' fill='#5a3a1a' opacity='0.8'/></svg>`,
+      france: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a3a'/><stop offset='1' stop-color='#0a0a1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M180 160 L180 60 L300 60 L300 160 Z' fill='#3a3a4a'/><rect x='210' y='80' width='60' height='80' fill='#1a1a2a'/></svg>`,
+      britain: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a3a4a'/><stop offset='1' stop-color='#0a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M0 100 Q240 85 480 95 L480 110 L0 110 Z' fill='#5a5a5a' opacity='0.7'/><path d='M180 160 L180 70 L300 70 L300 160 Z' fill='#3a4a5a'/></svg>`,
+      turkey: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a3a4a'/><stop offset='1' stop-color='#0a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='380' cy='50' r='18' fill='#e8e0c0'/><circle cx='372' cy='50' r='15' fill='#0a1a2a'/><path d='M100 160 L100 80 L180 80 L180 160 Z' fill='#3a4a5a'/></svg>`,
+      latin: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a4a3a'/><stop offset='1' stop-color='#1a2a1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='80' cy='45' r='22' fill='#e88030' opacity='0.8'/><path d='M0 130 Q240 100 480 105 L480 180 L0 180 Z' fill='#2a3a2a' opacity='0.8'/></svg>`,
+      technology: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#0a1a2a'/><stop offset='1' stop-color='#050810'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><g stroke='#3a8a4a' stroke-width='0.5' opacity='0.4' fill='none'><path d='M20 40 L460 40 M20 80 L460 80 M20 120 L460 120'/></g><rect x='180' y='70' width='120' height='80' fill='#1a2a1a' stroke='#3a8a4a'/></svg>`,
+      biotech: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a2a1a'/><stop offset='1' stop-color='#0a140a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M100 160 Q140 90 180 130 Q220 160 260 100 Q300 60 340 120 Q380 160 420 100' fill='none' stroke='#6a8a4a' stroke-width='1' opacity='0.7'/><circle cx='140' cy='90' r='5' fill='#8aaa5a'/><circle cx='260' cy='100' r='5' fill='#8aaa5a'/></svg>`,
+      environment: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a3a2a'/><stop offset='1' stop-color='#2a1a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M0 130 Q240 115 480 120 L480 180 L0 180 Z' fill='#3a2a1a' opacity='0.8'/><ellipse cx='240' cy='135' rx='50' ry='8' fill='#8a3a2a' opacity='0.6'/></svg>`,
+      plague: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M180 160 L180 80 L300 80 L300 160 Z' fill='#5a5a5a'/><rect x='220' y='90' width='40' height='70' fill='#8a8a8a' opacity='0.6'/></svg>`,
+      refugee: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a3a2a'/><stop offset='1' stop-color='#1a1a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='80' y='80' width='25' height='50' fill='#2a2a2a'/><rect x='340' y='80' width='25' height='50' fill='#2a2a2a'/><path d='M0 130 Q240 120 480 120 L480 180 L0 180 Z' fill='#5a5a5a' opacity='0.7'/></svg>`,
+      demographics: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a3a'/><stop offset='1' stop-color='#0a0a1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='60' y='50' width='20' height='100' fill='#5a5a6a'/><rect x='120' y='80' width='20' height='70' fill='#5a5a6a'/><rect x='180' y='110' width='20' height='40' fill='#5a5a6a'/><rect x='340' y='70' width='20' height='80' fill='#8a6a3a'/><rect x='370' y='55' width='20' height='95' fill='#8a6a3a'/></svg>`,
+      millennium: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a3a'/><stop offset='1' stop-color='#0a0a1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='160' rx='180' ry='40' fill='#e8a030' opacity='0.6'/><circle cx='240' cy='25' r='3' fill='#e8c860'/></svg>`,
+      cold_war_finale: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a4a3a'/><stop offset='1' stop-color='#0a1a1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='130' rx='200' ry='50' fill='#e8c860' opacity='0.3'/><path d='M0 130 Q240 115 480 115 L480 180 L0 180 Z' fill='#3a4a3a' opacity='0.7'/></svg>`,
+      oil: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a1a0a'/><stop offset='1' stop-color='#0a0505'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='180' y='70' width='120' height='80' fill='#3a3a2a'/><path d='M240 100 L240 30' stroke='#8a6a3a' stroke-width='2' opacity='0.7'/></svg>`,
+      russia: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a5a6a'/><stop offset='1' stop-color='#1a2a3a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M0 140 Q240 110 480 115 L480 180 L0 180 Z' fill='#e8e8e8'/><circle cx='240' cy='80' r='15' fill='#8a2a2a' opacity='0.7'/></svg>`,
+      america: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a2a4a'/><stop offset='1' stop-color='#0a1a2a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='0' y='0' width='120' height='45' fill='#3a5a8a' opacity='0.6'/><rect x='0' y='90' width='240' height='90' fill='#3a5a8a' opacity='0.3'/></svg>`,
+      japan: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a3a1a'/><stop offset='1' stop-color='#1a1408'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='60' r='30' fill='#e84030'/><rect x='180' y='110' width='120' height='50' fill='#8a2a2a' opacity='0.8'/></svg>`,
+      italy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a1a'/><stop offset='1' stop-color='#0f0f08'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='120' y='40' width='20' height='120' fill='#5a4a2a'/><rect x='340' y='40' width='20' height='120' fill='#5a4a2a'/><path d='M200 160 L200 80 Q240 60 280 80 L280 160 Z' fill='#6a5a3a'/></svg>`,
+      economy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a3a2a'/><stop offset='1' stop-color='#1a1a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='40' y='80' width='40' height='80' fill='#1a1a1a'/><rect x='90' y='60' width='50' height='100' fill='#1a1a1a'/><rect x='355' y='55' width='55' height='105' fill='#1a1a1a'/></svg>`,
+      nuclear: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a1a0a'/><stop offset='1' stop-color='#0a0a05'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='90' rx='70' ry='60' fill='#e8c860'/><ellipse cx='240' cy='100' rx='50' ry='25' fill='#e8a830' opacity='0.6'/></svg>`,
+      colony: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a2a1a'/><stop offset='1' stop-color='#1a0f08'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M0 140 Q240 120 480 125 L480 180 L0 180 Z' fill='#5a4a3a'/><ellipse cx='240' cy='160' rx='60' ry='25' fill='#e85a20' opacity='0.6'/></svg>`,
+      diplomacy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a3a'/><stop offset='1' stop-color='#0f0f1a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='80' y='40' width='40' height='120' fill='#3a3a4a'/><rect x='360' y='40' width='40' height='120' fill='#3a3a4a'/><rect x='210' y='65' width='60' height='50' fill='#2a2a3a' stroke='#5a5a6a'/></svg>`,
+      protest: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='30' y='100' width='30' height='60' fill='#1a1a1a'/><rect x='80' y='95' width='35' height='65' fill='#1a1a1a'/><rect x='270' y='98' width='30' height='62' fill='#1a1a1a'/></svg>`,
+      slave: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a1a14'/><stop offset='1' stop-color='#0f0808'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='90' r='25' fill='#4a3a2a' opacity='0.6'/><line x1='70' y1='60' x2='110' y2='60' stroke='#3a3a3a' stroke-width='2'/></svg>`,
+      reform: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a2a1a'/><stop offset='1' stop-color='#0a140a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='60' rx='120' ry='50' fill='#e8e0a0' opacity='0.3'/><path d='M230 160 L240 130 L250 160 Z' fill='#6a8a4a' opacity='0.5'/></svg>`,
+      military: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M100 160 L100 100 L120 160 Z' fill='#1a1a1a'/><circle cx='110' cy='85' r='12' fill='#2a2a2a'/><path d='M260 160 L260 100 L280 160 Z' fill='#1a1a1a'/></svg>`,
+      default: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2014'/><stop offset='1' stop-color='#0a0808'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='90' rx='80' ry='50' fill='#c9a84a' opacity='0.2'/><circle cx='240' cy='75' r='15' fill='#3a2a1a'/></svg>`,
     };
   },
 
@@ -2727,21 +2952,8 @@ const UI = {
         </button>`;
     }).join('');
 
-    const imgSrc = this._getEventImage(ev);
-    const isRealImg = imgSrc && !imgSrc.startsWith('data:');
-    // 先显示 SVG 占位（秒开），真实图片异步加载后淡入替换
-    const bannerHtml = isRealImg
-      ? `<div class="event-image-banner-wrap">
-           <div class="event-image-banner event-image-svg" style="background-image:url('${this._getEventSvgFallback(ev)}')"></div>
-           <img class="event-image-banner event-image-real" src="${imgSrc}" alt="" loading="eager" decoding="async"
-                onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden')"
-                onerror="this.style.display='none'" />
-         </div>`
-      : `<div class="event-image-banner" style="background-image:url('${imgSrc}')"></div>`;
-
     modal.innerHTML = `
       <div class="modal-box">
-        ${bannerHtml}
         <div class="modal-header">
           <div class="m-date">${dateStr}</div>
           <div class="m-title">${ev.title}</div>

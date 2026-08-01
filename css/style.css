@@ -754,22 +754,10 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-color: #1a1a20;
-  filter: saturate(1.2) contrast(1.1) brightness(1.15);
-  transition: opacity 0.4s ease;
-}
-.event-image-banner.event-image-svg {
-  z-index: 1;
 }
 .event-image-banner.event-image-real {
-  z-index: 2;
   object-fit: cover;
-  opacity: 0;
-}
-.event-image-banner.event-image-real.loaded {
   opacity: 1;
-}
-.event-image-banner.event-image-svg.hidden {
-  opacity: 0;
 }
 .event-image-banner::after {
   content: '';
@@ -1116,7 +1104,7 @@ body {
   .building-card .b-desc { min-height: auto; }
 
   /* 事件弹窗全屏化 */
-  .modal-box { width: 94%; max-height: 90vh; padding: 18px; }
+  .modal-box { width: 94%; max-width: 640px; max-height: 90vh; padding: 18px; }
   .modal-box .modal-title { font-size: 18px; }
   .modal-box .modal-desc { font-size: 13px; line-height: 1.7; }
   .choice-btn { padding: 12px; }
