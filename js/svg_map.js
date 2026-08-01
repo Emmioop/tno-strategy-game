@@ -12,6 +12,7 @@
     denmark: { fill: '#8b2a2a', border: '#5a1818' },
     norway: { fill: '#8b2a2a', border: '#5a1818' },
     norway_port: { fill: '#8b2a2a', border: '#5a1818' },
+    bohemia: { fill: '#8b3a3a', border: '#5a2020' },
 
     // ===== 团结协定 - 专员辖区 (深红, 略浅) =====
     ukraine: { fill: '#9a3030', border: '#5a1c1c' },

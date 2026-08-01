@@ -265,7 +265,18 @@ const Game = {
         egypt: 0,
         middle_east: -5,
         africa: -5,
-        french_indochina: 0
+        french_indochina: 0,
+        // 殖民地关系
+        ukraine: 20,
+        ostland: 15,
+        moscow: -30,
+        caucasus: 10,
+        bohemia: 5,
+        denmark: 10,
+        norway: 5,
+        netherlands: 8,
+        britanny: 0,
+        turkey: 0
       },
 
       // 建筑 {buildingId: count} —— 极少量初始建筑
@@ -492,7 +503,18 @@ const Game = {
       egypt_relation: 'egypt',
       middle_east_relation: 'middle_east',
       africa_relation: 'africa',
-      french_indochina_relation: 'french_indochina'
+      french_indochina_relation: 'french_indochina',
+      // 殖民地关系映射
+      ukraine_relation: 'ukraine',
+      ostland_relation: 'ostland',
+      moscow_relation: 'moscow',
+      caucasus_relation: 'caucasus',
+      bohemia_relation: 'bohemia',
+      denmark_relation: 'denmark',
+      norway_relation: 'norway',
+      netherlands_relation: 'netherlands',
+      britanny_relation: 'britanny',
+      turkey_relation: 'turkey'
     };
 
     for (const key in effects) {

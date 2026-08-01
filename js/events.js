@@ -266,19 +266,19 @@ const STORY_EVENTS = [
         text: '全面动员，速战速决',
         desc: '倾尽资源决战。+军力 -资金 -人力',
         effects: { militaryPower: 25, money: -100, manpower: -20, stability: -5 },
-        setFlags: { civil_war_strategy: 'blitz' }
+        setFlags: { civil_war: true, civil_war_strategy: 'blitz' }
       },
       {
         text: '稳扎稳打，蚕食对手',
         desc: '消耗战。缓慢但损失较小',
         effects: { militaryPower: 10, money: -50, stability: 3 },
-        setFlags: { civil_war_strategy: 'attrition' }
+        setFlags: { civil_war: true, civil_war_strategy: 'attrition' }
       },
       {
         text: '寻求外国援助',
         desc: '向美国或日本求援。有效但伤国际地位',
         effects: { money: 15, militaryPower: 15, deterrence: -8 },
-        setFlags: { civil_war_strategy: 'foreign_aid', foreign_intervention: true }
+        setFlags: { civil_war: true, civil_war_strategy: 'foreign_aid', foreign_intervention: true }
       }
     ]
   },
@@ -6571,6 +6571,393 @@ const STORY_EVENTS = [
     <p><strong>这一切，值得吗？</strong></p>`,
     choices: [
       { text: '一切都值得。', desc: '迎接终局', effects: { stability: 10 }, showToast: '新千年已开启' }
+    ]
+  },
+
+  /* ===========================================================
+   * 帝国内战与殖民地独立事件链
+   * 基于继承人选择的分支剧情
+   * =========================================================== */
+
+  {
+    id: 'ev_civil_war_colonial_crack',
+    turn: { year: 1963, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '殖民地的暗流',
+    body: `<p>内战的火焰不仅在德国本土燃烧，也蔓延到了整个帝国的殖民地体系。</p>
+    <p>乌克兰的粮食专列被游击队炸毁；奥斯兰的森林中冒出了反抗军的旗帜；高加索的石油设施接连遭到破坏；甚至连平静的丹麦和挪威，也开始出现要求独立的声音。</p>
+    <p><strong>你必须决定：是用铁腕镇压，还是给予自治？</strong></p>`,
+    condition: (s) => s.flags.civil_war,
+    choices: [
+      {
+        text: '全面军事镇压',
+        desc: '派军队到各个殖民地镇压独立运动',
+        effects: { militaryPower: -3, money: -15, stability: 5, deterrence: 8, ukraine_relation: -10, ostland_relation: -10 },
+        setFlags: { colonial_crackdown: true },
+        showToast: '全面镇压殖民地独立运动'
+      },
+      {
+        text: '给予有限自治',
+        desc: '允许殖民地保留自治政府，但维持军事控制',
+        effects: { stability: -3, money: 5, ukraine_relation: 5, ostland_relation: 3, caucasus_relation: 3 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { colonial_autonomy: true },
+        showToast: '殖民地自治政策启动'
+      },
+      {
+        text: '与叛军谈判',
+        desc: '寻求政治解决方案，可能失去部分殖民地',
+        effects: { stability: -8, money: 10, ukraine_relation: 15, independence_granted: true },
+        condition: (s) => s.flags.reformist,
+        setFlags: { negotiating_with_rebels: true },
+        showToast: '开始与殖民地叛军谈判'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_ukraine_independence',
+    turn: { year: 1963, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '乌克兰独立宣言',
+    body: `<p>1963年10月15日。乌克兰专员辖区的代理政府在基辅宣布<strong>独立</strong>。</p>
+    <p>总理霍夫曼·冯·切尔尼亚夫斯基发表声明，指责德国"掠夺乌克兰的粮食和矿产资源"，并宣布成立"乌克兰人民共和国"。</p>
+    <p>德国驻军在黑海要塞坚守，但第聂伯河以东的大部分地区已经落入叛军手中。更糟糕的是，乌克兰的独立鼓舞了其他殖民地——奥斯兰、高加索、甚至丹麦，都开始蠢蠢欲动。</p>
+    <p>帝国的"生存空间"正在失去它最重要的粮仓。</p>`,
+    condition: (s) => s.flags.civil_war && !s.flags.colonial_crackdown,
+    choices: [
+      {
+        text: '承认乌克兰独立',
+        desc: '接受现实，集中精力巩固本土',
+        effects: { stability: -15, money: -20, ukraine_relation: -50, deterrence: -10 },
+        setFlags: { ukraine_independent: true },
+        showToast: '乌克兰已正式独立'
+      },
+      {
+        text: '发起全面反攻',
+        desc: '动用空军、装甲部队重新征服乌克兰',
+        effects: { militaryPower: -8, money: -40, stability: 5, ukraine_relation: -30, deterrence: 5 },
+        setFlags: { ukraine_reconquest: true },
+        showToast: '乌克兰反攻战役启动'
+      },
+      {
+        text: '分割乌克兰',
+        desc: '与叛军谈判，保留黑海要塞和核心工业区',
+        effects: { stability: -8, money: -15, ukraine_relation: -20 },
+        setFlags: { ukraine_partial: true },
+        showToast: '乌克兰分割协议达成'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_ostland_collapse',
+    turn: { year: 1964, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '奥斯兰的森林之战',
+    body: `<p>乌克兰的独立像多米诺骨牌一样，冲击着整个东方专员辖区体系。</p>
+    <p>在奥斯兰，立陶宛游击队攻陷了考纳斯的德军司令部；拉脱维亚的森林中，"绿兄弟"组织袭击了德军哨卡；爱沙尼亚的塔尔图大学成了独立运动的中心。</p>
+    <p>德国驻军兵力分散、补给线过长，根本无法同时控制波罗的海三国和白俄罗斯。每一个森林都可能藏着狙击手，每一个村庄都可能是叛军的补给站。</p>
+    <p>奥斯兰总督科赫向柏林求援，但柏林的物资正在运往乌克兰前线。</p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.ukraine_independent || s.flags.ukraine_reconquest),
+    choices: [
+      {
+        text: '撤退到核心据点',
+        desc: '放弃农村地区，坚守主要城市',
+        effects: { militaryPower: -5, money: -10, stability: -8, ostland_relation: -40 },
+        setFlags: { ostland_in_retreat: true },
+        showToast: '奥斯兰德军开始撤退'
+      },
+      {
+        text: '招募地方民兵',
+        desc: '用波罗的海日耳曼人组建地方自卫队',
+        effects: { militaryPower: 3, money: -8, stability: 3, ostland_relation: -20 },
+        setFlags: { ostland_militia: true },
+        showToast: '奥斯兰地方民兵组建'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_moscow_front_crisis',
+    turn: { year: 1964, quarter: 2 },
+    once: true,
+    tag: 'critical',
+    title: '莫斯科前线的崩溃',
+    body: `<p>乌克兰和奥斯兰的危机使得莫斯科专员辖区也摇摇欲坠。</p>
+    <p>原本被德军压制的俄罗斯军阀开始反攻。西俄的几个军阀势力——"黑色联盟"、"自由战士"、"黑军"——联合起来，从乌拉尔山脉向西推进。</p>
+    <p>德军在莫斯科周围修筑的防线被称为"东线的马其诺"——但与马其诺一样，它被轻易绕过了。俄罗斯游击队渗透德军后方，切断补给线。</p>
+    <p>莫斯科总督科斯特勒向柏林报告：<em>"我们最多还能守三个月。"</em></p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.ukraine_independent || s.flags.ostland_in_retreat),
+    choices: [
+      {
+        text: '死守莫斯科',
+        desc: '投入所有预备队保卫莫斯科',
+        effects: { militaryPower: -10, money: -50, stability: -10, moscow_relation: -50 },
+        setFlags: { moscow_stand: true },
+        showToast: '莫斯科死守战开始'
+      },
+      {
+        text: '放弃莫斯科，退守波罗的海',
+        desc: '战略性撤退，保住波罗的海出海口',
+        effects: { militaryPower: -3, money: -20, stability: -15, moscow_relation: -60, russia_relation: 30 },
+        setFlags: { moscow_abandoned: true },
+        showToast: '德军撤出莫斯科'
+      },
+      {
+        text: '与俄罗斯军阀谈判',
+        desc: '承认莫斯科以东为俄罗斯势力范围',
+        effects: { stability: -12, money: 15, moscow_relation: -40, russia_relation: 20 },
+        setFlags: { moscow_negotiated: true },
+        showToast: '莫斯科谈判启动'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_caucasus_uprising',
+    turn: { year: 1964, quarter: 3 },
+    once: true,
+    tag: 'major',
+    title: '高加索的石油危机',
+    body: `<p>高加索专员辖区是帝国的石油命脉——但它也是最不稳定的殖民地。</p>
+    <p>亚美尼亚、阿塞拜疆、格鲁吉亚的民族主义者组成了"高加索联邦运动"，以罢工、破坏和游击战反抗德国统治。巴库的炼油厂被炸毁两次，格罗兹尼的输油管道被切断。</p>
+    <p>德军在高加索的驻军只有两个师，却要控制三个民族、三个共和国、绵延上千公里的山脉。</p>
+    <p>如果高加索失守，帝国的石油供应将彻底崩溃。</p>`,
+    condition: (s) => s.flags.civil_war && s.flags.caucasus_relation !== undefined,
+    choices: [
+      {
+        text: '增兵高加索',
+        desc: '派遣两个机械化师增援',
+        effects: { militaryPower: -4, money: -30, stability: -5, caucasus_relation: -30, research: -5 },
+        setFlags: { caucasus_reinforced: true },
+        showToast: '高加索增兵行动开始'
+      },
+      {
+        text: '政治解决',
+        desc: '给予高加索三国更大的自治权',
+        effects: { money: -5, stability: 5, caucasus_relation: 20 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { caucasus_autonomy: true },
+        showToast: '高加索自治方案启动'
+      },
+      {
+        text: '从土耳其借道',
+        desc: '与土耳其合作，共同镇压高加索反叛',
+        effects: { money: -10, stability: 3, caucasus_relation: -15, turkey_relation: 15 },
+        setFlags: { turkey_cooperation: true },
+        showToast: '土耳其出兵高加索'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_bohemia_annex',
+    turn: { year: 1964, quarter: 4 },
+    once: true,
+    tag: 'minor',
+    title: '波西米亚的命运',
+    body: `<p>在帝国风雨飘摇之际，连"保护区"也无法保持中立。</p>
+    <p>波西米亚和摩拉维亚保护国——名义上由前捷克总统哈查领导，实际上由德国将军弗兰克统治——也被内战波及。</p>
+    <p>捷克抵抗运动在布拉格发动起义，占领了电台大楼和火车站。德国驻军被围困在城堡中。而在摩拉维亚，波兰工人开始罢工，要求改善劳动条件。</p>
+    <p>这个小"保护国"的命运，已经不再由柏林决定。</p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.ukraine_independent || s.flags.moscow_stand || s.flags.ostland_in_retreat),
+    choices: [
+      {
+        text: '武力镇压起义',
+        desc: '用党卫军和盖世太保恢复秩序',
+        effects: { money: -8, stability: -5, deterrence: 3, bohemia_relation: -40 },
+        setFlags: { bohemia_crackdown: true },
+        showToast: '波西米亚起义被镇压'
+      },
+      {
+        text: '宣布波西米亚自治',
+        desc: '给予捷克更大的自治权以换取稳定',
+        effects: { stability: 5, money: -3, bohemia_relation: 25 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { bohemia_autonomy: true },
+        showToast: '波西米亚自治宣言'
+      },
+      {
+        text: '撤军，让波西米亚自决',
+        desc: '承认波西米亚独立，集中精力保卫核心领土',
+        effects: { stability: -10, money: 5, bohemia_relation: -50 },
+        setFlags: { bohemia_independent: true },
+        showToast: '波西米亚正式独立'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_danish_sovereignty',
+    turn: { year: 1965, quarter: 1 },
+    once: true,
+    tag: 'major',
+    title: '丹麦的平静革命',
+    body: `<p>当东欧的专员辖区一个接一个崩溃时，北欧的丹麦以更文明的方式寻求独立。</p>
+    <p>丹麦总理托伊特宣布，由于"帝国无法再保障丹麦的安全"，他将举行<strong>全民公投</strong>决定是否退出帝国联盟。</p>
+    <p>丹麦的抵抗运动（"丹麦自由委员会"）在哥本哈根发起了大规模示威，口号是"丹麦人治丹麦"。与东欧不同，丹麦的反抗是和平的——工会罢工、学生游行、市民抵制。</p>
+    <p>德国在丹麦的驻军只有一个团，而且大部分丹麦人并不仇恨德国人。这使得局势更加微妙——你不能像镇压东欧那样镇压一个文明的、和平的反抗运动。</p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.ukraine_independent || s.flags.ostland_in_retreat),
+    choices: [
+      {
+        text: '同意公投',
+        desc: '尊重丹麦人民的选择',
+        effects: { stability: -5, money: -5, denmark_relation: -40 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { denmark_referendum: true },
+        showToast: '丹麦独立公投启动'
+      },
+      {
+        text: '拒绝公投，维持统治',
+        desc: '加强丹麦驻军，压制独立运动',
+        effects: { stability: -8, money: -12, denmark_relation: -30, deterrence: 3 },
+        setFlags: { denmark_crackdown: true },
+        showToast: '丹麦独立运动被镇压'
+      },
+      {
+        text: '给予高度自治',
+        desc: '保留丹麦在帝国框架内的高度自治',
+        effects: { stability: 3, money: 3, denmark_relation: 15 },
+        setFlags: { denmark_autonomy: true },
+        showToast: '丹麦高度自治方案'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_norway_sovereignty',
+    turn: { year: 1965, quarter: 2 },
+    once: true,
+    tag: 'minor',
+    title: '挪威的抵抗',
+    body: `<p>丹麦的独立公投在挪威引起了连锁反应。</p>
+    <p>挪威的"自由挪威"组织在奥斯陆发动了示威，要求"与丹麦同样的权利"。与丹麦不同，挪威的抵抗运动更加激进——他们与英国的特工合作，获得了武器和训练。</p>
+    <p>挪威总督特博文建议采取"强硬但有限度"的措施：逮捕主要领导人，但不使用大规模武力。</p>
+    <p>然而，在特罗姆斯ø的德军基地，指挥官已经开始担心——如果挪威和丹麦都独立，德国将失去整个北欧的战略地位。</p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.denmark_referendum || s.flags.denmark_autonomy),
+    choices: [
+      {
+        text: '支持挪威自治',
+        desc: '跟随丹麦的步伐，给予挪威自治权',
+        effects: { stability: -3, money: -3, norway_relation: -20 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { norway_autonomy: true },
+        showToast: '挪威自治方案'
+      },
+      {
+        text: '镇压挪威独立运动',
+        desc: '逮捕主要领导人，加强监管',
+        effects: { stability: -5, money: -5, norway_relation: -30, deterrence: 2 },
+        setFlags: { norway_crackdown: true },
+        showToast: '挪威独立运动被镇压'
+      },
+      {
+        text: '挪威条约港独立',
+        desc: '允许特罗姆斯ø条约港独立，但保持对其余地区的控制',
+        effects: { stability: -2, money: 2, norway_relation: -10 },
+        setFlags: { norway_port_independent: true },
+        showToast: '挪威条约港独立'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_dutch_annex',
+    turn: { year: 1965, quarter: 3 },
+    once: true,
+    tag: 'minor',
+    title: '尼德兰的橙色起义',
+    body: `<p>荷兰被德国吞并已经25年了。当帝国开始崩溃时，荷兰的"橙色抵抗"组织开始活跃。</p>
+    <p>荷兰女王威廉明娜的支持者在阿姆斯特丹举行秘密集会，橙色旗帜（荷兰王室象征）再次出现在街头。德国驻军开始感受到压力——荷兰虽然是核心领土，但这里的民族主义从未完全消失。</p>
+    <p>特别是在鹿特丹、海牙等主要城市，要求"恢复荷兰独立"的声音越来越大。</p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.denmark_referendum || s.flags.ukraine_independent),
+    choices: [
+      {
+        text: '维持德国统治',
+        desc: '荷兰是核心领土，绝不允许独立',
+        effects: { stability: -5, money: -8, netherlands_relation: -40 },
+        setFlags: { netherlands_crackdown: true },
+        showToast: '荷兰独立运动被镇压'
+      },
+      {
+        text: '给予荷兰更大自治',
+        desc: '在帝国框架内给予荷兰地方自治权',
+        effects: { stability: 5, money: -3, netherlands_relation: 25 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { netherlands_autonomy: true },
+        showToast: '荷兰地方自治方案'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_colonial_revolts_summary',
+    turn: { year: 1965, quarter: 4 },
+    once: true,
+    tag: 'critical',
+    title: '殖民体系的崩溃',
+    body: `<p>到1965年底，帝国的殖民体系已经摇摇欲坠。</p>
+    <p>乌克兰、奥斯兰、高加索、波西米亚、丹麦、挪威——一个接一个的殖民地要么独立，要么获得自治权，要么陷入内战。德国的"生存空间"理论在实践中证明是不可持续的——你无法用武力永久控制数千万人的民族意愿。</p>
+    <p>更糟糕的是，英国、美国、日本趁机加大了对德国殖民地的渗透和资助。特工、武器、资金——三股势力同时在帝国的伤口上撒盐。</p>
+    <p>此刻，你面临一个根本性的选择：<strong>是继续维持一个已经腐朽的帝国，还是接受现实，重建一个新的德国？</strong></p>`,
+    condition: (s) => s.flags.civil_war && (s.flags.ukraine_independent || s.flags.ostland_in_retreat || s.flags.caucasus_uprising),
+    choices: [
+      {
+        text: '接受现实，重建新德国',
+        desc: '放弃殖民帝国，集中精力保卫核心领土',
+        effects: { stability: 10, money: 20, militaryPower: 5, ofn_relation: 15, japan_relation: 10, deterrence: -20 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { new_germany: true, empire_dissolved: true },
+        showToast: '新德国重建启动'
+      },
+      {
+        text: '誓死保卫帝国',
+        desc: '不管代价多大，都要维持殖民帝国',
+        effects: { stability: -10, money: -50, militaryPower: -10, ofn_relation: -20, japan_relation: -15, deterrence: 30 },
+        condition: (s) => s.flags.conservative || s.flags.militarist,
+        setFlags: { empire_defended: true },
+        showToast: '帝国保卫战开始'
+      },
+      {
+        text: '与殖民国家谈判',
+        desc: '承认大部分殖民地独立，但保留核心利益',
+        effects: { stability: -5, money: 10, ofn_relation: 10, japan_relation: 5, deterrence: -15 },
+        setFlags: { negotiated_settlement: true },
+        showToast: '殖民地独立谈判'
+      }
+    ]
+  },
+
+  {
+    id: 'ev_bretagne_revolt',
+    turn: { year: 1966, quarter: 2 },
+    once: true,
+    tag: 'minor',
+    title: '布列塔尼的低语',
+    body: `<p>在德国直接统治的法国布列塔尼地区，独立运动也在悄然兴起。</p>
+    <p>"布列塔尼民族阵线"在布雷斯特、雷恩等地发起示威，要求"布列塔尼自治"或"回归法国"。与东欧的大规模起义不同，布列塔尼的运动更加温和——更多是文化运动而非武装抵抗。</p>
+    <p>然而，布列塔尼的战略位置非常重要——它控制着英吉利海峡的入口，是德国海军的重要基地。</p>`,
+    condition: (s) => s.flags.civil_war && s.flags.empire_dissolved,
+    choices: [
+      {
+        text: '给予布列塔尼文化自治',
+        desc: '允许布列塔尼语和文化的自由发展',
+        effects: { stability: 3, money: -2, france_relation: 15, britanny_relation: 20 },
+        condition: (s) => s.flags.reformist,
+        setFlags: { britanny_autonomy: true },
+        showToast: '布列塔尼文化自治'
+      },
+      {
+        text: '维持现状',
+        desc: '布列塔尼是德国核心领土的一部分',
+        effects: { stability: -3, britanny_relation: -30 },
+        setFlags: { britanny_crackdown: true },
+        showToast: '布列塔尼独立运动被压制'
+      }
     ]
   }
 
