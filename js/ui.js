@@ -2065,13 +2065,14 @@ const UI = {
       { id: 'shop_res', name: '科研资助', desc: '向帝国大学拨发专项经费。', cost: { money: 150 }, gain: { research: 6 }, icon: '🔬' },
       { id: 'shop_nuke', name: '核材料采购', desc: '从铀矿采购浓缩铀。', cost: { money: 250, research: 25 }, gain: { nukeDeter: 5, nukes: 1 }, icon: '☢', reqFlag: 'nuclear_tech' },
       { id: 'shop_recruit', name: '征兵动员', desc: '在占领区强制征兵。', cost: { money: 60 }, gain: { manpower: 15 }, icon: '👥' },
-      { id: 'shop_loan', name: '帝国债券', desc: '发行战争债券，换取现金。代价是未来需偿还。', cost: { stability: -5 }, gain: { money: 120 }, icon: '💰' },
+      { id: 'shop_loan', name: '帝国债券', desc: `发行战争债券，换取现金。<strong>每30年只能发行一次</strong>，到期必须偿还本金+利息。${s.flags.loan_active ? '<span style="color:#e74c3c;">当前有未偿还债券</span>' : (s.flags.loan_cooldown ? `<span style="color:#e8a030;">冷却中（${s.flags.loan_cooldown}年后可再次发行）</span>` : '<span style="color:#3a7a4a;">可发行</span>')}`, cost: { stability: -5 }, gain: { money: 120 }, icon: '💰', reqNoLoan: true },
       { id: 'shop_propa', name: '宣传套餐', desc: '戈培尔亲自操刀的宣传攻势。', cost: { money: 70 }, gain: { stability: 3, deterrence: 2 }, icon: '📻' }
     ];
 
     let itemsHtml = '';
     for (const item of shopItems) {
       if (item.reqFlag && !s.flags[item.reqFlag]) continue;
+      if (item.reqNoLoan && (s.flags.loan_active || s.flags.loan_cooldown)) continue;
       const canAfford = Object.entries(item.cost).every(([k, v]) => (r[k] || 0) + v >= 0);
       const costStr = Object.entries(item.cost).map(([k, v]) => {
         const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发' };
@@ -2095,12 +2096,37 @@ const UI = {
       `;
     }
 
+    // 借贷状态面板
+    let loanPanel = '';
+    if (s.flags.loan_active) {
+      const yearsLeft = Math.ceil(s.flags.loan_remaining / 4);
+      const due = s.flags.loan_total_due || 180;
+      const canRepay = r.money >= due;
+      loanPanel = `
+        <div style="margin:12px 0;padding:12px;border:1px solid #e74c3c;border-radius:8px;background:rgba(231,76,60,0.08);">
+          <div style="font-weight:bold;color:#e74c3c;margin-bottom:6px;">💰 帝国债券状态</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.6;">
+            借款金额: ${s.flags.loan_amount || 120} 资金<br>
+            利息: ${s.flags.loan_interest || 60} 资金 (50%)<br>
+            <strong style="color:#e74c3c;">到期需还: ${due} 资金</strong><br>
+            剩余期限: ${yearsLeft} 年 (${s.flags.loan_remaining} 回合)
+          </div>
+          <button data-loan-repay="1" ${canRepay ? '' : 'disabled'}
+            style="margin-top:8px;padding:6px 16px;border-radius:4px;font-size:12px;cursor:${canRepay ? 'pointer' : 'not-allowed'};
+            background:${canRepay ? '#e74c3c' : 'var(--bg-dark)'};color:white;border:none;">
+            ${canRepay ? `提前偿还 (${due} 资金)` : `资金不足 (需 ${due})`}
+          </button>
+        </div>
+      `;
+    }
+
     return `
       <div class="shop-container">
         <div class="shop-header">
           <h3>帝国特别采购</h3>
           <p style="font-size:12px;color:var(--text-muted);margin:4px 0 16px;">用资源换取即时加成。谨慎使用。</p>
         </div>
+        ${loanPanel}
         <div class="shop-list">${itemsHtml}</div>
 
         ${isDebug ? this.renderDebugPanel() : `
@@ -2129,6 +2155,27 @@ const UI = {
         this.shopBuy(id);
       };
     });
+
+    // 借贷还款
+    const repayBtn = document.querySelector('[data-loan-repay]');
+    if (repayBtn) {
+      repayBtn.onclick = () => {
+        const s = Game.state;
+        if (!s.flags.loan_active) return;
+        const due = s.flags.loan_total_due || 180;
+        if (s.resources.money < due) {
+          this.toast('资金不足，无法偿还', 'error');
+          return;
+        }
+        s.resources.money -= due;
+        s.flags.loan_active = false;
+        s.flags.loan_cooldown = 120; // 30年冷却
+        this.addNews(`帝国债券已提前偿还，支付 ${due} 资金`, 'economy');
+        this.toast(`已偿还 ${due} 资金，债券结清`, 'success');
+        this.requestRender();
+        this.autoSave();
+      };
+    }
 
     // 密码输入
     const codeBtn = document.getElementById('shop-code-btn');
@@ -2176,6 +2223,18 @@ const UI = {
     const item = shopItems[id];
     if (!item) return;
 
+    // 借贷限制：有未偿还债券或在冷却期内不可发行
+    if (id === 'shop_loan') {
+      if (s.flags.loan_active) {
+        this.toast('已有未偿还债券，无法再次发行', 'error');
+        return;
+      }
+      if (s.flags.loan_cooldown) {
+        this.toast(`冷却中，还需 ${s.flags.loan_cooldown} 年`, 'error');
+        return;
+      }
+    }
+
     // 检查资源
     for (const [k, v] of Object.entries(item.cost)) {
       if ((r[k] || 0) + v < 0) {
@@ -2192,8 +2251,20 @@ const UI = {
       if (k === 'stability') r[k] = Math.min(100, (r[k] || 0) + v);
       else r[k] = (r[k] || 0) + v;
     }
+
+    // 借贷特殊处理：设置30年（120回合）后到期
+    if (id === 'shop_loan') {
+      s.flags.loan_active = true;
+      s.flags.loan_remaining = 120;  // 30年 = 120回合
+      s.flags.loan_amount = 120;     // 借款金额
+      s.flags.loan_interest = 60;    // 利息50%
+      s.flags.loan_total_due = 180;  // 总需偿还180
+      this.toast('债券发行成功！30年后需偿还180资金（含利息）', 'success');
+    } else {
+      this.toast('购买成功', 'success');
+    }
+
     Game.clampResources();
-    this.toast('购买成功', 'success');
     this.requestRender();
     this.autoSave();
   },

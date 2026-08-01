@@ -2,8 +2,8 @@
   "maps": {
     "einheitspakt": {
       "file": "data/svg_maps/einheitspakt.json",
-      "size": 165666,
-      "countries": 24
+      "size": 115668,
+      "countries": 19
     },
     "america": {
       "file": "data/svg_maps/america.json",
@@ -46,5 +46,5 @@
       "countries": 13
     }
   },
-  "total_countries": 176
+  "total_countries": 172
 }

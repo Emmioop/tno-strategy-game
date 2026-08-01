@@ -951,7 +951,45 @@ const Game = {
       this.state.quarter = 1;
       this.state.year++;
     }
-    // 4.1 年份变化时通知 DataStore 加载新年份池，释放旧池（若DataStore启用）
+
+    // 4.1 借贷系统：每回合递减剩余期限
+    if (this.state.flags.loan_active) {
+      this.state.flags.loan_remaining--;
+      if (this.state.flags.loan_remaining <= 0) {
+        // 债券到期，必须偿还
+        const due = this.state.flags.loan_total_due || 180;
+        if (this.state.resources.money >= due) {
+          // 自动扣除还款
+          this.state.resources.money -= due;
+          this.state.flags.loan_active = false;
+          this.state.flags.loan_cooldown = 120; // 30年冷却
+          this.addNews(`帝国债券到期，已偿还 ${due} 资金（含利息）`, 'economy');
+        } else {
+          // 无法偿还，严厉惩罚
+          const shortfall = due - this.state.resources.money;
+          this.state.resources.money = 0;
+          this.state.resources.stability = Math.max(0, this.state.resources.stability - 30);
+          this.state.resources.deterrence = Math.max(0, this.state.resources.deterrence - 15);
+          this.state.relations.ofn = Math.max(-100, this.state.relations.ofn - 20);
+          this.state.flags.loan_active = false;
+          this.state.flags.loan_defaulted = true;
+          this.state.flags.loan_cooldown = 240; // 违约后60年不能借
+          this.addNews(`帝国债券违约！信用崩溃，损失 ${shortfall.toFixed(0)} 资金。稳定-30，威慑-15`, 'crisis');
+        }
+      } else if (this.state.flags.loan_remaining % 4 === 0) {
+        // 每年提醒
+        const yearsLeft = this.state.flags.loan_remaining / 4;
+        this.addNews(`帝国债券还剩 ${yearsLeft} 年到期，需偿还 ${this.state.flags.loan_total_due || 180} 资金`, 'economy');
+      }
+    } else if (this.state.flags.loan_cooldown) {
+      this.state.flags.loan_cooldown--;
+      if (this.state.flags.loan_cooldown <= 0) {
+        delete this.state.flags.loan_cooldown;
+        this.addNews('帝国债券冷却期结束，可再次发行', 'economy');
+      }
+    }
+
+    // 4.2 年份变化时通知 DataStore 加载新年份池，释放旧池（若DataStore启用）
     if (this.state.year !== prevYear) {
       const ds = (typeof DataStore !== 'undefined') ? DataStore
         : (typeof window !== 'undefined' ? window.DataStore : null);
