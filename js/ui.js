@@ -2661,7 +2661,7 @@ const UI = {
     const imgSrc = this._getEventImage(ev);
     const isRealImg = imgSrc && !imgSrc.startsWith('data:');
     const bannerHtml = isRealImg
-      ? `<img class="event-image-banner" src="${imgSrc}" onerror="this.outerHTML='<div class=\\'event-image-banner-fallback\\'></div>'" />`
+      ? `<img class="event-image-banner" src="${imgSrc}" alt="" onerror="this.style.display='none'" />`
       : `<div class="event-image-banner" style="background-image:url('${imgSrc}')"></div>`;
 
     modal.innerHTML = `
