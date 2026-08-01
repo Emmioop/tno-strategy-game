@@ -335,6 +335,7 @@ const UI = {
           <div class="date" data-k="date">${Game.getDateStr()}</div>
           <div class="turn-info" data-k="turn">回合 ${s.turn} / ${s.totalTurns}</div>
         </div>
+        <button class="topbar-map-btn" id="btn-open-map" title="打开世界地图（横屏页面）">🗺 地图</button>
       `;
       // 建立快速引用
       this._topbarCache = {
@@ -350,6 +351,8 @@ const UI = {
         const d = topbar.querySelector(`[data-d="${k}"]`);
         if (d) this._topbarCache.dels[k] = d;
       });
+      const _mapBtn = topbar.querySelector('#btn-open-map');
+      if (_mapBtn) _mapBtn.onclick = () => this.openMapPage();
       return;
     }
 
@@ -834,6 +837,79 @@ const UI = {
         });
       }
     }, 0);
+  },
+
+  // ===== 独立横屏地图页面 =====
+  openMapPage() {
+    const overlay = document.getElementById('map-overlay-page');
+    if (!overlay) return;
+    overlay.innerHTML = this.renderMapPage();
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    // 重置绑定标志，强制重新绑定 canvas/缩放/选择器
+    this._mapPostRenderBound = false;
+    this._bindMapPostRender();
+    // 关闭按钮
+    const btnClose = document.getElementById('btn-close-map');
+    if (btnClose) btnClose.onclick = () => this.closeMapPage();
+    // ESC 关闭（只绑一次）
+    if (!this._mapOverlayEscBound) {
+      this._mapOverlayEscBound = true;
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const ov = document.getElementById('map-overlay-page');
+          if (ov && ov.classList.contains('active')) this.closeMapPage();
+        }
+      });
+    }
+  },
+
+  closeMapPage() {
+    const overlay = document.getElementById('map-overlay-page');
+    if (!overlay) return;
+    // 销毁地图实例释放资源
+    if (this._svgMapInstance) { try { this._svgMapInstance.destroy(); } catch(_) {} this._svgMapInstance = null; }
+    if (this._canvasMapInstance) { try { this._canvasMapInstance.destroy(); } catch(_) {} this._canvasMapInstance = null; }
+    this._mapPostRenderBound = false;
+    overlay.classList.remove('active');
+    overlay.innerHTML = '';
+    document.body.style.overflow = '';
+  },
+
+  renderMapPage() {
+    const s = Game.state || { flags: {}, relations: {}, turn: 1, totalTurns: 156 };
+    const mapNames = (typeof SVGMap !== 'undefined' && SVGMap.MAP_NAMES) ? SVGMap.MAP_NAMES : {
+      einheitspakt: '轴心国集团（欧洲）', america: '美洲', geacs: '大东亚共荣圈',
+      russia: '俄罗斯地区', south_asia: '南亚/中东', triumvirate: '三头同盟（地中海）',
+      einheitspakt_afrika: '轴心非洲', west_africa: '西非', antarctica: '南极洲',
+    };
+    const lastMap = (function(){ try { return localStorage.getItem('tno_last_map') || 'einheitspakt'; } catch(_){ return 'einheitspakt'; } })();
+    const options = Object.entries(mapNames).map(([id, name]) =>
+      `<option value="${id}"${id === lastMap ? ' selected' : ''}>${name}</option>`
+    ).join('');
+
+    return `
+      <div class="map-overlay-inner">
+        <div class="map-overlay-toolbar">
+          <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em;font-size:15px;margin:0;white-space:nowrap;">TNO 世界地图</h2>
+          <div class="map-overlay-controls">
+            <select id="tno-map-selector" style="padding:4px 10px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;font-size:12px;cursor:pointer;">${options}</select>
+            <button id="btn-zoom-out" style="width:32px;height:28px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="缩小">−</button>
+            <button id="btn-zoom-fit" style="padding:4px 10px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:12px;" title="重置视图">⤢</button>
+            <button id="btn-zoom-in" style="width:32px;height:28px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="放大">+</button>
+            <span style="font-size:12px;color:var(--text-muted);margin-left:6px;white-space:nowrap;">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</span>
+            <button id="btn-close-map" style="margin-left:10px;padding:4px 14px;background:rgba(120,40,40,0.6);color:#f0d0d0;border:1px solid #8a3a3a;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;" title="关闭地图">✕ 关闭</button>
+          </div>
+        </div>
+        <div class="map-overlay-stage">
+          <div class="map-container" style="width:100%;height:100%;background:#0e1520;border-radius:4px;overflow:hidden;">
+            <canvas id="tno-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
+          </div>
+          <div class="map-rotate-hint">📱 建议横屏查看以获得更好体验</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);padding:6px 14px;text-align:center;flex-shrink:0;border-top:1px solid var(--border);">滚轮缩放 · 拖拽平移 · 点击国家查看详情 · 矢量地图 by lilaui (CC-BY-SA 3.0)</div>
+      </div>
+    `;
   },
 
   // ===== 势力地图页 =====
