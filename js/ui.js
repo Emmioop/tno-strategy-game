@@ -620,34 +620,15 @@ const UI = {
         this._bindWorld();
         break;
       case 'map':
-        // Canvas模式: 不加载 11MB 的 map_extra.js（性能关键！）
-        const userRenderer = (function () { try { return localStorage.getItem('tno_renderer') || 'canvas'; } catch (_) { return 'canvas'; } })();
-        const isCanvasMode = userRenderer !== 'svg';
-
-        // 强制刷新标记：切渲染器/切层级时需要重绘
-        if (this._bypassMapCache) {
-          delete this._tabCache.map;
-          delete this._bypassMapCache;
-        }
-        // 每次切地图tab，重置后处理标记(因为DOM可能是新注入的)
         this._mapPostRenderBound = false;
-
-        if (!this._tabCache.map) {
+        if (!this._tabCache.map || Game.state._dirtyMap) {
           content.innerHTML = this.renderMap();
-          this._tabCache.map = { html: content.innerHTML, renderer: userRenderer };
-          this._bindMapPostRender.bind(this)();
-          console.log('[地图] Canvas渲染器启动, 使用 GeoJSON (16KB), 已跳过旧版 11MB map_extra.js');
+          this._tabCache.map = { html: content.innerHTML };
+          delete Game.state._dirtyMap;
         } else {
-          // 从缓存直接写
           content.innerHTML = this._tabCache.map.html;
-          // 如果缓存的renderer和当前不一致，强制刷新（避免用旧DOM）
-          if (this._tabCache.map.renderer !== userRenderer) {
-            delete this._tabCache.map;
-            this.renderTab('map');
-            return;
-          }
-          this._bindMapPostRender.bind(this)();
         }
+        this._bindMapPostRender.bind(this)();
         break;
       case 'industry':
         if (!this._tabCache.industry || tab === 'industry' && Game.state._dirtyIndustry) {
@@ -682,275 +663,81 @@ const UI = {
   // 地图渲染后的后处理：间隙、分区按钮 + Canvas初始化 + 渲染器/层级切换
   _bindMapPostRender() {
     const UI = this;
-    // 防止重复后处理造成 Canvas 被多次实例化
     if (this._mapPostRenderBound) return;
     this._mapPostRenderBound = true;
 
     setTimeout(() => {
-      // Fix: innerHTML注入的<script>不会被浏览器自动执行，手动eval
-      try {
-        const cfgScript = document.querySelector('script[data-render-config]');
-        if (cfgScript && (!window.__TNO_MAP_CONFIG || window.__TNO_MAP_CONFIG._notSet)) {
-          (0, eval)(cfgScript.textContent || '');
-        }
-      } catch (_) {}
-      const cfg = (typeof window !== 'undefined' && window.__TNO_MAP_CONFIG) || {};
-      const useCanvas = !!cfg.useCanvas;
+      const container = document.querySelector('.map-container');
+      if (!container) return;
 
-      // --------- A. SVG模式专属：路径间隙处理 (仅SVG显示时运行) ---------
-      const svgWrap = document.getElementById('svg-map-wrap');
-      if (svgWrap && svgWrap.style.display !== 'none') {
-        const specialClasses = ['germany-region', 'ofn-region', 'japan-region', 'burgundy-region'];
-        const regions = document.querySelectorAll('.map-container .map-region');
-        regions.forEach(path => {
-          const isSpecial = specialClasses.some(cls => path.classList.contains(cls));
-          if (isSpecial) {
-            path.setAttribute('stroke-width', (parseFloat(path.getAttribute('stroke-width')) || 1.5) + 1.5);
-            path.setAttribute('stroke-linejoin', 'round');
-          } else {
-            path.setAttribute('stroke', '#1a2030');
-            path.setAttribute('stroke-width', '3.5');
-            path.setAttribute('stroke-linejoin', 'round');
-          }
-        });
-      }
+      // 清理旧实例
+      if (UI._svgMapInstance) { UI._svgMapInstance.destroy(); UI._svgMapInstance = null; }
+      if (UI._canvasMapInstance) { UI._canvasMapInstance.destroy(); UI._canvasMapInstance = null; }
 
-      // --------- B. 分区查看: zm-btn (同时作用 SVG viewBox + Canvas zoomTo) ---------
-      const ZOOM_VIEWS = {
-        global:   '0 0 1200 750',
-        europe:   '300 100 500 420',
-        america:  '10 60 300 600',
-        eastasia: '740 160 460 500',
-        africa:   '410 350 350 400'
-      };
-      const svg = document.getElementById('world-map-svg');
-      const allZmBtns = document.querySelectorAll('.zm-btn');
-      const zmBtns = Array.from(allZmBtns).filter(b => b.getAttribute('data-zv'));
-      const applyStyle = (btn) => {
-        zmBtns.forEach(b => {
-          if (b === btn) {
-            b.style.background = 'linear-gradient(135deg,#2a1a1a,#3a2a2a)';
-            b.style.color = '#e8c860';
-            b.style.border = '1px solid #6a5a3a';
-            b.style.fontWeight = 'bold';
-            b.classList.add('active');
-          } else {
-            b.style.background = 'rgba(30,30,40,0.8)';
-            b.style.color = '#b8b8c0';
-            b.style.border = '1px solid #3a3a4a';
-            b.style.fontWeight = 'normal';
-            b.classList.remove('active');
-          }
-        });
-      };
-      zmBtns.forEach(btn => {
-        if (btn._zmBound) return;
-        btn._zmBound = true;
-        btn.addEventListener('click', () => {
-          const zv = btn.getAttribute('data-zv');
-          const vb = ZOOM_VIEWS[zv];
-          if (svg && vb) {
-            svg.style.transition = 'viewBox 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-            svg.setAttribute('viewBox', vb);
-          }
-          // Canvas版同步
-          if (UI._canvasMapInstance && zv) {
-            UI._canvasMapInstance.zoomTo(zv);
-          }
-          applyStyle(btn);
-        });
+      const canvas = document.getElementById('tno-map-canvas');
+      if (!canvas || typeof SVGMap === 'undefined') return;
+
+      // 创建tooltip
+      const tooltip = document.createElement('div');
+      tooltip.id = 'tno-map-tooltip';
+      tooltip.style.cssText = 'position:absolute;pointer-events:none;background:rgba(10,14,22,0.92);border:1px solid #4a4030;color:#f0e8c8;padding:4px 8px;border-radius:3px;font-size:11px;line-height:1.4;white-space:nowrap;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.6);';
+      container.appendChild(tooltip);
+
+      const selector = document.getElementById('tno-map-selector');
+      const lastMap = (function(){ try { return localStorage.getItem('tno_last_map') || 'einheitspakt'; } catch(_){ return 'einheitspakt'; } })();
+      if (selector) selector.value = lastMap;
+
+      UI._svgMapInstance = new SVGMap(canvas, {
+        dataDir: 'data/svg_maps',
+        autoLoad: false,
       });
 
-      // --------- C. 渲染器切换按钮 (保存localStorage + 重新渲染tab) ---------
-      const rBtn = document.getElementById('btn-renderer-toggle');
-      if (rBtn && !rBtn._bound) {
-        rBtn._bound = true;
-        rBtn.addEventListener('click', () => {
-          try {
-            const cur = localStorage.getItem('tno_renderer') || 'canvas';
-            const next = cur === 'canvas' ? 'svg' : 'canvas';
-            localStorage.setItem('tno_renderer', next);
-            UI.toast(`已切换为 ${next.toUpperCase()} 渲染器`, 'success');
-            if (UI._canvasMapInstance) { UI._canvasMapInstance.destroy(); UI._canvasMapInstance = null; }
-            UI._mapPostRenderBound = false;
-            UI._bypassMapCache = true; // 强制刷新tabCache
-            UI.renderTab('map');
-          } catch (e) { UI.toast('切换失败: ' + e.message, 'error'); }
+      UI._svgMapInstance.on('hover', (evt) => {
+        const f = evt && evt.feature;
+        if (!f) { tooltip.style.display = 'none'; return; }
+        const rect = container.getBoundingClientRect();
+        tooltip.innerHTML = `<b>${f.zh}</b><br><span style="color:#a0a0b0">ID: ${f.id}</span>`;
+        tooltip.style.left = Math.min(rect.width - 80, evt.x - rect.left + 12) + 'px';
+        tooltip.style.top = Math.min(rect.height - 40, evt.y - rect.top + 12) + 'px';
+        tooltip.style.display = 'block';
+      });
+      UI._svgMapInstance.on('hoverout', () => { tooltip.style.display = 'none'; });
+      UI._svgMapInstance.on('click', (evt) => {
+        const f = evt && evt.feature;
+        if (f) UI.toast(`${f.zh} [${f.id}]`, 'info');
+      });
+
+      UI._svgMapInstance.loadMap(lastMap);
+
+      // 地图选择器
+      if (selector) {
+        selector.onchange = () => {
+          const mapId = selector.value;
+          try { localStorage.setItem('tno_last_map', mapId); } catch(_) {}
+          if (UI._svgMapInstance) UI._svgMapInstance.loadMap(mapId);
+        };
+      }
+
+      // 缩放按钮
+      const btnZoomIn = document.getElementById('btn-zoom-in');
+      const btnZoomOut = document.getElementById('btn-zoom-out');
+      const btnFit = document.getElementById('btn-zoom-fit');
+      if (btnZoomIn && !btnZoomIn._bound) {
+        btnZoomIn._bound = true;
+        btnZoomIn.addEventListener('click', () => {
+          if (UI._svgMapInstance) UI._svgMapInstance.zoomBy(1.4);
         });
       }
-
-      // --------- D. 层级切换按钮 (Level1/Level2) ---------
-      const lBtn = document.getElementById('btn-lvl-toggle');
-      if (lBtn && !lBtn._bound) {
-        lBtn._bound = true;
-        lBtn.addEventListener('click', () => {
-          try {
-            const cur = +(localStorage.getItem('tno_map_level') || '2') || 2;
-            const next = cur === 1 ? 2 : 1;
-            localStorage.setItem('tno_map_level', String(next));
-            lBtn.textContent = 'Lv ' + next;
-            lBtn.style.color = next === 1 ? '#a0c8e0' : '#ffe8a0';
-            const badge = document.getElementById('canvas-map-badge');
-            if (badge) badge.textContent = 'Canvas · Level ' + next;
-            if (UI._canvasMapInstance) UI._canvasMapInstance.setDisplayLevel(next);
-            UI.toast(`地图显示等级: Level ${next} (${next === 1 ? '国家级·简洁' : '战区级·军阀/专员辖区'})`, 'info');
-          } catch (e) { UI.toast('切换失败: ' + e.message, 'error'); }
+      if (btnZoomOut && !btnZoomOut._bound) {
+        btnZoomOut._bound = true;
+        btnZoomOut.addEventListener('click', () => {
+          if (UI._svgMapInstance) UI._svgMapInstance.zoomBy(1 / 1.4);
         });
       }
-
-      // --------- E. Canvas模式：实例化 CanvasMap ---------
-      if (useCanvas && typeof CanvasMap !== 'undefined' && !UI._canvasMapInstance) {
-        const cvs = document.getElementById('world-map-canvas');
-        const tooltip = document.getElementById('canvas-map-tooltip');
-        if (cvs) {
-          try {
-            const cm = new CanvasMap(cvs, {
-              url: 'data/map/world_mini.geojson',
-              defaultDisplayLevel: cfg.defaultLevel || 2,
-              autoLoad: true
-            });
-            UI._canvasMapInstance = cm;
-
-            // 颜色覆盖
-            cm.on('ready', () => {
-              if (cfg.colors && typeof cfg.colors === 'object') {
-                cm.setStateColorOverrides(cfg.colors);
-              }
-              UI.toast('Canvas地图已就绪 (47 区域 · 节省11MB SVG)', 'success');
-            });
-            cm.on('error', (e) => {
-              UI.toast('Canvas加载失败，已降级为SVG: ' + (e && e.message || '?'), 'error');
-              // 自动降级：切回SVG
-              try { localStorage.setItem('tno_renderer', 'svg'); } catch (_) {}
-              UI._mapPostRenderBound = false;
-              setTimeout(() => UI.renderTab('map'), 400);
-            });
-
-            // Hover tooltip
-            cm.on('hover', (evt) => {
-              const f = evt && evt.feature;
-              if (!f || !tooltip) return;
-              const wrap = document.getElementById('canvas-map-wrap');
-              if (!wrap) return;
-              const rect = wrap.getBoundingClientRect();
-              const x = (evt.x || 0) - rect.left + 12;
-              const y = (evt.y || 0) - rect.top + 12;
-              const parent = f.properties.parent ? ` (归属: ${f.properties.parent})` : '';
-              const factionNames = { GER:'大日耳曼国', USA:'OFN', JAP:'共荣圈', ITA:'三头同盟', BUR:'勃艮第', RUS:'俄罗斯', MID:'中立' };
-              const fac = factionNames[f.properties.faction] || f.properties.faction;
-              tooltip.innerHTML = `<b>${f.properties.name}</b><br><span style="color:#a0a0b0">势力: ${fac}${parent}</span><br><span style="color:#888">ID: ${f.id}</span>`;
-              tooltip.style.left = Math.min(rect.width - 40, x) + 'px';
-              tooltip.style.top = Math.min(rect.height - 40, y) + 'px';
-              tooltip.style.display = 'block';
-            });
-            cm.on('hoverout', () => { if (tooltip) tooltip.style.display = 'none'; });
-
-            // Click
-            cm.on('click', (evt) => {
-              const f = evt && evt.feature;
-              if (!f) return;
-              const factionNames = { GER:'大日耳曼国', USA:'自由国家组织', JAP:'大东亚共荣圈', ITA:'三头同盟', BUR:'勃艮第骑士团国', RUS:'俄罗斯', MID:'中立' };
-              const fac = factionNames[f.properties.faction] || f.properties.faction;
-              UI.toast(`${f.properties.name} [${f.id}] · 势力: ${fac}`, 'info');
-            });
-
-            // 初始默认跳到全球
-            setTimeout(() => { try { cm.zoomTo('global'); } catch (_) {} }, 300);
-          } catch (e) {
-            console.warn('[CanvasMap] 初始化异常:', e);
-          }
-        }
-      }
-
-      // --------- F. TNO SVG区域地图 切换 ---------
-      const headerDiv = document.querySelector('.map-header > div');
-      const svgMapBtn = document.getElementById('btn-svgmap-toggle');
-      if (svgMapBtn && !svgMapBtn._bound) {
-        svgMapBtn._bound = true;
-        svgMapBtn.addEventListener('click', () => {
-          const isActive = svgMapBtn.classList.contains('active');
-          const container = document.querySelector('.map-container');
-          const existingCanvas = document.getElementById('svg-regional-canvas');
-
-          if (isActive) {
-            svgMapBtn.classList.remove('active');
-            svgMapBtn.style.background = '';
-            existingCanvas && existingCanvas.remove();
-            if (UI._svgMapInstance) { UI._svgMapInstance.destroy(); UI._svgMapInstance = null; }
-            // 恢复原地图
-            const svgW = document.getElementById('svg-map-wrap');
-            const canvasW = document.getElementById('canvas-map-wrap');
-            if (svgW) svgW.style.display = '';
-            if (canvasW) canvasW.style.display = '';
-            return;
-          }
-
-          svgMapBtn.classList.add('active');
-          svgMapBtn.style.background = 'linear-gradient(135deg,#1a3a5a,#2a4a6a)';
-
-          // 隐藏原地图
-          const svgW = document.getElementById('svg-map-wrap');
-          const canvasW = document.getElementById('canvas-map-wrap');
-          if (svgW) svgW.style.display = 'none';
-          if (canvasW) canvasW.style.display = 'none';
-
-          // 创建SVG区域地图canvas
-          if (!existingCanvas) {
-            const newCanvas = document.createElement('canvas');
-            newCanvas.id = 'svg-regional-canvas';
-            newCanvas.style.cssText = 'width:100%;height:100%;display:block;touch-action:none;cursor:grab;background:#0e1520;border-radius:4px;';
-            container.appendChild(newCanvas);
-          }
-
-          // 显示地图选择器
-          let selector = document.getElementById('svg-map-selector');
-          if (!selector) {
-            const mapNames = SVGMap.MAP_NAMES;
-            const options = Object.entries(mapNames).map(([id, name]) =>
-              `<option value="${id}">${name}</option>`
-            ).join('');
-            selector = document.createElement('select');
-            selector.id = 'svg-map-selector';
-            selector.style.cssText = 'margin-left:8px;padding:3px 8px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;font-size:11px;cursor:pointer;';
-            selector.innerHTML = options;
-            headerDiv.appendChild(selector);
-          }
-
-          // 初始化SVGMap
-          if (!UI._svgMapInstance && typeof SVGMap !== 'undefined') {
-            const sc = document.getElementById('svg-regional-canvas');
-            const currentMapId = selector.value;
-            UI._svgMapInstance = new SVGMap(sc, {
-              dataDir: 'data/svg_maps',
-              autoLoad: false,
-            });
-
-            const tooltipDiv = document.createElement('div');
-            tooltipDiv.id = 'svg-map-tooltip';
-            tooltipDiv.style.cssText = 'position:absolute;pointer-events:none;background:rgba(10,14,22,0.92);border:1px solid #4a4030;color:#f0e8c8;padding:4px 8px;border-radius:3px;font-size:11px;line-height:1.4;white-space:nowrap;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.6);';
-            container.appendChild(tooltipDiv);
-
-            UI._svgMapInstance.on('hover', (evt) => {
-              const f = evt && evt.feature;
-              if (!f) { tooltipDiv.style.display = 'none'; return; }
-              const rect = container.getBoundingClientRect();
-              tooltipDiv.innerHTML = `<b>${f.zh}</b><br><span style="color:#a0a0b0">ID: ${f.id}</span>`;
-              tooltipDiv.style.left = Math.min(rect.width - 80, evt.x - rect.left + 12) + 'px';
-              tooltipDiv.style.top = Math.min(rect.height - 40, evt.y - rect.top + 12) + 'px';
-              tooltipDiv.style.display = 'block';
-            });
-            UI._svgMapInstance.on('hoverout', () => { tooltipDiv.style.display = 'none'; });
-            UI._svgMapInstance.on('click', (evt) => {
-              const f = evt && evt.feature;
-              if (f) UI.toast(`${f.zh} [${f.id}]`, 'info');
-            });
-
-            UI._svgMapInstance.loadMap(currentMapId);
-          }
-
-          selector.onchange = () => {
-            if (UI._svgMapInstance) UI._svgMapInstance.loadMap(selector.value);
-          };
+      if (btnFit && !btnFit._bound) {
+        btnFit._bound = true;
+        btnFit.addEventListener('click', () => {
+          if (UI._svgMapInstance) UI._svgMapInstance.zoomToFit();
         });
       }
     }, 0);
@@ -961,51 +748,14 @@ const UI = {
     const s = Game.state;
     const f = s.flags;
 
-    // 战争标志检测
-    const hasWar = f.war_europe || f.war_africa || f.war_middle_east || f.war_asia || f.civil_war_imminent;
-    const warEurope = f.war_europe || f.civil_war_imminent;
-    const warAfrica = f.war_africa || f.italy_africa_collapse;
-    const warMiddleEast = f.war_middle_east || f.suez_crisis || f.first_nile_war;
-    const warAsia = f.war_asia;
-
-    // 判断各势力状态颜色
+    // 势力详情数据 (保留在地图下方)
     const germanyColor = f.civil_war_imminent && !f.civil_war_over ? '#6a2a2a' : '#a83232';
     const germanyLabel = f.civil_war_imminent && !f.civil_war_over ? '大日耳曼国（内战）' : '大日耳曼国';
-
-    const burgundyColor = '#4a2a4a';
     const italyColor = f.italy_accepted || f.italy_leaves_sphere ? '#3a6a3a' : '#5a8a4a';
     const italyLabel = f.italy_accepted ? '意大利（已脱离）' : '意大利（三头同盟）';
-
+    const burgundyColor = '#4a2a4a';
     const iberiaColor = f.iberian_collapse ? '#6a5a3a' : '#8a7a4a';
-    const iberiaLabel = f.iberian_collapse ? '伊比利亚（崩溃）' : '伊比利亚联盟';
 
-    const englandColor = f.britain_withdrawn ? '#4a4a5a' : '#5a5a6a';
-
-    // 法国颜色：根据抵抗运动和谈判状态
-    const franceOccupiedColor = f.french_resistance_crushed ? '#7a3a2a' : '#5a3a3a';
-    const freeFranceColor = f.french_negotiation ? '#4a7a5a' : '#3a6a4a';
-    const vichyColor = f.french_resistance_crushed ? '#6a5a3a' : '#8a4a3a';
-    const franceLabel = f.french_resistance_crushed ? '法国（占领·抵抗被镇压）' :
-                        f.french_negotiation ? '法国（维希·谈判中）' :
-                        '法国（德国占领/维希）';
-    const freeFranceLabel = f.french_negotiation ? '自由法国（南部·谈判）' : '自由法国（南部抵抗）';
-
-    // 非洲颜色
-    const northAfricaColor = warAfrica ? '#8a3a3a' : '#7a5a3a';
-    const italyAfricaColor = warAfrica ? '#7a4a2a' : '#6a7a4a';
-    const egyptColor = warMiddleEast ? '#8a6a2a' : '#6a7a5a';
-    const subSaharanColor = warAfrica ? '#5a4a2a' : '#4a5a3a';
-
-    // 中东颜色
-    const iranColor = warMiddleEast ? '#7a4a4a' : '#5a6a5a';
-    const iraqColor = warMiddleEast ? '#7a5a3a' : '#5a7a5a';
-    const saudiColor = '#6a5a4a';
-
-    // 东南亚颜色
-    const frenchIndochinaColor = '#5a6a7a';
-    const dutchIndiesColor = '#6a7a5a';
-
-    // 俄罗斯颜色根据统一者类型
     let russiaColor = '#3a3a3a';
     let russiaLabel = '俄罗斯（分裂）';
     let russiaFragments = true;
@@ -1015,161 +765,6 @@ const UI = {
     else if (f.russia_madman) { russiaColor = '#2a2a2a'; russiaLabel = '摄政俄罗斯（疯狂）'; russiaFragments = false; }
     else if (f.russia_monarchist) { russiaColor = '#4a4a8a'; russiaLabel = '俄罗斯帝国'; russiaFragments = false; }
 
-    const turkeyColor = f.turkey_junta ? '#6a6a3a' : '#5a5a4a';
-
-    // 关系连线颜色
-    const relLine = (val) => {
-      if (val > 20) return '#4a8a4a';
-      if (val > -10) return '#5a5a5a';
-      if (val > -40) return '#8a6a3a';
-      return '#a83232';
-    };
-
-    // 战争动画样式
-    const warAnimStyle = `animation: warBlink 1.2s ease-in-out infinite;`;
-    const warShakeStyle = `animation: warShake 0.6s ease-in-out infinite;`;
-
-    // 生成俄罗斯分裂区域
-    const russiaFragmentHtml = russiaFragments ? `
-      <!-- ===== 俄罗斯军阀格局（1962初始）· 布局修正版 ===== -->
-      <g class="russia-fragments">
-        <!-- AA线（乌拉尔边界，调整到x=800） -->
-        <line x1="800" y1="120" x2="800" y2="400" stroke="#c9a84a" stroke-width="1" stroke-dasharray="2,2" opacity="0.65"/>
-        <text x="800" y="114" font-size="6.5" fill="#c9a84a" text-anchor="middle" opacity="0.9">AA线</text>
-
-        <!-- ======= 西俄罗斯（x710–800，AA线以西，三专员辖区东侧的废土） ======= -->
-        <!-- 科米共和国（民主试验田，最西北） -->
-        <path d="M 710 138 Q 742 132, 768 142 Q 774 170, 766 194 Q 746 206, 726 198 Q 710 176, 710 156 Z"
-              fill="#4a4a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="科米共和国（俄罗斯仅存的民主试验田）"/>
-        <text x="738" y="172" font-size="5.5" fill="#a0a0c0" text-anchor="middle" font-weight="bold">科米</text>
-
-        <!-- WRRF · 西俄罗斯革命阵线（科米以南，莫斯科以东） -->
-        <path d="M 710 196 Q 748 188, 776 198 Q 782 228, 774 254 Q 754 270, 728 266 Q 710 244, 710 218 Z"
-              fill="#5a3a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="WRRF · 西俄罗斯革命阵线（苏沃洛夫）"/>
-        <text x="742" y="232" font-size="5.5" fill="#c8a0a0" text-anchor="middle" font-weight="bold">WRRF</text>
-
-        <!-- 维亚特卡（君主制复辟，WRRF以南） -->
-        <path d="M 712 268 Q 748 260, 776 272 Q 782 300, 774 324 Q 754 338, 730 332 Q 712 308, 712 288 Z"
-              fill="#4a4a8a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="维亚特卡（君主制复辟，沙皇遗老）"/>
-        <text x="744" y="302" font-size="5.5" fill="#a0a0d8" text-anchor="middle" font-weight="bold">维亚特卡</text>
-
-        <!-- 萨马拉 · 俄罗斯解放军（弗拉索夫叛军，东南） -->
-        <path d="M 760 254 Q 788 248, 806 262 Q 810 290, 802 314 Q 782 326, 762 316 Q 752 292, 756 272 Z"
-              fill="#5a5a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="萨马拉 · 俄罗斯解放军（弗拉索夫叛军）"/>
-        <text x="782" y="286" font-size="5.5" fill="#c8c8a0" text-anchor="middle" font-weight="bold">萨马拉</text>
-
-        <!-- 雅利安兄弟会（邪教军国主义，维亚特卡以南，乌克兰东侧） -->
-        <path d="M 718 332 Q 750 326, 776 338 Q 782 366, 772 390 Q 752 402, 730 394 Q 716 370, 718 350 Z"
-              fill="#6a3a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="雅利安兄弟会（新异教军国主义邪教）"/>
-        <text x="746" y="366" font-size="5" fill="#c8a0b0" text-anchor="middle" font-weight="bold">雅利安兄弟会</text>
-
-        <!-- ======= 西西伯利亚/乌拉尔（x800–930，AA线东侧） ======= -->
-        <!-- 斯维尔德洛夫斯克（工业军阀，最北） -->
-        <path d="M 802 160 Q 838 154, 864 164 Q 872 194, 864 222 Q 842 236, 820 230 Q 804 206, 802 184 Z"
-              fill="#3a5a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="斯维尔德洛夫斯克（工业军阀）"/>
-        <text x="834" y="196" font-size="5.5" fill="#a0c8b0" text-anchor="middle" font-weight="bold">斯维尔德洛夫斯克</text>
-
-        <!-- 秋明（斯维尔德洛夫斯克以南） -->
-        <path d="M 802 232 Q 834 226, 860 238 Q 868 266, 858 292 Q 836 304, 816 296 Q 802 272, 802 252 Z"
-              fill="#5a4a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="秋明"/>
-        <text x="830" y="266" font-size="5.5" fill="#c8b8a0" text-anchor="middle" font-weight="bold">秋明</text>
-
-        <!-- 鄂木斯克（黑色联盟 · 极端复仇主义） -->
-        <path d="M 862 236 Q 900 228, 926 242 Q 934 278, 920 310 Q 892 324, 868 314 Q 852 286, 858 260 Z"
-              fill="#2a2a2a" stroke="#5a5a5a" stroke-width="1" class="map-region" data-info="鄂木斯克 · 黑色联盟（极端军国复仇主义）"/>
-        <text x="894" y="276" font-size="5.5" fill="#e8e8e8" text-anchor="middle" font-weight="bold">鄂木斯克</text>
-        <text x="894" y="288" font-size="4.5" fill="#a8a8a8" text-anchor="middle">黑色联盟</text>
-
-        <!-- 新西伯利亚（鄂木斯克以南） -->
-        <path d="M 860 314 Q 896 306, 924 318 Q 934 346, 922 370 Q 896 382, 872 374 Q 856 348, 860 328 Z"
-              fill="#4a4a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="新西伯利亚"/>
-        <text x="892" y="346" font-size="5.5" fill="#c8c8a0" text-anchor="middle" font-weight="bold">新西伯利亚</text>
-
-        <!-- ======= 中西伯利亚（x920–1035） ======= -->
-        <!-- 托木斯克（学者共和，最北） -->
-        <path d="M 920 198 Q 952 190, 978 202 Q 986 230, 976 256 Q 954 268, 932 260 Q 920 236, 920 216 Z"
-              fill="#4a5a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="托木斯克（学者共和，西伯利亚文人政府）"/>
-        <text x="948" y="232" font-size="5.5" fill="#a0c0c0" text-anchor="middle" font-weight="bold">托木斯克</text>
-
-        <!-- 克麦罗沃（托木斯克以南） -->
-        <path d="M 920 260 Q 950 254, 974 266 Q 982 294, 970 318 Q 948 328, 928 320 Q 918 296, 920 276 Z"
-              fill="#5a3a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="克麦罗沃"/>
-        <text x="948" y="292" font-size="5.5" fill="#c0a0c0" text-anchor="middle" font-weight="bold">克麦罗沃</text>
-
-        <!-- 黑军自由领土（无政府主义，东北） -->
-        <path d="M 976 212 Q 1006 206, 1028 218 Q 1036 248, 1024 274 Q 998 284, 978 272 Q 968 246, 974 228 Z"
-              fill="#2a2a2a" stroke="#5a5a5a" stroke-width="0.9" class="map-region" data-info="黑军自由领土（马赫诺无政府主义）"/>
-        <text x="1002" y="248" font-size="5" fill="#d8d8d8" text-anchor="middle" font-weight="bold">黑军自由领土</text>
-
-        <!-- 人民革命委员会（布党残部，新西伯利亚以东） -->
-        <path d="M 924 324 Q 958 316, 986 328 Q 996 356, 984 382 Q 958 394, 932 386 Q 920 360, 924 342 Z"
-              fill="#7a2a2a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="人民革命委员会（西伯利亚布党残部）"/>
-        <text x="956" y="358" font-size="5" fill="#e8a0a0" text-anchor="middle" font-weight="bold">人民革命委员会</text>
-
-        <!-- 克拉斯诺亚尔斯克（灰色地带） -->
-        <path d="M 978 286 Q 1008 280, 1030 292 Q 1038 322, 1026 346 Q 1004 356, 984 348 Q 972 322, 976 302 Z"
-              fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.8" opacity="0.75" class="map-region" data-info="克拉斯诺亚尔斯克（灰色地带）"/>
-        <text x="1004" y="320" font-size="5" fill="#a8a8a8" text-anchor="middle">克拉斯诺亚尔斯克</text>
-
-        <!-- ======= 远东区（x1035+） ======= -->
-        <!-- 伊尔库茨克（最北） -->
-        <path d="M 1032 186 Q 1060 180, 1082 192 Q 1090 220, 1080 244 Q 1058 254, 1040 244 Q 1030 220, 1032 200 Z"
-              fill="#5a4a4a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="伊尔库茨克"/>
-        <text x="1056" y="216" font-size="5.5" fill="#c8b0b0" text-anchor="middle" font-weight="bold">伊尔库茨克</text>
-
-        <!-- 布里亚特（伊尔库茨克以南） -->
-        <path d="M 1034 248 Q 1062 242, 1080 254 Q 1086 280, 1074 300 Q 1054 306, 1038 296 Q 1030 274, 1034 258 Z"
-              fill="#6a3a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="布里亚特"/>
-        <text x="1058" y="278" font-size="5.5" fill="#c8a0a0" text-anchor="middle" font-weight="bold">布里亚特</text>
-
-        <!-- 马加丹（远东流放地，最东北） -->
-        <path d="M 1084 198 Q 1112 192, 1130 206 Q 1136 236, 1122 260 Q 1098 268, 1084 254 Q 1076 228, 1084 208 Z"
-              fill="#5a5a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="马加丹（远东流放地军阀，投机者）"/>
-        <text x="1106" y="234" font-size="5.5" fill="#c8c8c8" text-anchor="middle" font-weight="bold">马加丹</text>
-
-        <!-- 赤塔（远东据点） -->
-        <path d="M 1080 230 Q 1106 224, 1124 238 Q 1130 266, 1116 288 Q 1094 294, 1078 282 Q 1072 258, 1080 240 Z"
-              fill="#6a5a3a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="赤塔"/>
-        <text x="1102" y="262" font-size="5.5" fill="#c8c0a0" text-anchor="middle" font-weight="bold">赤塔</text>
-
-        <!-- 阿穆尔（白色独裁，最东南） -->
-        <path d="M 1034 306 Q 1070 298, 1098 312 Q 1108 342, 1094 370 Q 1066 380, 1042 368 Q 1030 342, 1034 322 Z"
-              fill="#4a3a5a" stroke="#2a2a2a" stroke-width="0.8" class="map-region" data-info="阿穆尔（远东白色独裁，日军阴影下）"/>
-        <text x="1066" y="342" font-size="5.5" fill="#b0a0c8" text-anchor="middle" font-weight="bold">阿穆尔</text>
-
-        <!-- 堪察加（半岛） -->
-        <path d="M 1128 222 Q 1148 216, 1160 232 Q 1164 262, 1150 286 Q 1130 294, 1122 276 Q 1118 250, 1128 230 Z"
-              fill="#4a4a4a" stroke="#2a2a2a" stroke-width="0.7" opacity="0.75" class="map-region" data-info="堪察加"/>
-        <text x="1144" y="258" font-size="4.5" fill="#a8a8a8" text-anchor="middle">堪察加</text>
-      </g>` : `
-      <!-- 统一后的俄罗斯（巨型块） · 坐标与新AA线对齐 -->
-      <path d="M 710 138 Q 820 120, 940 128 Q 1060 134, 1156 154 Q 1160 250, 1144 336 Q 1120 376, 1032 384 Q 920 388, 808 382 Q 724 374, 664 352 Q 652 270, 680 202 Z"
-            fill="${russiaColor}" stroke="#1a1a1a" stroke-width="1.5" class="map-region russia-unified" data-info="${russiaLabel}"/>
-      <text x="900" y="260" font-size="14" fill="#e8e6e0" text-anchor="middle" font-family="Georgia,serif" font-weight="bold">${russiaLabel}</text>
-    `;
-    // ===== 旧版SVG地图已移除 (原 11MB map_extra.js + 500行内联SVG =====
-    // 默认使用 Canvas (GeoJSON 16KB)。仅当浏览器不支持 Canvas 或 localStorage 明确强制 svg 时才用占位 SVG。
-    // 如果 Canvas 完全加载失败 (3次重试 + error 事件触发), 会自动切到此占位 SVG 提示用户刷新。
-    const isCanvasSupported = (function () {
-      try {
-        const c = document.createElement('canvas');
-        return !!(c.getContext && c.getContext('2d'));
-      } catch (_) { return false; }
-    })();
-    // 渲染器持久化: localStorage.tno_renderer = 'canvas' (默认) | 'svg' (保留旧切换能力但不加载11MB细节)
-    const forceSvg = (function () {
-      try { return localStorage.getItem('tno_renderer') === 'svg'; } catch (_) { return false; }
-    })();
-    const useCanvas = isCanvasSupported && !forceSvg;
-    // 最小化 SVG fallback: 仅显示海洋底色 + 简单国家色矩形 (不需要 map_extra.js，几 KB 即可)
-    const mapSvg = `
-      <svg id="world-map-svg" viewBox="0 0 1200 750" class="world-map" xmlns="http://www.w3.org/2000/svg">
-        <rect width="1200" height="750" fill="#1a2535"/>
-        <text x="600" y="350" font-size="22" fill="#a0a0b0" text-anchor="middle" font-family="sans-serif">旧版SVG地图已弃用</text>
-        <text x="600" y="390" font-size="14" fill="#808090" text-anchor="middle" font-family="sans-serif">请切换到 Canvas 渲染器 (右上角按钮)</text>
-      </svg>
-    `;
-    // 势力详情面板
     const factionDetails = [
       { name: '大日耳曼国', rel: null, desc: germanyLabel, color: germanyColor, isPlayer: true },
       { name: '美国 (OFN)', rel: s.relations.ofn, desc: '自由世界残部，民主灯塔', color: '#3a5a8a' },
@@ -1178,166 +773,70 @@ const UI = {
       { name: '勃艮第', rel: s.relations.burgundy, desc: '希姆莱的黑暗国度', color: burgundyColor },
       ...(russiaFragments ? [
         { name: '俄罗斯（军阀割据）', rel: s.relations.russia, desc: '群雄割据，前途未卜', color: russiaColor },
-        { name: 'WRRF · 西俄革命阵线', rel: null, desc: '苏沃洛夫的军政府，最强军阀之一', color: '#5a3a3a' },
-        { name: '科米共和国', rel: null, desc: '俄罗斯仅存的民主试验田', color: '#4a4a5a' },
-        { name: '维亚特卡', rel: null, desc: '君主制复辟，沙皇遗老', color: '#4a4a8a' },
-        { name: '萨马拉 · 俄罗斯解放军', rel: null, desc: '弗拉索夫的叛军政权', color: '#5a5a3a' },
-        { name: '鄂木斯克 · 黑色联盟', rel: null, desc: '极端军国主义，以复仇为业', color: '#2a2a2a' },
-        { name: '托木斯克', rel: null, desc: '学者共和，西伯利亚文人政府', color: '#4a5a5a' },
-        { name: '人民革命委员会', rel: null, desc: '西伯利亚布党残部', color: '#7a2a2a' },
-        { name: '阿穆尔', rel: null, desc: '远东白色独裁，日军阴影下', color: '#4a3a5a' },
-        { name: '马加丹', rel: null, desc: '远东流放地军阀，投机者', color: '#5a5a5a' },
       ] : [
         { name: russiaLabel, rel: s.relations.russia, desc: '已统一的东方巨人', color: russiaColor },
       ]),
-      { name: '法国（自由）', rel: s.relations.france || (f.french_negotiation ? 15 : (f.french_resistance_crushed ? -10 : 0)), desc: freeFranceLabel, color: freeFranceColor },
-      { name: '法国（维希）', rel: s.relations.vichy || 0, desc: franceLabel, color: vichyColor },
-      { name: '英国（本土）', rel: s.relations.england || (f.britain_withdrawn ? -5 : 5), desc: f.britain_withdrawn ? '英国合作国（撤退中）' : '英国合作国（傀儡）', color: englandColor },
-      { name: '土耳其', rel: s.relations.turkey || 0, desc: f.turkey_junta ? '土耳其（军政府）' : '土耳其共和国', color: turkeyColor },
-      { name: '伊朗', rel: s.relations.iran || 0, desc: warMiddleEast ? '伊朗（战争中）' : '伊朗王国', color: iranColor },
-      { name: '北非（法属）', rel: s.relations.north_africa || 0, desc: warAfrica ? '北非殖民地（战争中）' : '法属北非殖民地', color: northAfricaColor },
-      { name: '埃及', rel: s.relations.egypt || 0, desc: warMiddleEast ? '埃及（苏伊士危机）' : '埃及共和国', color: egyptColor },
-      { name: '中东', rel: s.relations.middle_east || 0, desc: warMiddleEast ? '中东（战争中）' : '中东诸国', color: saudiColor },
-      { name: '东南亚（法属）', rel: s.relations.french_indochina || 0, desc: '法属印度支那', color: frenchIndochinaColor },
-      { name: '东南亚（荷属）', rel: s.relations.dutch_indies || 0, desc: '荷属东印度', color: dutchIndiesColor },
     ];
 
-    // 帝国卫星国组
     const satelliteStates = [
-      { name: '奥地利', color: '#6a5a7a' },
-      { name: '捷克斯洛伐克', color: '#7a6a5a' },
-      { name: '匈牙利', color: '#7a5a5a' },
-      { name: '罗马尼亚', color: '#7a5a4a' },
-      { name: '保加利亚', color: '#6a4a5a' },
-      { name: '希腊', color: '#5a6a7a' },
-      { name: '南斯拉夫', color: '#6a5a6a' },
-      { name: '瑞士', color: '#8a7a6a' },
-      { name: '荷兰', color: '#6a7a8a' },
-      { name: '比利时', color: '#7a6a5a' },
+      { name: '奥地利', color: '#6a5a7a' }, { name: '捷克斯洛伐克', color: '#7a6a5a' },
+      { name: '匈牙利', color: '#7a5a5a' }, { name: '罗马尼亚', color: '#7a5a4a' },
+      { name: '保加利亚', color: '#6a4a5a' }, { name: '希腊', color: '#5a6a7a' },
       { name: '伊比利亚', color: iberiaColor },
     ];
 
-    const relText = (v) => {
-      if (v === null) return '—';
-      if (v <= -40) return '敌对';
-      if (v <= -10) return '冷淡';
-      if (v <= 10) return '中立';
-      if (v <= 40) return '友好';
-      return '盟友';
-    };
-    const relColor = (v) => {
-      if (v === null) return 'var(--text-muted)';
-      if (v <= -40) return 'var(--accent-blood-bright)';
-      if (v <= -10) return '#c97a3a';
-      if (v <= 10) return 'var(--text-muted)';
-      if (v <= 40) return 'var(--accent-toxic)';
-      return 'var(--accent-gold-bright)';
-    };
+    const relText = (v) => v === null ? '—' : v <= -40 ? '敌对' : v <= -10 ? '冷淡' : v <= 10 ? '中立' : v <= 40 ? '友好' : '盟友';
+    const relColor = (v) => v === null ? 'var(--text-muted)' : v <= -40 ? 'var(--accent-blood-bright)' : v <= -10 ? '#c97a3a' : v <= 10 ? 'var(--text-muted)' : v <= 40 ? 'var(--accent-toxic)' : 'var(--accent-gold-bright)';
 
     const factionHtml = factionDetails.map(fd => `
       <div class="faction-detail-card">
         <div class="fdc-color" style="background:${fd.color}"></div>
-        <div class="fdc-info">
-          <div class="fdc-name">${fd.name}</div>
-          <div class="fdc-desc">${fd.desc}</div>
-        </div>
-        <div class="fdc-rel" style="color:${relColor(fd.rel)}">
-          ${relText(fd.rel)}${fd.rel !== null ? ` ${fd.rel > 0 ? '+' : ''}${fd.rel}` : ''}
-        </div>
-      </div>
-    `).join('');
+        <div class="fdc-info"><div class="fdc-name">${fd.name}</div><div class="fdc-desc">${fd.desc}</div></div>
+        <div class="fdc-rel" style="color:${relColor(fd.rel)}">${relText(fd.rel)}${fd.rel !== null ? ` ${fd.rel > 0 ? '+' : ''}${fd.rel}` : ''}</div>
+      </div>`).join('');
 
-    // 帝国卫星国组渲染
     const satelliteHtml = `
       <div class="satellite-group" style="margin-top:16px;padding:12px;background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--accent-steel);border-radius:2px;">
         <div style="font-family:var(--font-serif);color:var(--accent-gold);margin-bottom:8px;letter-spacing:0.1em;font-size:12px">帝国卫星国 / 傀儡国</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${satelliteStates.map(s => `
-            <div style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:2px;font-size:10px;color:var(--text-secondary)">
-              <span style="display:inline-block;width:8px;height:8px;background:${s.color};border-radius:1px"></span>${s.name}
-            </div>
-          `).join('')}
+          ${satelliteStates.map(s => `<div style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:2px;font-size:10px;color:var(--text-secondary)"><span style="display:inline-block;width:8px;height:8px;background:${s.color};border-radius:1px"></span>${s.name}</div>`).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
 
-    // ===== Canvas 渲染模式 =====
-    // 默认: Canvas (高性能, 手机优先)。旧版SVG地图已移除。
-    // 显示等级: localStorage.tno_map_level = '1' | '2' (1=国家级 6块, 2=战区级 47块)
-    // (useCanvas/isCanvasSupported/forceSvg 已在前面 mapSvg 定义处统一声明)
-    const userLevel = +((function () { try { return localStorage.getItem('tno_map_level') || '2'; } catch (_) { return '2'; } })()) || 2;
-
-    // 颜色覆盖: 把游戏flags映射为CanvasMap的动态色
-    const cmColors = {};
-    cmColors['GER'] = germanyColor;
-    cmColors['GER_core'] = f.civil_war_imminent && !f.civil_war_over ? '#7a2020' : '#c04040';
-    cmColors['GER_ukraine'] = f.civil_war_imminent ? '#5a1818' : '#8a2828';
-    cmColors['GER_moscow'] = f.civil_war_imminent ? '#4a1010' : '#7a2020';
-    cmColors['GER_caucasus'] = f.civil_war_imminent ? '#3a0808' : '#6a1818';
-    cmColors['ITA'] = italyColor;
-    cmColors['ITA_core'] = italyColor;
-    cmColors['RUS'] = russiaColor;
-    // 俄罗斯统一后: 所有RUS_*子区域换成统一颜色
-    if (!russiaFragments) {
-      for (const k of ['RUS_komi','RUS_wrrf','RUS_vyatka','RUS_samara','RUS_ab','RUS_sverdlovsk','RUS_tyumen',
-                       'RUS_omsk','RUS_novosib','RUS_tomsk','RUS_kemerovo','RUS_blackarmy','RUS_nkr',
-                       'RUS_krasnoyarsk','RUS_irkutsk','RUS_buryatia','RUS_magadan','RUS_chita','RUS_amur']) {
-        cmColors[k] = russiaColor;
-      }
-    }
-
-    // Canvas HTML (轻量, 不加载11MB map_extra.js)
-    const canvasWrapHtml = useCanvas ? `
-      <div id="canvas-map-wrap" style="position:relative;width:100%;height:100%;overflow:hidden;background:#0e1520;border-radius:4px;">
-        <canvas id="world-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
-        <div id="canvas-map-tooltip" style="position:absolute;pointer-events:none;background:rgba(10,14,22,0.92);border:1px solid #4a4030;color:#f0e8c8;padding:4px 8px;border-radius:3px;font-size:11px;line-height:1.4;white-space:nowrap;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.6);"></div>
-        <div id="canvas-map-badge" style="position:absolute;top:6px;right:8px;background:rgba(60,50,20,0.75);border:1px solid #6a5a3a;color:#f0e0a0;padding:2px 6px;border-radius:3px;font-size:10px;letter-spacing:0.05em;pointer-events:none;z-index:4;">Canvas · Level ${userLevel}</div>
-      </div>
-    ` : '';
-
-    // SVG HTML (原有完整版，包含所有细节 + 懒加载 11MB map_extra)
-    const svgWrapHtml = `
-      <div id="svg-map-wrap" style="width:100%;height:100%;display:${useCanvas ? 'none' : 'block'};">${mapSvg}</div>
-    `;
-
-    // 时间轴
     const timelineHtml = this.renderTimeline();
+
+    // 地图选择器选项
+    const mapNames = (typeof SVGMap !== 'undefined' && SVGMap.MAP_NAMES) ? SVGMap.MAP_NAMES : {
+      einheitspakt: '轴心国集团（欧洲）', america: '美洲', geacs: '大东亚共荣圈',
+      russia: '俄罗斯地区', south_asia: '南亚/中东', triumvirate: '三头同盟（地中海）',
+      einheitspakt_afrika: '轴心非洲', west_africa: '西非', antarctica: '南极洲',
+    };
+    const lastMap = (function(){ try { return localStorage.getItem('tno_last_map') || 'einheitspakt'; } catch(_){ return 'einheitspakt'; } })();
+    const options = Object.entries(mapNames).map(([id, name]) =>
+      `<option value="${id}"${id === lastMap ? ' selected' : ''}>${name}</option>`
+    ).join('');
 
     return `
       <div class="map-page">
         <div class="map-header">
-          <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em">三极世界势力图</h2>
+          <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em">TNO 世界地图</h2>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <button class="zm-btn active" data-zv="global" style="padding:4px 12px;font-size:12px;background:linear-gradient(135deg,#2a1a1a,#3a2a2a);color:#e8c860;border:1px solid #6a5a3a;border-radius:4px;cursor:pointer;font-weight:bold">🌍 全球</button>
-            <button class="zm-btn" data-zv="europe" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇪🇺 欧洲</button>
-            <button class="zm-btn" data-zv="america" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇺🇸 美洲</button>
-            <button class="zm-btn" data-zv="eastasia" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇯🇵 东亚</button>
-            <button class="zm-btn" data-zv="africa" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇪🇬 非洲</button>
-            <button id="btn-lvl-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(50,40,20,0.7);color:${userLevel === 1 ? '#a0c8e0' : '#ffe8a0'};border:1px solid #6a5a3a;border-radius:4px;cursor:pointer" title="显示层级：国家级 vs 战区级/军阀">Lv ${userLevel}</button>
-            <button id="btn-renderer-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(30,35,50,0.7);color:${useCanvas ? '#8ad0ff' : '#f0c890'};border:1px solid #4a5a6a;border-radius:4px;cursor:pointer" title="渲染器切换：Canvas(性能优先，省11MB) / SVG(细节完整)">${useCanvas ? 'Canvas' : 'SVG'}</button>
-            <button id="btn-svgmap-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(40,60,80,0.7);color:#8ac8e8;border:1px solid #4a6a7a;border-radius:4px;cursor:pointer" title="TNO区域矢量地图 (lilaui作品)">🗺 TNO地图</button>
+            <select id="tno-map-selector" style="padding:4px 10px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;font-size:12px;cursor:pointer;">${options}</select>
+            <button id="btn-zoom-out" style="width:32px;height:28px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="缩小">−</button>
+            <button id="btn-zoom-fit" style="padding:4px 10px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:12px;" title="重置视图">⤢</button>
+            <button id="btn-zoom-in" style="width:32px;height:28px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="放大">+</button>
             <div style="font-size:12px;color:var(--text-muted);margin-left:8px">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
           </div>
         </div>
-        <div class="map-container" style="position:relative;">
-          ${svgWrapHtml}
-          ${canvasWrapHtml}
+        <div class="map-container" style="position:relative;width:100%;height:calc(100vh - 280px);min-height:400px;background:#0e1520;border-radius:4px;overflow:hidden;">
+          <canvas id="tno-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
         </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">滚轮缩放 · 拖拽平移 · 点击国家查看详情 · 矢量地图 by lilaui (CC-BY-SA 3.0)</div>
         <div class="map-factions">${factionHtml}${satelliteHtml}</div>
         <div class="map-timeline-section">
           <h3 style="font-family:var(--font-serif);color:var(--accent-gold);letter-spacing:0.1em;margin-bottom:10px">历史进程</h3>
           ${timelineHtml}
         </div>
-        <script data-render-config>
-          (function(){
-            window.__TNO_MAP_CONFIG = {
-              useCanvas: ${JSON.stringify(useCanvas)},
-              defaultLevel: ${userLevel},
-              colors: ${JSON.stringify(cmColors)},
-              russiaLabel: ${JSON.stringify(russiaLabel)}
-            };
-          })();
-        <\/script>
       </div>
     `;
   },
