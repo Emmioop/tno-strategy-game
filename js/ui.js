@@ -186,6 +186,37 @@ const UI = {
   // 保留空方法防止旧代码调用时报错
   async loadMapExtra() { return false; },
 
+  // ===== 快速开始：跳过开场动画，直接进入游戏 =====
+  quickStart() {
+    if (Game.state && !Game.state.ended) {
+      if (!confirm('将丢弃当前进度，快速开始新游戏。确认？')) return;
+    }
+    // 重置游戏状态
+    Game.init();
+    // 清除教程弹窗
+    const modal = document.getElementById('tutorial-modal');
+    if (modal) modal.innerHTML = '';
+    // 隐藏开场画面
+    const splash = document.getElementById('splash');
+    if (splash) splash.style.display = 'none';
+    const game = document.getElementById('game');
+    if (game) game.classList.add('active');
+    // 渲染
+    this.renderAll();
+    // 初始化DataStore
+    const initDsPromise = (typeof DataStore !== 'undefined' && DataStore && typeof DataStore.init === 'function')
+      ? DataStore.init(Game.state.year)
+      : Promise.reject(new Error('no DataStore'));
+    initDsPromise.catch(() => {
+      this.loadEventsGen().then(ok => {
+        if (ok) console.log('[速开] events_gen.js 已就绪');
+      });
+    });
+    // 直接触发开场事件
+    setTimeout(() => this.processTurnEvents(), 200);
+    this.toast('⚡ 快速开始成功', 'success');
+  },
+
   // ===== 启动游戏 =====
   start(mode) {
     if (mode && GAME_MODES[mode]) {
@@ -441,6 +472,7 @@ const UI = {
       <button class="btn-secondary" id="btn-save">保存</button>
       <button class="btn-secondary" id="btn-load">读取</button>
       <button class="btn-secondary" id="btn-restart">重启</button>
+      <button class="btn-secondary" id="btn-quick-start" style="border-color:var(--accent-gold);color:var(--accent-gold);">⚡速开</button>
       ${this.isDebugMode() ? '<button class="btn-secondary" id="btn-debug" style="border-color:var(--accent-gold);color:var(--accent-gold);">DEBUG</button>' : ''}
     `;
 
@@ -452,6 +484,7 @@ const UI = {
         location.reload();
       }
     };
+    document.getElementById('btn-quick-start').onclick = () => this.quickStart();
     const dbgBtn = document.getElementById('btn-debug');
     if (dbgBtn) dbgBtn.onclick = () => this.toggleDebugPanel();
 
