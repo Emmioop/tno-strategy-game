@@ -2633,6 +2633,75 @@ const UI = {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg).replace(/'/g, '%27');
   },
 
+  // ===== SVG 占位图（用于真实图片加载前的秒开占位） =====
+  _getEventSvgFallback(ev) {
+    // 复用 _getEventImage 的主题匹配，但跳过 realImages 表
+    const text = ((ev.title || '') + ' ' + (ev.body || '')).toLowerCase();
+    const id = (ev.id || '').toLowerCase();
+    const rules = [
+      { id: 'moon',     kw: ['登月','月球','火箭','宇航','冯·布劳恩','太空','moon','rocket'] },
+      { id: 'assassin', kw: ['刺杀','刺客','遇刺','枪声','暗杀','贝格霍夫','assassin'] },
+      { id: 'death',    kw: ['元首之死','希特勒之死','死讯','葬礼','悼念','死亡','阿道夫'] },
+      { id: 'succession', kw: ['继承','继位','继承人','接班','权力','succession','successor','施佩尔','鲍曼','戈林','海德里希'] },
+      { id: 'civilwar', kw: ['内战','战火','战役','交火','战线','巷战','civil war','国防军','党卫军','叛乱','兵变'] },
+      { id: 'burgundy', kw: ['勃艮第','希姆莱','burgundy','himmler','党卫军','黑骑士'] },
+      { id: 'russia',   kw: ['俄罗斯','苏联','红军','西俄','莫斯科','军阀','russia','soviet','siberia','西伯利亚','鄂木斯克'] },
+      { id: 'america',  kw: ['美国','ofn','肯尼迪','华盛顿','美洲','america','usa','白宫','太平洋'] },
+      { id: 'japan',    kw: ['日本','共荣圈','天皇','东京','japan','共荣','太平洋战争','珍珠港'] },
+      { id: 'italy',    kw: ['意大利','地中海','罗马','墨索里尼','italy','italian','齐亚诺'] },
+      { id: 'economy',  kw: ['经济','工厂','马克','鲁尔','工业','失业','通胀','市场','economy'] },
+      { id: 'nuclear',  kw: ['核','原子','蘑菇云','核弹','核武','nuclear','原子弹','核战争'] },
+      { id: 'colony',   kw: ['殖民地','独立','总督辖区','乌克兰专员','奥斯兰','高加索','叛乱','起义','colony'] },
+      { id: 'diplomacy', kw: ['外交','谈判','会议','协定','条约','访问','会晤','diplomacy','summit'] },
+      { id: 'protest',  kw: ['抗议','学生','示威','游行','罢工','抗议','protest','riot'] },
+      { id: 'slave',    kw: ['奴隶','奴役','解放','slave','奴隶制'] },
+      { id: 'reform',   kw: ['改革','自由化','开放','reform','改革派'] },
+      { id: 'military', kw: ['军队','军备','军事','国防','建军','military','军力'] },
+    ];
+    let theme = 'default';
+    for (const r of rules) {
+      if (r.kw.some(k => text.includes(k) || id.includes(k))) { theme = r.id; break; }
+    }
+    // 返回简化 SVG 占位（与 _getEventImage 共享主题逻辑，但用简化版避免代码重复）
+    // 直接调用 _getEventImage 的 SVG 生成逻辑（传一个 fake ev 跳过 realImages）
+    return this._buildEventSvg(theme);
+  },
+
+  // ===== 根据主题构建 SVG data URI =====
+  _buildEventSvg(theme) {
+    const svgs = this._eventSvgs || (this._eventSvgs = this._buildEventSvgLib());
+    const raw = svgs[theme] || svgs.default;
+    const svg = raw.replace(
+      /(<rect width='480' height='180' fill='url\(#g\)'\/>)/,
+      "$1<rect width='480' height='180' fill='#f0e8d8' opacity='0.12'/>"
+    );
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg).replace(/'/g, '%27');
+  },
+
+  _buildEventSvgLib() {
+    return {
+      moon: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a1a2e'/><circle cx='360' cy='60' r='28' fill='#a89868'/><circle cx='40' cy='30' r='1' fill='#e8c860'/><circle cx='100' cy='20' r='1' fill='#e8c860'/><circle cx='200' cy='15' r='1.5' fill='#e8c860'/><path d='M180 160 L200 100 L210 100 L225 110 L240 160 Z' fill='#3a3a4a'/></svg>`,
+      assassin: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a0a0a'/><ellipse cx='240' cy='120' rx='100' ry='40' fill='#8a2020' opacity='0.6'/><rect x='180' y='60' width='120' height='80' fill='#2a1a1a'/><circle cx='240' cy='100' r='12' fill='#5a2a2a'/></svg>`,
+      death: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a1a1a'/><rect x='100' y='40' width='280' height='120' fill='#1c1c1c'/><rect x='220' y='80' width='40' height='80' fill='#0a0a0a'/><circle cx='240' cy='110' r='18' fill='#1a1a1a' stroke='#4a4a4a'/></svg>`,
+      succession: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2014'/><rect x='225' y='50' width='30' height='80' fill='#5a4a2a'/><circle cx='240' cy='35' r='8' fill='#c93232'/></svg>`,
+      civilwar: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#3a2a1a'/><ellipse cx='240' cy='165' rx='100' ry='30' fill='#e85a20' opacity='0.6'/><rect x='60' y='80' width='30' height='80' fill='#1a1a1a'/><rect x='350' y='85' width='28' height='75' fill='#1a1a1a'/></svg>`,
+      burgundy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a0a1a'/><path d='M180 160 L180 80 L200 60 L280 60 L300 80 L300 160 Z' fill='#0a0508'/><rect x='225' y='100' width='30' height='60' fill='#000'/></svg>`,
+      russia: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#4a5a6a'/><path d='M0 140 Q240 110 480 115 L480 180 L0 180 Z' fill='#e8e8e8'/><circle cx='240' cy='80' r='15' fill='#8a2a2a' opacity='0.7'/></svg>`,
+      america: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='90' fill='#1a2a4a'/><rect width='120' height='45' fill='#3a5a8a' opacity='0.6'/><rect x='0' y='90' width='480' height='90' fill='#0a1a2a'/></svg>`,
+      japan: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#4a3a1a'/><circle cx='240' cy='60' r='30' fill='#e84030'/><rect x='180' y='110' width='120' height='50' fill='#8a2a2a' opacity='0.8'/></svg>`,
+      italy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a1a'/><rect x='120' y='40' width='20' height='120' fill='#5a4a2a'/><rect x='340' y='40' width='20' height='120' fill='#5a4a2a'/><path d='M200 160 L200 80 Q240 60 280 80 L280 160 Z' fill='#6a5a3a'/></svg>`,
+      economy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#3a3a2a'/><rect x='40' y='80' width='40' height='80' fill='#1a1a1a'/><rect x='90' y='60' width='50' height='100' fill='#1a1a1a'/><rect x='355' y='55' width='55' height='105' fill='#1a1a1a'/><rect x='105' y='20' width='15' height='50' fill='#2a2a2a'/><rect x='375' y='10' width='18' height='50' fill='#2a2a2a'/></svg>`,
+      nuclear: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a1a0a'/><ellipse cx='240' cy='90' rx='70' ry='60' fill='#e8c860'/><ellipse cx='240' cy='100' rx='50' ry='25' fill='#e8a830' opacity='0.6'/><path d='M235 150 Q240 110 245 150' fill='#e85a20' opacity='0.7'/></svg>`,
+      colony: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#3a2a1a'/><path d='M0 140 Q240 120 480 125 L480 180 L0 180 Z' fill='#5a4a3a'/><ellipse cx='240' cy='160' rx='60' ry='25' fill='#e85a20' opacity='0.6'/></svg>`,
+      diplomacy: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a3a'/><rect x='80' y='40' width='40' height='120' fill='#3a3a4a'/><rect x='360' y='40' width='40' height='120' fill='#3a3a4a'/><rect x='210' y='65' width='60' height='50' fill='#2a2a3a' stroke='#5a5a6a'/></svg>`,
+      protest: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a2a'/><rect x='30' y='100' width='30' height='60' fill='#1a1a1a'/><rect x='80' y='95' width='35' height='65' fill='#1a1a1a'/><rect x='270' y='98' width='30' height='62' fill='#1a1a1a'/><rect x='155' y='55' width='20' height='3' fill='#a83232'/></svg>`,
+      slave: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a1a14'/><circle cx='240' cy='90' r='25' fill='#4a3a2a' opacity='0.6'/><line x1='70' y1='60' x2='110' y2='60' stroke='#3a3a3a' stroke-width='2'/></svg>`,
+      reform: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#1a2a1a'/><ellipse cx='240' cy='60' rx='120' ry='50' fill='#e8e0a0' opacity='0.3'/><path d='M230 160 L240 130 L250 160 Z' fill='#6a8a4a' opacity='0.5'/></svg>`,
+      military: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2a2a'/><path d='M100 160 L100 100 L120 160 Z' fill='#1a1a1a'/><circle cx='110' cy='85' r='12' fill='#2a2a2a'/><path d='M260 160 L260 100 L280 160 Z' fill='#1a1a1a'/></svg>`,
+      default: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><rect width='480' height='180' fill='#2a2014'/><ellipse cx='240' cy='90' rx='80' ry='50' fill='#c9a84a' opacity='0.2'/><circle cx='240' cy='75' r='15' fill='#3a2a1a'/></svg>`,
+    };
+  },
+
   showEventModal(ev) {
     const s = Game.state;
     const tagText = { critical: '关键事件', major: '重大事件', minor: '一般事件' };
@@ -2660,8 +2729,14 @@ const UI = {
 
     const imgSrc = this._getEventImage(ev);
     const isRealImg = imgSrc && !imgSrc.startsWith('data:');
+    // 先显示 SVG 占位（秒开），真实图片异步加载后淡入替换
     const bannerHtml = isRealImg
-      ? `<img class="event-image-banner" src="${imgSrc}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
+      ? `<div class="event-image-banner-wrap">
+           <div class="event-image-banner event-image-svg" style="background-image:url('${this._getEventSvgFallback(ev)}')"></div>
+           <img class="event-image-banner event-image-real" src="${imgSrc}" alt="" loading="eager" decoding="async"
+                onload="this.classList.add('loaded');this.previousElementSibling.classList.add('hidden')"
+                onerror="this.style.display='none'" />
+         </div>`
       : `<div class="event-image-banner" style="background-image:url('${imgSrc}')"></div>`;
 
     modal.innerHTML = `

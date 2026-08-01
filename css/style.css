@@ -737,25 +737,39 @@ body {
 }
 
 /* 事件历史插画横幅 */
-.event-image-banner {
-  display: block;
+.event-image-banner-wrap {
+  position: relative;
   width: 100%;
-  height: 0;
-  padding-bottom: 37.5%; /* 16:6 比例 */
+  height: 220px;
+  overflow: hidden;
+  border-bottom: 2px solid var(--accent-blood);
+  background: #1a1a20;
+}
+.event-image-banner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-color: #1a1a20;
   filter: saturate(1.2) contrast(1.1) brightness(1.15);
-  border-bottom: 2px solid var(--accent-blood);
-  position: relative;
-  object-fit: cover;
-  height: 200px;
-  padding-bottom: 0;
+  transition: opacity 0.4s ease;
 }
-.event-image-banner[src] {
-  /* <img> 标签形式：真实图片 */
-  height: 220px;
+.event-image-banner.event-image-svg {
+  z-index: 1;
+}
+.event-image-banner.event-image-real {
+  z-index: 2;
+  object-fit: cover;
+  opacity: 0;
+}
+.event-image-banner.event-image-real.loaded {
+  opacity: 1;
+}
+.event-image-banner.event-image-svg.hidden {
+  opacity: 0;
 }
 .event-image-banner::after {
   content: '';
@@ -763,12 +777,6 @@ body {
   inset: 0;
   background: linear-gradient(180deg, transparent 60%, rgba(28,28,36,0.5) 100%);
   pointer-events: none;
-}
-.event-image-banner-fallback {
-  width: 100%;
-  height: 220px;
-  background: linear-gradient(135deg, #1a1a20 0%, #2a2014 100%);
-  border-bottom: 2px solid var(--accent-blood);
 }
 .modal-header {
   padding: 16px 22px;
