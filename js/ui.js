@@ -2511,6 +2511,49 @@ const UI = {
     const text = ((ev.title || '') + ' ' + (ev.body || '')).toLowerCase();
     const id = (ev.id || '').toLowerCase();
 
+    // 优先使用真实历史风格图片（按事件ID精确映射）
+    const realImages = {
+      'ev_moon_landing': 'img/events/ev_moon_landing.jpg',
+      'ev_hitler_assassinated': 'img/events/ev_hitler_assassinated.jpg',
+      'ev_hitler_death': 'img/events/ev_hitler_death.jpg',
+      'ev_succession_announcement': 'img/events/ev_succession_announcement.jpg',
+      'ev_choose_successor': 'img/events/ev_succession_announcement.jpg',
+      'ev_civil_war_battles': 'img/events/ev_civil_war_battles.jpg',
+      'ev_civil_war_burgundy': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_civil_war_climax': 'img/events/ev_civil_war_battles.jpg',
+      'ev_civil_war_end': 'img/events/ev_civil_war_battles.jpg',
+      'ev_burgundian_crisis': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_burgundian_war_result': 'img/events/ev_civil_war_burgundy.jpg',
+      'ev_economic_miracle_1970': 'img/events/ev_economic_miracle_1970.jpg',
+      'ev_nuclear_arms_race': 'img/events/ev_nuclear_arms_race.jpg',
+      'ev_russia_reunification_threat': 'img/events/ev_russia_reunification_threat.jpg',
+      'ev_russia_unified': 'img/events/ev_russia_unified.jpg',
+      'ev_russia_warlords_1968': 'img/events/ev_russia_reunification_threat.jpg',
+      'ev_us_civil_unrest': 'img/events/ev_us_civil_unrest.jpg',
+      'ev_oil_crisis_1975': 'img/events/ev_oil_crisis_1975.jpg',
+      'ev_computer_revolution': 'img/events/ev_computer_revolution.jpg',
+      'ev_student_protests_1962': 'img/events/ev_student_protests_1962.jpg',
+      'ev_black_market': 'img/events/ev_black_market.jpg',
+      'ev_west_russia_remnants': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_second_west_russian_war': 'img/events/ev_west_russia_remnants.jpg',
+      'ev_ofn_diplomacy_1967': 'img/events/ev_ofn_diplomacy_1967.jpg',
+      'ev_japan_sphere_1968': 'img/events/ev_japan_sphere_1968.jpg',
+      'ev_italy_triumvirate': 'img/events/ev_italy_triumvirate.jpg',
+      'ev_slave_question': 'img/events/ev_slave_question.jpg',
+      'ev_reconstruction_plan': 'img/events/ev_reconstruction_plan.jpg',
+      'ev_iberian_crisis': 'img/events/ev_iberian_crisis.jpg',
+      'ev_iberian_collapse': 'img/events/ev_iberian_crisis.jpg',
+      'ev_french_resistance': 'img/events/ev_french_resistance.jpg',
+      'ev_north_africa_rising': 'img/events/ev_north_africa_rising.jpg',
+      'ev_internet_era': 'img/events/ev_internet_era.jpg',
+      'ev_environmental_crisis': 'img/events/ev_environmental_crisis.jpg',
+      'ev_third_world_war_crisis': 'img/events/ev_third_world_war_crisis.jpg',
+      'ev_decolonization_wave': 'img/events/ev_decolonization_wave.jpg',
+      'ev_demographic_winter': 'img/events/ev_demographic_winter.jpg',
+      'ev_millennium_anxiety': 'img/events/ev_millennium_anxiety.jpg',
+    };
+    if (realImages[ev.id]) return realImages[ev.id];
+
     // 主题匹配规则：关键词 → 主题id
     const rules = [
       { id: 'moon',     kw: ['登月','月球','火箭','宇航','冯·布劳恩','太空','moon','rocket'] },
@@ -2616,10 +2659,14 @@ const UI = {
     }).join('');
 
     const imgSrc = this._getEventImage(ev);
+    const isRealImg = imgSrc && !imgSrc.startsWith('data:');
+    const bannerHtml = isRealImg
+      ? `<img class="event-image-banner" src="${imgSrc}" onerror="this.outerHTML='<div class=\\'event-image-banner-fallback\\'></div>'" />`
+      : `<div class="event-image-banner" style="background-image:url('${imgSrc}')"></div>`;
 
     modal.innerHTML = `
       <div class="modal-box">
-        <div class="event-image-banner" style="background-image:url('${imgSrc}')"></div>
+        ${bannerHtml}
         <div class="modal-header">
           <div class="m-date">${dateStr}</div>
           <div class="m-title">${ev.title}</div>

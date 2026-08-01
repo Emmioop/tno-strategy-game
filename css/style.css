@@ -738,6 +738,7 @@ body {
 
 /* 事件历史插画横幅 */
 .event-image-banner {
+  display: block;
   width: 100%;
   height: 0;
   padding-bottom: 37.5%; /* 16:6 比例 */
@@ -748,6 +749,13 @@ body {
   filter: saturate(1.2) contrast(1.1) brightness(1.15);
   border-bottom: 2px solid var(--accent-blood);
   position: relative;
+  object-fit: cover;
+  height: 200px;
+  padding-bottom: 0;
+}
+.event-image-banner[src] {
+  /* <img> 标签形式：真实图片 */
+  height: 220px;
 }
 .event-image-banner::after {
   content: '';
@@ -755,6 +763,12 @@ body {
   inset: 0;
   background: linear-gradient(180deg, transparent 60%, rgba(28,28,36,0.5) 100%);
   pointer-events: none;
+}
+.event-image-banner-fallback {
+  width: 100%;
+  height: 220px;
+  background: linear-gradient(135deg, #1a1a20 0%, #2a2014 100%);
+  border-bottom: 2px solid var(--accent-blood);
 }
 .modal-header {
   padding: 16px 22px;
