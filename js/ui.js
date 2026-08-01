@@ -2957,8 +2957,7 @@ const UI = {
     modal.innerHTML = `
       <div class="modal-box">
         <div class="event-image-banner-wrap">
-          <img class="event-image-banner" src="${imgSrc}" alt="" loading="eager" decoding="async"
-               onerror="this.style.opacity='0'" />
+          <img class="event-image-banner" src="${imgSrc}" alt="历史图片" />
         </div>
         <div class="modal-header">
           <div class="m-date">${dateStr}</div>
