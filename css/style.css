@@ -1182,6 +1182,8 @@ body {
   overflow-y: auto;
   height: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 .map-header {
   display: flex;
@@ -1190,6 +1192,7 @@ body {
   margin-bottom: 12px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 10px;
+  flex-shrink: 0;
 }
 .map-header h2 {
   font-size: 16px;
@@ -1201,6 +1204,8 @@ body {
   border-radius: 4px;
   overflow: hidden;
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   /* 移除 padding，让canvas撑满容器 */
 }
 

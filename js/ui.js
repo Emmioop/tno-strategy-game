@@ -891,12 +891,12 @@ const UI = {
             <div style="font-size:12px;color:var(--text-muted);margin-left:8px">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
           </div>
         </div>
-        <div class="map-container" style="width:100%;height:calc(100vh - 300px);min-height:420px;background:#0e1520;border-radius:4px;overflow:hidden;">
+        <div class="map-container" style="width:100%;background:#0e1520;border-radius:4px;overflow:hidden;">
           <canvas id="tno-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">滚轮缩放 · 拖拽平移 · 点击国家查看详情 · 矢量地图 by lilaui (CC-BY-SA 3.0)</div>
-        <div class="map-factions">${factionHtml}${satelliteHtml}</div>
-        <div class="map-timeline-section">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;flex-shrink:0;">滚轮缩放 · 拖拽平移 · 点击国家查看详情 · 矢量地图 by lilaui (CC-BY-SA 3.0)</div>
+        <div class="map-factions" style="flex-shrink:0;">${factionHtml}${satelliteHtml}</div>
+        <div class="map-timeline-section" style="flex-shrink:0;">
           <h3 style="font-family:var(--font-serif);color:var(--accent-gold);letter-spacing:0.1em;margin-bottom:10px">历史进程</h3>
           ${timelineHtml}
         </div>

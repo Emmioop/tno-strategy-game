@@ -246,16 +246,34 @@
       };
       this.pathCache.clear();
       this.featureIndex.clear();
+      this._labelCache = {};
+
+      const canvas = this.canvas;
+      const offCtx = canvas.getContext('2d');
 
       for (const [cid, cdata] of Object.entries(data.countries)) {
         const combinedPath = new Path2D();
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let totalArea = 0;
+
         for (const dStr of cdata.p) {
           try {
             combinedPath.addPath(new Path2D(dStr));
           } catch (_) {
             try { combinedPath.addPath(new Path2D(dStr)); } catch (_) {}
           }
+
+          // 解析路径数据计算边界
+          const bbox = this._computePathBBox(dStr);
+          if (bbox) {
+            minX = Math.min(minX, bbox.minX);
+            minY = Math.min(minY, bbox.minY);
+            maxX = Math.max(maxX, bbox.maxX);
+            maxY = Math.max(maxY, bbox.maxY);
+            totalArea += bbox.area;
+          }
         }
+
         this.pathCache.set(cid, combinedPath);
         this.featureIndex.set(cid, {
           id: cid,
@@ -263,8 +281,48 @@
           pathCount: cdata.n,
           mapId
         });
+
+        // 计算标签位置（中心点 + 面积）
+        if (isFinite(minX) && isFinite(minY)) {
+          const cx = (minX + maxX) / 2;
+          const cy = (minY + maxY) / 2;
+          this._labelCache[cid] = { x: cx, y: cy, area: totalArea };
+        }
       }
       this.zoomToFit();
+    }
+
+    _computePathBBox(dStr) {
+      try {
+        // 提取路径中的所有坐标
+        const nums = [];
+        const matches = dStr.match(/-?[\d.]+/g);
+        if (!matches || matches.length < 2) return null;
+
+        for (let i = 0; i < matches.length; i += 2) {
+          const x = parseFloat(matches[i]);
+          const y = parseFloat(matches[i + 1]);
+          if (isFinite(x) && isFinite(y)) {
+            nums.push(x, y);
+          }
+        }
+
+        if (nums.length < 4) return null;
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (let i = 0; i < nums.length; i += 2) {
+          minX = Math.min(minX, nums[i]);
+          minY = Math.min(minY, nums[i + 1]);
+          maxX = Math.max(maxX, nums[i]);
+          maxY = Math.max(maxY, nums[i + 1]);
+        }
+
+        const w = maxX - minX;
+        const h = maxY - minY;
+        return { minX, minY, maxX, maxY, area: w * h };
+      } catch (_) {
+        return null;
+      }
     }
 
     zoomToFit() {
@@ -472,7 +530,306 @@
       return null;
     }
 
-    _clampView() {
+    _renderLabels(ctx) {
+      if (!this.currentMapData || !this._labelCache) return;
+
+      // 计算当前缩放级别下的字体大小
+      const zoomLevel = this._getZoomLevel();
+
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (const [cid, pos] of Object.entries(this._labelCache)) {
+        // 获取中文名
+        let name = null;
+        const feature = this.featureIndex.get(cid);
+        if (feature && feature.zh) {
+          name = feature.zh;
+        } else {
+          name = this._getCountryName(cid);
+        }
+        if (!name) continue;
+
+        // 跳过太小的国家（在高缩放下才显示）
+        const area = pos.area || 0;
+        const minArea = zoomLevel < 0.5 ? 5000 : zoomLevel < 1 ? 1500 : 300;
+        if (area < minArea) continue;
+
+        const fontSize = this._getFontSize(area, zoomLevel, name);
+        ctx.font = `bold ${fontSize}px 'PingFang SC', 'Microsoft YaHei', sans-serif`;
+
+        // 检查标签是否在可见区域内
+        if (pos.x < this.view.x || pos.x > this.view.x + this.view.w ||
+            pos.y < this.view.y || pos.y > this.view.y + this.view.h) continue;
+
+        // 背景阴影描边效果
+        ctx.lineWidth = Math.max(2, fontSize * 0.28);
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.strokeText(name, pos.x, pos.y);
+
+        // 主文字
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(name, pos.x, pos.y);
+      }
+
+      ctx.restore();
+    }
+
+    _getZoomLevel() {
+      if (!this.currentMapData) return 1;
+      const v = this.currentMapData.view;
+      const scaleX = this.view.w / v.w;
+      const scaleY = this.view.h / v.h;
+      return Math.min(scaleX, scaleY);
+    }
+
+    _getBaseFontSize(zoomLevel) {
+      const base = 10;
+      return Math.max(5, base / Math.max(zoomLevel, 0.3));
+    }
+
+    _getFontSize(area, zoomLevel, name) {
+      const charLen = name.length;
+      const widthFactor = Math.min(1, 8 / Math.max(charLen, 3));
+      const areaFactor = Math.sqrt(Math.min(area / 20000, 2));
+      const zoomFactor = 1 / Math.max(zoomLevel, 0.3);
+      return Math.max(4, 8 * widthFactor * areaFactor * zoomFactor);
+    }
+
+    _getCountryName(id) {
+      const zhMap = this._getZhNameMap();
+      return zhMap[id] || id;
+    }
+
+    _getZhNameMap() {
+      if (this._zhNameMap) return this._zhNameMap;
+      this._zhNameMap = {
+        germany: '德国', german_empire: '德意志帝国', weimar: '魏玛共和国',
+        uk: '英国', britain: '英国', england: '英格兰', scotland: '苏格兰', wales: '威尔士',
+        france: '法国', free_france: '自由法国', vichy: '维希法国',
+        burgundy: '勃艮第', burgundy_knights: '勃艮第骑士团国',
+        spain: '西班牙', iberia: '伊比利亚',
+        italy: '意大利', italian_empire: '意大利帝国',
+        japan: '日本', japanese_empire: '大日本帝国',
+        manchuria: '满洲国', manchu: '满洲国',
+        china: '中国', prc: '中华人民共和国', roc: '中华民国',
+        usa: '美国', united_states: '美利坚合众国', america: '美国',
+        canada: '加拿大',
+        mexico: '墨西哥',
+        brazil: '巴西',
+        argentina: '阿根廷',
+        chile: '智利',
+        peru: '秘鲁',
+        colombia: '哥伦比亚',
+        venezuela: '委内瑞拉',
+        ecuador: '厄瓜多尔',
+        bolivia: '玻利维亚',
+        paraguay: '巴拉圭',
+        uruguay: '乌拉圭',
+        cuba: '古巴',
+        panama: '巴拿马',
+        thailand: '泰国',
+        vietnam: '越南',
+        laos: '老挝',
+        cambodia: '柬埔寨',
+        burma: '缅甸',
+        malaya: '马来亚',
+        indonesia: '印度尼西亚',
+        philippines: '菲律宾',
+        korea: '朝鲜', south_korea: '韩国', north_korea: '朝鲜',
+        india: '印度',
+        pakistan: '巴基斯坦',
+        nepal: '尼泊尔',
+        bhutan: '不丹',
+        sri_lanka: '斯里兰卡',
+        bangladesh: '孟加拉',
+        afghanistan: '阿富汗',
+        iran: '伊朗', persia: '波斯',
+        iraq: '伊拉克',
+        syria: '叙利亚',
+        jordan: '约旦',
+        saudi: '沙特阿拉伯',
+        yemen: '也门',
+        oman: '阿曼',
+        kuwait: '科威特',
+        qatar: '卡塔尔',
+        bahrain: '巴林',
+        uae: '阿联酋',
+        israel: '以色列', palestine: '巴勒斯坦',
+        egypt: '埃及',
+        libya: '利比亚',
+        tunisia: '突尼斯',
+        algeria: '阿尔及利亚',
+        morocco: '摩洛哥',
+        ethiopia: '埃塞俄比亚',
+        kenya: '肯尼亚',
+        tanzania: '坦桑尼亚',
+        congo: '刚果',
+        nigeria: '尼日利亚',
+        ghana: '加纳',
+        south_africa: '南非',
+        namibia: '纳米比亚',
+        angola: '安哥拉',
+        mozambique: '莫桑比克',
+        madagascar: '马达加斯加',
+        russia: '俄罗斯', ussr: '苏联', soviet: '苏维埃',
+        moscow: '莫斯科',
+        leningrad: '列宁格勒',
+        stalingrad: '斯大林格勒',
+        ukraine: '乌克兰',
+        belarus: '白俄罗斯',
+        lithuania: '立陶宛',
+        latvia: '拉脱维亚',
+        estonia: '爱沙尼亚',
+        poland: '波兰',
+        czechoslovakia: '捷克斯洛伐克', czechia: '捷克',
+        slovakia: '斯洛伐克',
+        hungary: '匈牙利',
+        romania: '罗马尼亚',
+        bulgaria: '保加利亚',
+        yugoslavia: '南斯拉夫',
+        serbia: '塞尔维亚',
+        croatia: '克罗地亚',
+        slovenia: '斯洛文尼亚',
+        bosnia: '波斯尼亚',
+        greece: '希腊',
+        albania: '阿尔巴尼亚',
+        ottoman: '奥斯曼帝国',
+        turkey: '土耳其',
+        finland: '芬兰',
+        sweden: '瑞典',
+        norway: '挪威',
+        denmark: '丹麦',
+        iceland: '冰岛',
+        netherlands: '荷兰', holland: '荷兰',
+        belgium: '比利时',
+        luxembourg: '卢森堡',
+        switzerland: '瑞士',
+        austria: '奥地利',
+        germany_empire: '德意志帝国',
+        ostland: '奥斯特兰',
+        reichskommissariat_ukraine: '乌克兰专员辖区',
+        reichskommissariat_moscow: '莫斯科专员辖区',
+        reichskommissariat_caucasus: '高加索专员辖区',
+        reichskommissariat_belarus: '白俄罗斯专员辖区',
+        italian_social_republic: '意大利社会共和国',
+        montenegro: '黑山',
+        macedonia: '马其顿',
+        kosovo: '科索沃',
+        australia: '澳大利亚',
+        new_zealand: '新西兰',
+        papua_new_guinea: '巴布亚新几内亚',
+        south_africa: '南非联邦',
+        rhodesia: '罗得西亚',
+        zimbabwe: '津巴布韦',
+        mozambique: '莫桑比克',
+        angola: '安哥拉',
+        zaire: '扎伊尔',
+        ethiopia: '埃塞俄比亚',
+        liberia: '利比里亚',
+        sierra_leone: '塞拉利昂',
+        ivory_coast: '科特迪瓦',
+        niger: '尼日尔',
+        senegal: '塞内加尔',
+        mali: '马里',
+        upper_volta: '上沃尔特',
+        guinea: '几内亚',
+        cameroon: '喀麦隆',
+        gabon: '加蓬',
+        congo_brazzaville: '刚果(布)',
+        central_african_republic: '中非共和国',
+        sudan: '苏丹',
+        south_sudan: '南苏丹',
+        somalia: '索马里',
+        eritrea: '厄立特里亚',
+        uganda: '乌干达',
+        rwanda: '卢旺达',
+        burundi: '布隆迪',
+        tanzania: '坦桑尼亚',
+        kenya: '肯尼亚',
+        malawi: '马拉维',
+        zambia: '赞比亚',
+        zimbabwe: '津巴布韦',
+        botswana: '博茨瓦纳',
+        lesotho: '莱索托',
+        swaziland: '斯威士兰',
+        namibia: '纳米比亚',
+        south_africa: '南非',
+        newfoundland: '纽芬兰',
+        labrador: '拉布拉多',
+        greenland: '格陵兰',
+        faroe_islands: '法罗群岛',
+        channel_islands: '海峡群岛',
+        gibraltar: '直布罗陀',
+        malta: '马耳他',
+        cyprus: '塞浦路斯',
+        luxembourg: '卢森堡',
+        monaco: '摩纳哥',
+        andorra: '安道尔',
+        san_marino: '圣马力诺',
+        liechtenstein: '列支敦士登',
+        vatican: '梵蒂冈',
+        ecuador: '厄瓜多尔',
+        colombia: '哥伦比亚',
+        venezuela: '委内瑞拉',
+        guyana: '圭亚那',
+        suriname: '苏里南',
+        french_guiana: '法属圭亚那',
+        brazil: '巴西',
+        peru: '秘鲁',
+        bolivia: '玻利维亚',
+        paraguay: '巴拉圭',
+        uruguay: '乌拉圭',
+        argentina: '阿根廷',
+        chile: '智利',
+        cuba: '古巴',
+        jamaica: '牙买加',
+        haiti: '海地',
+        dominican_republic: '多米尼加',
+        puerto_rico: '波多黎各',
+        bahamas: '巴哈马',
+        trinidad: '特立尼达',
+        barbados: '巴巴多斯',
+        martinique: '马提尼克',
+        guadeloupe: '瓜德罗普',
+        st_lucia: '圣卢西亚',
+        st_vincent: '圣文森特',
+        grenada: '格林纳达',
+        antigua: '安提瓜',
+        dominica: '多米尼克',
+        st_kitts: '圣基茨',
+        nevis: '尼维斯',
+        anguilla: '安圭拉',
+        montserrat: '蒙特塞拉特',
+        british_virgin_islands: '英属维尔京群岛',
+        us_virgin_islands: '美属维尔京群岛',
+        cayman_islands: '开曼群岛',
+        turks_and_caicos: '特克斯和凯科斯群岛',
+        belize: '伯利兹',
+        costa_rica: '哥斯达黎加',
+        panama: '巴拿马',
+        guatemala: '危地马拉',
+        honduras: '洪都拉斯',
+        el_salvador: '萨尔瓦多',
+        nicaragua: '尼加拉瓜',
+        caribbean: '加勒比',
+        bahamas: '巴哈马',
+        cuba: '古巴',
+        jamaica: '牙买加',
+        haiti: '海地',
+        dominican: '多米尼加',
+        puerto_rico: '波多黎各',
+        trinidad_and_tobago: '特立尼达和多巴哥',
+        barbados: '巴巴多斯',
+        guyana: '圭亚那',
+        suriname: '苏里南',
+        french_guiana: '法属圭亚那',
+    };
+    return this._zhNameMap;
+  }
+
+  _clampView() {
       if (!this.currentMapData) return;
       const v = this.currentMapData.view;
       if (this.view.w > v.w * 4) this.view.w = v.w * 4;
@@ -576,6 +933,9 @@
       for (const [cid, path] of this.pathCache) {
         ctx.stroke(path);
       }
+
+      // 渲染国家名称文字标签
+      this._renderLabels(ctx);
 
       const drawHighlight = (id, color, width) => {
         if (!id) return;
