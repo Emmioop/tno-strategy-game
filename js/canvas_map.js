@@ -63,8 +63,10 @@
       this._listeners = {};
       this._animId = null;
       this._dirty = true;
+      this._destroyed = false;
 
       this._bindPointer();
+      this._bindResize();
 
       if (this.options.autoLoad && this.options.url) {
         this.loadGeoJSON(this.options.url);
@@ -73,8 +75,53 @@
       }
     }
 
+    /* ================= 内部: 尺寸变更监听 ================= */
+    _bindResize() {
+      // 优先 ResizeObserver: 父元素尺寸变化立即重绘
+      if (typeof ResizeObserver !== 'undefined' && this.canvas && this.canvas.parentElement) {
+        try {
+          const ob = new ResizeObserver(() => {
+            if (this._destroyed) return;
+            this._dirty = true;
+            this._requestDraw();
+          });
+          ob.observe(this.canvas.parentElement);
+          this._resizeOb = ob;
+        } catch (_) {
+          this._resizeOb = null;
+        }
+      }
+      // window resize 兜底 (含方向旋转/设备像素比变化)
+      if (typeof window !== 'undefined' && window.addEventListener) {
+        this._onWinResize = () => {
+          if (this._destroyed) return;
+          this._dirty = true;
+          this._requestDraw();
+        };
+        window.addEventListener('resize', this._onWinResize);
+        window.addEventListener('orientationchange', this._onWinResize);
+      }
+      // 兜底: 初始化后的前 2 秒，若 size=0 则每 100ms 重试一次
+      // (处理"canvas先被注入DOM，父元素随后通过flex/grid撑开到正确尺寸"的场景)
+      let tries = 0;
+      const tryDraw = () => {
+        if (this._destroyed) return;
+        tries++;
+        const r = this._getCssRect();
+        if (r && r.width > 0 && r.height > 0) {
+          this._dirty = true;
+          this._requestDraw();
+          return;
+        }
+        if (tries < 20) {
+          setTimeout(tryDraw, 100);
+        }
+      };
+      setTimeout(tryDraw, 0);
+    }
+
     /* ================= 公开: 数据加载 ================= */
-    async loadGeoJSON(url) {
+    async loadGeoJSON(url, tries = 0) {
       try {
         const resp = await fetch(url, { cache: 'no-cache' });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -84,8 +131,14 @@
         this._dirty = true;
         this._requestDraw();
       } catch (e) {
-        console.error('[CanvasMap] 加载失败:', e.message);
-        this._fire('error', e);
+        console.warn('[CanvasMap] 加载失败 (尝试 ' + (tries + 1) + '/3):', e.message);
+        if (tries < 2) {
+          const self = this;
+          setTimeout(() => self.loadGeoJSON(url, tries + 1), 500 + tries * 800);
+        } else {
+          console.error('[CanvasMap] 加载彻底失败:', e.message);
+          this._fire('error', e);
+        }
       }
     }
 
@@ -371,8 +424,27 @@
 
     _draw() {
       const ctx = this.ctx;
-      const rect = this._getCssRect();
-      if (!rect || rect.width === 0 || rect.height === 0) return;
+      let rect = this._getCssRect();
+      // fail-safe: getBoundingClientRect 有时在隐藏/刚挂载时为0，用 clientWidth/clientHeight 或父容器尺寸兜底
+      if (!rect || rect.width === 0 || rect.height === 0) {
+        const cw = (this.canvas && (this.canvas.clientWidth || this.canvas.offsetWidth)) || 0;
+        const ch = (this.canvas && (this.canvas.clientHeight || this.canvas.offsetHeight)) || 0;
+        const parent = this.canvas && this.canvas.parentElement;
+        const pw = parent && (parent.clientWidth || parent.offsetWidth) || 0;
+        const ph = parent && (parent.clientHeight || parent.offsetHeight) || 0;
+        const w = cw || pw;
+        const h = ch || ph || (w ? Math.round(w * 0.625) : 0); // 默认 16:10 比例
+        if (w && h) {
+          rect = { width: w, height: h, top: 0, left: 0, bottom: h, right: w };
+        } else {
+          // 尺寸仍然为 0: 延迟再试 (父容器可能是 display:none，等显示出来后 ResizeObserver 会接管)
+          this._dirty = true;
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => this._requestDraw(), 500);
+          }
+          return;
+        }
+      }
 
       // 处理 DPR，每个尺寸都乘以 devicePixelRatio
       const dpr = Math.min(window.devicePixelRatio || 1, this.options.dprMax);
@@ -480,8 +552,20 @@
     }
 
     destroy() {
+      this._destroyed = true;
       if (this._animId != null) cancelAnimationFrame(this._animId);
       this._animId = null;
+      if (this._resizeOb) {
+        try { this._resizeOb.disconnect(); } catch (_) {}
+        this._resizeOb = null;
+      }
+      if (typeof window !== 'undefined' && window.removeEventListener) {
+        if (this._onWinResize) {
+          window.removeEventListener('resize', this._onWinResize);
+          window.removeEventListener('orientationchange', this._onWinResize);
+          this._onWinResize = null;
+        }
+      }
       this.pathCache.clear();
       this.featureIndex.clear();
       this.features = [];
