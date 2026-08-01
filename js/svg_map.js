@@ -249,7 +249,6 @@
       this._labelCache = {};
 
       const canvas = this.canvas;
-      const offCtx = canvas.getContext('2d');
 
       for (const [cid, cdata] of Object.entries(data.countries)) {
         const combinedPath = new Path2D();
@@ -278,49 +277,14 @@
           mapId
         });
 
-        // 计算标签位置：过滤异常大的路径，选最大路径，用 isPointInPath 验证
+        // 计算标签位置：过滤异常大的路径，选最大路径的中心点
         const mapArea = data.view.w * data.view.h;
-        const filtered = allBBoxes.filter(b => b.area < mapArea * 0.4);
+        const filtered = allBBoxes.filter(b => b.area < mapArea * 0.4 && b.area > 10);
         const candidates = filtered.length > 0 ? filtered : allBBoxes;
         candidates.sort((a, b) => b.area - a.area);
 
-        // 重置变换矩阵，确保 isPointInPath 使用世界坐标
-        offCtx.save();
-        offCtx.setTransform(1, 0, 0, 1, 0, 0);
-
         let labelPos = null;
-        for (const bbox of candidates) {
-          const cx = (bbox.minX + bbox.maxX) / 2;
-          const cy = (bbox.minY + bbox.maxY) / 2;
-          // 用 isPointInPath 验证中心是否在国土内
-          try {
-            if (offCtx.isPointInPath(combinedPath, cx, cy)) {
-              labelPos = { x: cx, y: cy, area: totalArea };
-              break;
-            }
-          } catch (_) {}
-          // 中心不在路径内，在 bounding box 内搜索
-          const stepX = Math.max((bbox.maxX - bbox.minX) / 8, 0.5);
-          const stepY = Math.max((bbox.maxY - bbox.minY) / 8, 0.5);
-          let found = false;
-          for (let dx = 0; dx <= bbox.maxX - bbox.minX && !found; dx += stepX) {
-            for (let dy = 0; dy <= bbox.maxY - bbox.minY && !found; dy += stepY) {
-              const tx = bbox.minX + dx;
-              const ty = bbox.minY + dy;
-              try {
-                if (offCtx.isPointInPath(combinedPath, tx, ty)) {
-                  labelPos = { x: tx, y: ty, area: totalArea };
-                  found = true;
-                }
-              } catch (_) {}
-            }
-          }
-          if (found) break;
-        }
-        offCtx.restore();
-
-        // fallback：使用最大候选的 bounding box 中心
-        if (!labelPos && candidates.length > 0) {
+        if (candidates.length > 0) {
           const b = candidates[0];
           labelPos = { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, area: totalArea };
         }
