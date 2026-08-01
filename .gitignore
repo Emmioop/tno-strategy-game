@@ -18,3 +18,11 @@ Thumbs.db
 *.tmp
 .cache/
 tno-strategy-game.zip
+
+# 调试截图
+canvas_*.png
+map-*.png
+map_*.png
+
+# 启动测试临时文件
+_startup_test.js

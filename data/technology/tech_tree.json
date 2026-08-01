@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "desc": "TNO科技树 v1.0 — 四类(军事/民用/核/火箭) × 时代解锁(1960/1970/1980/1990)",
+    "eraStart": 1960,
+    "maxTier": 5
+  },
+  "eras": [
+    { "id": "1960s", "name": "原子时代", "startYear": 1960, "desc": "喷气飞机、导弹、核技术奠基" },
+    { "id": "1970s", "name": "电子时代", "startYear": 1970, "desc": "精确制导、先进坦克、计算机革命" },
+    { "id": "1980s", "name": "信息时代", "startYear": 1980, "desc": "信息战争、隐形技术、互联网雏形" },
+    { "id": "1990s", "name": "网络时代", "startYear": 1990, "desc": "网络战争、无人设备、人工智能" }
+  ],
+  "trees": {
+    "military": {
+      "name": "军事科技",
+      "color": "#e8a0a0",
+      "icon": "⚔️",
+      "desc": "影响陆军/空军/海军战力与工业军事产出",
+      "tiers": [
+        { "tier": 1, "era": "1960s", "name": "喷气时代", "cost": 60, "requires": [], "effects": { "militaryPower": 5 }, "desc": "Me 262遗产，喷气式战机量产化" },
+        { "tier": 2, "era": "1960s", "name": "导弹技术", "cost": 90, "requires": [1], "effects": { "militaryPower": 8, "deterrence": 3 }, "desc": "V-2后裔，战术导弹列装" },
+        { "tier": 3, "era": "1970s", "name": "精确制导", "cost": 140, "requires": [2], "effects": { "militaryPower": 12, "deterrence": 5 }, "desc": "激光制导炸弹与巡航导弹" },
+        { "tier": 4, "era": "1980s", "name": "隐形技术", "cost": 200, "requires": [3], "effects": { "militaryPower": 18, "deterrence": 8 }, "desc": "隐身战机与雷达吸波材料" },
+        { "tier": 5, "era": "1990s", "name": "无人战争", "cost": 280, "requires": [4], "effects": { "militaryPower": 25, "deterrence": 10 }, "desc": "无人机蜂群与自动化战场" }
+      ]
+    },
+    "civil": {
+      "name": "民用科技",
+      "color": "#a0c8e0",
+      "icon": "🏭",
+      "desc": "影响GDP增长、工业效率、民生",
+      "tiers": [
+        { "tier": 1, "era": "1960s", "name": "大众消费", "cost": 50, "requires": [], "effects": { "money": 3, "stability": 2 }, "desc": "大众汽车与家用电器普及" },
+        { "tier": 2, "era": "1960s", "name": "合成材料", "cost": 80, "requires": [1], "effects": { "money": 4, "efficiency": 0.02 }, "desc": "塑料与合成纤维革命" },
+        { "tier": 3, "era": "1970s", "name": "计算机化", "cost": 130, "requires": [2], "effects": { "money": 6, "efficiency": 0.05, "research": 2 }, "desc": "大型机与办公自动化" },
+        { "tier": 4, "era": "1980s", "name": "信息高速公路", "cost": 190, "requires": [3], "effects": { "money": 8, "efficiency": 0.08, "research": 4 }, "desc": "光纤网络与数据通信" },
+        { "tier": 5, "era": "1990s", "name": "数字经济", "cost": 260, "requires": [4], "effects": { "money": 12, "efficiency": 0.12, "research": 6 }, "desc": "电子商务与全球信息流" }
+      ]
+    },
+    "nuclear": {
+      "name": "核技术",
+      "color": "#e8c860",
+      "icon": "☢️",
+      "desc": "影响核弹产量与核威慑",
+      "tiers": [
+        { "tier": 1, "era": "1960s", "name": "原子武器", "cost": 100, "requires": [], "effects": { "nukes": 1, "nukeDeter": 8 }, "desc": "基础裂变武器，已掌握", "flag": "nuclear_tech" },
+        { "tier": 2, "era": "1960s", "name": "氢弹", "cost": 160, "requires": [1], "effects": { "nukes": 2, "nukeDeter": 15 }, "desc": "聚变弹头，威力提升千倍" },
+        { "tier": 3, "era": "1970s", "name": "分导式多弹头", "cost": 220, "requires": [2], "effects": { "nukes": 3, "nukeDeter": 25 }, "desc": "MIRV技术，一弹多头" },
+        { "tier": 4, "era": "1980s", "name": "中子弹", "cost": 300, "requires": [3], "effects": { "nukes": 4, "nukeDeter": 35 }, "desc": "增强辐射武器，战术核打击" },
+        { "tier": 5, "era": "1990s", "name": "第三代核武", "cost": 400, "requires": [4], "effects": { "nukes": 6, "nukeDeter": 50 }, "desc": "纯聚变与定向能核武器" }
+      ]
+    },
+    "rocket": {
+      "name": "火箭技术",
+      "color": "#a0d0a0",
+      "icon": "🚀",
+      "desc": "影响投送能力与太空探索",
+      "tiers": [
+        { "tier": 1, "era": "1960s", "name": "弹道导弹", "cost": 70, "requires": [], "effects": { "deterrence": 5, "nukeDeter": 3 }, "desc": "V-2演化，短程弹道导弹", "flag": "rocketry" },
+        { "tier": 2, "era": "1960s", "name": "洲际导弹", "cost": 120, "requires": [1], "effects": { "deterrence": 8, "nukeDeter": 8 }, "desc": "ICBM，跨洲核打击能力" },
+        { "tier": 3, "era": "1970s", "name": "潜射导弹", "cost": 170, "requires": [2], "effects": { "deterrence": 10, "nukeDeter": 12 }, "desc": "SLBM，核潜艇二次打击" },
+        { "tier": 4, "era": "1980s", "name": "反导系统", "cost": 240, "requires": [3], "effects": { "deterrence": 12, "nukeDeter": 8 }, "desc": "ABM拦截，攻防兼备" },
+        { "tier": 5, "era": "1990s", "name": "天基武器", "cost": 350, "requires": [4], "effects": { "deterrence": 18, "nukeDeter": 15, "research": 5 }, "desc": "轨道武器与导弹防御网" }
+      ]
+    }
+  }
+}

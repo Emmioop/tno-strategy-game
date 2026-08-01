@@ -2,6 +2,40 @@
  * 千年帝国的最后一息 - UI 渲染与交互
  * ============================================================ */
 
+// ============ UI 数据读取: 优先 DataStore, 失败回退到旧全局 ============
+(function _defineUIHelpers(scope) {
+  function _DS() {
+    if (typeof DataStore !== 'undefined') return DataStore;
+    if (scope.DataStore) return scope.DataStore;
+    if (typeof window !== 'undefined' && window.DataStore) return window.DataStore;
+    return null;
+  }
+  scope._uiGetBuildings = function () {
+    const d = _DS(); if (d) { const r = d.getBuildings(); if (r && Object.keys(r).length) return r; }
+    return BUILDINGS || {};
+  };
+  scope._uiGetTechs = function () {
+    const d = _DS(); if (d) { const r = d.getTechs(); if (r && Object.keys(r).length) return r; }
+    return TECHS || {};
+  };
+  scope._uiGetPolicies = function () {
+    const d = _DS(); if (d) { const r = d.getPolicies(); if (r && Object.keys(r).length) return r; }
+    return POLICIES || {};
+  };
+  scope._uiGetFoci = function () {
+    const d = _DS(); if (d) { const r = d.getNationalFoci(); if (r && Object.keys(r).length) return r; }
+    return NATIONAL_FOCI || {};
+  };
+  scope._uiGetSuccession = function () {
+    const d = _DS(); if (d) { const r = d.getSuccessionPaths(); if (r && Object.keys(r).length) return r; }
+    return SUCCESSION_PATHS || {};
+  };
+  scope._uiGetFactions = function () {
+    const d = _DS(); if (d) { const r = d.getFactions(); if (r && Object.keys(r).length) return r; }
+    return FACTIONS || {};
+  };
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+
 // ===== 结局定义 =====
 const ENDINGS = {
   nuclear_holocaust: {
@@ -102,18 +136,117 @@ const UI = {
   currentTab: 'overview',
   pendingEvents: [],
   currentEventIndex: 0,
+  // 懒加载状态标记
+  _lazy: {
+    eventsGenLoaded: false,
+    eventsGenLoading: false,
+    mapExtraLoaded: false,
+    mapExtraLoading: false,
+    pendingFirstEvent: false
+  },
+  // tab渲染缓存（避免每次切换都innerHTML重建DOM）
+  _tabCache: {},
+
+  // ===== 懒加载工具 =====
+  loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[data-lazy="${src}"]`)) { resolve(); return; }
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.setAttribute('data-lazy', src);
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('加载失败: ' + src));
+      document.head.appendChild(s);
+    });
+  },
+
+  // 加载 events_gen.js (84MB, 首屏跳过)
+  async loadEventsGen() {
+    if (this._lazy.eventsGenLoaded) return true;
+    if (this._lazy.eventsGenLoading) {
+      return new Promise(res => {
+        const itv = setInterval(() => {
+          if (this._lazy.eventsGenLoaded) { clearInterval(itv); res(true); }
+        }, 100);
+      });
+    }
+    this._lazy.eventsGenLoading = true;
+    try {
+      await this.loadScript('js/events_gen.js?v=30');
+      this._lazy.eventsGenLoaded = true;
+      return true;
+    } catch (e) {
+      console.warn(e);
+      return false;
+    } finally {
+      this._lazy.eventsGenLoading = false;
+    }
+  },
+
+  // 加载 map_extra.js (11MB, 进入地图tab时才加载)
+  async loadMapExtra() {
+    if (this._lazy.mapExtraLoaded) return true;
+    if (this._lazy.mapExtraLoading) {
+      return new Promise(res => {
+        const itv = setInterval(() => {
+          if (this._lazy.mapExtraLoaded) { clearInterval(itv); res(true); }
+        }, 100);
+      });
+    }
+    this._lazy.mapExtraLoading = true;
+    try {
+      await this.loadScript('js/map_extra.js?v=30');
+      this._lazy.mapExtraLoaded = true;
+      return true;
+    } catch (e) {
+      console.warn(e);
+      return false;
+    } finally {
+      this._lazy.mapExtraLoading = false;
+    }
+  },
 
   // ===== 启动游戏 =====
-  start() {
+  start(mode) {
+    if (mode && GAME_MODES[mode]) {
+      Game.setMode(mode);
+    }
     Game.init();
     document.getElementById('splash').style.display = 'none';
     document.getElementById('game').classList.add('active');
     this.renderAll();
+    // 首屏初始化 DataStore (加载 story_core.json + 当前年 + 前后1年随机池 ≈ 380KB+7.8MB ≈ 8.2MB)
+    // 替代原先加载整个 84MB events_gen.js 的流程，手机端减少内存~76MB
+    const initDsPromise = (typeof DataStore !== 'undefined' && DataStore && typeof DataStore.init === 'function')
+      ? DataStore.init(Game.state.year)
+      : Promise.reject(new Error('no DataStore'));
+    initDsPromise.then(ok => {
+      if (ok) {
+        const pool = DataStore.getEventPool();
+        console.log('[DataStore] 首屏就绪, 当前事件池: ' + pool.length.toLocaleString() + ' 个 (剧情 + ' + (Game.state.year - 1) + '/' + Game.state.year + '/' + (Game.state.year + 1) + ' 年随机)');
+      }
+    }).catch(() => {
+      // DataStore不可用时，退化为旧版懒加载：后台异步加载 84MB 事件库（不阻塞首屏和开场事件）
+      this.loadEventsGen().then(ok => {
+        if (ok) console.log('[懒加载-兼容] events_gen.js 已就绪 (' + (typeof window.STORY_EVENTS === 'undefined' ? '?' : window.STORY_EVENTS.length.toLocaleString()) + ' 事件)');
+      });
+    });
     // 触发开场事件
     setTimeout(() => this.processTurnEvents(), 300);
   },
 
   // ===== 渲染全部 =====
+  // ===== 渲染调度 (防抖, 避免短时间多次renderAll卡顿) =====
+  _renderTimer: null,
+  requestRender() {
+    if (this._renderTimer) return; // 已有 pending 渲染, 跳过
+    this._renderTimer = requestAnimationFrame(() => {
+      this._renderTimer = null;
+      this.renderAll();
+    });
+  },
+
   renderAll() {
     this.renderTopbar();
     this.renderLeftPanel();
@@ -135,61 +268,91 @@ const UI = {
       return '';
     };
 
-    const diffInfo = DIFFICULTIES[s.difficulty] || DIFFICULTIES.normal;
+    const topbar = document.getElementById('topbar');
+    // 缓存策略：第一次用innerHTML建立结构；后续直接用DOM引用更新文本（避免每帧100+节点重建）
+    if (!this._topbarCache) {
+      const diffInfo = DIFFICULTIES[s.difficulty] || DIFFICULTIES.normal;
+      const modeInfo = (typeof GAME_MODES !== 'undefined' && GAME_MODES[s.gameMode]) ? GAME_MODES[s.gameMode] : GAME_MODES.historical;
+      topbar.innerHTML = `
+        <div class="faction-emblem">大日耳曼国 <span class="diff-tag" style="font-size:10px;color:${diffInfo.color};border:1px solid ${diffInfo.color};padding:1px 5px;border-radius:2px;margin-left:6px">${diffInfo.name}</span><span class="diff-tag" style="font-size:10px;color:${modeInfo.color};border:1px solid ${modeInfo.color};padding:1px 5px;border-radius:2px;margin-left:4px">${modeInfo.icon} ${modeInfo.name}</span></div>
+        <div class="leader-info">
+          <div>元首</div>
+          <div class="leader-name" data-k="leader">${s.leader.name}</div>
+          <div style="font-size:10px;color:var(--text-muted)" data-k="title">${s.leader.title || ''}</div>
+        </div>
+        <div class="resources">
+          <div class="resource" title="帝国马克">
+            <span class="icon">资金</span>
+            <span class="value" data-v="money">${fmt(r.money)}</span>
+            <span class="d-money" data-d="money">${fmtDelta(income.money)}</span>
+          </div>
+          <div class="resource" title="人力">
+            <span class="icon">人力</span>
+            <span class="value" data-v="manpower">${fmt(r.manpower)}</span>
+            <span class="d-manpower" data-d="manpower">${fmtDelta(income.manpower)}</span>
+          </div>
+          <div class="resource" title="稳定度：只能通过事件恢复，持续衰减">
+            <span class="icon">稳定</span>
+            <span class="value" data-v="stability">${fmt(r.stability)}</span>
+            <span class="d-stability" data-d="stability">${fmtDelta(income.stability)}</span>
+          </div>
+          <div class="resource" title="威慑：只能通过事件提升，持续衰减">
+            <span class="icon">威慑</span>
+            <span class="value" data-v="deterrence">${fmt(r.deterrence)}</span>
+            <span class="d-deterrence" data-d="deterrence">${fmtDelta(income.deterrence)}</span>
+          </div>
+          <div class="resource" title="军力：只能通过事件提升，持续衰减">
+            <span class="icon">军力</span>
+            <span class="value" data-v="militaryPower">${fmt(r.militaryPower)}</span>
+            <span class="d-militaryPower" data-d="militaryPower">${fmtDelta(income.militaryPower)}</span>
+          </div>
+          <div class="resource" title="核慑：只能通过事件提升，持续衰减">
+            <span class="icon">核慑</span>
+            <span class="value" data-v="nukeDeter">${fmt(r.nukeDeter)}</span>
+            <span class="d-nukeDeter" data-d="nukeDeter">${fmtDelta(income.nukeDeter)}</span>
+          </div>
+          <div class="resource" title="核武器：通过核设施建造，或事件获得">
+            <span class="icon">核弹</span>
+            <span class="value" data-v="nukes">${fmt(r.nukes)}</span>
+          </div>
+          <div class="resource" title="研发：只能通过事件获得，持续老化衰减">
+            <span class="icon">研发</span>
+            <span class="value" data-v="research">${fmt(r.research)}</span>
+            <span class="d-research" data-d="research">${fmtDelta(income.research)}</span>
+          </div>
+        </div>
+        <div class="date-block">
+          <div class="date" data-k="date">${Game.getDateStr()}</div>
+          <div class="turn-info" data-k="turn">回合 ${s.turn} / ${s.totalTurns}</div>
+        </div>
+      `;
+      // 建立快速引用
+      this._topbarCache = {
+        vals: {},
+        dels: {},
+        leader: topbar.querySelector('[data-k="leader"]'),
+        title: topbar.querySelector('[data-k="title"]'),
+        date: topbar.querySelector('[data-k="date"]'),
+        turn: topbar.querySelector('[data-k="turn"]'),
+      };
+      ['money','manpower','stability','deterrence','militaryPower','nukeDeter','nukes','research'].forEach(k => {
+        this._topbarCache.vals[k] = topbar.querySelector(`[data-v="${k}"]`);
+        const d = topbar.querySelector(`[data-d="${k}"]`);
+        if (d) this._topbarCache.dels[k] = d;
+      });
+      return;
+    }
 
-    document.getElementById('topbar').innerHTML = `
-      <div class="faction-emblem">大日耳曼国 <span style="font-size:10px;color:${diffInfo.color};border:1px solid ${diffInfo.color};padding:1px 5px;border-radius:2px;margin-left:6px">${diffInfo.name}</span></div>
-      <div class="leader-info">
-        <div>元首</div>
-        <div class="leader-name">${s.leader.name}</div>
-        <div style="font-size:10px;color:var(--text-muted)">${s.leader.title || ''}</div>
-      </div>
-      <div class="resources">
-        <div class="resource" title="帝国马克">
-          <span class="icon">资金</span>
-          <span class="value">${fmt(r.money)}</span>
-          ${fmtDelta(income.money)}
-        </div>
-        <div class="resource" title="人力">
-          <span class="icon">人力</span>
-          <span class="value">${fmt(r.manpower)}</span>
-          ${fmtDelta(income.manpower)}
-        </div>
-        <div class="resource" title="稳定度：只能通过事件恢复，持续衰减">
-          <span class="icon">稳定</span>
-          <span class="value">${fmt(r.stability)}</span>
-          ${fmtDelta(income.stability)}
-        </div>
-        <div class="resource" title="威慑：只能通过事件提升，持续衰减">
-          <span class="icon">威慑</span>
-          <span class="value">${fmt(r.deterrence)}</span>
-          ${fmtDelta(income.deterrence)}
-        </div>
-        <div class="resource" title="军力：只能通过事件提升，持续衰减">
-          <span class="icon">军力</span>
-          <span class="value">${fmt(r.militaryPower)}</span>
-          ${fmtDelta(income.militaryPower)}
-        </div>
-        <div class="resource" title="核慑：只能通过事件提升，持续衰减">
-          <span class="icon">核慑</span>
-          <span class="value">${fmt(r.nukeDeter)}</span>
-          ${fmtDelta(income.nukeDeter)}
-        </div>
-        <div class="resource" title="核武器：通过核设施建造，或事件获得">
-          <span class="icon">核弹</span>
-          <span class="value">${fmt(r.nukes)}</span>
-        </div>
-        <div class="resource" title="研发：只能通过事件获得，持续老化衰减">
-          <span class="icon">研发</span>
-          <span class="value">${fmt(r.research)}</span>
-          ${fmtDelta(income.research)}
-        </div>
-      </div>
-      <div class="date-block">
-        <div class="date">${Game.getDateStr()}</div>
-        <div class="turn-info">回合 ${s.turn} / ${s.totalTurns}</div>
-      </div>
-    `;
+    // 增量更新：只更新数值文本，不重建DOM（性能提升~10x）
+    const c = this._topbarCache;
+    ['money','manpower','stability','deterrence','militaryPower','nukeDeter','nukes','research'].forEach(k => {
+      if (c.vals[k]) c.vals[k].firstChild.nodeValue = String(fmt(r[k]));
+      if (c.dels[k]) c.dels[k].innerHTML = fmtDelta(income[k]);
+    });
+    if (c.leader && c.leader.textContent !== s.leader.name) c.leader.textContent = s.leader.name;
+    if (c.title && c.title.textContent !== (s.leader.title || '')) c.title.textContent = s.leader.title || '';
+    if (c.date) c.date.textContent = Game.getDateStr();
+    if (c.turn) c.turn.textContent = `回合 ${s.turn} / ${s.totalTurns}`;
   },
 
   // ===== 左面板 =====
@@ -296,13 +459,15 @@ const UI = {
 
     document.getElementById('action-bar').innerHTML = `
       <button class="btn-next-turn" id="btn-next-turn">推进至下一季度 ▸</button>
-      <button class="btn-secondary" id="btn-save">保存进度</button>
-      <button class="btn-secondary" id="btn-restart">放弃存档并重启</button>
+      <button class="btn-secondary" id="btn-save">保存</button>
+      <button class="btn-secondary" id="btn-load">读取</button>
+      <button class="btn-secondary" id="btn-restart">重启</button>
       ${this.isDebugMode() ? '<button class="btn-secondary" id="btn-debug" style="border-color:var(--accent-gold);color:var(--accent-gold);">DEBUG</button>' : ''}
     `;
 
     document.getElementById('btn-next-turn').onclick = () => this.nextTurn();
-    document.getElementById('btn-save').onclick = () => this.saveGame();
+    document.getElementById('btn-save').onclick = () => this.showSavePanel('save');
+    document.getElementById('btn-load').onclick = () => this.showSavePanel('load');
     document.getElementById('btn-restart').onclick = () => {
       if (confirm('确定要重新开始吗？当前进度将丢失。')) {
         location.reload();
@@ -319,25 +484,31 @@ const UI = {
   renderMobileActionBar() {
     const bar = document.getElementById('mobile-action-bar');
     if (!bar) return;
+    // 危机状态指示 (若有核危机)
+    const crisis = (typeof NationSim !== 'undefined' && NationSim.getNuclearCrisis) ? NationSim.getNuclearCrisis() : null;
+    const crisisBadge = (crisis && crisis.level !== 'low')
+      ? `<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;background:${crisis.color};border-radius:50%;box-shadow:0 0 6px ${crisis.color};"></span>`
+      : '';
     bar.innerHTML = `
-      <button class="mobile-nav-btn" id="m-btn-left" aria-label="势力面板">
+      <button class="mobile-nav-btn" id="m-btn-left" aria-label="势力面板" style="position:relative;">
         <span class="nav-icon">☰</span>
         <span>势力</span>
+        ${crisisBadge}
       </button>
       <button class="btn-next-turn" id="m-btn-next">下一季度 ▸</button>
+      <button class="mobile-nav-btn" id="m-btn-save" aria-label="存档">
+        <span class="nav-icon">💾</span>
+        <span>存档</span>
+      </button>
       <button class="mobile-nav-btn" id="m-btn-news" aria-label="新闻">
         <span class="nav-icon">📰</span>
         <span>新闻</span>
       </button>
-      <button class="mobile-nav-btn" id="m-btn-help" aria-label="教程">
-        <span class="nav-icon">？</span>
-        <span>教程</span>
-      </button>
     `;
     document.getElementById('m-btn-next').onclick = () => this.nextTurn();
     document.getElementById('m-btn-left').onclick = () => this.toggleDrawer('left-panel');
+    document.getElementById('m-btn-save').onclick = () => this.showSavePanel('save');
     document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
-    document.getElementById('m-btn-help').onclick = () => this.showTutorial();
 
     // 给左右面板各加一个关闭按钮（手机端可见）
     // 注意：left-panel 在 renderLeftPanel 模板中已经自带了，这里只处理 right-panel，
@@ -459,20 +630,132 @@ const UI = {
 
     const content = document.getElementById('tab-content');
     switch (tab) {
-      case 'overview': content.innerHTML = this.renderOverview(); break;
-      case 'map': content.innerHTML = this.renderMap(); break;
-      case 'industry': content.innerHTML = this.renderIndustry(); break;
-      case 'policy': content.innerHTML = this.renderPolicy(); break;
-      case 'tech': content.innerHTML = this.renderTech(); break;
-      case 'shop': content.innerHTML = this.renderShop(); break;
-      case 'events': content.innerHTML = this.renderEventLog(); break;
+      case 'overview':
+        content.innerHTML = this.renderOverview();
+        break;
+      case 'nation':
+        content.innerHTML = this.renderNation();
+        break;
+      case 'map':
+        // Canvas模式: 不加载 11MB 的 map_extra.js（性能关键！）
+        const userRenderer = (function () { try { return localStorage.getItem('tno_renderer') || 'canvas'; } catch (_) { return 'canvas'; } })();
+        const isCanvasMode = userRenderer !== 'svg';
+
+        // 强制刷新标记：切渲染器/切层级时需要重绘
+        if (this._bypassMapCache) {
+          delete this._tabCache.map;
+          delete this._bypassMapCache;
+        }
+        // 每次切地图tab，重置后处理标记(因为DOM可能是新注入的)
+        this._mapPostRenderBound = false;
+
+        if (!this._tabCache.map) {
+          content.innerHTML = this.renderMap();
+          this._tabCache.map = { html: content.innerHTML, renderer: userRenderer };
+          this._bindMapPostRender.bind(this)();
+
+          // ============ 关键性能优化：Canvas模式下不加载 11MB map_extra.js ============
+          if (!isCanvasMode && !this._lazy.mapExtraLoaded) {
+            // 显示加载提示(短暂一闪,不打扰), 在SVG里先放占位, 加载完毕再插入MAP_EXTRA_SVG
+            const hint = document.createElement('div');
+            hint.id = 'map-extra-loading';
+            hint.style.cssText = 'position:absolute;top:60px;right:18px;font-size:11px;color:#a8a870;z-index:5;background:rgba(20,16,8,0.7);padding:3px 8px;border-radius:3px;pointer-events:none';
+            hint.textContent = '⏳ 加载地图细节中 (11MB)...';
+            const mapPage = document.querySelector('.map-page');
+            if (mapPage) { mapPage.style.position = 'relative'; mapPage.appendChild(hint); }
+            this.loadMapExtra().then(ok => {
+              if (ok && typeof MAP_EXTRA_SVG !== 'undefined') {
+                const svg = document.getElementById('world-map-svg');
+                if (svg && !svg.querySelector('#map-extra')) {
+                  const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                  const tmp = document.createElement('div');
+                  tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + MAP_EXTRA_SVG + '</svg>';
+                  const innerG = tmp.querySelector('svg > *');
+                  if (innerG) svg.appendChild(innerG);
+                  console.log('[懒加载完成] map_extra.js 已注入, SVG元素: ' + svg.querySelectorAll('*').length.toLocaleString());
+                }
+              }
+              const h = document.getElementById('map-extra-loading');
+              if (h) h.remove();
+              this._bindMapPostRender.bind(this)();
+            });
+          } else if (isCanvasMode) {
+            console.log('[Canvas地图] 跳过 11MB map_extra.js 加载，使用16KB GeoJSON轻量地图');
+          }
+        } else {
+          // 从缓存直接写
+          content.innerHTML = this._tabCache.map.html;
+          // 如果缓存的renderer和当前不一致，强制刷新（避免用旧DOM）
+          if (this._tabCache.map.renderer !== userRenderer) {
+            delete this._tabCache.map;
+            // 再跑一次
+            this.renderTab('map');
+            return;
+          }
+          this._bindMapPostRender.bind(this)();
+          // 如果是SVG模式且已经加载过，则把已经注入的 SVG 元素内容再次用缓存恢复即可
+          if (!isCanvasMode && this._lazy.mapExtraLoaded && typeof MAP_EXTRA_SVG !== 'undefined') {
+            const svg = document.getElementById('world-map-svg');
+            if (svg && !svg.querySelector('#map-extra')) {
+              const tmp = document.createElement('div');
+              tmp.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + MAP_EXTRA_SVG + '</svg>';
+              const innerG = tmp.querySelector('svg > *');
+              if (innerG) svg.appendChild(innerG);
+            }
+          }
+        }
+        break;
+      case 'industry':
+        if (!this._tabCache.industry || tab === 'industry' && Game.state._dirtyIndustry) {
+          content.innerHTML = this.renderIndustry();
+          this._tabCache.industry = { html: content.innerHTML };
+          delete Game.state._dirtyIndustry;
+        } else content.innerHTML = this._tabCache.industry.html;
+        break;
+      case 'policy':
+        content.innerHTML = this.renderPolicy();
+        this._tabCache.policy = { html: content.innerHTML };
+        break;
+      case 'tech':
+        content.innerHTML = this.renderTech();
+        this._tabCache.tech = { html: content.innerHTML };
+        break;
+      case 'shop':
+        content.innerHTML = this.renderShop();
+        this._tabCache.shop = { html: content.innerHTML };
+        this.bindShopEvents();
+        break;
+      case 'events':
+        content.innerHTML = this.renderEventLog();
+        this._tabCache.events = { html: content.innerHTML };
+        break;
     }
-    if (tab === 'shop') {
+    if (tab === 'shop' && !this._tabCache.shop) {
       this.bindShopEvents();
     }
-    if (tab === 'map') {
-      // 给普通的.map-region路径添加间隙stroke；特殊势力（德/美/日/勃艮第）保留醒目彩色边框
-      setTimeout(() => {
+  },
+
+  // 地图渲染后的后处理：间隙、分区按钮 + Canvas初始化 + 渲染器/层级切换
+  _bindMapPostRender() {
+    const UI = this;
+    // 防止重复后处理造成 Canvas 被多次实例化
+    if (this._mapPostRenderBound) return;
+    this._mapPostRenderBound = true;
+
+    setTimeout(() => {
+      // Fix: innerHTML注入的<script>不会被浏览器自动执行，手动eval
+      try {
+        const cfgScript = document.querySelector('script[data-render-config]');
+        if (cfgScript && (!window.__TNO_MAP_CONFIG || window.__TNO_MAP_CONFIG._notSet)) {
+          (0, eval)(cfgScript.textContent || '');
+        }
+      } catch (_) {}
+      const cfg = (typeof window !== 'undefined' && window.__TNO_MAP_CONFIG) || {};
+      const useCanvas = !!cfg.useCanvas;
+
+      // --------- A. SVG模式专属：路径间隙处理 (仅SVG显示时运行) ---------
+      const svgWrap = document.getElementById('svg-map-wrap');
+      if (svgWrap && svgWrap.style.display !== 'none') {
         const specialClasses = ['germany-region', 'ofn-region', 'japan-region', 'burgundy-region'];
         const regions = document.querySelectorAll('.map-container .map-region');
         regions.forEach(path => {
@@ -486,47 +769,155 @@ const UI = {
             path.setAttribute('stroke-linejoin', 'round');
           }
         });
+      }
 
-        // ===== 分区查看: viewBox 切换
-        const ZOOM_VIEWS = {
-          global:   '0 0 1200 750',
-          europe:   '300 100 500 420',
-          america:  '10 60 300 600',
-          eastasia: '740 160 460 500',
-          africa:   '410 350 350 400'
-        };
-        const svg = document.getElementById('world-map-svg');
-        const btns = document.querySelectorAll('.zm-btn');
-        const applyStyle = (btn) => {
-          btns.forEach(b => {
-            if (b === btn) {
-              b.style.background = 'linear-gradient(135deg,#2a1a1a,#3a2a2a)';
-              b.style.color = '#e8c860';
-              b.style.border = '1px solid #6a5a3a';
-              b.style.fontWeight = 'bold';
-              b.classList.add('active');
-            } else {
-              b.style.background = 'rgba(30,30,40,0.8)';
-              b.style.color = '#b8b8c0';
-              b.style.border = '1px solid #3a3a4a';
-              b.style.fontWeight = 'normal';
-              b.classList.remove('active');
-            }
-          });
-        };
-        btns.forEach(btn => {
-          btn.addEventListener('click', () => {
-            const zv = btn.getAttribute('data-zv');
-            const vb = ZOOM_VIEWS[zv];
-            if (svg && vb) {
-              svg.style.transition = 'viewBox 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-              svg.setAttribute('viewBox', vb);
-            }
-            applyStyle(btn);
-          });
+      // --------- B. 分区查看: zm-btn (同时作用 SVG viewBox + Canvas zoomTo) ---------
+      const ZOOM_VIEWS = {
+        global:   '0 0 1200 750',
+        europe:   '300 100 500 420',
+        america:  '10 60 300 600',
+        eastasia: '740 160 460 500',
+        africa:   '410 350 350 400'
+      };
+      const svg = document.getElementById('world-map-svg');
+      const allZmBtns = document.querySelectorAll('.zm-btn');
+      const zmBtns = Array.from(allZmBtns).filter(b => b.getAttribute('data-zv'));
+      const applyStyle = (btn) => {
+        zmBtns.forEach(b => {
+          if (b === btn) {
+            b.style.background = 'linear-gradient(135deg,#2a1a1a,#3a2a2a)';
+            b.style.color = '#e8c860';
+            b.style.border = '1px solid #6a5a3a';
+            b.style.fontWeight = 'bold';
+            b.classList.add('active');
+          } else {
+            b.style.background = 'rgba(30,30,40,0.8)';
+            b.style.color = '#b8b8c0';
+            b.style.border = '1px solid #3a3a4a';
+            b.style.fontWeight = 'normal';
+            b.classList.remove('active');
+          }
         });
-      }, 0);
-    }
+      };
+      zmBtns.forEach(btn => {
+        if (btn._zmBound) return;
+        btn._zmBound = true;
+        btn.addEventListener('click', () => {
+          const zv = btn.getAttribute('data-zv');
+          const vb = ZOOM_VIEWS[zv];
+          if (svg && vb) {
+            svg.style.transition = 'viewBox 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            svg.setAttribute('viewBox', vb);
+          }
+          // Canvas版同步
+          if (UI._canvasMapInstance && zv) {
+            UI._canvasMapInstance.zoomTo(zv);
+          }
+          applyStyle(btn);
+        });
+      });
+
+      // --------- C. 渲染器切换按钮 (保存localStorage + 重新渲染tab) ---------
+      const rBtn = document.getElementById('btn-renderer-toggle');
+      if (rBtn && !rBtn._bound) {
+        rBtn._bound = true;
+        rBtn.addEventListener('click', () => {
+          try {
+            const cur = localStorage.getItem('tno_renderer') || 'canvas';
+            const next = cur === 'canvas' ? 'svg' : 'canvas';
+            localStorage.setItem('tno_renderer', next);
+            UI.toast(`已切换为 ${next.toUpperCase()} 渲染器`, 'success');
+            if (UI._canvasMapInstance) { UI._canvasMapInstance.destroy(); UI._canvasMapInstance = null; }
+            UI._mapPostRenderBound = false;
+            UI._bypassMapCache = true; // 强制刷新tabCache
+            UI.renderTab('map');
+          } catch (e) { UI.toast('切换失败: ' + e.message, 'error'); }
+        });
+      }
+
+      // --------- D. 层级切换按钮 (Level1/Level2) ---------
+      const lBtn = document.getElementById('btn-lvl-toggle');
+      if (lBtn && !lBtn._bound) {
+        lBtn._bound = true;
+        lBtn.addEventListener('click', () => {
+          try {
+            const cur = +(localStorage.getItem('tno_map_level') || '2') || 2;
+            const next = cur === 1 ? 2 : 1;
+            localStorage.setItem('tno_map_level', String(next));
+            lBtn.textContent = 'Lv ' + next;
+            lBtn.style.color = next === 1 ? '#a0c8e0' : '#ffe8a0';
+            const badge = document.getElementById('canvas-map-badge');
+            if (badge) badge.textContent = 'Canvas · Level ' + next;
+            if (UI._canvasMapInstance) UI._canvasMapInstance.setDisplayLevel(next);
+            UI.toast(`地图显示等级: Level ${next} (${next === 1 ? '国家级·简洁' : '战区级·军阀/专员辖区'})`, 'info');
+          } catch (e) { UI.toast('切换失败: ' + e.message, 'error'); }
+        });
+      }
+
+      // --------- E. Canvas模式：实例化 CanvasMap ---------
+      if (useCanvas && typeof CanvasMap !== 'undefined' && !UI._canvasMapInstance) {
+        const cvs = document.getElementById('world-map-canvas');
+        const tooltip = document.getElementById('canvas-map-tooltip');
+        if (cvs) {
+          try {
+            const cm = new CanvasMap(cvs, {
+              url: 'data/map/world_mini.geojson',
+              defaultDisplayLevel: cfg.defaultLevel || 2,
+              autoLoad: true
+            });
+            UI._canvasMapInstance = cm;
+
+            // 颜色覆盖
+            cm.on('ready', () => {
+              if (cfg.colors && typeof cfg.colors === 'object') {
+                cm.setStateColorOverrides(cfg.colors);
+              }
+              UI.toast('Canvas地图已就绪 (47 区域 · 节省11MB SVG)', 'success');
+            });
+            cm.on('error', (e) => {
+              UI.toast('Canvas加载失败，已降级为SVG: ' + (e && e.message || '?'), 'error');
+              // 自动降级：切回SVG
+              try { localStorage.setItem('tno_renderer', 'svg'); } catch (_) {}
+              UI._mapPostRenderBound = false;
+              setTimeout(() => UI.renderTab('map'), 400);
+            });
+
+            // Hover tooltip
+            cm.on('hover', (evt) => {
+              const f = evt && evt.feature;
+              if (!f || !tooltip) return;
+              const wrap = document.getElementById('canvas-map-wrap');
+              if (!wrap) return;
+              const rect = wrap.getBoundingClientRect();
+              const x = (evt.x || 0) - rect.left + 12;
+              const y = (evt.y || 0) - rect.top + 12;
+              const parent = f.properties.parent ? ` (归属: ${f.properties.parent})` : '';
+              const factionNames = { GER:'大日耳曼国', USA:'OFN', JAP:'共荣圈', ITA:'三头同盟', BUR:'勃艮第', RUS:'俄罗斯', MID:'中立' };
+              const fac = factionNames[f.properties.faction] || f.properties.faction;
+              tooltip.innerHTML = `<b>${f.properties.name}</b><br><span style="color:#a0a0b0">势力: ${fac}${parent}</span><br><span style="color:#888">ID: ${f.id}</span>`;
+              tooltip.style.left = Math.min(rect.width - 40, x) + 'px';
+              tooltip.style.top = Math.min(rect.height - 40, y) + 'px';
+              tooltip.style.display = 'block';
+            });
+            cm.on('hoverout', () => { if (tooltip) tooltip.style.display = 'none'; });
+
+            // Click
+            cm.on('click', (evt) => {
+              const f = evt && evt.feature;
+              if (!f) return;
+              const factionNames = { GER:'大日耳曼国', USA:'自由国家组织', JAP:'大东亚共荣圈', ITA:'三头同盟', BUR:'勃艮第骑士团国', RUS:'俄罗斯', MID:'中立' };
+              const fac = factionNames[f.properties.faction] || f.properties.faction;
+              UI.toast(`${f.properties.name} [${f.id}] · 势力: ${fac}`, 'info');
+            });
+
+            // 初始默认跳到全球
+            setTimeout(() => { try { cm.zoomTo('global'); } catch (_) {} }, 300);
+          } catch (e) {
+            console.warn('[CanvasMap] 初始化异常:', e);
+          }
+        }
+      }
+    }, 0);
   },
 
   // ===== 势力地图页 =====
@@ -1316,6 +1707,47 @@ const UI = {
       </div>
     `;
 
+    // ===== Canvas / SVG 双模式 =====
+    // 默认: Canvas (高性能, 手机优先)，可在UI上随时切回SVG
+    // 用户偏好持久化: localStorage.tno_renderer = 'canvas' | 'svg'
+    // 显示等级: localStorage.tno_map_level = '1' | '2' (1=国家级 6块, 2=战区级 47块)
+    const userRenderer = (function () { try { return localStorage.getItem('tno_renderer') || 'canvas'; } catch (_) { return 'canvas'; } })();
+    const userLevel = +((function () { try { return localStorage.getItem('tno_map_level') || '2'; } catch (_) { return '2'; } })()) || 2;
+    const useCanvas = userRenderer !== 'svg' && typeof CanvasMap !== 'undefined';
+
+    // 颜色覆盖: 把游戏flags映射为CanvasMap的动态色
+    const cmColors = {};
+    cmColors['GER'] = germanyColor;
+    cmColors['GER_core'] = f.civil_war_imminent && !f.civil_war_over ? '#7a2020' : '#c04040';
+    cmColors['GER_ukraine'] = f.civil_war_imminent ? '#5a1818' : '#8a2828';
+    cmColors['GER_moscow'] = f.civil_war_imminent ? '#4a1010' : '#7a2020';
+    cmColors['GER_caucasus'] = f.civil_war_imminent ? '#3a0808' : '#6a1818';
+    cmColors['ITA'] = italyColor;
+    cmColors['ITA_core'] = italyColor;
+    cmColors['RUS'] = russiaColor;
+    // 俄罗斯统一后: 所有RUS_*子区域换成统一颜色
+    if (!russiaFragments) {
+      for (const k of ['RUS_komi','RUS_wrrf','RUS_vyatka','RUS_samara','RUS_ab','RUS_sverdlovsk','RUS_tyumen',
+                       'RUS_omsk','RUS_novosib','RUS_tomsk','RUS_kemerovo','RUS_blackarmy','RUS_nkr',
+                       'RUS_krasnoyarsk','RUS_irkutsk','RUS_buryatia','RUS_magadan','RUS_chita','RUS_amur']) {
+        cmColors[k] = russiaColor;
+      }
+    }
+
+    // Canvas HTML (轻量, 不加载11MB map_extra.js)
+    const canvasWrapHtml = useCanvas ? `
+      <div id="canvas-map-wrap" style="position:relative;width:100%;height:100%;overflow:hidden;background:#0e1520;border-radius:4px;">
+        <canvas id="world-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
+        <div id="canvas-map-tooltip" style="position:absolute;pointer-events:none;background:rgba(10,14,22,0.92);border:1px solid #4a4030;color:#f0e8c8;padding:4px 8px;border-radius:3px;font-size:11px;line-height:1.4;white-space:nowrap;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.6);"></div>
+        <div id="canvas-map-badge" style="position:absolute;top:6px;right:8px;background:rgba(60,50,20,0.75);border:1px solid #6a5a3a;color:#f0e0a0;padding:2px 6px;border-radius:3px;font-size:10px;letter-spacing:0.05em;pointer-events:none;z-index:4;">Canvas · Level ${userLevel}</div>
+      </div>
+    ` : '';
+
+    // SVG HTML (原有完整版，包含所有细节 + 懒加载 11MB map_extra)
+    const svgWrapHtml = `
+      <div id="svg-map-wrap" style="width:100%;height:100%;display:${useCanvas ? 'none' : 'block'};">${mapSvg}</div>
+    `;
+
     // 时间轴
     const timelineHtml = this.renderTimeline();
 
@@ -1329,15 +1761,30 @@ const UI = {
             <button class="zm-btn" data-zv="america" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇺🇸 美洲</button>
             <button class="zm-btn" data-zv="eastasia" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇯🇵 东亚</button>
             <button class="zm-btn" data-zv="africa" style="padding:4px 12px;font-size:12px;background:rgba(30,30,40,0.8);color:#b8b8c0;border:1px solid #3a3a4a;border-radius:4px;cursor:pointer">🇪🇬 非洲</button>
+            <button id="btn-lvl-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(50,40,20,0.7);color:${userLevel === 1 ? '#a0c8e0' : '#ffe8a0'};border:1px solid #6a5a3a;border-radius:4px;cursor:pointer" title="显示层级：国家级 vs 战区级/军阀">Lv ${userLevel}</button>
+            <button id="btn-renderer-toggle" class="zm-btn" style="padding:4px 10px;font-size:12px;background:rgba(30,35,50,0.7);color:${useCanvas ? '#8ad0ff' : '#f0c890'};border:1px solid #4a5a6a;border-radius:4px;cursor:pointer" title="渲染器切换：Canvas(性能优先，省11MB) / SVG(细节完整)">${useCanvas ? 'Canvas' : 'SVG'}</button>
             <div style="font-size:12px;color:var(--text-muted);margin-left:8px">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
           </div>
         </div>
-        <div class="map-container">${mapSvg}</div>
+        <div class="map-container" style="position:relative;">
+          ${svgWrapHtml}
+          ${canvasWrapHtml}
+        </div>
         <div class="map-factions">${factionHtml}${satelliteHtml}</div>
         <div class="map-timeline-section">
           <h3 style="font-family:var(--font-serif);color:var(--accent-gold);letter-spacing:0.1em;margin-bottom:10px">历史进程</h3>
           ${timelineHtml}
         </div>
+        <script data-render-config>
+          (function(){
+            window.__TNO_MAP_CONFIG = {
+              useCanvas: ${JSON.stringify(useCanvas)},
+              defaultLevel: ${userLevel},
+              colors: ${JSON.stringify(cmColors)},
+              russiaLabel: ${JSON.stringify(russiaLabel)}
+            };
+          })();
+        <\/script>
       </div>
     `;
   },
@@ -1391,6 +1838,331 @@ const UI = {
           <span>1962</span>
           <span>1981</span>
           <span>2000</span>
+        </div>
+      </div>
+    `;
+  },
+
+  // ===== 国势页 (国家模拟系统) =====
+  renderNation() {
+    const s = Game.state;
+    const NS = (typeof NationSim !== 'undefined') ? NationSim : null;
+    if (!NS) return '<div style="padding:40px;text-align:center;color:var(--text-muted)">国家模拟系统未加载</div>';
+
+    // 获取玩家国摘要
+    const ger = NS.getSummary('GER');
+    if (!ger) return '<div style="padding:40px;text-align:center;color:var(--text-muted)">数据加载中...</div>';
+
+    // 获取势力排名
+    const ranking = NS.getPowerRanking();
+    const gerRank = ranking.findIndex(r => r.id === 'GER') + 1;
+
+    // 格式化数字
+    const fmtGDP = (v) => {
+      if (v >= 1000000) return (v / 1000000).toFixed(2) + '万亿';
+      if (v >= 10000) return (v / 10000).toFixed(1) + '亿';
+      return v.toLocaleString() + '万';
+    };
+    const fmtPop = (v) => {
+      if (v >= 100000000) return (v / 100000000).toFixed(2) + '亿';
+      if (v >= 10000) return (v / 10000).toFixed(0) + '万';
+      return v.toLocaleString();
+    };
+    const fmtPct = (v) => (v * 100).toFixed(1) + '%';
+
+    // 进度条颜色
+    const barColor = (pct, thresholds = [30, 60]) => {
+      if (pct < thresholds[0]) return '#c84040';
+      if (pct < thresholds[1]) return '#c8a040';
+      return '#4a8a4a';
+    };
+
+    // GDP趋势图 (简易柱状图)
+    const gdpHistory = ger.gdpHistory || [ger.gdp];
+    const maxGdp = Math.max.apply(null, gdpHistory);
+    const minGdp = Math.min.apply(null, gdpHistory);
+    const gdpRange = Math.max(1, maxGdp - minGdp);
+    const chartBars = gdpHistory.slice(-40).map((v, i) => {
+      const h = Math.max(2, ((v - minGdp) / gdpRange) * 48 + 4);
+      const isLast = i === gdpHistory.slice(-40).length - 1;
+      return `<div style="display:inline-block;width:${100/Math.min(40, gdpHistory.length)}%;height:${h}px;background:${isLast ? '#e8c860' : 'rgba(232,200,96,0.4)'};border-radius:1px 1px 0 0;vertical-align:bottom;" title="${fmtGDP(v)}"></div>`;
+    }).join('');
+
+    // 势力对比条 (含AI国家战略)
+    const maxPower = ranking[0] ? ranking[0].power : 100;
+    const rankingHtml = ranking.map((r, i) => {
+      const isPlayer = r.id === 'GER';
+      const pct = (r.power / maxPower) * 100;
+      const colors = { GER:'#a83232', USA:'#3a6a9a', JAP:'#b89438', ITA:'#5a8a4a', BUR:'#4a2a4a', RUS:'#7a3a3a' };
+      const c = colors[r.id] || '#5a5a5a';
+      // 获取该国AI战略
+      const aiSum = NS.getSummary(r.id);
+      const ai = aiSum && aiSum.aiState;
+      const diploSign = ai ? (ai.diploMod > 0 ? '+' : '') + ai.diploMod.toFixed(0) : '';
+      const diploColor = ai ? (ai.diploMod > 5 ? '#4a8a4a' : (ai.diploMod < -5 ? '#c84040' : 'var(--text-muted)')) : 'var(--text-muted)';
+      const milTag = ai ? (ai.milMod > 0.2 ? '·扩军' : (ai.milMod < -0.1 ? '·裁军' : '')) : '';
+      return `
+        <div style="margin-bottom:8px;${isPlayer ? 'background:rgba(168,50,50,0.08);border-radius:4px;padding:4px 6px;' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-size:12px;color:${isPlayer ? 'var(--accent-gold-bright)' : 'var(--text-primary)'};font-weight:${isPlayer ? 'bold' : 'normal'}">${i+1}. ${r.name}</span>
+            <span style="font-size:11px;color:var(--text-muted)">国力 ${r.power}</span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${c},${c}cc);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:2px;font-size:10px;color:var(--text-muted);align-items:center;flex-wrap:wrap;">
+            <span>GDP ${fmtGDP(r.gdp)}</span>
+            <span>核弹 ${r.nukes}</span>
+            <span>威慑 ${r.deterrence}</span>
+            ${ai ? `<span style="margin-left:auto;padding:1px 6px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;font-size:9px;color:var(--accent-gold);">战略: ${ai.goalName}${milTag}</span><span style="font-size:9px;color:${diploColor};">对德${diploSign}</span>` : '<span style="margin-left:auto;font-size:9px;color:var(--accent-gold-bright);">玩家</span>'}
+          </div>
+        </div>`;
+    }).join('');
+
+    // 预算分配条
+    const b = ger.budget || {};
+    const budgetItems = [
+      { label: '军事', val: b.military || 0, color: '#c84040' },
+      { label: '福利', val: b.welfare || 0, color: '#4a8a4a' },
+      { label: '研发', val: b.research || 0, color: '#4a7aaa' },
+      { label: '行政', val: b.administration || 0, color: '#8a7a4a' },
+      { label: '情报', val: b.espionage || 0, color: '#4a2a4a' }
+    ];
+    const budgetBar = budgetItems.map(bi =>
+      `<div style="display:inline-block;height:18px;width:${(bi.val*100).toFixed(1)}%;background:${bi.color};line-height:18px;text-align:center;font-size:9px;color:#fff;overflow:hidden;white-space:nowrap;">${bi.val>0.05?bi.label:''}</div>`
+    ).join('');
+
+    // 科技等级
+    const techStars = (tier) => '★'.repeat(tier) + '☆'.repeat(Math.max(0, 5 - tier));
+
+    return `
+      <div class="nation-page" style="padding:16px;">
+        <!-- 国家概况 -->
+        <div style="background:linear-gradient(135deg,rgba(168,50,50,0.12),rgba(60,30,30,0.05));border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.08em;margin:0 0 4px;">${ger.name}</h2>
+              <div style="font-size:12px;color:var(--text-muted);">
+                元首: ${ger.leader} · 首都: ${ger.capital} · 意识形态: ${ger.ideology}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:var(--text-muted);">综合国力排名</div>
+              <div style="font-size:24px;font-weight:bold;color:${gerRank === 1 ? 'var(--accent-gold-bright)' : 'var(--text-primary)'};">第${gerRank}位</div>
+              <div style="font-size:10px;color:var(--text-muted);">/${ranking.length}国</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 经济面板 -->
+        <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px;">
+          <h3 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:14px;margin:0 0 10px;letter-spacing:0.08em;">经济</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px;">
+            <div style="text-align:center;padding:6px;background:rgba(255,255,255,0.03);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">GDP</div>
+              <div style="font-size:15px;font-weight:bold;color:#e8c860;">${fmtGDP(ger.gdp)}</div>
+              <div style="font-size:9px;color:${ger.gdpGrowth > 0 ? '#4a8a4a' : '#c84040'};">${ger.gdpGrowth > 0 ? '↑' : '↓'} ${(ger.gdpGrowth*100).toFixed(2)}%/年</div>
+            </div>
+            <div style="text-align:center;padding:6px;background:rgba(255,255,255,0.03);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">国库</div>
+              <div style="font-size:15px;font-weight:bold;color:#c8c8a0;">${fmtGDP(ger.treasury)}</div>
+              <div style="font-size:9px;color:var(--text-muted);">税率 ${fmtPct(ger.taxRate)}</div>
+            </div>
+            <div style="text-align:center;padding:6px;background:rgba(255,255,255,0.03);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">通胀率</div>
+              <div style="font-size:15px;font-weight:bold;color:${ger.inflation > 0.08 ? '#c84040' : '#a0a0a0'};">${fmtPct(ger.inflation)}</div>
+              <div style="font-size:9px;color:var(--text-muted);">${ger.inflation > 0.08 ? '⚠ 恶性通胀' : ger.inflation > 0.05 ? '偏高' : '正常'}</div>
+            </div>
+            <div style="text-align:center;padding:6px;background:rgba(255,255,255,0.03);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">人均GDP</div>
+              <div style="font-size:15px;font-weight:bold;color:#a0c8e0;">${(ger.gdpPerCapita/1000).toFixed(1)}千</div>
+              <div style="font-size:9px;color:var(--text-muted);">马克</div>
+            </div>
+          </div>
+          <!-- GDP趋势图 -->
+          <div style="margin-top:8px;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">GDP趋势 (近${Math.min(40, gdpHistory.length)}季度)</div>
+            <div style="height:56px;display:flex;align-items:flex-end;border-bottom:1px solid var(--border);border-left:1px solid var(--border);padding:2px;">
+              ${chartBars || '<div style="font-size:11px;color:var(--text-muted);margin:auto;">数据收集中</div>'}
+            </div>
+          </div>
+          <!-- 预算分配 -->
+          <div style="margin-top:10px;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">政府预算分配</div>
+            <div style="height:18px;border-radius:3px;overflow:hidden;display:flex;background:rgba(255,255,255,0.05);">
+              ${budgetBar}
+            </div>
+          </div>
+        </div>
+
+        <!-- 政治面板 -->
+        <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px;">
+          <h3 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:14px;margin:0 0 10px;letter-spacing:0.08em;">政治</h3>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                <span style="color:var(--text-muted);">稳定度</span>
+                <span style="color:${barColor(ger.stability)};font-weight:bold;">${ger.stability.toFixed(1)}</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${ger.stability}%;background:${barColor(ger.stability)};border-radius:3px;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                <span style="color:var(--text-muted);">支持率</span>
+                <span style="color:${barColor(ger.support)};font-weight:bold;">${ger.support.toFixed(1)}</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${ger.support}%;background:${barColor(ger.support)};border-radius:3px;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                <span style="color:var(--text-muted);">腐败度</span>
+                <span style="color:${ger.corruption > 0.2 ? '#c84040' : '#a0a0a0'};font-weight:bold;">${fmtPct(ger.corruption)}</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${ger.corruption * 100 * 2}%;background:${ger.corruption > 0.2 ? '#c84040' : '#8a7a4a'};border-radius:3px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 军事面板 -->
+        <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px;">
+          <h3 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:14px;margin:0 0 10px;letter-spacing:0.08em;">军事</h3>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+            <div style="text-align:center;padding:8px 4px;background:rgba(168,50,50,0.08);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">陆军</div>
+              <div style="font-size:16px;font-weight:bold;color:#e8a0a0;">${ger.army}</div>
+            </div>
+            <div style="text-align:center;padding:8px 4px;background:rgba(168,50,50,0.08);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">空军</div>
+              <div style="font-size:16px;font-weight:bold;color:#a0c8e0;">${ger.airforce}</div>
+            </div>
+            <div style="text-align:center;padding:8px 4px;background:rgba(168,50,50,0.08);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">海军</div>
+              <div style="font-size:16px;font-weight:bold;color:#a0a0d0;">${ger.navy}</div>
+            </div>
+            <div style="text-align:center;padding:8px 4px;background:rgba(168,50,50,0.12);border-radius:4px;">
+              <div style="font-size:10px;color:var(--text-muted);">核弹头</div>
+              <div style="font-size:16px;font-weight:bold;color:#e8c860;">${ger.nukes}</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;color:var(--text-muted);">核威慑值</span>
+            <div style="flex:1;margin:0 8px;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${Math.min(100, ger.nukeDeterrence/150*100)}%;background:linear-gradient(90deg,#4a4a8a,#e8c860);border-radius:3px;"></div>
+            </div>
+            <span style="font-size:12px;font-weight:bold;color:${ger.nukeDeterrence > 50 ? '#e8c860' : '#a0a0a0'};">${ger.nukeDeterrence}/150</span>
+          </div>
+          <!-- 核威慑公式分解 -->
+          ${(() => {
+            const db = ger.deterBreakdown;
+            if (!db) return '';
+            return `
+              <div style="margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);font-size:9px;color:var(--text-muted);line-height:1.5;">
+                <div style="color:var(--accent-gold);font-size:10px;margin-bottom:2px;">威慑构成</div>
+                <div>核弹×5: <span style="color:#e8c860;">${db.warheads}</span> · 投送: <span style="color:#a0c8e0;">${db.delivery}</span></div>
+                <div>科技: <span style="color:#a0d0a0;">${db.tech}</span> · 外交: <span style="color:${db.diplo > 0 ? '#4a8a4a' : '#c84040'};">${db.diplo > 0 ? '+' : ''}${db.diplo}</span> · 工效: <span style="color:#a0a0d0;">${db.eff}</span></div>
+              </div>`;
+          })()}
+        </div>
+
+        <!-- 核危机状态警示 -->
+        ${(() => {
+          const crisis = NS.getNuclearCrisis ? NS.getNuclearCrisis() : null;
+          if (!crisis) return '';
+          const effText = crisis.level === 'low' ? '无影响' :
+            (crisis.level === 'medium' ? `稳定-${Math.abs(crisis.effects.stability)}/回合 · GDP-${Math.abs(crisis.effects.gdpMod*100).toFixed(1)}%/回合` :
+            `稳定-${Math.abs(crisis.effects.stability)}/回合 · GDP-${Math.abs(crisis.effects.gdpMod*100).toFixed(1)}%/回合`);
+          return `
+            <div style="background:${crisis.color}15;border:1px solid ${crisis.color}50;border-radius:6px;padding:10px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span style="font-family:var(--font-serif);color:${crisis.color};font-size:13px;font-weight:bold;">⚠ 核危机: ${crisis.name}</span>
+                  <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">全球平均威慑 ${crisis.avgDeter} · ${effText}</div>
+                </div>
+                <div style="text-align:right;font-size:9px;color:var(--text-muted);line-height:1.4;">
+                  ${Object.keys(crisis.breakdown).map(id => `<div>${id}: ${crisis.breakdown[id]}</div>`).join('')}
+                </div>
+              </div>
+            </div>`;
+        })()}
+
+        <!-- 科技 + 工业 + 人口 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <!-- 科技 -->
+          <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:10px;">
+            <h4 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:12px;margin:0 0 8px;">科技等级</h4>
+            <div style="font-size:11px;line-height:1.8;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">军事科技</span><span style="color:#e8a0a0;">${techStars(ger.techMil)}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">民用科技</span><span style="color:#a0c8e0;">${techStars(ger.techCiv)}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">核技术</span><span style="color:#e8c860;">${techStars(ger.techNuke)}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">火箭技术</span><span style="color:#a0d0a0;">${techStars(ger.techRocket)}</span></div>
+            </div>
+          </div>
+          <!-- 工业系统 (四类工业 + 效率公式) -->
+          <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:10px;">
+            <h4 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:12px;margin:0 0 8px;">工业体系</h4>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;border-bottom:1px dashed var(--border);padding-bottom:4px;">
+              效率 = 数量/槽位 × 科技 × 稳定 · 综合: <span style="font-weight:bold;color:${ger.industryEff > 0.7 ? '#4a8a4a' : '#c8a040'};">${fmtPct(ger.industryEff)}</span>
+            </div>
+            <div style="font-size:10px;line-height:1.6;">
+              ${(() => {
+                const is = ger.industryStats;
+                if (!is) return '<div style="color:var(--text-muted);">建筑工业统计中...</div>';
+                const rows = [
+                  { key:'civil',    name:'民用', color:'#a0c8e0', icon:'🏭', desc:'GDP+稳定' },
+                  { key:'military', name:'军事', color:'#e8a0a0', icon:'⚔️', desc:'军力+威慑' },
+                  { key:'hitech',   name:'高科技', color:'#c8a0e0', icon:'🔬', desc:'研发+科技' },
+                  { key:'energy',   name:'能源', color:'#e0c060', icon:'⚡', desc:'石油+效率' }
+                ];
+                return rows.map(row => {
+                  const cnt = is.counts[row.key];
+                  const slot = is.slots[row.key];
+                  const e = is.eff[row.key];
+                  const fillPct = slot > 0 ? Math.min(100, (cnt / slot) * 100) : 0;
+                  const effPct = (e * 100).toFixed(0);
+                  return `
+                    <div style="margin-bottom:5px;">
+                      <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:${row.color};">${row.icon} ${row.name}</span>
+                        <span style="color:var(--text-muted);font-size:9px;">${cnt}/${slot} · ${row.desc}</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+                        <div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+                          <div style="width:${fillPct}%;height:100%;background:${row.color};opacity:0.7;"></div>
+                        </div>
+                        <span style="font-size:9px;color:${e > 0.3 ? '#4a8a4a' : 'var(--text-muted)'};min-width:28px;text-align:right;">${effPct}%</span>
+                      </div>
+                    </div>`;
+                }).join('');
+              })()}
+            </div>
+          </div>
+        </div>
+
+        <!-- 人口 -->
+        <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;">
+          <h4 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:12px;margin:0 0 8px;">人口与社会</h4>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;text-align:center;">
+            <div><div style="color:var(--text-muted);font-size:9px;">总人口</div><div style="font-weight:bold;">${fmtPop(ger.population)}</div></div>
+            <div><div style="color:var(--text-muted);font-size:9px;">预期寿命</div><div style="font-weight:bold;">${ger.lifeExpectancy}岁</div></div>
+            <div><div style="color:var(--text-muted);font-size:9px;">识字率</div><div style="font-weight:bold;">${fmtPct(ger.literacy)}</div></div>
+            <div><div style="color:var(--text-muted);font-size:9px;">城镇化</div><div style="font-weight:bold;">${fmtPct(ger.urbanRate)}</div></div>
+          </div>
+        </div>
+
+        <!-- 势力对比 -->
+        <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <h3 style="font-family:var(--font-serif);color:var(--accent-gold);font-size:14px;margin:0 0 10px;letter-spacing:0.08em;">列强国力对比</h3>
+          ${rankingHtml}
+        </div>
+
+        <div style="text-align:center;margin-top:12px;font-size:10px;color:var(--text-muted);">
+          数据来源: NationSim v1.0 · ${NS._fallback ? '内置数据' : 'JSON加载'} · ${Game.getDateStr()}
         </div>
       </div>
     `;
@@ -1544,14 +2316,14 @@ const UI = {
         btn.onclick = () => {
           const result = Game.buildBuilding(btn.dataset.build);
           this.toast(result.msg, result.ok ? 'success' : 'error');
-          this.renderAll();
+          this.requestRender();
         };
       });
       document.querySelectorAll('[data-demolish]').forEach(btn => {
         btn.onclick = () => {
           const result = Game.demolishBuilding(btn.dataset.demolish);
           this.toast(result.msg, result.ok ? 'success' : 'error');
-          this.renderAll();
+          this.requestRender();
         };
       });
     }, 0);
@@ -1627,7 +2399,7 @@ const UI = {
         card.onclick = () => {
           const result = Game.startFocus(card.dataset.focus);
           this.toast(result.msg, result.ok ? 'success' : 'error');
-          this.renderAll();
+          this.requestRender();
         };
       });
     }, 0);
@@ -1654,10 +2426,61 @@ const UI = {
   renderTech() {
     const s = Game.state;
     const techs = Object.values(TECHS);
+    const treeStatus = (typeof Game.getTechTreeStatus === 'function') ? Game.getTechTreeStatus() : null;
+
+    // ===== 新科技树面板 (四类×时代解锁) =====
+    let treeHtml = '';
+    if (treeStatus && treeStatus.trees) {
+      const statusColor = { done: '#4a8a4a', available: '#e8c860', locked: '#5a5a5a', era_locked: '#3a3a3a' };
+      const statusLabel = { done: '✓已掌握', available: '可研发', locked: '锁定', era_locked: '时代未到' };
+      treeHtml = `
+        <div style="background:linear-gradient(135deg,rgba(168,50,50,0.08),rgba(60,30,30,0.03));border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:14px;">
+          <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em;margin:0 0 4px;">科技树</h2>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+            四类科技 × 时代解锁 · 当前 ${s.year}年 · 研发点数: <span style="color:var(--accent-gold);font-weight:bold;">${Math.round(s.resources.research)}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+            ${Object.keys(treeStatus.trees).map(treeId => {
+              const t = treeStatus.trees[treeId];
+              return `
+                <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:10px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;">
+                    <span style="font-family:var(--font-serif);color:${t.color};font-size:13px;font-weight:bold;">${t.icon} ${t.name}</span>
+                    <span style="font-size:10px;color:var(--text-muted);">Lv.${t.currentTier}/5</span>
+                  </div>
+                  <div style="font-size:10px;line-height:1.5;">
+                    ${t.tiers.map(tier => {
+                      const sc = statusColor[tier.status];
+                      const sl = statusLabel[tier.status];
+                      const isAvail = tier.status === 'available';
+                      return `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,0.04);">
+                          <div style="flex:1;min-width:0;">
+                            <div style="color:${tier.status === 'done' ? sc : (tier.status === 'available' ? t.color : 'var(--text-muted)')};font-size:11px;">
+                              ${tier.status === 'done' ? '✓' : (tier.status === 'available' ? '▶' : '🔒')} ${tier.tier}.${tier.name}
+                            </div>
+                            <div style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tier.desc}</div>
+                          </div>
+                          <div style="text-align:right;min-width:60px;">
+                            <div style="font-size:9px;color:var(--text-muted);">${tier.eraName || ''} ${tier.cost}💰</div>
+                            ${isAvail
+                              ? `<button class="btn btn-build" data-tree="${treeId}" style="padding:2px 8px;font-size:10px;margin-top:2px;">研发</button>`
+                              : `<span style="font-size:9px;color:${sc};">${sl}</span>`
+                            }
+                          </div>
+                        </div>`;
+                    }).join('')}
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }
 
     const html = `
+      ${treeHtml}
       <div class="industry-header">
-        <h2>科技研发</h2>
+        <h2>特殊科技</h2>
         <div style="font-size:12px;color:var(--text-secondary)">研发点数: <span style="color:var(--accent-gold);font-family:var(--font-mono)">${Math.round(s.resources.research)} 研发</span></div>
       </div>
       <div class="building-grid">
@@ -1690,7 +2513,15 @@ const UI = {
         btn.onclick = () => {
           const result = Game.researchTech(btn.dataset.tech);
           this.toast(result.msg, result.ok ? 'success' : 'error');
-          this.renderAll();
+          this.requestRender();
+        };
+      });
+      // 新科技树研发按钮
+      document.querySelectorAll('[data-tree]').forEach(btn => {
+        btn.onclick = () => {
+          const result = Game.researchTech(btn.dataset.tree);
+          this.toast(result.msg, result.ok ? 'success' : 'error');
+          this.requestRender();
         };
       });
     }, 0);
@@ -1841,7 +2672,7 @@ const UI = {
     }
     Game.clampResources();
     this.toast('购买成功', 'success');
-    this.renderAll();
+    this.requestRender();
     this.autoSave();
   },
 
@@ -1926,7 +2757,7 @@ const UI = {
       this.pendingEvents = events;
     });
 
-    this.renderAll();
+    this.requestRender();
 
     // 自动保存
     this.autoSave();
@@ -1968,7 +2799,7 @@ const UI = {
         const mBtn = document.getElementById('m-btn-next');
         if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
         if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
-        this.renderAll();
+        this.requestRender();
       }
       return;
     }
@@ -2243,54 +3074,156 @@ const UI = {
         this.toast('状态已输出到控制台(F12)', 'success'); break;
     }
     Game.clampResources();
-    this.renderAll();
+    this.requestRender();
     this.autoSave();
   },
 
-  // ===== 保存游戏（localStorage） =====
+  // ===== 保存游戏 (默认槽位1) =====
   saveGame() {
-    try {
-      localStorage.setItem('tno_game_save', JSON.stringify(Game.state));
-      this.toast('进度已保存', 'success');
-    } catch (e) {
-      this.toast('保存失败', 'error');
+    if (typeof SaveSystem === 'undefined') {
+      this.toast('存档系统未加载', 'error');
+      return;
+    }
+    const result = SaveSystem.saveToSlot(1);
+    this.toast(result.msg, result.ok ? 'success' : 'error');
+  },
+
+  // ===== 自动保存 (静默, 槽位0) =====
+  autoSave() {
+    if (typeof SaveSystem !== 'undefined') {
+      SaveSystem.autoSave();
     }
   },
 
-  // ===== 自动保存（静默） =====
-  autoSave() {
-    try {
-      localStorage.setItem('tno_game_save', JSON.stringify(Game.state));
-    } catch (e) {}
+  // ===== 加载游戏 (优先槽位1, 回退自动存档) =====
+  loadGame() {
+    if (typeof SaveSystem === 'undefined') return false;
+    // 迁移旧存档
+    SaveSystem.migrateLegacy();
+    // 优先加载槽位1
+    let result = SaveSystem.loadFromSlot(1);
+    if (!result.ok) {
+      // 回退到自动存档
+      result = SaveSystem.loadFromSlot(0);
+    }
+    if (result.ok) {
+      this.toast(result.msg, 'success');
+      return true;
+    } else {
+      console.log('无可用存档:', result.msg);
+      return false;
+    }
   },
 
-  // ===== 加载游戏 =====
-  loadGame() {
-    try {
-      const saved = localStorage.getItem('tno_game_save');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // 存档版本检查：版本不匹配则拒绝加载旧存档
-        if (!parsed.saveVersion || parsed.saveVersion !== Game.SAVE_VERSION) {
-          console.log('存档版本不匹配，需要开新档');
-          localStorage.removeItem('tno_game_save');
-          return false;
+  // ===== 存档管理面板 =====
+  showSavePanel(mode) {
+    // mode: 'save' | 'load'
+    if (typeof SaveSystem === 'undefined') {
+      this.toast('存档系统未加载', 'error');
+      return;
+    }
+    const slots = SaveSystem.getAllSlots();
+    const diffNames = { easy: '简单', normal: '普通', hard: '困难', hell: '地狱' };
+    const pathNames = {
+      reform: '改革派', militarist: '军部路线', conservative: '保守派',
+      reform_democrat: '民主改革', militarist_extreme: '极端军部'
+    };
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:20px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;';
+    panel.onclick = (e) => e.stopPropagation();
+
+    panel.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+        <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);margin:0;letter-spacing:0.05em;">${mode === 'save' ? '保存进度' : '读取存档'}</h2>
+        <button class="btn-secondary" id="save-close" style="padding:4px 10px;">关闭</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${slots.map(slot => {
+          const m = slot.meta;
+          const isAuto = slot.type === 'auto';
+          const occupied = slot.occupied;
+          let infoHtml = '';
+          if (occupied && m) {
+            const date = new Date(m.savedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const path = m.chosenPath ? (pathNames[m.chosenPath] || m.chosenPath) : '未定';
+            infoHtml = `
+              <div style="font-size:11px;color:var(--text-primary);margin-top:4px;">
+                ${m.year}年Q${m.quarter} · ${diffNames[m.difficulty] || m.difficulty} · ${m.leader}
+              </div>
+              <div style="font-size:10px;color:var(--text-muted);">
+                路线: ${path} · 稳定: ${m.stability} · ${date}
+              </div>`;
+          } else {
+            infoHtml = '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">空槽位</div>';
+          }
+          return `
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;${isAuto ? 'opacity:0.85;' : ''}">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="flex:1;">
+                  <span style="font-size:13px;color:${isAuto ? 'var(--accent-gold)' : 'var(--text-primary)'};font-weight:bold;">
+                    ${isAuto ? '🔄 ' : '💾 '}${slot.name}
+                  </span>
+                  ${infoHtml}
+                </div>
+                <div style="display:flex;gap:4px;">
+                  ${mode === 'save'
+                    ? (isAuto
+                      ? '<span style="font-size:10px;color:var(--text-muted);padding:4px 8px;">自动</span>'
+                      : `<button class="btn btn-build" data-save-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">${occupied ? '覆盖' : '保存'}</button>`)
+                    : (occupied
+                      ? `<button class="btn btn-build" data-load-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">读取</button>${!isAuto ? `<button class="btn-secondary" data-del-slot="${slot.id}" style="padding:4px 8px;font-size:10px;margin-left:2px;">删除</button>` : ''}`
+                      : '<span style="font-size:10px;color:var(--text-muted);padding:4px 8px;">空</span>')
+                  }
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:12px;text-align:center;border-top:1px solid var(--border);padding-top:8px;">
+        存档包含: 年份 · 国家数据 · 科技 · 工业 · 外交 · 事件进度 · AI战略
+      </div>
+    `;
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    // 绑定事件
+    panel.querySelector('#save-close').onclick = () => overlay.remove();
+    panel.querySelectorAll('[data-save-slot]').forEach(btn => {
+      btn.onclick = () => {
+        const slotId = +btn.dataset.saveSlot;
+        const result = SaveSystem.saveToSlot(slotId);
+        this.toast(result.msg, result.ok ? 'success' : 'error');
+        if (result.ok) {
+          overlay.remove();
+          this.requestRender();
         }
-        Game.state = parsed;
-        // 恢复难度设置
-        if (Game.state.difficulty) {
-          Game.difficulty = Game.state.difficulty;
+      };
+    });
+    panel.querySelectorAll('[data-load-slot]').forEach(btn => {
+      btn.onclick = () => {
+        const slotId = +btn.dataset.loadSlot;
+        const result = SaveSystem.loadFromSlot(slotId);
+        this.toast(result.msg, result.ok ? 'success' : 'error');
+        if (result.ok) {
+          overlay.remove();
+          this.requestRender();
         }
-        // 兼容性修复：如果有核弹但没有核武技术，自动解锁
-        if (Game.state.resources.nukes > 0 && !Game.state.techs['nuclear_tech']) {
-          Game.state.techs['nuclear_tech'] = true;
-          Game.state.flags['nuclear_tech'] = true;
-          localStorage.setItem('tno_game_save', JSON.stringify(Game.state));
-        }
-        return true;
-      }
-    } catch (e) {}
-    return false;
+      };
+    });
+    panel.querySelectorAll('[data-del-slot]').forEach(btn => {
+      btn.onclick = () => {
+        const slotId = +btn.dataset.delSlot;
+        const result = SaveSystem.deleteSlot(slotId);
+        this.toast(result.msg, 'success');
+        overlay.remove();
+        this.showSavePanel(mode); // 刷新面板
+      };
+    });
   }
 };
 

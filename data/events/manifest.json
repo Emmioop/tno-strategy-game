@@ -1,0 +1,166 @@
+{
+  "generatedAt": "2026-07-31T18:40:02.304Z",
+  "years": {
+    "1962": {
+      "count": 2583,
+      "sizeKb": 2540
+    },
+    "1963": {
+      "count": 2751,
+      "sizeKb": 2876
+    },
+    "1964": {
+      "count": 3234,
+      "sizeKb": 3238
+    },
+    "1965": {
+      "count": 2101,
+      "sizeKb": 2051
+    },
+    "1966": {
+      "count": 4200,
+      "sizeKb": 4263
+    },
+    "1967": {
+      "count": 2904,
+      "sizeKb": 3009
+    },
+    "1968": {
+      "count": 2098,
+      "sizeKb": 2154
+    },
+    "1969": {
+      "count": 2585,
+      "sizeKb": 2591
+    },
+    "1970": {
+      "count": 2587,
+      "sizeKb": 2551
+    },
+    "1971": {
+      "count": 811,
+      "sizeKb": 776
+    },
+    "1972": {
+      "count": 3712,
+      "sizeKb": 3772
+    },
+    "1973": {
+      "count": 1454,
+      "sizeKb": 1449
+    },
+    "1974": {
+      "count": 2743,
+      "sizeKb": 2715
+    },
+    "1975": {
+      "count": 1780,
+      "sizeKb": 1745
+    },
+    "1976": {
+      "count": 2427,
+      "sizeKb": 2432
+    },
+    "1977": {
+      "count": 2102,
+      "sizeKb": 2063
+    },
+    "1978": {
+      "count": 1938,
+      "sizeKb": 2002
+    },
+    "1979": {
+      "count": 2580,
+      "sizeKb": 2574
+    },
+    "1980": {
+      "count": 2265,
+      "sizeKb": 2284
+    },
+    "1981": {
+      "count": 3553,
+      "sizeKb": 3619
+    },
+    "1982": {
+      "count": 2423,
+      "sizeKb": 2417
+    },
+    "1983": {
+      "count": 3067,
+      "sizeKb": 3009
+    },
+    "1984": {
+      "count": 1787,
+      "sizeKb": 1786
+    },
+    "1985": {
+      "count": 1780,
+      "sizeKb": 1691
+    },
+    "1986": {
+      "count": 1614,
+      "sizeKb": 1604
+    },
+    "1987": {
+      "count": 2100,
+      "sizeKb": 2091
+    },
+    "1988": {
+      "count": 2105,
+      "sizeKb": 2106
+    },
+    "1989": {
+      "count": 2262,
+      "sizeKb": 2348
+    },
+    "1990": {
+      "count": 1301,
+      "sizeKb": 1322
+    },
+    "1991": {
+      "count": 2585,
+      "sizeKb": 2467
+    },
+    "1992": {
+      "count": 1459,
+      "sizeKb": 1437
+    },
+    "1993": {
+      "count": 2423,
+      "sizeKb": 2459
+    },
+    "1994": {
+      "count": 2425,
+      "sizeKb": 2447
+    },
+    "1995": {
+      "count": 2261,
+      "sizeKb": 2319
+    },
+    "1996": {
+      "count": 0,
+      "sizeKb": 0
+    },
+    "1997": {
+      "count": 0,
+      "sizeKb": 0
+    },
+    "1998": {
+      "count": 0,
+      "sizeKb": 0
+    },
+    "1999": {
+      "count": 0,
+      "sizeKb": 0
+    },
+    "2000": {
+      "count": 0,
+      "sizeKb": 0
+    }
+  },
+  "storyCoreSizeKb": 359,
+  "totalPoolSizeMb": 78.33,
+  "totalPoolEventRefs": 80000,
+  "uniqueStoryEvents": 274,
+  "uniqueRandomEvents": 80000
+}

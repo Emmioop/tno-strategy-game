@@ -1100,6 +1100,82 @@ body {
   .tab { padding: 8px 10px; font-size: 11px; }
 }
 
+/* ===== 手机端 UI 优化 (第九阶段) ===== */
+
+/* 国势页/工业页的内联2列网格在手机端强制单列 */
+@media (max-width: 768px) {
+  .nation-page [style*="grid-template-columns:1fr 1fr"],
+  .nation-page [style*="grid-template-columns: 1fr 1fr"],
+  #tab-content [style*="grid-template-columns:1fr 1fr"],
+  #tab-content [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* 国势页内联4列资源网格改为2列 */
+  .nation-page [style*="grid-template-columns:repeat(4"],
+  .nation-page [style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* 内联3列也改为单列 */
+  .nation-page [style*="grid-template-columns:repeat(3"],
+  .nation-page [style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* 可折叠面板组件 (原生 details/summary, 无JS) */
+.collapsible-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.collapsible-section > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  font-family: var(--font-serif);
+  color: var(--accent-gold);
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.collapsible-section > summary::-webkit-details-marker { display: none; }
+.collapsible-section > summary::after {
+  content: '▸';
+  color: var(--text-muted);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+.collapsible-section[open] > summary::after {
+  transform: rotate(90deg);
+}
+.collapsible-section > summary:active {
+  background: rgba(255,255,255,0.03);
+}
+.collapsible-section > .collapsible-body {
+  padding: 0 12px 10px;
+}
+
+/* 触摸优化: 增大点击区域 */
+@media (max-width: 768px) {
+  .choice-btn, .btn-build, .btn-secondary {
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+  /* 国势页减少内边距 */
+  .nation-page { padding: 10px !important; }
+  /* 隐藏非关键装饰 */
+  .nation-page h2 { font-size: 16px !important; }
+}
+
+/* 渲染性能: will-change 提示 */
+#tab-content { will-change: transform; }
+.mobile-action-bar { will-change: transform; }
+
 /* ===== 势力地图页 ===== */
 .map-page {
   padding: 16px;

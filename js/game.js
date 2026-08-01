@@ -2,6 +2,40 @@
  * 千年帝国的最后一息 - 核心游戏逻辑
  * ============================================================ */
 
+// ============ 数据读取: 优先 DataStore 拆分加载, 失败回退到 data.js 旧全局 ============
+(function _defineDSHelpers(scope) {
+  function _DS() {
+    if (typeof DataStore !== 'undefined') return DataStore;
+    if (scope.DataStore) return scope.DataStore;
+    if (typeof window !== 'undefined' && window.DataStore) return window.DataStore;
+    return null;
+  }
+  scope._getBuildings = function () {
+    const d = _DS(); if (d) { const r = d.getBuildings(); if (r && Object.keys(r).length) return r; }
+    return BUILDINGS || {};
+  };
+  scope._getTechs = function () {
+    const d = _DS(); if (d) { const r = d.getTechs(); if (r && Object.keys(r).length) return r; }
+    return TECHS || {};
+  };
+  scope._getPolicies = function () {
+    const d = _DS(); if (d) { const r = d.getPolicies(); if (r && Object.keys(r).length) return r; }
+    return POLICIES || {};
+  };
+  scope._getFoci = function () {
+    const d = _DS(); if (d) { const r = d.getNationalFoci(); if (r && Object.keys(r).length) return r; }
+    return NATIONAL_FOCI || {};
+  };
+  scope._getSuccession = function () {
+    const d = _DS(); if (d) { const r = d.getSuccessionPaths(); if (r && Object.keys(r).length) return r; }
+    return SUCCESSION_PATHS || {};
+  };
+  scope._getFactions = function () {
+    const d = _DS(); if (d) { const r = d.getFactions(); if (r && Object.keys(r).length) return r; }
+    return FACTIONS || {};
+  };
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+
 // ===== 难度定义 =====
 const DIFFICULTIES = {
   easy: {
@@ -58,11 +92,76 @@ const DIFFICULTIES = {
   }
 };
 
+// ===== 游戏模式定义 =====
+// 历史: 按主线时间线, 严格TNO剧情
+// 沙盒: 随机世界发展, AI加速, 事件池扩充, 自由探索
+// 混乱: 随机领导人/路线/事件权重打乱, 不可预测的疯狂世界
+const GAME_MODES = {
+  historical: {
+    id: 'historical',
+    name: '历史模式',
+    desc: '严格遵循TNO主线时间线，体验原汁原味的剧情',
+    color: '#a83232',
+    icon: '📜',
+    // 影响: 剧情事件正常触发, AI正常发展, 危机正常
+    aiSpeedMod: 1.0,        // AI发展速度倍率
+    eventWeightMod: 1.0,    // 随机事件权重倍率
+    randomLeaders: false,    // 是否随机领导人
+    randomPaths: false,      // 是否随机路线
+    crisisBoost: 0,          // 危机概率额外加成
+    unlocked: true
+  },
+  sandbox: {
+    id: 'sandbox',
+    name: '沙盒模式',
+    desc: '世界自由发展，AI加速演变，适合长期推演',
+    color: '#3a6a9a',
+    icon: '🌍',
+    aiSpeedMod: 1.5,        // AI发展加速
+    eventWeightMod: 1.3,    // 随机事件更多
+    randomLeaders: false,
+    randomPaths: false,
+    crisisBoost: -0.1,       // 危机略降 (自由探索)
+    unlocked: true
+  },
+  chaos: {
+    id: 'chaos',
+    name: '混乱模式',
+    desc: '随机领导人、随机路线、事件权重打乱——不可预测的疯狂世界',
+    color: '#8a3a8a',
+    icon: '🎲',
+    aiSpeedMod: 1.8,
+    eventWeightMod: 2.0,    // 事件频发
+    randomLeaders: true,     // 随机领导人
+    randomPaths: true,       // 随机路线
+    crisisBoost: 0.15,       // 危机更频繁
+    unlocked: true
+  }
+};
+
+// 混乱模式可选领导人池 (替代希特勒)
+const CHAOS_LEADERS = [
+  { id: 'hitler', name: '阿道夫·希特勒', title: '元首（垂死）', ideology: 'none' },
+  { id: 'speidel', name: '汉斯·斯派达尔', title: '保护区元帅', ideology: 'neutral' },
+  { id: 'rommel', name: '埃尔温·隆美尔', title: '沙漠之狐', ideology: 'neutral' },
+  { id: 'himmler', name: '海因里希·希姆莱', title: '勃艮第之主', ideology: 'ss' },
+  { id: 'donitz', name: '卡尔·邓尼茨', title: '海军元帅', ideology: 'navy' },
+  { id: 'hoefer', name: '迈尔·霍费尔', title: '克里米亚之王', ideology: 'navy' },
+  { id: 'random_general', name: '某位无名将领', title: '军政府首脑', ideology: 'military' },
+  { id: 'random_bureaucrat', name: '某位官僚', title: '技术官僚', ideology: 'bureaucracy' }
+];
+
+// 混乱模式可选路线池
+const CHAOS_PATHS = [
+  'reform', 'militarist', 'conservative', 'reform_democrat', 'militarist_extreme'
+];
+
 const Game = {
 
   // ===== 游戏状态 =====
   state: null,
   difficulty: 'normal',
+  gameMode: 'historical',  // 默认历史模式
 
   // ===== 检查地狱难度是否解锁 =====
   isHellUnlocked() {
@@ -90,6 +189,30 @@ const Game = {
     return DIFFICULTIES[this.difficulty] || DIFFICULTIES.normal;
   },
 
+  // ===== 获取当前游戏模式配置 =====
+  getMode() {
+    return GAME_MODES[this.gameMode] || GAME_MODES.historical;
+  },
+
+  // ===== 设置游戏模式 =====
+  setMode(modeId) {
+    if (GAME_MODES[modeId] && GAME_MODES[modeId].unlocked) {
+      this.gameMode = modeId;
+      return true;
+    }
+    return false;
+  },
+
+  // ===== 混乱模式: 随机选择领导人 =====
+  _pickRandomLeader() {
+    return CHAOS_LEADERS[Math.floor(Math.random() * CHAOS_LEADERS.length)];
+  },
+
+  // ===== 混乱模式: 随机选择路线 =====
+  _pickRandomPath() {
+    return CHAOS_PATHS[Math.floor(Math.random() * CHAOS_PATHS.length)];
+  },
+
   // 存档版本号（修改资源平衡时递增，旧存档将被重置）
   SAVE_VERSION: 16,
 
@@ -105,8 +228,9 @@ const Game = {
       turn: 1,
       totalTurns: 156, // (2000-1962)*4
 
-      // 难度
+      // 难度 + 模式
       difficulty: this.difficulty,
+      gameMode: this.gameMode,
 
       // 当前路线与领导人
       leader: {
@@ -190,7 +314,79 @@ const Game = {
       saveVersion: this.SAVE_VERSION
     };
 
+    // 初始化国家模拟系统
+    if (typeof NationSim !== 'undefined') {
+      NationSim.initSync();
+      // 用GER数据初始化玩家稳定度（覆盖旧初始值）
+      const ger = NationSim.getNation('GER');
+      if (ger) {
+        this.state.resources.stability = Math.round(ger.stability);
+        this.state.resources.efficiency = ger.industry.efficiency;
+      }
+      // 异步加载完整JSON数据 + 科技树
+      NationSim.init().then(() => {
+        console.log('[Game] NationSim 异步数据加载完成');
+        return NationSim.loadTechTree();
+      }).then(() => {
+        console.log('[Game] 科技树加载完成');
+      }).catch(e => { console.warn('[Game] NationSim 异步加载失败:', e.message); });
+    }
+
+    // ===== 游戏模式特殊初始化 =====
+    const mode = this.getMode();
+    if (mode.randomLeaders) {
+      // 混乱模式: 随机领导人
+      const rl = this._pickRandomLeader();
+      this.state.leader = { id: rl.id, name: rl.name, title: rl.title, ideology: rl.ideology };
+      this.addNews(`混乱世界: ${rl.name} 就任 ${rl.title}`, 'world');
+    }
+    if (mode.randomPaths) {
+      // 混乱模式: 随机路线 (但暂不锁定, 仅记录倾向)
+      this.state._chaosPathHint = this._pickRandomPath();
+    }
+    // 沙盒/混乱模式: 初始资源微调 (更多探索空间)
+    if (this.gameMode === 'sandbox') {
+      this.state.resources.money += 100;
+      this.state.resources.research += 30;
+    } else if (this.gameMode === 'chaos') {
+      // 混乱模式: 资源随机波动 ±30%
+      const r = this.state.resources;
+      r.money = Math.round(r.money * (0.7 + Math.random() * 0.6));
+      r.manpower = Math.round(r.manpower * (0.7 + Math.random() * 0.6));
+      r.stability = Math.max(20, Math.min(90, Math.round(r.stability * (0.7 + Math.random() * 0.6))));
+    }
+
     return this.state;
+  },
+
+  // ===== 研发科技 (路由: 新科技树treeId 或 旧TECHS id) =====
+  researchTech(techId) {
+    // 新科技树 (military/civil/nuclear/rocket)
+    const treeIds = ['military', 'civil', 'nuclear', 'rocket'];
+    if (treeIds.indexOf(techId) >= 0) {
+      if (typeof NationSim === 'undefined') return { ok: false, msg: '系统未加载' };
+      const result = NationSim.researchTech(techId, this.state);
+      if (result.ok) this.clampResources();
+      return result;
+    }
+    // 旧TECHS (flag式: nuclear_tech/advanced_tech/...)
+    const TECHS = _getTechs();
+    const t = TECHS[techId];
+    if (!t) return { ok: false, msg: '科技不存在' };
+    if (this.state.techs[techId]) return { ok: false, msg: '已研发' };
+    if (this.state.resources.research < t.cost) return { ok: false, msg: '研发点数不足' };
+    this.state.resources.research -= t.cost;
+    this.state.techs[techId] = true;
+    this.state.flags[techId] = true;
+    this.addNews('科技突破: ' + t.name, 'tech');
+    this.clampResources();
+    return { ok: true, msg: t.name + ' 研发成功' };
+  },
+
+  // ===== 获取科技树状态 (UI用) =====
+  getTechTreeStatus() {
+    if (typeof NationSim === 'undefined') return null;
+    return NationSim.getTechTreeStatus(this.state);
   },
 
   // ===== 获取当前日期字符串 =====
@@ -241,23 +437,34 @@ const Game = {
   // ===== 获取本回合应触发的事件 =====
   getEventsForTurn() {
     const events = [];
+    // 优先走 DataStore (年份拆分, 内存占用 <50%原加载)
+    // DataStore.getEventPool() 会返回「story_core剧情事件 + 当前年±1年随机池」
+    // 若启用 fallback，返回旧版 STORY_EVENTS 全局数组，兼容老代码
+    const ds = (typeof DataStore !== 'undefined') ? DataStore : null;
+    const pool = (ds && typeof ds.getEventPool === 'function') ? ds.getEventPool()
+      : ((typeof STORY_EVENTS !== 'undefined') ? STORY_EVENTS
+        : ((typeof window !== 'undefined' && window.STORY_EVENTS) ? window.STORY_EVENTS : []));
 
     // 1. 匹配回合的剧情事件
-    for (const ev of STORY_EVENTS) {
+    for (const ev of pool) {
       if (ev.turn && this.checkEventCondition(ev)) {
         events.push(ev);
       }
     }
 
     // 2. 随机事件（每回合最多1个，按权重）
-    const randomCandidates = STORY_EVENTS.filter(ev =>
+    const randomCandidates = pool.filter(ev =>
       !ev.turn && ev.weight && this.checkEventCondition(ev)
     );
-    if (randomCandidates.length > 0 && Math.random() < this.getDiff().crisisChance) {
-      const totalWeight = randomCandidates.reduce((s, e) => s + e.weight, 0);
+    // 游戏模式影响: 危机概率 + eventWeightMod 调整触发频率
+    const mode = this.getMode();
+    const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance + (mode.crisisBoost || 0)));
+    if (randomCandidates.length > 0 && Math.random() < crisisChance) {
+      const wMod = mode.eventWeightMod || 1.0;
+      const totalWeight = randomCandidates.reduce((s, e) => s + e.weight * wMod, 0);
       let r = Math.random() * totalWeight;
       for (const ev of randomCandidates) {
-        r -= ev.weight;
+        r -= ev.weight * wMod;
         if (r <= 0) {
           events.push(ev);
           break;
@@ -387,6 +594,8 @@ const Game = {
 
   // ===== 建造建筑 =====
   buildBuilding(buildingId) {
+    const BUILDINGS = _getBuildings();
+    const TECHS = _getTechs();
     const b = BUILDINGS[buildingId];
     if (!b) return { ok: false, msg: '建筑不存在' };
 
@@ -413,6 +622,7 @@ const Game = {
 
   // ===== 拆除建筑 =====
   demolishBuilding(buildingId) {
+    const BUILDINGS = _getBuildings();
     const b = BUILDINGS[buildingId];
     if (!b) return { ok: false, msg: '建筑不存在' };
     if (!this.state.buildings[buildingId] || this.state.buildings[buildingId] <= 0) {
@@ -426,6 +636,7 @@ const Game = {
 
   // ===== 研发科技 =====
   researchTech(techId) {
+    const TECHS = _getTechs();
     const t = TECHS[techId];
     if (!t) return { ok: false, msg: '科技不存在' };
     if (this.state.techs[techId]) return { ok: false, msg: '已研发完成' };
@@ -440,6 +651,7 @@ const Game = {
 
   // ===== 设置政策 =====
   setPolicy(policyId, optionId) {
+    const POLICIES = _getPolicies();
     const p = POLICIES[policyId];
     if (!p) return { ok: false, msg: '政策不存在' };
     const opt = p.options.find(o => o.id === optionId);
@@ -462,6 +674,7 @@ const Game = {
 
   // ===== 检查政策是否可用 =====
   canChoosePolicy(policyId, optionId) {
+    const POLICIES = _getPolicies();
     const p = POLICIES[policyId];
     if (!p) return false;
     const opt = p.options.find(o => o.id === optionId);
@@ -482,6 +695,7 @@ const Game = {
 
   // ===== 国策树系统 =====
   startFocus(focusId) {
+    const NATIONAL_FOCI = _getFoci();
     const f = NATIONAL_FOCI[focusId];
     if (!f) return { ok: false, msg: '国策不存在' };
     if (this.state.currentFocus) return { ok: false, msg: '正在执行其他国策' };
@@ -507,6 +721,7 @@ const Game = {
   },
 
   canStartFocus(focusId) {
+    const NATIONAL_FOCI = _getFoci();
     const f = NATIONAL_FOCI[focusId];
     if (!f) return false;
     if (this.state.currentFocus) return false;
@@ -521,6 +736,7 @@ const Game = {
   },
 
   getFocusLockReason(focusId) {
+    const NATIONAL_FOCI = _getFoci();
     const f = NATIONAL_FOCI[focusId];
     if (!f) return '国策不存在';
     if (this.state.completedFoci.includes(focusId)) return '已完成';
@@ -556,6 +772,7 @@ const Game = {
 
     // 建筑产出：只允许 money/manpower/efficiency/nukes（其他资源只能通过事件获得）
     const passiveKeys = { money: 1, manpower: 1, efficiency: 1, nukes: 1 };
+    const BUILDINGS = _getBuildings();
     for (const bid in this.state.buildings) {
       const count = this.state.buildings[bid];
       const b = BUILDINGS[bid];
@@ -594,6 +811,7 @@ const Game = {
     income.manpower += 1;
 
     // 国策树持续加成：已完成国策提供每回合buff
+    const NATIONAL_FOCI = _getFoci();
     for (const fid of this.state.completedFoci) {
       const f = NATIONAL_FOCI[fid];
       if (!f || !f.perTurn) continue;
@@ -671,6 +889,7 @@ const Game = {
     // 2. 推进国策
     if (this.state.currentFocus) {
       this.state.focusProgress++;
+      const NATIONAL_FOCI = _getFoci();
       const f = NATIONAL_FOCI[this.state.currentFocus];
       if (this.state.focusProgress >= f.turns) {
         // 国策完成
@@ -692,12 +911,27 @@ const Game = {
     }
     this.clampResources();
 
+    // 3.5 国家模拟系统更新 (经济/政治/军事/科技/人口)
+    if (typeof NationSim !== 'undefined') {
+      NationSim.updateAll(this.state);
+    }
+
     // 4. 推进时间
     this.state.turn++;
+    const prevYear = this.state.year;
     this.state.quarter++;
     if (this.state.quarter > 4) {
       this.state.quarter = 1;
       this.state.year++;
+    }
+    // 4.1 年份变化时通知 DataStore 加载新年份池，释放旧池（若DataStore启用）
+    if (this.state.year !== prevYear) {
+      const ds = (typeof DataStore !== 'undefined') ? DataStore
+        : (typeof window !== 'undefined' ? window.DataStore : null);
+      if (ds && typeof ds.ensureYear === 'function' && !ds._fallback) {
+        // 异步执行不阻塞回合推进，加载完成后未来回合的事件池会自动变大
+        ds.ensureYear(this.state.year).catch(err => { console.warn('[Game] 预加载新年份失败:', err && err.message); });
+      }
     }
 
     // 5. 检查事件
@@ -873,4 +1107,7 @@ const Game = {
 if (typeof window !== 'undefined') {
   window.Game = Game;
   window.DIFFICULTIES = DIFFICULTIES;
+  window.GAME_MODES = GAME_MODES;
+  window.CHAOS_LEADERS = CHAOS_LEADERS;
+  window.CHAOS_PATHS = CHAOS_PATHS;
 }

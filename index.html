@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>千年帝国的最后一息 · TNO策略游戏</title>
-  <link rel="stylesheet" href="css/style.css?v=26">
+  <link rel="stylesheet" href="css/style.css?v=27">
 </head>
 <body>
 
@@ -67,6 +67,12 @@
       <div class="diff-options" id="diff-options"></div>
     </div>
 
+    <!-- 游戏模式选择 -->
+    <div class="difficulty-select" id="mode-select">
+      <div class="diff-label">选择游戏模式：</div>
+      <div class="diff-options" id="mode-options"></div>
+    </div>
+
     <div class="disclaimer">
       ⚠ 本游戏基于TNO（The New Order: Last Days of Europe）架空世界观创作，纯属虚构历史推演。<br>
       游戏内容旨在探讨极权主义的后果与历史教训，绝无任何政治立场或意识形态宣传意图。<br>
@@ -101,6 +107,7 @@
           <div class="tab-fade tab-fade-right"></div>
           <div id="tabs">
             <div class="tab active" data-tab="overview">概览</div>
+            <div class="tab" data-tab="nation">国势</div>
             <div class="tab" data-tab="map">地图</div>
             <div class="tab" data-tab="industry">工业</div>
             <div class="tab" data-tab="policy">国策</div>
@@ -132,13 +139,18 @@
   <!-- Toast 容器 -->
   <div id="toast-container"></div>
 
-  <!-- ===== 脚本 ===== -->
-  <script src="js/data.js?v=29"></script>
-  <script src="js/events.js?v=29"></script>
-  <script src="js/events_gen.js?v=29"></script>
-  <script src="js/map_extra.js?v=29"></script>
-  <script src="js/game.js?v=29"></script>
-  <script src="js/ui.js?v=29"></script>
+  <!-- ===== 脚本 =====
+       注意: events_gen.js (84MB) 和 map_extra.js (11MB) 改为懒加载,
+       分别由 DataStore / 进入地图tab时按需加载, 避免首屏阻塞
+       datastore.js 负责事件池按年份拆分加载，首屏只加载story_core+3年 ≈ 8MB -->
+  <script src="js/data.js?v=32"></script>
+  <script src="js/events.js?v=32"></script>
+  <script src="js/datastore.js?v=32"></script>
+  <script src="js/canvas_map.js?v=32"></script>
+  <script src="js/save_system.js?v=3"></script>
+  <script src="js/nation_sim.js?v=39"></script>
+  <script src="js/game.js?v=36"></script>
+  <script src="js/ui.js?v=39"></script>
   <script>
     // 难度选择初始化
     (function initDifficultySelect() {
@@ -175,27 +187,67 @@
     // 检查是否有存档（版本匹配才显示继续游戏）
     (function checkSave() {
       try {
-        const saved = localStorage.getItem('tno_game_save');
+        // 兼容新SaveSystem: 检查槽位1或自动存档
+        let saved = null;
+        try {
+          if (typeof SaveSystem !== 'undefined') {
+            SaveSystem.migrateLegacy();
+            const meta1 = SaveSystem.getSlotMeta(1);
+            const meta0 = SaveSystem.getSlotMeta(0);
+            const target = meta1 || meta0;
+            if (target) {
+              saved = JSON.parse(localStorage.getItem('tno_save_' + target.slotId) || '{}');
+              saved._slotId = target.slotId;
+            }
+          }
+        } catch(_) {}
+        // 回退到旧存档检查
+        if (!saved) saved = JSON.parse(localStorage.getItem('tno_game_save') || 'null');
         if (saved) {
-          const state = JSON.parse(saved);
+          const state = saved.state || saved;
           // 版本检查：旧存档不显示继续按钮
-          if (state && !state.ended && state.saveVersion === 16) {
+          if (state && !state.ended && state.saveVersion === Game.SAVE_VERSION) {
             const btn = document.getElementById('btn-continue');
             btn.style.display = '';
             const diffName = (window.DIFFICULTIES && DIFFICULTIES[state.difficulty]?.name) || '普通';
             btn.textContent = `继续游戏（${state.year}年Q${state.quarter} · ${diffName}）▸`;
-          } else if (state && !state.saveVersion || state.saveVersion !== 16) {
+          } else if (state && (!state.saveVersion || state.saveVersion !== Game.SAVE_VERSION)) {
             // 旧版存档，清除并提示
-            localStorage.removeItem('tno_game_save');
+            try { localStorage.removeItem('tno_game_save'); } catch(_) {}
             console.log('旧版存档已清除，请开始新游戏');
           }
         }
       } catch(e) {}
     })();
 
+    // 游戏模式选择初始化
+    (function initModeSelect() {
+      const container = document.getElementById('mode-options');
+      if (!container) return;
+      let html = '';
+      for (const key in GAME_MODES) {
+        const m = GAME_MODES[key];
+        html += `<button class="diff-btn" data-mode="${key}" style="border-color:${m.color};">
+          <span class="diff-name" style="color:${m.color}">${m.icon} ${m.name}</span>
+          <span class="diff-desc">${m.desc}</span>
+        </button>`;
+      }
+      container.innerHTML = html;
+      // 默认选中历史模式
+      Game.gameMode = 'historical';
+      container.querySelector('[data-mode="historical"]').classList.add('selected');
+      container.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.onclick = () => {
+          container.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          Game.gameMode = btn.dataset.mode;
+        };
+      });
+    })();
+
     // 启动逻辑
     document.getElementById('btn-start').addEventListener('click', () => {
-      UI.start();
+      UI.start(Game.gameMode);
     });
 
     // 继续游戏
