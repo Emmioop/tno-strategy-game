@@ -976,7 +976,10 @@ const UI = {
         <div id="world-virtual-scroll" style="flex:1;overflow-y:auto;position:relative;">
           <div id="world-spacer" style="position:relative;"></div>
         </div>
-        <div id="world-detail" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;background:var(--bg-secondary);border-top:2px solid var(--accent);padding:16px;overflow-y:auto;z-index:100;border-radius:12px 12px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,0.4);"></div>
+        <!-- 国家详情全屏模态（带遮罩，z-index 9999） -->
+        <div id="world-detail-mask" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;backdrop-filter:blur(2px);"
+             onclick="var el=document.getElementById('world-detail');el&&(el.style.display='none');this.style.display='none'"></div>
+        <div id="world-detail" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,92vw);max-height:min(80vh,720px);background:var(--bg-secondary);border:1px solid var(--accent-steel);padding:18px;overflow-y:auto;z-index:9999;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);"></div>
       </div>
     `;
   },
@@ -1296,7 +1299,13 @@ const UI = {
     const data = this._worldData.find(d => d.id === id);
     if (!data) return;
     const el = document.getElementById('world-detail');
-    el.style.display = 'block';
+    const mask = document.getElementById('world-detail-mask');
+    function _close() {
+      if (el) el.style.display = 'none';
+      if (mask) mask.style.display = 'none';
+    }
+    if (el) el.style.display = 'block';
+    if (mask) mask.style.display = 'block';
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">加载中...</div>';
 
     let detail = null;
@@ -1320,12 +1329,12 @@ const UI = {
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div style="width:32px;height:22px;background:${data.flag};border-radius:3px;border:1px solid rgba(255,255,255,0.2);"></div>
           <div style="flex:1;">
-            <div style="font-size:16px;font-weight:600;color:var(--text);">${d.name || data.name}</div>
-            <div style="font-size:12px;color:var(--text-muted);">${data.short} · ${data.capital}${data.leader ? ' · ' + data.leader : ''}</div>
+            <div style="font-size:16px;font-weight:600;color:var(--text);">${d.name || data.name}${data.short !== data.name ? ` <span style="font-size:13px;color:var(--text-muted);font-weight:400">(${data.short})</span>` : ''}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${data.capital}${data.leader ? ' · ' + data.leader : ''}</div>
           </div>
-          <button onclick="document.getElementById('world-detail').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
+          <button onclick="var el=document.getElementById('world-detail');var mk=document.getElementById('world-detail-mask');if(el)el.style.display='none';if(mk)mk.style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
           ${d.gdp ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">GDP</div><div style="font-size:14px;color:var(--text);">${fmt(d.gdp)}</div></div>` : ''}
           ${d.population ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">人口</div><div style="font-size:14px;color:var(--text);">${fmt(d.population)}</div></div>` : ''}
           ${d.stability != null ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">稳定度</div><div style="font-size:14px;color:${d.stability>50?'var(--success)':'var(--danger)'}">${d.stability}</div></div>` : ''}
@@ -1344,9 +1353,9 @@ const UI = {
           <div style="width:32px;height:22px;background:${data.flag};border-radius:3px;border:1px solid rgba(255,255,255,0.2);"></div>
           <div style="flex:1;">
             <div style="font-size:16px;font-weight:600;color:var(--text);">${data.name}</div>
-            <div style="font-size:12px;color:var(--text-muted);">${data.short} · ${data.capital}${data.leader ? ' · ' + data.leader : ''}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${data.capital}${data.leader ? ' · ' + data.leader : ''}</div>
           </div>
-          <button onclick="document.getElementById('world-detail').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
+          <button onclick="var el=document.getElementById('world-detail');var mk=document.getElementById('world-detail-mask');if(el)el.style.display='none';if(mk)mk.style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
         </div>
         <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;">
           ${data.tier === 'minor' ? '此为小国/傀儡，详细数据暂未建模。' : '详细数据加载失败。'}
