@@ -744,16 +744,16 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-color: #0a0a0a;
-  filter: sepia(0.3) contrast(1.05) brightness(0.9);
-  border-bottom: 1px solid var(--accent-blood);
+  background-color: #1a1a20;
+  filter: saturate(1.2) contrast(1.1) brightness(1.15);
+  border-bottom: 2px solid var(--accent-blood);
   position: relative;
 }
 .event-image-banner::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(10,10,12,0.6) 100%);
+  background: linear-gradient(180deg, transparent 60%, rgba(28,28,36,0.5) 100%);
   pointer-events: none;
 }
 .modal-header {

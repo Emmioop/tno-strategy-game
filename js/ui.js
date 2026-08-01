@@ -2579,13 +2579,15 @@ const UI = {
       default: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2014'/><stop offset='1' stop-color='#0a0808'/></linearGradient><radialGradient id='halo' cx='0.5' cy='0.5'><stop offset='0' stop-color='#c9a84a' stop-opacity='0.3'/><stop offset='1' stop-color='#c9a84a' stop-opacity='0'/></radialGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='90' rx='80' ry='50' fill='url(#halo)'/><g fill='#1a1a1a' opacity='0.8'><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(45 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(90 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(135 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(180 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(225 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(270 240 75)'/><path d='M240 40 L260 70 L250 70 L250 110 L230 110 L230 70 L220 70 Z' transform='rotate(315 240 75)'/></g><circle cx='240' cy='75' r='15' fill='#3a2a1a'/><circle cx='240' cy='75' r='8' fill='#5a4a2a'/><g fill='#8a7a4a' opacity='0.3'><circle cx='100' cy='50' r='1'/><circle cx='380' cy='40' r='1'/><circle cx='150' cy='30' r='1'/><circle cx='330' cy='30' r='1'/></g><g fill='#3a2a1a' opacity='0.5'><rect x='60' y='140' width='360' height='25'/></g></svg>`,
     };
 
-    const svg = svgs[theme] || svgs.default;
-    // 颗粒纹理叠加（模拟老照片质感）
-    const noise = `<filter xmlns='http://www.w3.org/2000/svg' id='noise'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' result='n'/><feColorMatrix in='n' type='matrix' values='0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0 0.15  0 0 0 0.15 0'/></filter>`;
-    const svgWithNoise = svg.replace("<defs>", "<defs>" + noise).replace(/<rect width='480' height='180' fill='url\(#g\)'\/>/, "<rect width='480' height='180' fill='url(#g)'/><rect width='480' height='180' filter='url(#noise)' opacity='0.4'/>");
+    const raw = svgs[theme] || svgs.default;
+    // 在背景 rect 后注入半透明白色叠加层，整体提亮（SVG 原色过暗）
+    const svg = raw.replace(
+      /(<rect width='480' height='180' fill='url\(#g\)'\/>)/,
+      "$1<rect width='480' height='180' fill='#f0e8d8' opacity='0.12'/>"
+    );
 
     // encodeURIComponent 不编码单引号，需手动转义，否则 CSS url('...') 会被 SVG 内部单引号截断
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgWithNoise).replace(/'/g, '%27');
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg).replace(/'/g, '%27');
   },
 
   showEventModal(ev) {
