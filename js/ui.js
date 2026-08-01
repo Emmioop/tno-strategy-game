@@ -740,6 +740,68 @@ const UI = {
           if (UI._svgMapInstance) UI._svgMapInstance.zoomToFit();
         });
       }
+
+      // 全屏按钮（优先 Fullscreen API，失败则伪全屏 fixed）
+      const btnFS = document.getElementById('btn-fullscreen-map');
+      const mapPageRoot = document.getElementById('map-page-root');
+      function _exitFullscreen() {
+        try {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+            return;
+          }
+        } catch (_) {}
+        mapPageRoot && mapPageRoot.classList.remove('map-fullscreen-mode');
+        btnFS && (btnFS.textContent = '⛶ 全屏');
+        setTimeout(() => UI._svgMapInstance && UI._svgMapInstance.zoomToFit(), 120);
+      }
+      function _enterFullscreen() {
+        let usedRealFS = false;
+        try {
+          const target = document.documentElement || mapPageRoot;
+          if (target && typeof target.requestFullscreen === 'function'
+              && document.fullscreenEnabled !== false) {
+            target.requestFullscreen().catch(() => {
+              // Fullscreen API 被拒绝（iframe/权限），降级伪全屏
+              mapPageRoot && mapPageRoot.classList.add('map-fullscreen-mode');
+              btnFS && (btnFS.textContent = '✕ 退出全屏');
+              setTimeout(() => UI._svgMapInstance && UI._svgMapInstance.zoomToFit(), 120);
+            });
+            usedRealFS = true;
+          }
+        } catch (_) { usedRealFS = false; }
+        if (!usedRealFS) {
+          mapPageRoot && mapPageRoot.classList.add('map-fullscreen-mode');
+          btnFS && (btnFS.textContent = '✕ 退出全屏');
+          setTimeout(() => UI._svgMapInstance && UI._svgMapInstance.zoomToFit(), 120);
+        }
+        btnFS && (btnFS.textContent = '✕ 退出全屏');
+      }
+      // 监听真实全屏变化，同步按钮文字和伪全屏状态
+      if (!UI._fsChangeListener) {
+        UI._fsChangeListener = () => {
+          if (!document.fullscreenElement
+              && mapPageRoot && !mapPageRoot.classList.contains('map-fullscreen-mode')) {
+            btnFS && (btnFS.textContent = '⛶ 全屏');
+          }
+        };
+        document.addEventListener('fullscreenchange', UI._fsChangeListener);
+      }
+      if (btnFS && !btnFS._bound) {
+        btnFS._bound = true;
+        btnFS.addEventListener('click', () => {
+          const fsActive = (document.fullscreenElement)
+            || (mapPageRoot && mapPageRoot.classList.contains('map-fullscreen-mode'));
+          if (fsActive) _exitFullscreen(); else _enterFullscreen();
+        });
+        // ESC 退出伪全屏
+        document.addEventListener('keydown', function onKey(e) {
+          if (e.key === 'Escape'
+              && mapPageRoot && mapPageRoot.classList.contains('map-fullscreen-mode')) {
+            _exitFullscreen();
+          }
+        });
+      }
     }, 0);
   },
 
@@ -817,7 +879,7 @@ const UI = {
     ).join('');
 
     return `
-      <div class="map-page">
+      <div class="map-page" id="map-page-root">
         <div class="map-header">
           <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);letter-spacing:0.1em">TNO 世界地图</h2>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -825,10 +887,11 @@ const UI = {
             <button id="btn-zoom-out" style="width:32px;height:28px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="缩小">−</button>
             <button id="btn-zoom-fit" style="padding:4px 10px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:12px;" title="重置视图">⤢</button>
             <button id="btn-zoom-in" style="width:32px;height:28px;background:rgba(30,35,50,0.8);color:#c0c8d0;border:1px solid #4a5a6a;border-radius:4px;cursor:pointer;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="放大">+</button>
+            <button id="btn-fullscreen-map" style="padding:4px 10px;background:rgba(50,40,60,0.8);color:#d8c0f0;border:1px solid #6a5a8a;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;" title="全屏显示地图">⛶ 全屏</button>
             <div style="font-size:12px;color:var(--text-muted);margin-left:8px">${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
           </div>
         </div>
-        <div class="map-container" style="position:relative;width:100%;height:calc(100vh - 280px);min-height:400px;background:#0e1520;border-radius:4px;overflow:hidden;">
+        <div class="map-container" style="width:100%;height:calc(100vh - 300px);min-height:420px;background:#0e1520;border-radius:4px;overflow:hidden;">
           <canvas id="tno-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">滚轮缩放 · 拖拽平移 · 点击国家查看详情 · 矢量地图 by lilaui (CC-BY-SA 3.0)</div>
