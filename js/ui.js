@@ -745,8 +745,8 @@ const UI = {
 
   // ===== 势力地图页 =====
   renderMap() {
-    const s = Game.state;
-    const f = s.flags;
+    const s = Game.state || { flags: {}, relations: {}, turn: 1, totalTurns: 156 };
+    const f = s.flags || {};
 
     // 势力详情数据 (保留在地图下方)
     const germanyColor = f.civil_war_imminent && !f.civil_war_over ? '#6a2a2a' : '#a83232';
