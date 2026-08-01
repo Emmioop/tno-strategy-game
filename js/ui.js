@@ -615,6 +615,10 @@ const UI = {
       case 'nation':
         content.innerHTML = this.renderNation();
         break;
+      case 'world':
+        content.innerHTML = this.renderWorld();
+        this._bindWorld();
+        break;
       case 'map':
         // Canvas模式: 不加载 11MB 的 map_extra.js（性能关键！）
         const userRenderer = (function () { try { return localStorage.getItem('tno_renderer') || 'canvas'; } catch (_) { return 'canvas'; } })();
@@ -1297,6 +1301,404 @@ const UI = {
         </div>
       </div>
     `;
+  },
+
+  // ===== 世界页 (全国家虚拟滚动列表) =====
+  renderWorld() {
+    if (!this._worldData) {
+      this._worldData = this._buildWorldData();
+    }
+    const data = this._worldData;
+    const total = data.length;
+
+    return `
+      <div class="world-container" style="padding:0;height:calc(100vh - 180px);display:flex;flex-direction:column;">
+        <div class="world-toolbar" style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="world-search" type="text" placeholder="搜索国家名/缩写..." style="flex:1;min-width:180px;padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:13px;outline:none;" />
+          <div id="world-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          <span id="world-count" style="color:var(--text-muted);font-size:12px;margin-left:auto;"></span>
+        </div>
+        <div id="world-virtual-scroll" style="flex:1;overflow-y:auto;position:relative;">
+          <div id="world-spacer" style="position:relative;"></div>
+        </div>
+        <div id="world-detail" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;background:var(--bg-secondary);border-top:2px solid var(--accent);padding:16px;overflow-y:auto;z-index:100;border-radius:12px 12px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,0.4);"></div>
+      </div>
+    `;
+  },
+
+  _buildWorldData() {
+    const major = [
+      { id:'GER', name:'大日耳曼国', short:'德国', flag:'#a83232', sphere:'pakt', tier:'major', capital:'日耳曼尼亚', leader:'阿登纳' },
+      { id:'USA', name:'美利坚合众国', short:'美国', flag:'#3a6a9a', sphere:'ofn', tier:'major', capital:'华盛顿', leader:'尼克松' },
+      { id:'JAP', name:'大日本帝国', short:'日本', flag:'#d8d0a8', sphere:'japanese_sphere', tier:'major', capital:'东京', leader:'昭和天皇' },
+      { id:'ITA', name:'意大利帝国', short:'意大利', flag:'#b0a060', sphere:'italian_sphere', tier:'major', capital:'罗马', leader:'墨索里尼' },
+      { id:'BUR', name:'勃艮第骑士团国', short:'勃艮第', flag:'#3a1a3a', sphere:'pakt', tier:'major', capital:'南锡', leader:'希姆莱' },
+      { id:'RUS', name:'俄罗斯诸军阀', short:'俄罗斯', flag:'#7a3a3a', sphere:'none', tier:'major', capital:'莫斯科', leader:'—' },
+    ];
+    const regional = [
+      { id:'CAN', name:'加拿大', short:'加拿大', flag:'#d40000', sphere:'ofn', tier:'regional', capital:'渥太华', leader:'迪芬贝克' },
+      { id:'MEX', name:'墨西哥合众国', short:'墨西哥', flag:'#006847', sphere:'none', tier:'regional', capital:'墨西哥城', leader:'鲁伊斯' },
+      { id:'BRA', name:'巴西联邦共和国', short:'巴西', flag:'#009c3b', sphere:'none', tier:'regional', capital:'巴西利亚', leader:'库比契克' },
+      { id:'ARG', name:'阿根廷共和国', short:'阿根廷', flag:'#74acdf', sphere:'none', tier:'regional', capital:'布宜诺斯艾利斯', leader:'弗朗迪西' },
+      { id:'AUS', name:'澳大利亚联邦', short:'澳大利亚', flag:'#00008b', sphere:'ofn', tier:'regional', capital:'堪培拉', leader:'孟席斯' },
+      { id:'IND', name:'印度共和国', short:'印度', flag:'#ff9933', sphere:'none', tier:'regional', capital:'新德里', leader:'尼赫鲁' },
+      { id:'CHI', name:'中华民国', short:'中国', flag:'#fe0000', sphere:'japanese_sphere', tier:'regional', capital:'南京', leader:'蒋介石' },
+      { id:'SAU', name:'沙特阿拉伯王国', short:'沙特', flag:'#006c35', sphere:'none', tier:'regional', capital:'利雅得', leader:'阿卜杜勒-阿齐兹' },
+      { id:'IRN', name:'伊朗王国', short:'伊朗', flag:'#239f40', sphere:'pakt', tier:'regional', capital:'德黑兰', leader:'巴列维' },
+      { id:'TUR', name:'土耳其共和国', short:'土耳其', flag:'#e30a17', sphere:'italian_sphere', tier:'regional', capital:'安卡拉', leader:'古尔特' },
+      { id:'EGY', name:'埃及王国', short:'埃及', flag:'#ce1126', sphere:'italian_sphere', tier:'regional', capital:'开罗', leader:'纳赛尔' },
+      { id:'ETH', name:'埃塞俄比亚帝国', short:'埃塞俄比亚', flag:'#ffcc00', sphere:'italian_sphere', tier:'regional', capital:'亚的斯亚贝巴', leader:'海尔·塞拉西' },
+      { id:'THA', name:'暹罗王国', short:'泰国', flag:'#a51931', sphere:'japanese_sphere', tier:'regional', capital:'曼谷', leader:'普密蓬' },
+      { id:'IDN', name:'印度尼西亚共和国', short:'印尼', flag:'#ff0000', sphere:'japanese_sphere', tier:'regional', capital:'雅加达', leader:'苏加诺' },
+      { id:'VNM', name:'越南帝国', short:'越南', flag:'#ffcc00', sphere:'japanese_sphere', tier:'regional', capital:'顺化', leader:'保大' },
+      { id:'KHM', name:'柬埔寨王国', short:'柬埔寨', flag:'#033ea0', sphere:'japanese_sphere', tier:'regional', capital:'金边', leader:'西哈努克' },
+      { id:'MMR', name:'缅甸联邦', short:'缅甸', flag:'#fecb00', sphere:'japanese_sphere', tier:'regional', capital:'仰光', leader:'吴努' },
+      { id:'MNG', name:'蒙古人民共和国', short:'蒙古', flag:'#c41230', sphere:'japanese_sphere', tier:'regional', capital:'乌兰巴托', leader:'泽登巴尔' },
+      { id:'PAK', name:'巴基斯坦', short:'巴基斯坦', flag:'#01411c', sphere:'none', tier:'regional', capital:'伊斯兰堡', leader:'阿尤布·汗' },
+      { id:'GBR', name:'联合王国', short:'英国', flag:'#012169', sphere:'pakt', tier:'regional', capital:'伦敦', leader:'伊丽莎白二世' },
+      { id:'FRA', name:'法国', short:'法国', flag:'#002654', sphere:'pakt', tier:'regional', capital:'巴黎', leader:'贝当' },
+      { id:'ESP', name:'西班牙国', short:'西班牙', flag:'#aa151b', sphere:'pakt', tier:'regional', capital:'马德里', leader:'佛朗哥' },
+      { id:'PRT', name:'葡萄牙', short:'葡萄牙', flag:'#006600', sphere:'pakt', tier:'regional', capital:'里斯本', leader:'萨拉查' },
+      { id:'POL', name:'波兰共和国', short:'波兰', flag:'#dc143c', sphere:'pakt', tier:'regional', capital:'华沙', leader:'—' },
+      { id:'HUN', name:'匈牙利', short:'匈牙利', flag:'#477056', sphere:'pakt', tier:'regional', capital:'布达佩斯', leader:'—' },
+      { id:'SWE', name:'瑞典王国', short:'瑞典', flag:'#006aa7', sphere:'none', tier:'regional', capital:'斯德哥尔摩', leader:'古斯塔夫六世' },
+      { id:'FIN', name:'芬兰共和国', short:'芬兰', flag:'#003580', sphere:'pakt', tier:'regional', capital:'赫尔辛基', leader:'—' },
+      { id:'CHL', name:'智利共和国', short:'智利', flag:'#0039a6', sphere:'none', tier:'regional', capital:'圣地亚哥', leader:'伊瓦涅斯' },
+      { id:'COL', name:'哥伦比亚共和国', short:'哥伦比亚', flag:'#fcd116', sphere:'none', tier:'regional', capital:'波哥大', leader:'卡马戈' },
+      { id:'CUB', name:'古巴共和国', short:'古巴', flag:'#002a8f', sphere:'none', tier:'regional', capital:'哈瓦那', leader:'—' },
+      { id:'NLD', name:'尼德兰', short:'荷兰', flag:'#ae1c28', sphere:'pakt', tier:'regional', capital:'阿姆斯特丹', leader:'—' },
+      { id:'BEL', name:'比利时', short:'比利时', flag:'#000000', sphere:'pakt', tier:'regional', capital:'布鲁塞尔', leader:'—' },
+    ];
+    const minor = [
+      { id:'AFG', name:'阿富汗王国', short:'阿富汗', flag:'#006666', sphere:'none', tier:'minor', capital:'喀布尔', leader:'查希尔沙' },
+      { id:'ALB', name:'阿尔巴尼亚王国', short:'阿尔巴尼亚', flag:'#c0392b', sphere:'italian_sphere', tier:'minor', capital:'地拉那', leader:'—' },
+      { id:'AND', name:'安道尔公国', short:'安道尔', flag:'#00159b', sphere:'pakt', tier:'minor', capital:'安道尔城', leader:'—' },
+      { id:'ARG_ANT', name:'阿根廷南极', short:'阿属南极', flag:'#74acdf', sphere:'none', tier:'minor', capital:'—', leader:'—' },
+      { id:'AAB', name:'南极古腾堡基地', short:'古腾堡', flag:'#2a2a2a', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'AAJ', name:'日本南极', short:'日属南极', flag:'#d8d0a8', sphere:'japanese_sphere', tier:'minor', capital:'昭和基地', leader:'—' },
+      { id:'AAO', name:'OFN南极', short:'美属南极', flag:'#3a6a9a', sphere:'ofn', tier:'minor', capital:'麦克默多', leader:'—' },
+      { id:'AAB_ANT', name:'勃艮第南极', short:'勃属南极', flag:'#3a1a3a', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'AAF', name:'法属南半球', short:'法属南极', flag:'#002654', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'AAB_GER', name:'德国新斯瓦比亚', short:'新斯瓦比亚', flag:'#4a4a4a', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'AAG', name:'德国南极探险', short:'南极探险', flag:'#2a2a2a', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'AZE', name:'阿塞拜疆', short:'阿塞拜疆', flag:'#0098c3', sphere:'pakt', tier:'minor', capital:'巴库', leader:'—' },
+      { id:'ARM', name:'亚美尼亚', short:'亚美尼亚', flag:'#d60000', sphere:'pakt', tier:'minor', capital:'埃里温', leader:'—' },
+      { id:'AUT', name:'奥地利', short:'奥地利', flag:'#ed2939', sphere:'none', tier:'minor', capital:'维也纳', leader:'—' },
+      { id:'AYR', name:'艾尔苏丹国', short:'艾尔', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'阿加德兹', leader:'易卜拉欣' },
+      { id:'BAH', name:'巴哈马', short:'巴哈马', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'拿骚', leader:'—' },
+      { id:'BEL_AFR', name:'比属刚果', short:'比属刚果', flag:'#000000', sphere:'pakt', tier:'minor', capital:'利奥波德维尔', leader:'—' },
+      { id:'BEN', name:'达荷美共和国', short:'达荷美', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'波多诺伏', leader:'—' },
+      { id:'BHT', name:'不丹王国', short:'不丹', flag:'#f47920', sphere:'japanese_sphere', tier:'minor', capital:'廷布', leader:'旺楚克' },
+      { id:'BLR', name:'白俄罗斯', short:'白俄罗斯', flag:'#ce1720', sphere:'pakt', tier:'minor', capital:'明斯克', leader:'—' },
+      { id:'BLZ', name:'英属洪都拉斯', short:'英属洪都拉斯', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'贝尔莫潘', leader:'—' },
+      { id:'BOL', name:'玻利维亚共和国', short:'玻利维亚', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'拉巴斯', leader:'特拉萨斯' },
+      { id:'BWA', name:'贝专纳', short:'贝专纳', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'哈博罗内', leader:'—' },
+      { id:'BRB', name:'巴巴多斯', short:'巴巴多斯', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'布里奇敦', leader:'—' },
+      { id:'BRY', name:'布里亚特', short:'布里亚特', flag:'#6a3a3a', sphere:'none', tier:'minor', capital:'乌兰乌德', leader:'—' },
+      { id:'BUL', name:'保加利亚沙皇国', short:'保加利亚', flag:'#00966e', sphere:'pakt', tier:'minor', capital:'索非亚', leader:'—' },
+      { id:'CAF', name:'中非共和国', short:'中非', flag:'#00209f', sphere:'pakt', tier:'minor', capital:'班加西', leader:'—' },
+      { id:'CAN_AFR', name:'喀麦隆', short:'喀麦隆', flag:'#009a44', sphere:'pakt', tier:'minor', capital:'雅温得', leader:'—' },
+      { id:'CHD', name:'乍得', short:'乍得', flag:'#00209f', sphere:'pakt', tier:'minor', capital:'恩贾梅纳', leader:'—' },
+      { id:'CHT', name:'赤塔', short:'赤塔', flag:'#6a5a3a', sphere:'none', tier:'minor', capital:'赤塔', leader:'—' },
+      { id:'CIV', name:'象牙海岸', short:'象牙海岸', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'阿比让', leader:'—' },
+      { id:'CMR', name:'喀麦隆', short:'喀麦隆', flag:'#009a44', sphere:'pakt', tier:'minor', capital:'雅温得', leader:'—' },
+      { id:'COD', name:'刚果民主共和国', short:'刚果金', flag:'#007bff', sphere:'pakt', tier:'minor', capital:'金沙萨', leader:'—' },
+      { id:'COG', name:'刚果共和国', short:'刚果布', flag:'#009a44', sphere:'pakt', tier:'minor', capital:'布拉柴维尔', leader:'—' },
+      { id:'CRI', name:'哥斯达黎加', short:'哥斯达黎加', flag:'#002a8f', sphere:'none', tier:'minor', capital:'圣何塞', leader:'—' },
+      { id:'CRO', name:'克罗地亚王国', short:'克罗地亚', flag:'#003893', sphere:'pakt', tier:'minor', capital:'萨格勒布', leader:'—' },
+      { id:'CUB_ANT', name:'智利南极', short:'智属南极', flag:'#0039a6', sphere:'none', tier:'minor', capital:'—', leader:'—' },
+      { id:'CZE', name:'捷克斯洛伐克', short:'捷克斯洛伐克', flag:'#0060b5', sphere:'pakt', tier:'minor', capital:'布拉格', leader:'—' },
+      { id:'DEU_ORG', name:'德意志骑士团国', short:'骑士团国', flag:'#4a2a4a', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'DJI', name:'法属阿法尔', short:'吉布提', flag:'#003da5', sphere:'italian_sphere', tier:'minor', capital:'吉布提市', leader:'—' },
+      { id:'DNK', name:'丹麦王国', short:'丹麦', flag:'#c8102e', sphere:'pakt', tier:'minor', capital:'哥本哈根', leader:'弗雷德里克九世' },
+      { id:'DOM', name:'多米尼加共和国', short:'多米尼加', flag:'#002a8f', sphere:'none', tier:'minor', capital:'圣多明各', leader:'—' },
+      { id:'ECU', name:'厄瓜多尔共和国', short:'厄瓜多尔', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'基多', leader:'—' },
+      { id:'ERI', name:'厄立特里亚', short:'厄立特里亚', flag:'#003da5', sphere:'italian_sphere', tier:'minor', capital:'阿斯马拉', leader:'—' },
+      { id:'ESP_AFR', name:'西属撒哈拉', short:'西撒哈拉', flag:'#aa151b', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'EST', name:'爱沙尼亚', short:'爱沙尼亚', flag:'#72c2ce', sphere:'pakt', tier:'minor', capital:'塔林', leader:'—' },
+      { id:'ETH_COL', name:'意属埃塞俄比亚', short:'意属埃塞俄比亚', flag:'#008c45', sphere:'italian_sphere', tier:'minor', capital:'亚的斯亚贝巴', leader:'—' },
+      { id:'FAR', name:'法罗群岛', short:'法罗群岛', flag:'#006aa7', sphere:'ofn', tier:'minor', capital:'托尔斯港', leader:'—' },
+      { id:'FAV', name:'自由飞行员', short:'自由飞行员', flag:'#4a5a3a', sphere:'none', tier:'minor', capital:'苏尔古特', leader:'—' },
+      { id:'FJI', name:'斐济群岛', short:'斐济', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'苏瓦', leader:'—' },
+      { id:'FIN', name:'芬兰共和国', short:'芬兰', flag:'#003580', sphere:'pakt', tier:'minor', capital:'赫尔辛基', leader:'—' },
+      { id:'FRA_COL', name:'法属马达加斯加', short:'法属马达加斯加', flag:'#002654', sphere:'pakt', tier:'minor', capital:'塔那那利佛', leader:'—' },
+      { id:'FSA', name:'自由沙特', short:'自由沙特', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'—', leader:'—' },
+      { id:'GAB', name:'加蓬', short:'加蓬', flag:'#009a44', sphere:'pakt', tier:'minor', capital:'利伯维尔', leader:'—' },
+      { id:'GBR_COL', name:'英属圭亚那', short:'英属圭亚那', flag:'#002a8f', sphere:'pakt', tier:'minor', capital:'乔治敦', leader:'—' },
+      { id:'GBR_HON', name:'英属洪都拉斯', short:'英属洪都拉斯', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'—', leader:'—' },
+      { id:'GER_NLD', name:'尼德兰专员辖区', short:'尼德兰专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'阿姆斯特丹', leader:'—' },
+      { id:'GER_NOR', name:'挪威专员辖区', short:'挪威专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'奥斯陆', leader:'—' },
+      { id:'GER_OST', name:'东方专员辖区', short:'东方专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'里加', leader:'—' },
+      { id:'GER_UKR', name:'乌克兰专员辖区', short:'乌克兰专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'基辅', leader:'—' },
+      { id:'GER_MOS', name:'莫斯科专员辖区', short:'莫斯科专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'莫斯科', leader:'—' },
+      { id:'GER_KAU', name:'高加索专员辖区', short:'高加索专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'第比利斯', leader:'—' },
+      { id:'GER_OSTAF', name:'东非专员辖区', short:'东非专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'布勒尔施塔特', leader:'—' },
+      { id:'GER_SDAF', name:'西南非专员辖区', short:'西南非专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'温得和克', leader:'—' },
+      { id:'GER_ZENTRAAF', name:'中非专员辖区', short:'中非专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'利奥波德维尔', leader:'—' },
+      { id:'GER_RUSLAND', name:'俄罗斯专员辖区', short:'俄罗斯专员辖区', flag:'#aa2222', sphere:'pakt', tier:'minor', capital:'莫斯科', leader:'—' },
+      { id:'GHA', name:'加纳共和国', short:'加纳', flag:'#ff0000', sphere:'none', tier:'minor', capital:'阿克拉', leader:'恩克鲁玛' },
+      { id:'GIN', name:'几内亚共和国', short:'几内亚', flag:'#ff0000', sphere:'none', tier:'minor', capital:'科纳克里', leader:'塞古·杜尔' },
+      { id:'GNB', name:'几内亚比绍', short:'几比', flag:'#00853f', sphere:'none', tier:'minor', capital:'比绍', leader:'—' },
+      { id:'GOL', name:'黄金海岸', short:'黄金海岸', flag:'#ffcc00', sphere:'ofn', tier:'minor', capital:'阿克拉', leader:'—' },
+      { id:'GRC', name:'希腊王国', short:'希腊', flag:'#0d5eaf', sphere:'italian_sphere', tier:'minor', capital:'雅典', leader:'保罗一世' },
+      { id:'GUA', name:'危地马拉共和国', short:'危地马拉', flag:'#0060b5', sphere:'none', tier:'minor', capital:'危地马拉城', leader:'—' },
+      { id:'GUC', name:'法属圭亚那', short:'法属圭亚那', flag:'#002654', sphere:'pakt', tier:'minor', capital:'卡宴', leader:'—' },
+      { id:'GUY', name:'圭亚那合作共和国', short:'圭亚那', flag:'#009c3b', sphere:'none', tier:'minor', capital:'乔治敦', leader:'—' },
+      { id:'HAI', name:'海地共和国', short:'海地', flag:'#00209f', sphere:'ofn', tier:'minor', capital:'太子港', leader:'—' },
+      { id:'HND', name:'洪都拉斯共和国', short:'洪都拉斯', flag:'#0060b5', sphere:'none', tier:'minor', capital:'特古西加尔巴', leader:'—' },
+      { id:'HUN', name:'匈牙利王国', short:'匈牙利', flag:'#ed2939', sphere:'pakt', tier:'minor', capital:'布达佩斯', leader:'—' },
+      { id:'ICE', name:'冰岛共和国', short:'冰岛', flag:'#004080', sphere:'ofn', tier:'minor', capital:'雷克雅未克', leader:'—' },
+      { id:'IND_COL', name:'英属印度', short:'英属印度', flag:'#ffcc00', sphere:'ofn', tier:'minor', capital:'新德里', leader:'—' },
+      { id:'IND_FRA', name:'法属印度', short:'法属印度', flag:'#002654', sphere:'pakt', tier:'minor', capital:'本地治里', leader:'—' },
+      { id:'IND_PRT', name:'葡属印度', short:'葡属印度', flag:'#006600', sphere:'pakt', tier:'minor', capital:'果阿', leader:'—' },
+      { id:'IRE', name:'爱尔兰共和国', short:'爱尔兰', flag:'#169b62', sphere:'ofn', tier:'minor', capital:'都柏林', leader:'—' },
+      { id:'ITA_COL', name:'意属非洲', short:'意属非洲', flag:'#008c45', sphere:'italian_sphere', tier:'minor', capital:'—', leader:'—' },
+      { id:'JAM', name:'牙买加', short:'牙买加', flag:'#009a44', sphere:'ofn', tier:'minor', capital:'金斯顿', leader:'—' },
+      { id:'JOR', name:'约旦哈希姆王国', short:'约旦', flag:'#ffcc00', sphere:'italian_sphere', tier:'minor', capital:'安曼', leader:'侯赛因' },
+      { id:'KAS', name:'克什米尔', short:'克什米尔', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'—', leader:'—' },
+      { id:'KAZ', name:'哈萨克苏维埃社会主义共和国', short:'哈萨克', flag:'#d8d0a8', sphere:'none', tier:'minor', capital:'阿拉木图', leader:'—' },
+      { id:'KEN', name:'肯尼亚', short:'肯尼亚', flag:'#bb0000', sphere:'pakt', tier:'minor', capital:'内罗毕', leader:'—' },
+      { id:'KHM', name:'高棉共和国', short:'高棉', flag:'#033ea0', sphere:'japanese_sphere', tier:'minor', capital:'金边', leader:'西哈努克' },
+      { id:'KOR_ANT', name:'韩国', short:'韩国', flag:'#003478', sphere:'ofn', tier:'minor', capital:'首尔', leader:'李承晚' },
+      { id:'KWT', name:'科威特王国', short:'科威特', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'科威特城', leader:'—' },
+      { id:'LAO', name:'老挝王国', short:'老挝', flag:'#002d62', sphere:'japanese_sphere', tier:'minor', capital:'万象', leader:'西萨旺' },
+      { id:'LBN', name:'黎巴嫩共和国', short:'黎巴嫩', flag:'#ed1c24', sphere:'italian_sphere', tier:'minor', capital:'贝鲁特', leader:'—' },
+      { id:'LBR', name:'利比里亚共和国', short:'利比里亚', flag:'#c8102e', sphere:'ofn', tier:'minor', capital:'蒙罗维亚', leader:'—' },
+      { id:'LBY', name:'利比亚王国', short:'利比亚', flag:'#ffcc00', sphere:'italian_sphere', tier:'minor', capital:'的黎波里', leader:'—' },
+      { id:'LIE', name:'列支敦士登公国', short:'列支敦士登', flag:'#002b5c', sphere:'pakt', tier:'minor', capital:'瓦杜兹', leader:'弗朗茨·约瑟夫' },
+      { id:'LTU', name:'立陶宛', short:'立陶宛', flag:'#f3b400', sphere:'pakt', tier:'minor', capital:'维尔纽斯', leader:'—' },
+      { id:'LUX', name:'卢森堡', short:'卢森堡', flag:'#ed1c24', sphere:'pakt', tier:'minor', capital:'卢森堡城', leader:'—' },
+      { id:'LV', name:'拉脱维亚', short:'拉脱维亚', flag:'#9e1b34', sphere:'pakt', tier:'minor', capital:'里加', leader:'—' },
+      { id:'MAD', name:'马达加斯加', short:'马达加斯加', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'塔那那利佛', leader:'—' },
+      { id:'MAG', name:'马加丹', short:'马加丹', flag:'#5a5a5a', sphere:'japanese_sphere', tier:'minor', capital:'马加丹', leader:'—' },
+      { id:'MAR', name:'摩洛哥王国', short:'摩洛哥', flag:'#c1272d', sphere:'pakt', tier:'minor', capital:'拉巴特', leader:'穆罕默德五世' },
+      { id:'MHL', name:'马绍尔群岛', short:'马绍尔', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'马朱罗', leader:'—' },
+      { id:'MKD', name:'马其顿', short:'马其顿', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'斯科普里', leader:'—' },
+      { id:'MLI', name:'马里共和国', short:'马里', flag:'#00853f', sphere:'none', tier:'minor', capital:'巴马科', leader:'莫迪博·凯塔' },
+      { id:'MMR_ANT', name:'缅甸', short:'缅甸', flag:'#fecb00', sphere:'japanese_sphere', tier:'minor', capital:'仰光', leader:'吴努' },
+      { id:'MNE', name:'黑山王国', short:'黑山', flag:'#c8102e', sphere:'italian_sphere', tier:'minor', capital:'采蒂涅', leader:'—' },
+      { id:'MON', name:'摩纳哥公国', short:'摩纳哥', flag:'#b0a060', sphere:'pakt', tier:'minor', capital:'摩纳哥城', leader:'雷尼尔三世' },
+      { id:'MOZ', name:'莫桑比克', short:'莫桑比克', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'马普托', leader:'—' },
+      { id:'MRT', name:'毛里求斯', short:'毛里求斯', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'路易港', leader:'—' },
+      { id:'MWI', name:'马拉维', short:'马拉维', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'利隆圭', leader:'—' },
+      { id:'NAM', name:'西南非洲', short:'西南非洲', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'温得和克', leader:'—' },
+      { id:'NCL', name:'新喀里多尼亚', short:'新喀里多尼亚', flag:'#002654', sphere:'pakt', tier:'minor', capital:'努美阿', leader:'—' },
+      { id:'NER', name:'尼日尔共和国', short:'尼日尔', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'尼亚美', leader:'—' },
+      { id:'NIC', name:'尼加拉瓜共和国', short:'尼加拉瓜', flag:'#002a8f', sphere:'none', tier:'minor', capital:'马那瓜', leader:'—' },
+      { id:'NLD_ANT', name:'荷属安的列斯', short:'荷属安的列斯', flag:'#ae1c28', sphere:'ofn', tier:'minor', capital:'威廉斯塔德', leader:'—' },
+      { id:'NRU', name:'瑙鲁共和国', short:'瑙鲁', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'亚伦', leader:'—' },
+      { id:'NZL', name:'新西兰自治领', short:'新西兰', flag:'#00008b', sphere:'ofn', tier:'minor', capital:'惠灵顿', leader:'—' },
+      { id:'OMA', name:'马斯喀特苏丹国', short:'马斯喀特', flag:'#ffcc00', sphere:'italian_sphere', tier:'minor', capital:'马斯喀特', leader:'赛义德·本·泰穆尔' },
+      { id:'OMN', name:'阿曼', short:'阿曼', flag:'#ffcc00', sphere:'italian_sphere', tier:'minor', capital:'马斯喀特', leader:'—' },
+      { id:'PAK_ANT', name:'巴基斯坦', short:'巴基斯坦', flag:'#01411c', sphere:'none', tier:'minor', capital:'伊斯兰堡', leader:'阿尤布·汗' },
+      { id:'PAN', name:'巴拿马共和国', short:'巴拿马', flag:'#002a8f', sphere:'none', tier:'minor', capital:'巴拿马城', leader:'—' },
+      { id:'PER', name:'秘鲁共和国', short:'秘鲁', flag:'#d91023', sphere:'none', tier:'minor', capital:'利马', leader:'普拉多' },
+      { id:'PHI', name:'菲律宾共和国', short:'菲律宾', flag:'#0038a8', sphere:'japanese_sphere', tier:'minor', capital:'马尼拉', leader:'马科斯' },
+      { id:'PNG', name:'巴布亚新几内亚', short:'巴新', flag:'#009a44', sphere:'ofn', tier:'minor', capital:'莫尔兹比港', leader:'—' },
+      { id:'PRK', name:'朝鲜民主主义人民共和国', short:'朝鲜', flag:'#024fa2', sphere:'none', tier:'minor', capital:'平壤', leader:'—' },
+      { id:'PRT_AFR', name:'葡属非洲', short:'葡属非洲', flag:'#006600', sphere:'pakt', tier:'minor', capital:'—', leader:'—' },
+      { id:'PRY', name:'巴拉圭共和国', short:'巴拉圭', flag:'#009c3b', sphere:'none', tier:'minor', capital:'亚松森', leader:'莫里尼戈' },
+      { id:'PSE', name:'耶路撒冷', short:'耶路撒冷', flag:'#ffcc00', sphere:'italian_sphere', tier:'minor', capital:'耶路撒冷', leader:'—' },
+      { id:'QAT', name:'卡塔尔', short:'卡塔尔', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'多哈', leader:'—' },
+      { id:'ROU', name:'罗马尼亚王国', short:'罗马尼亚', flag:'#002b7f', sphere:'pakt', tier:'minor', capital:'布加勒斯特', leader:'—' },
+      { id:'RWA', name:'卢旺达', short:'卢旺达', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'基加利', leader:'—' },
+      { id:'SAU_ANT', name:'沙特', short:'沙特', flag:'#006c35', sphere:'none', tier:'minor', capital:'利雅得', leader:'—' },
+      { id:'SEN', name:'塞内加尔', short:'塞内加尔', flag:'#00853f', sphere:'none', tier:'minor', capital:'达喀尔', leader:'桑戈尔' },
+      { id:'SLV', name:'萨尔瓦多共和国', short:'萨尔瓦多', flag:'#0060b5', sphere:'none', tier:'minor', capital:'圣萨尔瓦多', leader:'—' },
+      { id:'SLB', name:'所罗门群岛', short:'所罗门群岛', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'霍尼亚拉', leader:'—' },
+      { id:'SLE', name:'塞拉利昂', short:'塞拉利昂', flag:'#007ad9', sphere:'none', tier:'minor', capital:'弗里敦', leader:'—' },
+      { id:'SLO', name:'斯洛伐克共和国', short:'斯洛伐克', flag:'#0b4ea2', sphere:'pakt', tier:'minor', capital:'布拉迪斯拉发', leader:'—' },
+      { id:'SOM', name:'索马里', short:'索马里', flag:'#003da5', sphere:'italian_sphere', tier:'minor', capital:'摩加迪沙', leader:'—' },
+      { id:'SRB', name:'塞尔维亚', short:'塞尔维亚', flag:'#c0392b', sphere:'pakt', tier:'minor', capital:'贝尔格莱德', leader:'—' },
+      { id:'SSD', name:'南苏丹', short:'南苏丹', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'朱巴', leader:'—' },
+      { id:'SGP', name:'新加坡自治邦', short:'新加坡', flag:'#ef3340', sphere:'japanese_sphere', tier:'minor', capital:'新加坡', leader:'李光耀' },
+      { id:'SUI', name:'瑞士联邦', short:'瑞士', flag:'#d52b1e', sphere:'none', tier:'minor', capital:'伯尔尼', leader:'—' },
+      { id:'SUR', name:'苏里南共和国', short:'苏里南', flag:'#007a45', sphere:'ofn', tier:'minor', capital:'帕拉马里博', leader:'—' },
+      { id:'SWE_ANT', name:'瑞典', short:'瑞典', flag:'#006aa7', sphere:'none', tier:'minor', capital:'斯德哥尔摩', leader:'古斯塔夫六世' },
+      { id:'SWZ', name:'斯威士兰', short:'斯威士兰', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'姆巴巴内', leader:'—' },
+      { id:'SYR', name:'叙利亚共和国', short:'叙利亚', flag:'#ce1126', sphere:'none', tier:'minor', capital:'大马士革', leader:'—' },
+      { id:'TCD', name:'乍得', short:'乍得', flag:'#00209f', sphere:'pakt', tier:'minor', capital:'恩贾梅纳', leader:'—' },
+      { id:'TGO', name:'多哥', short:'多哥', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'洛美', leader:'—' },
+      { id:'TTO', name:'特立尼达和多巴哥', short:'特多', flag:'#002a8f', sphere:'ofn', tier:'minor', capital:'西班牙港', leader:'—' },
+      { id:'TUN', name:'突尼斯王国', short:'突尼斯', flag:'#e30a17', sphere:'italian_sphere', tier:'minor', capital:'突尼斯', leader:'—' },
+      { id:'TWN', name:'中华民国台湾', short:'台湾', flag:'#fe0000', sphere:'ofn', tier:'minor', capital:'台北', leader:'蒋介石' },
+      { id:'TZA', name:'坦噶尼喀', short:'坦噶尼喀', flag:'#008736', sphere:'pakt', tier:'minor', capital:'多多马', leader:'—' },
+      { id:'UGA', name:'乌干达', short:'乌干达', flag:'#000000', sphere:'pakt', tier:'minor', capital:'坎帕拉', leader:'—' },
+      { id:'UKR', name:'乌克兰', short:'乌克兰', flag:'#ffd500', sphere:'pakt', tier:'minor', capital:'基辅', leader:'—' },
+      { id:'URG', name:'乌拉圭共和国', short:'乌拉圭', flag:'#ffcc00', sphere:'none', tier:'minor', capital:'蒙得维的亚', leader:'—' },
+      { id:'USA_ANT', name:'美国', short:'美国', flag:'#3a6a9a', sphere:'ofn', tier:'minor', capital:'华盛顿', leader:'尼克松' },
+      { id:'UZB', name:'乌兹别克苏维埃社会主义共和国', short:'乌兹别克', flag:'#d8d0a8', sphere:'none', tier:'minor', capital:'塔什干', leader:'—' },
+      { id:'VAN', name:'瓦努阿图', short:'瓦努阿图', flag:'#009a44', sphere:'ofn', tier:'minor', capital:'维拉港', leader:'—' },
+      { id:'VAT', name:'梵蒂冈城国', short:'梵蒂冈', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'梵蒂冈城', leader:'约翰二十三世' },
+      { id:'VEN', name:'委内瑞拉共和国', short:'委内瑞拉', flag:'#fcd116', sphere:'none', tier:'minor', capital:'加拉加斯', leader:'拉里萨巴尔' },
+      { id:'VUT', name:'瓦利斯和富图纳', short:'瓦富', flag:'#002654', sphere:'pakt', tier:'minor', capital:'马塔乌图', leader:'—' },
+      { id:'YEM', name:'也门王国', short:'也门', flag:'#ffcc00', sphere:'italian_sphere', tier:'minor', capital:'萨那', leader:'穆塔瓦基勒' },
+      { id:'YUG', name:'南斯拉夫王国', short:'南斯拉夫', flag:'#002b5c', sphere:'pakt', tier:'minor', capital:'贝尔格莱德', leader:'—' },
+      { id:'ZAF', name:'南非联邦', short:'南非', flag:'#007749', sphere:'ofn', tier:'minor', capital:'比勒陀利亚', leader:'—' },
+      { id:'ZMB', name:'北罗得西亚', short:'北罗得西亚', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'卢萨卡', leader:'—' },
+      { id:'ZWE', name:'南罗得西亚', short:'南罗得西亚', flag:'#ffcc00', sphere:'pakt', tier:'minor', capital:'索尔兹伯里', leader:'—' },
+    ];
+    return [...major, ...regional, ...minor];
+  },
+
+  _bindWorld(initialFilter) {
+    const UI = this;
+    const container = document.getElementById('world-virtual-scroll');
+    const spacer = document.getElementById('world-spacer');
+    const searchInput = document.getElementById('world-search');
+    const filtersEl = document.getElementById('world-filters');
+    const countEl = document.getElementById('world-count');
+    const ROW_H = 52;
+    let filter = initialFilter || 'all';
+    let search = '';
+    let filteredList = [];
+
+    const sphereNames = {
+      pakt: '轴心', ofn: 'OFN', japanese_sphere: '共荣圈',
+      italian_sphere: '三头同盟', none: '中立',
+      syndicalist: '工团主义', turkish_sphere: '土耳其圈'
+    };
+    const tierNames = { major: '大国', regional: '地区', minor: '小国' };
+
+    function applyFilter() {
+      let list = UI._worldData;
+      if (filter === 'major') list = list.filter(d => d.tier === 'major');
+      else if (filter !== 'all' && filter !== 'major') list = list.filter(d => d.sphere === filter);
+      if (search) {
+        const q = search.toLowerCase();
+        list = list.filter(d => d.name.toLowerCase().includes(q) || d.short.toLowerCase().includes(q) || d.id.toLowerCase().includes(q));
+      }
+      filteredList = list;
+      countEl.textContent = `显示 ${list.length} / ${UI._worldData.length}`;
+    }
+
+    function renderFilterChips() {
+      const chips = [
+        ['all', '全部'],
+        ['major', '大国'],
+        ['pakt', '轴心'],
+        ['ofn', 'OFN'],
+        ['japanese_sphere', '共荣圈'],
+        ['italian_sphere', '三头同盟'],
+        ['none', '中立'],
+      ];
+      filtersEl.innerHTML = chips.map(([k, l]) =>
+        `<button data-filter="${k}" style="padding:4px 10px;font-size:11px;border:1px solid var(--border);border-radius:12px;background:${filter===k?'var(--accent)':'var(--bg-secondary)'};color:${filter===k?'#fff':'var(--text)'};cursor:pointer;transition:all .15s;">${l}</button>`
+      ).join('');
+      filtersEl.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => { filter = btn.dataset.filter; renderFilterChips(); applyFilter(); render(); };
+      });
+    }
+
+    function render() {
+      applyFilter();
+      const total = filteredList.length;
+      const viewH = container.clientHeight || 600;
+      const buffer = 5;
+      const startIdx = Math.max(0, Math.floor(container.scrollTop / ROW_H) - buffer);
+      const endIdx = Math.min(total, Math.ceil((container.scrollTop + viewH) / ROW_H) + buffer);
+
+      spacer.style.height = (total * ROW_H) + 'px';
+      let html = '';
+      for (let i = startIdx; i < endIdx; i++) {
+        const d = filteredList[i];
+        const bg = i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent';
+        html += `
+          <div class="world-row" data-id="${d.id}" style="position:absolute;top:${i*ROW_H}px;left:0;right:0;height:${ROW_H}px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);background:${bg};cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='${bg}'">
+            <div style="width:28px;height:18px;background:${d.flag};border-radius:2px;margin-right:12px;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</div>
+              <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.short} · ${d.capital}${d.leader ? ' · ' + d.leader : ''}</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              <span style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--bg-secondary);color:var(--text-muted);">${sphereNames[d.sphere] || d.sphere}</span>
+              <span style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--bg-secondary);color:var(--text-muted);">${tierNames[d.tier]}</span>
+            </div>
+          </div>
+        `;
+      }
+      spacer.innerHTML = html;
+      spacer.querySelectorAll('.world-row').forEach(row => {
+        row.onclick = () => UI._showCountryDetail(row.dataset.id);
+      });
+    }
+
+    container.onscroll = () => render();
+    searchInput.oninput = (e) => { search = e.target.value; render(); };
+
+    renderFilterChips();
+    applyFilter();
+    render();
+
+    this._worldRaf = null;
+    const ro = new ResizeObserver(() => { if (!this._worldRaf) this._worldRaf = requestAnimationFrame(() => { render(); this._worldRaf = null; }); });
+    ro.observe(container);
+    this._worldResizeObs = ro;
+  },
+
+  async _showCountryDetail(id) {
+    const UI = this;
+    const data = this._worldData.find(d => d.id === id);
+    if (!data) return;
+    const el = document.getElementById('world-detail');
+    el.style.display = 'block';
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">加载中...</div>';
+
+    let detail = null;
+    if (typeof DataStore !== 'undefined') {
+      detail = await DataStore.getCountry(id);
+    }
+
+    const fmt = (v) => {
+      if (!v && v !== 0) return '—';
+      if (typeof v === 'number') {
+        if (v >= 1e8) return (v / 1e8).toFixed(2) + '亿';
+        if (v >= 1e4) return (v / 1e4).toFixed(1) + '万';
+        return v.toLocaleString();
+      }
+      return v;
+    };
+
+    if (detail) {
+      const d = detail;
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="width:32px;height:22px;background:${data.flag};border-radius:3px;border:1px solid rgba(255,255,255,0.2);"></div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:600;color:var(--text);">${d.name || data.name}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${data.short} · ${data.capital}${data.leader ? ' · ' + data.leader : ''}</div>
+          </div>
+          <button onclick="document.getElementById('world-detail').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">
+          ${d.gdp ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">GDP</div><div style="font-size:14px;color:var(--text);">${fmt(d.gdp)}</div></div>` : ''}
+          ${d.population ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">人口</div><div style="font-size:14px;color:var(--text);">${fmt(d.population)}</div></div>` : ''}
+          ${d.stability != null ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">稳定度</div><div style="font-size:14px;color:${d.stability>50?'var(--success)':'var(--danger)'}">${d.stability}</div></div>` : ''}
+          ${d.support != null ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">支持率</div><div style="font-size:14px;color:var(--text);">${d.support}%</div></div>` : ''}
+          ${d.army ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">陆军</div><div style="font-size:14px;color:var(--text);">${fmt(d.army)}k</div></div>` : ''}
+          ${d.airforce ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">空军</div><div style="font-size:14px;color:var(--text);">${fmt(d.airforce)}</div></div>` : ''}
+          ${d.navy ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">海军</div><div style="font-size:14px;color:var(--text);">${fmt(d.navy)}</div></div>` : ''}
+          ${d.nuclear && d.nuclear.warheads ? `<div style="background:var(--bg-primary);padding:8px 12px;border-radius:6px;"><div style="font-size:10px;color:var(--text-muted);">核弹</div><div style="font-size:14px;color:var(--danger);">${d.nuclear.warheads}</div></div>` : ''}
+        </div>
+        ${d.desc ? `<div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;">${d.desc}</div>` : ''}
+        ${d.territories ? `<div style="font-size:11px;color:var(--text-muted);">领土: ${d.territories.join(', ')}</div>` : ''}
+      `;
+    } else {
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="width:32px;height:22px;background:${data.flag};border-radius:3px;border:1px solid rgba(255,255,255,0.2);"></div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:600;color:var(--text);">${data.name}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${data.short} · ${data.capital}${data.leader ? ' · ' + data.leader : ''}</div>
+          </div>
+          <button onclick="document.getElementById('world-detail').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;">
+          ${data.tier === 'minor' ? '此为小国/傀儡，详细数据暂未建模。' : '详细数据加载失败。'}
+          <br>国家代码: ${id}
+        </div>
+      `;
+    }
   },
 
   // ===== 国势页 (国家模拟系统) =====
