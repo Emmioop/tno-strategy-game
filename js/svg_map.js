@@ -254,8 +254,7 @@
       for (const [cid, cdata] of Object.entries(data.countries)) {
         const combinedPath = new Path2D();
         let totalArea = 0;
-        let largestPathBBox = null;
-        let largestPathArea = 0;
+        const allBBoxes = [];
 
         for (const dStr of cdata.p) {
           try {
@@ -267,10 +266,7 @@
           const bbox = this._computePathBBox(dStr);
           if (bbox) {
             totalArea += bbox.area;
-            if (bbox.area > largestPathArea) {
-              largestPathArea = bbox.area;
-              largestPathBBox = bbox;
-            }
+            allBBoxes.push(bbox);
           }
         }
 
@@ -282,12 +278,53 @@
           mapId
         });
 
-        // 用面积最大的子路径作为标签位置（避免飞地/殖民地偏移中心点）
-        if (largestPathBBox) {
-          const cx = (largestPathBBox.minX + largestPathBBox.maxX) / 2;
-          const cy = (largestPathBBox.minY + largestPathBBox.maxY) / 2;
-          this._labelCache[cid] = { x: cx, y: cy, area: totalArea };
+        // 计算标签位置：过滤异常大的路径，选最大路径，用 isPointInPath 验证
+        const mapArea = data.view.w * data.view.h;
+        const filtered = allBBoxes.filter(b => b.area < mapArea * 0.4);
+        const candidates = filtered.length > 0 ? filtered : allBBoxes;
+        candidates.sort((a, b) => b.area - a.area);
+
+        // 重置变换矩阵，确保 isPointInPath 使用世界坐标
+        offCtx.save();
+        offCtx.setTransform(1, 0, 0, 1, 0, 0);
+
+        let labelPos = null;
+        for (const bbox of candidates) {
+          const cx = (bbox.minX + bbox.maxX) / 2;
+          const cy = (bbox.minY + bbox.maxY) / 2;
+          // 用 isPointInPath 验证中心是否在国土内
+          try {
+            if (offCtx.isPointInPath(combinedPath, cx, cy)) {
+              labelPos = { x: cx, y: cy, area: totalArea };
+              break;
+            }
+          } catch (_) {}
+          // 中心不在路径内，在 bounding box 内搜索
+          const stepX = Math.max((bbox.maxX - bbox.minX) / 8, 0.5);
+          const stepY = Math.max((bbox.maxY - bbox.minY) / 8, 0.5);
+          let found = false;
+          for (let dx = 0; dx <= bbox.maxX - bbox.minX && !found; dx += stepX) {
+            for (let dy = 0; dy <= bbox.maxY - bbox.minY && !found; dy += stepY) {
+              const tx = bbox.minX + dx;
+              const ty = bbox.minY + dy;
+              try {
+                if (offCtx.isPointInPath(combinedPath, tx, ty)) {
+                  labelPos = { x: tx, y: ty, area: totalArea };
+                  found = true;
+                }
+              } catch (_) {}
+            }
+          }
+          if (found) break;
         }
+        offCtx.restore();
+
+        // fallback：使用最大候选的 bounding box 中心
+        if (!labelPos && candidates.length > 0) {
+          const b = candidates[0];
+          labelPos = { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, area: totalArea };
+        }
+        if (labelPos) this._labelCache[cid] = labelPos;
       }
       this.zoomToFit();
     }
@@ -347,8 +384,8 @@
                 } else { i++; }
                 break;
               }
-              case 'C': case 'S': {
-                // C/S: 3 对坐标（控制点+终点）
+              case 'C': {
+                // C: 3 对坐标（控制点1+控制点2+终点）
                 if (i + 6 < tokens.length) {
                   for (let k = 0; k < 3; k++) {
                     const x = parseFloat(tokens[i + 1 + k * 2]);
@@ -363,8 +400,8 @@
                 } else { i++; }
                 break;
               }
-              case 'Q': case 'T': {
-                // Q/T: 2 对坐标
+              case 'S': {
+                // S: 2 对坐标（控制点2+终点）
                 if (i + 4 < tokens.length) {
                   for (let k = 0; k < 2; k++) {
                     const x = parseFloat(tokens[i + 1 + k * 2]);
@@ -376,6 +413,33 @@
                   cx = points[points.length - 1][0];
                   cy = points[points.length - 1][1];
                   i += 5;
+                } else { i++; }
+                break;
+              }
+              case 'Q': {
+                // Q: 2 对坐标（控制点+终点）
+                if (i + 4 < tokens.length) {
+                  for (let k = 0; k < 2; k++) {
+                    const x = parseFloat(tokens[i + 1 + k * 2]);
+                    const y = parseFloat(tokens[i + 2 + k * 2]);
+                    let px, py;
+                    if (isRelative) { px = cx + x; py = cy + y; } else { px = x; py = y; }
+                    points.push([px, py]);
+                  }
+                  cx = points[points.length - 1][0];
+                  cy = points[points.length - 1][1];
+                  i += 5;
+                } else { i++; }
+                break;
+              }
+              case 'T': {
+                // T: 1 对坐标（终点）
+                if (i + 2 < tokens.length) {
+                  const x = parseFloat(tokens[i + 1]);
+                  const y = parseFloat(tokens[i + 2]);
+                  if (isRelative) { cx += x; cy += y; } else { cx = x; cy = y; }
+                  points.push([cx, cy]);
+                  i += 3;
                 } else { i++; }
                 break;
               }
@@ -652,8 +716,9 @@
       for (const [cid, pos] of Object.entries(this._labelCache)) {
         let name = null;
         const feature = this.featureIndex.get(cid);
+        // 优先使用数据文件的 zh 字段（繁简转换），fallback 到简体映射
         if (feature && feature.zh) {
-          name = feature.zh;
+          name = this._toSimplified(feature.zh);
         } else {
           name = this._getCountryName(cid);
         }
@@ -700,6 +765,62 @@
       }
 
       ctx.restore();
+    }
+
+    _toSimplified(text) {
+      if (!text) return text;
+      if (!this._t2sMap) {
+        this._t2sMap = {
+          '國':'国','東':'东','車':'车','馬':'马','義':'义','專':'专','轄':'辖','區':'区',
+          '總':'总','督':'督','條':'条','約':'约','黨':'党','衛':'卫','軍':'军','騎':'骑',
+          '士':'士','團':'团','聯':'联','合':'合','王':'王','愛':'爱','爾':'尔','蘭':'兰',
+          '大':'大','日':'日','耳':'耳','曼':'曼','法':'法','蘭':'兰','西':'西','丹':'丹',
+          '麥':'麦','挪':'挪','威':'威','斯':'斯','洛':'洛','伐':'伐','克':'克','匈':'匈',
+          '牙':'牙','利':'利','羅':'罗','馬':'马','尼':'尼','亞':'亚','塞':'塞','維':'维',
+          '保':'保','加':'加','里':'里','烏':'乌','克':'克','蘭':'兰','東':'东','方':'方',
+          '莫':'莫','科':'科','高':'高','加':'加','索':'索','克':'克','里':'里','米':'米',
+          '尼':'尼','德':'德','尼':'尼','蘭':'兰','義':'义','大':'大','利':'利','伊':'伊',
+          '比':'比','亞':'亚','埃':'埃','及':'及','土':'土','耳':'耳','其':'其','摩':'摩',
+          '蘇':'苏','門':'门','叙':'叙','利':'利','亞':'亚','伊':'伊','拉':'拉','克':'克',
+          '黎':'黎','凡':'凡','特':'特','阿':'阿','爾':'尔','及':'及','利':'利','亞':'亚',
+          '西':'西','班':'班','牙':'牙','葡':'葡','萄':'萄','牙':'牙','瑞':'瑞','士':'士',
+          '典':'典','挪':'挪','威':'威','瑞':'瑞','典':'典','芬':'芬','蘭':'兰','波':'波',
+          '蘭':'兰','捷':'捷','克':'克','斯':'斯','洛':'洛','伐':'伐','克':'克','奧':'奥',
+          '地':'地','利':'利','匈':'匈','牙':'牙','利':'利','羅':'罗','馬':'马','尼':'尼',
+          '亞':'亚','保':'保','加':'加','里':'里','亞':'亚','塞':'塞','爾':'尔','維':'维',
+          '亞':'亚','克':'克','羅':'罗','地':'地','亞':'亚','黑':'黑','山':'山','希':'希',
+          '臘':'腊','阿':'阿','爾':'尔','巴':'巴','尼':'尼','亞':'亚','馬':'马','其':'其',
+          '頓':'顿','科':'科','索':'索','沃':'沃','波':'波','斯':'斯','尼':'尼','亞':'亚',
+          '哥':'哥','倫':'伦','比':'比','亞':'亚','委':'委','內':'内','瑞':'瑞','拉':'拉',
+          '厄':'厄','瓜':'瓜','多':'多','爾':'尔','玻':'玻','利':'利','維':'维','亞':'亚',
+          '巴':'巴','拉':'拉','圭':'圭','烏':'乌','拉':'拉','圭':'圭','智':'智','利':'利',
+          '阿':'阿','根':'根','廷':'廷','巴':'巴','西':'西','秘':'秘','魯':'鲁','墨':'墨',
+          '西':'西','哥':'哥','美':'美','國':'国','加':'加','拿':'拿','大':'大','古':'古',
+          '巴':'巴','海':'海','地':'地','多':'多','米':'米','尼':'尼','加':'加','喀':'喀',
+          '麥':'麦','隆':'隆','剛':'刚','果':'果','蘇':'苏','丹':'丹','索':'索','馬':'马',
+          '里':'里','南':'南','非':'非','洲':'洲','澳':'澳','大':'大','利':'利','亞':'亚',
+          '紐':'纽','西':'西','蘭':'兰','印':'印','度':'度','尼':'尼','西':'西','亞':'亚',
+          '菲':'菲','律':'律','賓':'宾','越':'越','南':'南','寮':'寮','國':'国','柬':'柬',
+          '埔':'埔','寨':'寨','緬':'缅','甸':'甸','泰':'泰','國':'国','馬':'马','來':'来',
+          '亞':'亚','不':'不','丹':'丹','尼':'尼','泊':'泊','爾':'尔','巴':'巴','基':'基',
+          '斯':'斯','坦':'坦','阿':'阿','富':'富','汗':'汗','伊':'伊','朗':'朗','沙':'沙',
+          '烏':'乌','地':'地','阿':'阿','拉':'拉','伯':'伯','葉':'叶','門':'门','阿':'阿',
+          '曼':'曼','科':'科','威':'威','特':'特','卡':'卡','塔':'塔','爾':'尔','巴':'巴',
+          '林':'林','阿':'阿','聯':'联','酋':'酋','長':'长','以':'以','色':'色','列':'列',
+          '巴':'巴','勒':'勒','斯':'斯','坦':'坦','塞':'塞','浦':'浦','路':'路','斯':'斯',
+          '馬':'马','耳':'耳','他':'他','梵':'梵','蒂':'蒂','岡':'冈','摩':'摩','納':'纳',
+          '哥':'哥','安':'安','道':'道','爾':'尔','聖':'圣','馬':'马','利':'利','諾':'诺',
+          '列':'列','支':'支','敦':'敦','士':'士','登':'登','冰':'冰','島':'岛','格':'格',
+          '陵':'陵','蘭':'兰','法':'法','羅':'罗','群':'群','島':'岛','海':'海','峽':'峡',
+          '群':'群','島':'岛','直':'直','布':'布','羅':'罗','陀':'陀','紐':'纽','芬':'芬',
+          '蘭':'兰','拉':'拉','布':'布','拉':'拉','多':'多','爾':'尔'
+        };
+      }
+      let result = '';
+      for (const ch of text) {
+        result += this._t2sMap[ch] || ch;
+      }
+      return result;
     }
 
     _getCountryName(id) {
