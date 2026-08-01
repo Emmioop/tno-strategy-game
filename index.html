@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>千年帝国的最后一息 · TNO策略游戏</title>
-  <link rel="stylesheet" href="css/style.css?v=60">
+  <link rel="stylesheet" href="css/style.css?v=61">
 </head>
 <body>
 
@@ -154,7 +154,7 @@
   <script src="js/save_system.js?v=3"></script>
   <script src="js/nation_sim.js?v=39"></script>
   <script src="js/game.js?v=37"></script>
-  <script src="js/ui.js?v=60"></script>
+  <script src="js/ui.js?v=61"></script>
   <script>
     // 难度选择初始化
     (function initDifficultySelect() {
@@ -267,6 +267,7 @@
         document.getElementById('splash').style.display = 'none';
         document.getElementById('game').classList.add('active');
         UI.renderAll();
+        UI.preloadEventImages();
         UI.toast('存档已载入', 'success');
       } else {
         UI.toast('加载失败', 'error');

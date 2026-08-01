@@ -186,6 +186,83 @@ const UI = {
   // 保留空方法防止旧代码调用时报错
   async loadMapExtra() { return false; },
 
+  // ===== 事件图片预加载（进入游戏后立即把所有事件图片缓存到浏览器，弹窗秒开） =====
+  _eventImagesPreloaded: false,
+  preloadEventImages() {
+    if (this._eventImagesPreloaded) return;
+    this._eventImagesPreloaded = true;
+    setTimeout(() => {
+      // 先收集 _getEventImage 中所有用到的图片路径（realImages表 + themeImages表 + 兜底图）
+      const paths = new Set();
+      // 兜底
+      paths.add('img/events/ev_millennium_anxiety.jpg');
+      // realImages 表的值
+      const realList = [
+        'img/events/ev_moon_landing.jpg',
+        'img/events/ev_hitler_assassinated.jpg',
+        'img/events/ev_hitler_death.jpg',
+        'img/events/ev_succession_announcement.jpg',
+        'img/events/ev_civil_war_battles.jpg',
+        'img/events/ev_civil_war_burgundy.jpg',
+        'img/events/ev_us_civil_unrest.jpg',
+        'img/events/ev_iberian_crisis.jpg',
+        'img/events/ev_economic_miracle_1970.jpg',
+        'img/events/ev_black_market.jpg',
+        'img/events/ev_nuclear_arms_race.jpg',
+        'img/events/ev_third_world_war_crisis.jpg',
+        'img/events/ev_russia_reunification_threat.jpg',
+        'img/events/ev_russia_unified.jpg',
+        'img/events/ev_west_russia_remnants.jpg',
+        'img/events/ev_japan_sphere_1968.jpg',
+        'img/events/ev_italy_triumvirate.jpg',
+        'img/events/ev_slave_question.jpg',
+        'img/events/ev_reconstruction_plan.jpg',
+        'img/events/ev_heydrich_ss.jpg',
+        'img/events/ev_bormann_stagnation.jpg',
+        'img/events/ev_goring_war.jpg',
+        'img/events/ev_speer_reforms.jpg',
+        'img/events/ev_neutral_zone.jpg',
+        'img/events/ev_atlantropa.jpg',
+        'img/events/ev_china_occupation.jpg',
+        'img/events/ev_korea.jpg',
+        'img/events/ev_india.jpg',
+        'img/events/ev_indonesia.jpg',
+        'img/events/ev_north_africa_rising.jpg',
+        'img/events/ev_middle_east.jpg',
+        'img/events/ev_french_resistance.jpg',
+        'img/events/ev_turkey.jpg',
+        'img/events/ev_latin_america.jpg',
+        'img/events/ev_internet_era.jpg',
+        'img/events/ev_computer_revolution.jpg',
+        'img/events/ev_biotech.jpg',
+        'img/events/ev_environmental_crisis.jpg',
+        'img/events/ev_plague.jpg',
+        'img/events/ev_refugee.jpg',
+        'img/events/ev_demographics.jpg',
+        'img/events/ev_cold_war_finale.jpg',
+        'img/events/ev_military_coup.jpg',
+        'img/events/ev_oil_crisis_1975.jpg',
+        'img/events/ev_decolonization_wave.jpg',
+        'img/events/ev_ofn_diplomacy_1967.jpg',
+        'img/events/ev_student_protests_1962.jpg',
+      ];
+      realList.forEach(p => paths.add(p));
+      // 逐个预加载（低优先级，不阻塞主线程）
+      let i = 0;
+      const arr = Array.from(paths);
+      const next = () => {
+        if (i >= arr.length) {
+          console.log('[预加载] 事件图片全部缓存完毕: ' + arr.length + ' 张');
+          return;
+        }
+        const img = new Image();
+        img.onload = img.onerror = next;
+        img.src = arr[i++];
+      };
+      next();
+    }, 500); // 进入游戏后等500ms再开始，不抢主线程
+  },
+
   // ===== 快速开始：跳过开场动画，直接进入游戏 =====
   quickStart() {
     if (Game.state && !Game.state.ended) {
@@ -203,6 +280,8 @@ const UI = {
     if (game) game.classList.add('active');
     // 渲染
     this.renderAll();
+    // 预加载事件图片（弹窗秒开）
+    this.preloadEventImages();
     // 初始化DataStore
     const initDsPromise = (typeof DataStore !== 'undefined' && DataStore && typeof DataStore.init === 'function')
       ? DataStore.init(Game.state.year)
@@ -226,6 +305,8 @@ const UI = {
     document.getElementById('splash').style.display = 'none';
     document.getElementById('game').classList.add('active');
     this.renderAll();
+    // 预加载事件图片（弹窗秒开）
+    this.preloadEventImages();
     // 首屏初始化 DataStore (加载 story_core.json + 当前年 + 前后1年随机池 ≈ 380KB+7.8MB ≈ 8.2MB)
     // 替代原先加载整个 84MB events_gen.js 的流程，手机端减少内存~76MB
     const initDsPromise = (typeof DataStore !== 'undefined' && DataStore && typeof DataStore.init === 'function')
