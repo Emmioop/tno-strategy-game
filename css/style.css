@@ -735,6 +735,27 @@ body {
   overflow-y: auto;
   box-shadow: var(--shadow-deep), 0 0 60px rgba(168,50,50,0.3);
 }
+
+/* 事件历史插画横幅 */
+.event-image-banner {
+  width: 100%;
+  height: 0;
+  padding-bottom: 37.5%; /* 16:6 比例 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #0a0a0a;
+  filter: sepia(0.3) contrast(1.05) brightness(0.9);
+  border-bottom: 1px solid var(--accent-blood);
+  position: relative;
+}
+.event-image-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(10,10,12,0.6) 100%);
+  pointer-events: none;
+}
 .modal-header {
   padding: 16px 22px;
   background: linear-gradient(180deg, rgba(168,50,50,0.2), transparent);
