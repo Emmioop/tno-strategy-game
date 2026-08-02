@@ -781,6 +781,14 @@ const UI = {
           content.innerHTML = this._tabCache.map.html;
         }
         this._bindMapPostRender.bind(this)();
+        // 绑定势力卡片点击 → 外交面板
+        const UI = this;
+        content.querySelectorAll('.faction-clickable[data-faction]').forEach(card => {
+          card.onclick = () => {
+            const fid = card.dataset.faction;
+            if (fid) UI._showDiplomacyPanel(fid);
+          };
+        });
         break;
       case 'industry':
         content.innerHTML = this.renderIndustry();
@@ -959,16 +967,6 @@ const UI = {
         });
       }
 
-      // 势力卡片点击 → 打开外交面板
-      const factionCards = document.querySelectorAll('.faction-clickable[data-faction]');
-      factionCards.forEach(card => {
-        if (card._diploBound) return;
-        card._diploBound = true;
-        card.onclick = () => {
-          const fid = card.dataset.faction;
-          if (fid) this._showDiplomacyPanel(fid);
-        };
-      });
     }, 0);
   },
 
@@ -1046,7 +1044,6 @@ const UI = {
           <div class="map-container" style="width:100%;height:100%;background:#0e1520;border-radius:4px;overflow:hidden;">
             <canvas id="tno-map-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:grab;"></canvas>
           </div>
-          <div class="map-rotate-hint">📱 建议横屏查看以获得更好体验</div>
         </div>
         <div class="map-overlay-factions">
           <div style="font-family:var(--font-serif);color:var(--accent-gold);letter-spacing:0.1em;font-size:12px;padding:8px 14px 4px;flex-shrink:0;">势力关系 <span style="color:var(--text-muted);font-size:10px">（点击势力进行外交）</span></div>
@@ -1167,11 +1164,30 @@ const UI = {
   },
 
   // ===== 外交面板 =====
+  // ===== 通用模态框 =====
+  showModal(title, html) {
+    const modal = document.getElementById('event-modal');
+    if (!modal) return;
+    modal.innerHTML = `
+      <div class="modal-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+          <div style="font-family:var(--font-serif);font-size:15px;color:var(--accent-gold-bright);letter-spacing:0.08em">${title}</div>
+          <button class="btn" id="modal-close-btn" style="padding:4px 10px;font-size:12px">✕ 关闭</button>
+        </div>
+        <div class="modal-body" style="max-height:60vh;overflow-y:auto">${html}</div>
+      </div>
+    `;
+    modal.classList.add('active');
+    const closeBtn = document.getElementById('modal-close-btn');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.remove('active');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+  },
+
   _showDiplomacyPanel(factionId) {
     const s = Game.state;
     const FACTIONS = (typeof _getFactions === 'function') ? _getFactions() : {};
     const fdata = FACTIONS[factionId];
-    if (!fdata) return;
+    if (!fdata) { this.toast('势力数据不存在', 'error'); return; }
     const rel = s.relations[factionId] || 0;
     const r = s.resources;
     const relText = rel <= -40 ? '敌对' : rel <= -10 ? '冷淡' : rel <= 10 ? '中立' : rel <= 40 ? '友好' : '盟友';

@@ -1354,27 +1354,6 @@ body {
   .map-overlay-factions { max-height: 40vh; }
 }
 
-.map-rotate-hint {
-  display: none;
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  background: rgba(20,20,26,0.85);
-  border: 1px solid var(--accent-gold);
-  color: var(--accent-gold-bright);
-  font-size: 11px;
-  border-radius: 14px;
-  pointer-events: none;
-  z-index: 5;
-  white-space: nowrap;
-}
-/* 竖屏（手机）时显示横屏提示 */
-@media (orientation: portrait) and (max-width: 900px) {
-  .map-rotate-hint { display: block; }
-}
-
 /* 手机端：工具栏紧凑、按钮换行 */
 @media (max-width: 768px) {
   .map-overlay-toolbar { flex-direction: column; align-items: stretch; gap: 6px; padding: 6px 8px; }
