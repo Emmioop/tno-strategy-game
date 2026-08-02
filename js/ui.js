@@ -192,61 +192,51 @@ const UI = {
     if (this._eventImagesPreloaded) return;
     this._eventImagesPreloaded = true;
     setTimeout(() => {
-      // 先收集 _getEventImage 中所有用到的图片路径（realImages表 + themeImages表 + 兜底图）
       const paths = new Set();
-      // 兜底
       paths.add('img/events/ev_millennium_anxiety.jpg');
-      // realImages 表的值
-      const realList = [
-        'img/events/ev_moon_landing.jpg',
-        'img/events/ev_hitler_assassinated.jpg',
-        'img/events/ev_hitler_death.jpg',
-        'img/events/ev_succession_announcement.jpg',
-        'img/events/ev_civil_war_battles.jpg',
-        'img/events/ev_civil_war_burgundy.jpg',
-        'img/events/ev_us_civil_unrest.jpg',
-        'img/events/ev_iberian_crisis.jpg',
-        'img/events/ev_economic_miracle_1970.jpg',
-        'img/events/ev_black_market.jpg',
-        'img/events/ev_nuclear_arms_race.jpg',
-        'img/events/ev_third_world_war_crisis.jpg',
-        'img/events/ev_russia_reunification_threat.jpg',
-        'img/events/ev_russia_unified.jpg',
-        'img/events/ev_west_russia_remnants.jpg',
-        'img/events/ev_japan_sphere_1968.jpg',
-        'img/events/ev_italy_triumvirate.jpg',
-        'img/events/ev_slave_question.jpg',
-        'img/events/ev_reconstruction_plan.jpg',
-        'img/events/ev_heydrich_ss.jpg',
-        'img/events/ev_bormann_stagnation.jpg',
-        'img/events/ev_goring_war.jpg',
-        'img/events/ev_speer_reforms.jpg',
-        'img/events/ev_neutral_zone.jpg',
-        'img/events/ev_atlantropa.jpg',
-        'img/events/ev_china_occupation.jpg',
-        'img/events/ev_korea.jpg',
-        'img/events/ev_india.jpg',
-        'img/events/ev_indonesia.jpg',
-        'img/events/ev_north_africa_rising.jpg',
-        'img/events/ev_middle_east.jpg',
-        'img/events/ev_french_resistance.jpg',
-        'img/events/ev_turkey.jpg',
-        'img/events/ev_latin_america.jpg',
-        'img/events/ev_internet_era.jpg',
-        'img/events/ev_computer_revolution.jpg',
-        'img/events/ev_biotech.jpg',
-        'img/events/ev_environmental_crisis.jpg',
-        'img/events/ev_plague.jpg',
-        'img/events/ev_refugee.jpg',
-        'img/events/ev_demographics.jpg',
-        'img/events/ev_cold_war_finale.jpg',
-        'img/events/ev_military_coup.jpg',
-        'img/events/ev_oil_crisis_1975.jpg',
-        'img/events/ev_decolonization_wave.jpg',
-        'img/events/ev_ofn_diplomacy_1967.jpg',
-        'img/events/ev_student_protests_1962.jpg',
+
+      // 全量预加载：所有已生成的事件图片（291张）
+      const coreList = [
+        'ev_2000_finale','ev_africa_scramble','ev_amur_white_army','ev_anarchy_west_africa','ev_armistice_day','ev_atlantropa','ev_atlantropa_aftermath','ev_atlantropa_consequences',
+        'ev_biotech','ev_black_market','ev_boom_economy','ev_bormann_conservative_coalition','ev_bormann_naval_buildup','ev_bormann_party_machine','ev_bormann_purge_reformers','ev_bormann_stagnation',
+        'ev_bormann_victory_hollow','ev_british_resistance','ev_british_underground','ev_burgundian_crisis','ev_burgundian_infiltration','ev_burgundian_war_result','ev_burgundy_aftermath','ev_burgundy_agents_ofn',
+        'ev_burgundy_confrontation','ev_burgundy_deep_infiltration','ev_burgundy_doomsday_discovery','ev_burgundy_final_shadow','ev_burgundy_knights_state','ev_burgundy_nuclear_test','ev_burgundy_nuclear_theft','ev_burgundy_remnant_terror',
+        'ev_buryat_sablin','ev_china_economic_collapse_1968','ev_china_occupation','ev_china_resistance_1968','ev_chita_monarchist','ev_choose_successor','ev_civil_war_battles','ev_civil_war_burgundy',
+        'ev_civil_war_climax','ev_civil_war_end','ev_cold_war_finale','ev_computer_revolution','ev_congo_dam_crisis','ev_cps_china_inferno','ev_cps_decolonization','ev_cps_korea_uprising',
+        'ev_cps_manchuria_resistance','ev_crimea_hofer','ev_decolonization_wave','ev_degaulle_return','ev_demographic_winter','ev_demographics','ev_economic_bubble_1982','ev_economic_collapse_1975',
+        'ev_economic_miracle_1970','ev_end_of_cold_war','ev_energy_revolution','ev_env_protection','ev_environmental_crisis','ev_european_unification','ev_famine_1976','ev_fascist_legacy',
+        'ev_final_five_years','ev_first_nile_war','ev_flood_1984','ev_free_france_rallying','ev_french_resistance','ev_gibraltar_dam_maintenance','ev_goering_war_economy','ev_goring_airforce_loyalty',
+        'ev_goring_downfall','ev_goring_eastern_campaign','ev_goring_economic_spiral','ev_goring_military_disaster','ev_goring_war','ev_goring_war_plans','ev_great_recession','ev_heydrich_collapse',
+        'ev_heydrich_descent','ev_heydrich_himmler_puppet','ev_heydrich_ss','ev_heydrich_ss_state','ev_heydrich_terror','ev_hitler_assassinated','ev_hitler_death','ev_hofer_crimea_navy',
+        'ev_hofer_pirate_kingdom','ev_iberia_strain','ev_iberian_civil_war_1978','ev_iberian_collapse','ev_iberian_crisis','ev_iberian_federation_strain','ev_india','ev_indian_civil_war',
+        'ev_indonesia','ev_indonesian_independence','ev_indonesian_resistance_1972','ev_internet_era','ev_iranian_revolution','ev_irktusk_yagoda','ev_italian_africa_collapse','ev_italian_colonial_wars',
+        'ev_italian_democracy_movement','ev_italian_economic_crisis','ev_italy_ciano','ev_italy_democratization','ev_italy_leaves_german_sphere','ev_italy_leaves_sphere','ev_italy_triumvirate','ev_japan_democratization_1985',
+        'ev_japan_economic_collapse','ev_japan_economic_crisis','ev_japan_economic_reform_1980','ev_japan_military_coup_1965','ev_japan_navy_army_split','ev_japan_reform','ev_japan_sphere_1968','ev_japan_yen_collapse',
+        'ev_kemerovo_rurik','ev_kolonial_empire','ev_komi_democratic_experiment','ev_korea','ev_korean_uprising_1975','ev_latin_america','ev_lebanon_civil_war','ev_magadan_warlord',
+        'ev_manchukuo_industrialization','ev_mediterranean_crisis','ev_mediterranean_draining','ev_mediterranean_new_order','ev_middle_east','ev_military_coup','ev_millennium_anxiety','ev_millennium_celebration',
+        'ev_moon_landing','ev_neutral_zone','ev_neutral_zone_blackmarket','ev_neutral_zone_diplomats','ev_neutral_zone_refugees','ev_neutral_zone_resolution','ev_new_world_order_1992','ev_north_africa_rising',
+        'ev_nuclear_arms_race','ev_nuclear_proliferation','ev_ofn_diplomacy_1967','ev_ofn_intervention_africa_1976','ev_oil_crisis_1973','ev_oil_crisis_1975','ev_omsk_black_league','ev_pan_european_movement',
+        'ev_peace_accord','ev_plague','ev_political_realignment_1974','ev_pollution_disaster','ev_reconstruction_plan','ev_refugee','ev_rommel_mediation','ev_russia_border_tension',
+        'ev_russia_communist_unified','ev_russia_democratic_unified','ev_russia_fascist_unified','ev_russia_final_resolve','ev_russia_komi_taboritsky','ev_russia_madman_unified','ev_russia_magadan','ev_russia_monarchist_unified',
+        'ev_russia_nuclear_threat','ev_russia_omsk_black_league','ev_russia_pressure_1979','ev_russia_recovery_1','ev_russia_reunification_threat','ev_russia_unified','ev_saharan_war','ev_samara_vlasov',
+        'ev_siberian_black_army','ev_slave_question','ev_somali_ethiopian_war','ev_south_africa_crisis','ev_south_african_war','ev_space_race_1975','ev_spanish_civil_unrest','ev_speer_economic_blueprint',
+        'ev_speer_ofn_backchannel','ev_speer_old_guard_resistance','ev_speer_reforms','ev_speer_reforms_deep','ev_speer_slave_reform','ev_speer_student_guard','ev_speer_victory_consolidation','ev_speidal_neutral_zone',
+        'ev_speidel_neutral_zone','ev_student_protests_1962','ev_succession_announcement','ev_suez_crisis','ev_sverdlovsk_rokossovsky','ev_technological_revolution','ev_third_world_war_crisis','ev_tomsk_scholar_republic',
+        'ev_totalist_spread','ev_triumvirate_formation','ev_triumvirate_fracture','ev_turkey','ev_turkey_colonies','ev_turkey_coup_attempt','ev_turkey_revolt','ev_type_air_show',
+        'ev_type_arsenal_explosion','ev_type_art_looting','ev_type_assassination_plot','ev_type_black_market','ev_type_border_clash','ev_type_camp_riot','ev_type_civil_rights','ev_type_codebreaking',
+        'ev_type_currency_reform','ev_type_defection','ev_type_diplomatic_crisis','ev_type_diplomatic_wedding','ev_type_economic_crisis','ev_type_espionage','ev_type_food_shortage','ev_type_gas_leak',
+        'ev_type_harvest','ev_type_industrial_accident','ev_type_infiltration','ev_type_intelligence_leak','ev_type_mark_devaluation','ev_type_military_mutiny','ev_type_military_parade','ev_type_mine_collapse',
+        'ev_type_movie_premiere','ev_type_navy_army_rivalry','ev_type_nuclear_accident','ev_type_nuclear_test','ev_type_occult','ev_type_paranormal','ev_type_plague','ev_type_propaganda',
+        'ev_type_religious_conflict','ev_type_rocket_failure','ev_type_satellite_launch','ev_type_slave_auction','ev_type_slave_revolt','ev_type_space_race','ev_type_sports','ev_type_ss_activity',
+        'ev_type_state_funeral','ev_type_strike','ev_type_student_protest','ev_type_submarine','ev_type_tech_breakthrough','ev_type_ufo','ev_type_underground','ev_type_warlord',
+        'ev_type_weather_anomaly','ev_us_civil_rights_1963','ev_us_civil_rights_1965','ev_us_civil_rights_legacy','ev_us_civil_unrest','ev_us_detente_1980','ev_us_economic_recovery_1972','ev_us_kennedy_assassination',
+        'ev_us_new_era','ev_us_ofn_paralysis','ev_us_presidential_election_1968','ev_us_presidential_election_1988','ev_us_race_riots','ev_us_recovery','ev_us_second_civil_war','ev_us_space_program_1975',
+        'ev_vyatka_monarchy','ev_war_aftermath','ev_west_russia_remnants','ev_white_international','ev_worker_uprising','ev_ww2_anniversary','rnd_assassination','rnd_coup',
+        'rnd_death','rnd_disaster','rnd_election','rnd_festival','rnd_holiday','rnd_parade','rnd_protest','rnd_scandal',
+        'rnd_summit','rnd_technical_victory','rnd_wedding',
       ];
-      realList.forEach(p => paths.add(p));
+      coreList.forEach(id => paths.add('img/events/' + id + '.jpg'));
+
       // 逐个预加载（低优先级，不阻塞主线程）
       let i = 0;
       const arr = Array.from(paths);
@@ -260,7 +250,7 @@ const UI = {
         img.src = arr[i++];
       };
       next();
-    }, 500); // 进入游戏后等500ms再开始，不抢主线程
+    }, 500);
   },
 
   // ===== 快速开始：跳过开场动画，直接进入游戏 =====
@@ -644,7 +634,7 @@ const UI = {
   showTutorial() {
     const modal = document.getElementById('tutorial-modal');
     modal.innerHTML = `
-      <div style="position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;" onclick="if(event.target===this){document.getElementById('tutorial-modal').innerHTML='';}">
+      <div style="position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;" onclick="if(event.target===this){document.getElementById('tutorial-modal').innerHTML='';}">
         <div class="tutorial-modal" style="background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:4px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;margin:auto;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
             <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:20px;letter-spacing:0.1em;">游戏教程</h2>
@@ -712,7 +702,7 @@ const UI = {
 
           </div>
 
-          <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="display:block;width:100%;margin-top:20px;padding:12px;background:linear-gradient(180deg,rgba(168,50,50,0.25),rgba(168,50,50,0.08));border:1px solid var(--accent-blood);color:var(--accent-gold-bright);font-family:var(--font-serif);font-size:15px;letter-spacing:0.15em;cursor:pointer;border-radius:2px;">明白了，开始游戏</button>
+          <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="display:block;width:100%;margin-top:20px;padding:12px;background:linear-gradient(180deg,rgba(168,50,50,0.25),rgba(168,50,50,0.08));border:1px solid var(--accent-blood);color:var(--accent-gold-bright);font-family:var(--font-serif);font-size:15px;letter-spacing:0.15em;cursor:pointer;border-radius:2px;">明白了</button>
         </div>
       </div>
     `;
@@ -2829,6 +2819,69 @@ const UI = {
     };
     if (realImages[ev.id]) return realImages[ev.id];
 
+    // ===== 自动匹配与事件ID同名的图片（img/events/ev_id.jpg）=====
+    if (id && !id.startsWith('ev_gen_')) return 'img/events/' + id + '.jpg';
+
+    // ===== ev_gen_* 通用事件：按标题中的事件类型精准映射 =====
+    // 标题格式为 "城市名：事件类型"，提取事件类型直接对应 ev_type_*.jpg
+    if (id.startsWith('ev_gen_') && ev.title) {
+      const titleTypeMap = {
+        '马克贬值': 'ev_type_mark_devaluation',
+        '美国民权运动': 'ev_type_civil_rights',
+        '国葬': 'ev_type_state_funeral',
+        '密码破译': 'ev_type_codebreaking',
+        '神秘学活动': 'ev_type_occult',
+        '外交危机': 'ev_type_diplomatic_crisis',
+        '军火库爆炸': 'ev_type_arsenal_explosion',
+        '黑市走私': 'ev_type_black_market',
+        '航空展': 'ev_type_air_show',
+        '奴隶起义': 'ev_type_slave_revolt',
+        '人造卫星发射': 'ev_type_satellite_launch',
+        '宗教冲突': 'ev_type_religious_conflict',
+        '超自然现象调查': 'ev_type_paranormal',
+        '艺术品掠夺': 'ev_type_art_looting',
+        '宣传战': 'ev_type_propaganda',
+        '火箭试射失败': 'ev_type_rocket_failure',
+        '国防军哗变': 'ev_type_military_mutiny',
+        '瘟疫爆发': 'ev_type_plague',
+        '技术突破': 'ev_type_tech_breakthrough',
+        '边境冲突': 'ev_type_border_clash',
+        '高官叛逃': 'ev_type_defection',
+        '太空竞赛突破': 'ev_type_space_race',
+        '间谍案': 'ev_type_espionage',
+        '集中营暴动': 'ev_type_camp_riot',
+        '体育赛事': 'ev_type_sports',
+        '罢工潮': 'ev_type_strike',
+        '地下抵抗': 'ev_type_underground',
+        '毒气泄漏': 'ev_type_gas_leak',
+        '核设施事故': 'ev_type_nuclear_accident',
+        '阅兵式': 'ev_type_military_parade',
+        '粮食丰收': 'ev_type_harvest',
+        '情报泄露': 'ev_type_intelligence_leak',
+        '学生示威': 'ev_type_student_protest',
+        '潜艇失踪': 'ev_type_submarine',
+        '勃艮第渗透': 'ev_civil_war_burgundy',
+        '俄罗斯军阀动态': 'ev_type_warlord',
+        '经济危机': 'ev_type_economic_crisis',
+        '党卫军异动': 'ev_type_ss_activity',
+        '矿井坍塌': 'ev_type_mine_collapse',
+        '核试验': 'ev_type_nuclear_test',
+        '奴隶拍卖': 'ev_type_slave_auction',
+        '气象异常': 'ev_type_weather_anomaly',
+        'UFO目击': 'ev_type_ufo',
+        '日本陆海对立': 'ev_type_navy_army_rivalry',
+        '电影首映': 'ev_type_movie_premiere',
+        '粮食短缺': 'ev_type_food_shortage',
+        '外交婚礼': 'ev_type_diplomatic_wedding',
+        '货币改革': 'ev_type_currency_reform',
+        '暗杀阴谋': 'ev_type_assassination_plot',
+        '工业事故': 'ev_type_industrial_accident',
+      };
+      for (const [suffix, imgId] of Object.entries(titleTypeMap)) {
+        if (ev.title.includes(suffix)) return 'img/events/' + imgId + '.jpg';
+      }
+    }
+
     // 复用共享主题匹配逻辑
     const theme = this._matchEventTheme(ev);
 
@@ -2878,6 +2931,8 @@ const UI = {
       protest: 'img/events/ev_student_protests_1962.jpg',
       slave: 'img/events/ev_slave_question.jpg',
       reform: 'img/events/ev_reconstruction_plan.jpg',
+      crime: 'img/events/ev_totalist_spread.jpg',
+      death: 'img/events/ev_hitler_death.jpg',
     };
     if (themeImages[theme]) return themeImages[theme];
 
@@ -2940,6 +2995,16 @@ const UI = {
       { id: 'slave',    kw: ['奴隶','奴役','解放','slave','奴隶制','枷锁'] },
       { id: 'reform',   kw: ['改革','自由化','开放','reform','改革派','重建','蓝图'] },
       { id: 'military', kw: ['军队','军备','军事','国防','建军','military','军力','军靴','政变'] },
+      // 新增：通用事件标题关键词匹配
+      { id: 'technology', kw: ['航空展','工业事故','火箭试射','卫星发射','技术突破','广播','雷达','隧道','水坝','工厂','产业','工业','科技'] },
+      { id: 'economy', kw: ['经济危机','经济崩溃','经济泡沫','金融危机','经济复苏','通胀','萧条','繁荣','黑市','经济'] },
+      { id: 'nuclear', kw: ['核试验','核事故','核扩散','核威慑','核武器','熔毁','辐射','核'] },
+      { id: 'environment', kw: ['污染','环境','生态','灾害','灾难','洪水','饥荒','干旱','环保','地震'] },
+      { id: 'protest', kw: ['示威','抗议','罢工','骚乱','兵变','起义','叛乱','暴动','游行'] },
+      { id: 'diplomacy', kw: ['峰会','外交','谈判','协定','条约','会议','会晤','访问','密使','斡旋'] },
+      { id: 'crime', kw: ['丑闻','腐败','泄密','间谍','渗透','阴谋','暗杀','刺杀','走私','黑市'] },
+      { id: 'death', kw: ['葬礼','国葬','死亡','逝世','遇难','牺牲','哀悼','纪念'] },
+      { id: 'burgundy', kw: ['勃艮第渗透','勃艮第'] },
     ];
     for (const r of rules) {
       if (r.kw.some(k => text.includes(k) || id.includes(k))) return r.id;
@@ -3004,6 +3069,8 @@ const UI = {
       slave: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a1a14'/><stop offset='1' stop-color='#0f0808'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='90' r='25' fill='#4a3a2a' opacity='0.6'/><line x1='70' y1='60' x2='110' y2='60' stroke='#3a3a3a' stroke-width='2'/></svg>`,
       reform: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a2a1a'/><stop offset='1' stop-color='#0a140a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='60' rx='120' ry='50' fill='#e8e0a0' opacity='0.3'/><path d='M230 160 L240 130 L250 160 Z' fill='#6a8a4a' opacity='0.5'/></svg>`,
       military: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><path d='M100 160 L100 100 L120 160 Z' fill='#1a1a1a'/><circle cx='110' cy='85' r='12' fill='#2a2a2a'/><path d='M260 160 L260 100 L280 160 Z' fill='#1a1a1a'/></svg>`,
+      crime: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1a0a0a'/><stop offset='1' stop-color='#050505'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><circle cx='240' cy='90' r='30' fill='#2a1a1a'/><path d='M230 80 L250 80 L255 95 L240 110 L225 95 Z' fill='#5a2a2a' opacity='0.7'/></svg>`,
+      death: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2a2a'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><rect x='220' y='60' width='40' height='100' fill='#1a1a1a'/><ellipse cx='240' cy='75' rx='25' ry='10' fill='#3a3a3a' opacity='0.5'/></svg>`,
       default: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 180'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2014'/><stop offset='1' stop-color='#0a0808'/></linearGradient></defs><rect width='480' height='180' fill='url(#g)'/><ellipse cx='240' cy='90' rx='80' ry='50' fill='#c9a84a' opacity='0.2'/><circle cx='240' cy='75' r='15' fill='#3a2a1a'/></svg>`,
     };
   },
@@ -3034,11 +3101,13 @@ const UI = {
     }).join('');
 
     const imgSrc = this._getEventImage(ev);
+    const svgFallback = this._getEventSvgFallback(ev);
 
     modal.innerHTML = `
       <div class="modal-box">
         <div class="event-image-banner-wrap">
-          <img class="event-image-banner" src="${imgSrc}" alt="历史图片" />
+          <img class="event-image-banner" src="${imgSrc}" alt="历史图片"
+               onerror="this.onerror=null;this.src='${svgFallback}';" />
         </div>
         <div class="modal-header">
           <div class="m-date">${dateStr}</div>
