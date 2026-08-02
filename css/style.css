@@ -1716,38 +1716,26 @@ body {
 .shop-body {
   display: grid; grid-template-columns: 1.05fr 1fr; gap: 10px;
 }
+/* 对话框和菜单都不设固定高度/独立滚动，让整个页面只有一个滚动条 */
 .shop-dialog {
   background: #0d0d0d; border: 1px solid var(--border); border-radius: 6px;
-  padding: 12px 14px; height: 260px;
-  display: flex; flex-direction: column;
+  padding: 12px 14px;
 }
 .shop-dialog-bubble {
   font-size: 13px; color: var(--text-primary); line-height: 1.75;
   padding: 10px 12px; background: var(--bg-panel);
   border-left: 3px solid var(--accent-gold); border-radius: 0 4px 4px 0;
-  overflow-y: auto; flex: 1; padding-bottom: 180px;
-}
-.shop-dialog-bubble::-webkit-scrollbar,
-.shop-menu-list::-webkit-scrollbar { width: 6px; }
-.shop-dialog-bubble::-webkit-scrollbar-thumb,
-.shop-menu-list::-webkit-scrollbar-thumb {
-  background: var(--border); border-radius: 3px;
-}
-.shop-dialog-bubble::-webkit-scrollbar-thumb:hover,
-.shop-menu-list::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-gold);
 }
 .shop-menu {
   background: #0a0a0a; border: 1px solid var(--border); border-radius: 6px;
-  padding: 10px 12px; height: 260px;
-  display: flex; flex-direction: column;
+  padding: 10px 12px;
 }
 .shop-menu-title {
   font-family: var(--font-serif); color: var(--accent-gold-bright);
   font-size: 12.5px; letter-spacing: 0.08em; margin-bottom: 6px;
-  padding-bottom: 6px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
 }
-.shop-menu-list { flex: 1; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; padding-right: 2px; padding-bottom: 180px; }
+.shop-menu-list { display: flex; flex-direction: column; gap: 3px; padding-right: 2px; }
 .sm-item {
   display: flex; align-items: flex-start; gap: 8px;
   padding: 7px 10px; border-radius: 3px; cursor: pointer;
@@ -1763,8 +1751,6 @@ body {
 
 @media (max-width: 640px) {
   .shop-body { grid-template-columns: 1fr; }
-  .shop-dialog { height: auto; min-height: 120px; max-height: 220px; }
-  .shop-menu { height: auto; max-height: 380px; }
 }
 
 .dbg-btn {
