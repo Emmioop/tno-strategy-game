@@ -675,9 +675,19 @@ body {
 .news-item .news-date { font-size: 10px; color: var(--accent-gold); font-family: var(--font-mono); }
 .news-item .news-text { color: var(--text-secondary); margin-top: 3px; font-family: var(--font-serif); }
 .news-item.world { border-left-color: var(--accent-steel); }
-.news-item.crisis { border-left-color: var(--accent-blood-bright); }
 .news-item.economy { border-left-color: var(--accent-toxic); }
 .news-item.tech { border-left-color: var(--accent-gold); }
+.news-item.crisis {
+  border-left-color: var(--accent-blood-bright);
+  background: linear-gradient(90deg, rgba(168,50,50,0.15), transparent);
+  border-color: rgba(200,70,70,0.4);
+  animation: crisis-pulse 2.6s ease-in-out infinite;
+}
+.news-item.crisis .news-text { color: var(--text-primary); font-weight: 500; }
+@keyframes crisis-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(212,72,72,0); }
+  50%      { box-shadow: 0 0 8px rgba(212,72,72,0.35); }
+}
 
 #action-bar {
   border-top: 1px solid var(--border);

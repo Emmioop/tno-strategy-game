@@ -1156,50 +1156,141 @@ const Game = {
   },
 
   // ===== 检查结局条件 =====
+  // 失败类结局（前四种）不再"一回合秒杀"：通过累计回合数触发，且提供新闻预警
   checkEnding() {
     const s = this.state;
     const r = s.resources;
     const diff = this.getDiff();
 
-    // 核毁灭结局
+    // 初始化危机计数器（首次运行时）
+    if (s._crisis === undefined) s._crisis = {
+      stab0: 0,      // 稳定度低于阈值连续回合
+      debt: 0,       // 负债超过阈值连续回合
+      deter: 0,      // 威慑低于阈值且敌对关系连续回合
+    };
+    const cc = s._crisis;
+
+    // 核毁灭结局（无法挽回，直接触发）
     if (s.flags.nuclear_holocaust) {
       this.endGame('nuclear_holocaust');
       return;
     }
 
-    // 稳定度归零 - 崩溃（简单难度有保护）
-    if (r.stability <= diff.stabFloor && r.stability <= 0) {
-      this.endGame('collapse');
-      return;
+    // ============ 1. 稳定崩溃 ============
+    // 阶段 1：低于 15 连续 3 回合 → 新闻预警
+    // 阶段 2：低于 10 连续 5 回合 → 高危新闻
+    // 阶段 3：≤ 0 且超过难度保护线 → 触发崩溃
+    const stabDangerThresh = 15;
+    const stabCriticalThresh = 10;
+    let collapseTriggered = false;
+
+    if (r.stability <= stabDangerThresh) {
+      cc.stab0++;
+      // 预警级别 1：低稳定持续 3 回合
+      if (cc.stab0 === 3 && r.stability > stabCriticalThresh) {
+        this.addNews('⚠ 政局动荡：民众支持率持续走低，街头抗议频发，地方官员呼吁改革', 'crisis');
+      }
+      // 预警级别 2：稳定 < 10 持续 5 回合
+      if (cc.stab0 >= 5 && r.stability <= stabCriticalThresh && r.stability > 0) {
+        if (cc.stab0 === 5 || cc.stab0 % 4 === 0) {
+          this.addNews('🚨 危机警报：稳定度极低，奴隶暴动、黑市失控、党卫军蠢蠢欲动！请立即提高稳定度！', 'crisis');
+        }
+      }
+      // 真正的崩溃触发：稳定归零且超过难度保护
+      if (r.stability <= diff.stabFloor && r.stability <= 0) {
+        // 需至少 2 回合低稳定才崩（避免一回合意外归零直接崩）
+        if (cc.stab0 >= 2 || diff.stabFloor >= 0) {
+          // 简单难度保护：如果 stabFloor>0，给玩家一个最后新闻
+          if (this.difficulty === 'easy') {
+            this.addNews('💀 帝国的心脏停止跳动 — 帝国崩塌！', 'crisis');
+          }
+          collapseTriggered = true;
+          this.endGame('collapse');
+          return;
+        }
+      }
+    } else {
+      if (cc.stab0 > 0) {
+        if (cc.stab0 >= 5) {
+          this.addNews('✅ 局势回稳：政府成功平息风波，民心渐归', 'economy');
+        }
+        cc.stab0 = 0;
+      }
     }
 
-    // 资金极度负债 - 经济崩溃
-    const debtLimit = this.difficulty === 'hell' ? -100 : (this.difficulty === 'hard' ? -120 : -150);
-    if (r.money <= debtLimit) {
-      this.endGame('economic_collapse');
-      return;
+    // ============ 2. 经济崩溃 ============
+    // 简单/普通 连续 3 回合低于 -100  或  1回合低于 -250  才爆
+    // 困难/地狱  连续 3 回合低于 -80   或  1回合低于 -200
+    const softDebt = this.difficulty === 'hell' ? -80 : (this.difficulty === 'hard' ? -80 : -100);
+    const hardDebt = this.difficulty === 'hell' ? -200 : -250;
+    let econTriggered = false;
+
+    if (r.money <= softDebt) {
+      cc.debt++;
+      // 连续 2 回合：新闻警告
+      if (cc.debt === 2) {
+        this.addNews('⚠ 赤字警报：帝国财政极度紧张，借贷方开始怀疑偿债能力，国库空虚！', 'crisis');
+      }
+      // 连续 3 回合以上：每隔几回合再催一下
+      if (cc.debt >= 3 && (cc.debt === 3 || cc.debt % 4 === 0)) {
+        this.addNews('🚨 帝国赤字严重：军队薪资拖欠、奴隶口粮不足、各省上缴萎缩，濒临破产！', 'crisis');
+      }
+      // 最终触发：连续 3 回合 软阈值 OR 一次 硬阈值
+      if (cc.debt >= 3 || r.money <= hardDebt) {
+        econTriggered = true;
+        this.endGame('economic_collapse');
+        return;
+      }
+    } else {
+      if (cc.debt > 0) {
+        if (cc.debt >= 2) this.addNews('✅ 财政回正：赤字警报解除', 'economy');
+        cc.debt = 0;
+      }
     }
 
-    // 威慑过低且敌对 - 被入侵
-    const deterThreshold = diff.deterFloor;
-    if (r.deterrence <= deterThreshold && (s.relations.russia < -50 || s.relations.ofn < -50)) {
-      this.endGame('invasion');
-      return;
+    // ============ 3. 威慑崩盘被入侵 ============
+    // 威慑低迷 + 敌对关系 连续 4 回合 → 触发入侵
+    const deterSoft = Math.max(diff.deterFloor, 15);   // 普通 15
+    const hasHostile = s.relations.russia < -50 || s.relations.ofn < -50;
+
+    if (r.deterrence <= deterSoft && hasHostile) {
+      cc.deter++;
+      if (cc.deter === 2) {
+        const enemy = s.relations.russia < -50 ? '俄罗斯' : '美国';
+        this.addNews(`⚠ 外交危机：${enemy}已察觉帝国威慑疲软，边境部署开始增加！`, 'crisis');
+      }
+      if (cc.deter === 4) {
+        const enemy = s.relations.russia < -50 ? '俄罗斯' : '美国';
+        this.addNews(`🚨 战争预警：${enemy}情报判断帝国不堪一击！入侵正在准备，必须立即提升威慑！`, 'crisis');
+      }
+      // 连续 6 回合（1年半）低迷 → 真正入侵
+      if (cc.deter >= 6) {
+        this.endGame('invasion');
+        return;
+      }
+    } else {
+      if (cc.deter > 0) {
+        if (cc.deter >= 2) this.addNews('✅ 局势缓和：威慑恢复/敌对关系缓和，边境降温', 'world');
+        cc.deter = 0;
+      }
     }
 
-    // 地狱难度额外：威慑极低直接崩溃
+    // 地狱难度：威慑 ≤ 0 连续 2 回合直接崩（已含敌对条件，不单独判）
     if (this.difficulty === 'hell' && r.deterrence <= 0) {
-      this.endGame('invasion');
-      return;
+      cc.hellDeter = (cc.hellDeter || 0) + 1;
+      if (cc.hellDeter >= 2) {
+        this.endGame('invasion');
+        return;
+      }
+    } else if (cc.hellDeter) {
+      cc.hellDeter = 0;
     }
 
-    // 到达2000年 - 根据状态判定结局
+    // ============ 到达2000年 - 根据状态判定结局 ============
     if (s.year >= 2001) {
       this.determineFinalEnding();
       return;
     }
-
-    // 提前到达2000Q4
     if (s.year === 2000 && s.quarter === 4 && s.turn >= s.totalTurns) {
       this.determineFinalEnding();
       return;
