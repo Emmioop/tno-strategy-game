@@ -2556,13 +2556,9 @@ const UI = {
       return;
     }
 
-    // 菜单项点击
+    // 菜单项点击（不要碰 mousedown/touchstart，会阻止页面/菜单的触摸滚动导致"卡住"）
     wrap.querySelectorAll('[data-sm-cmd]').forEach(el => {
-      // 在 mousedown/touchstart 阶段就阻止默认行为，防止浏览器给元素加焦点并自动滚动
-      el.addEventListener('mousedown', (e) => { e.preventDefault(); }, { passive: false });
-      el.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
       el.onclick = (e) => {
-        e.preventDefault();
         e.stopPropagation();
         this._shopHandleCmd(el.dataset.smCmd);
       };
