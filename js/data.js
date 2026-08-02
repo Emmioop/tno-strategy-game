@@ -15,8 +15,8 @@ const BUILDINGS = {
     desc: '生产从收音机到合成香皂的一切。让帝国的人民暂时忘记饥饿。',
     cost: 120,
     buildTime: 2,
-    effects: { money: 1 },
-    maint: 3,
+    effects: { money: 7 },
+    maint: 2,
     category: '经济'
   },
   infrastructure: {
@@ -26,8 +26,8 @@ const BUILDINGS = {
     desc: '高速公路、铁路与电网。让帝国的血管重新跳动。',
     cost: 180,
     buildTime: 3,
-    effects: { money: 1 },
-    maint: 4,
+    effects: { money: 9 },
+    maint: 3,
     category: '经济'
   },
   agriculture: {
@@ -37,7 +37,7 @@ const BUILDINGS = {
     desc: '在东方总督辖区开垦的土地。粮食是一切的基础。',
     cost: 105,
     buildTime: 2,
-    effects: { manpower: 1 },
+    effects: { manpower: 3 },
     maint: 1,
     category: '民生'
   },
@@ -48,8 +48,8 @@ const BUILDINGS = {
     desc: '技术专利卖钱，为事件中的突破打基础。',
     cost: 240,
     buildTime: 3,
-    effects: { money: 1 },
-    maint: 3,
+    effects: { research: 4, money: 2 },
+    maint: 2,
     category: '科技'
   },
   university: {
@@ -59,7 +59,7 @@ const BUILDINGS = {
     desc: '培养工程师与官僚。提供额外人力。',
     cost: 165,
     buildTime: 3,
-    effects: { manpower: 1 },
+    effects: { manpower: 2, research: 2 },
     maint: 2,
     category: '民生'
   },
@@ -70,7 +70,7 @@ const BUILDINGS = {
     desc: '为帝国工人提供的住所。',
     cost: 90,
     buildTime: 1,
-    effects: { manpower: 1 },
+    effects: { manpower: 2, money: 1 },
     maint: 1,
     category: '民生'
   },
@@ -81,8 +81,8 @@ const BUILDINGS = {
     desc: '管控黑市、发行马克。',
     cost: 210,
     buildTime: 3,
-    effects: { money: 2 },
-    maint: 2,
+    effects: { money: 10 },
+    maint: 3,
     category: '经济'
   },
   propaganda: {
@@ -92,8 +92,8 @@ const BUILDINGS = {
     desc: '戈培尔的遗产。报纸收入微薄。',
     cost: 135,
     buildTime: 2,
-    effects: { money: 1 },
-    maint: 2,
+    effects: { stability: 2, money: 2 },
+    maint: 1,
     category: '政治'
   },
 
@@ -106,8 +106,8 @@ const BUILDINGS = {
     desc: '军火出口，微薄收入。',
     cost: 150,
     buildTime: 2,
-    effects: { money: 1 },
-    maint: 5,
+    effects: { militaryPower: 2, money: 1 },
+    maint: 3,
     category: '陆军'
   },
   tank_factory: {
@@ -117,8 +117,8 @@ const BUILDINGS = {
     desc: '重型工业，高薪就业。',
     cost: 270,
     buildTime: 4,
-    effects: { money: 2 },
-    maint: 5,
+    effects: { militaryPower: 4, money: 2 },
+    maint: 4,
     category: '陆军'
   },
   aircraft_factory: {
@@ -128,8 +128,8 @@ const BUILDINGS = {
     desc: '高附加值产业。',
     cost: 300,
     buildTime: 4,
-    effects: { money: 2 },
-    maint: 7,
+    effects: { militaryPower: 3, deterrence: 2, money: 2 },
+    maint: 5,
     category: '空军'
   },
   shipyard: {
@@ -139,8 +139,8 @@ const BUILDINGS = {
     desc: '大型造船厂。',
     cost: 360,
     buildTime: 5,
-    effects: { money: 2 },
-    maint: 6,
+    effects: { militaryPower: 2, deterrence: 3, money: 2 },
+    maint: 5,
     category: '海军'
   },
   missile_base: {
@@ -150,8 +150,8 @@ const BUILDINGS = {
     desc: '基地提供就业。',
     cost: 450,
     buildTime: 5,
-    effects: { money: 1 },
-    maint: 7,
+    effects: { deterrence: 5, nukeDeter: 1 },
+    maint: 5,
     category: '战略'
   },
   nuclear_facility: {
@@ -161,8 +161,8 @@ const BUILDINGS = {
     desc: '唯一能直接产出核弹的设施（极慢）。',
     cost: 675,
     buildTime: 6,
-    effects: { nukes: 0.1, money: 1 },
-    maint: 10,
+    effects: { nukes: 0.15, nukeDeter: 3, money: 2 },
+    maint: 6,
     category: '战略',
     requires: 'nuclear_tech'
   },
@@ -173,8 +173,8 @@ const BUILDINGS = {
     desc: '兵营提供就业。',
     cost: 195,
     buildTime: 3,
-    effects: { manpower: 1, money: 1 },
-    maint: 7,
+    effects: { militaryPower: 2, manpower: 1, money: 1 },
+    maint: 3,
     category: '陆军'
   },
   air_defense: {
@@ -184,8 +184,8 @@ const BUILDINGS = {
     desc: '防空系统维护岗位。',
     cost: 225,
     buildTime: 3,
-    effects: { money: 1 },
-    maint: 4,
+    effects: { deterrence: 3, militaryPower: 1 },
+    maint: 2,
     category: '空军'
   },
   wunderwaffe: {
@@ -195,8 +195,8 @@ const BUILDINGS = {
     desc: '等事件突破，不直接产出。',
     cost: 525,
     buildTime: 6,
-    effects: { money: 2 },
-    maint: 8,
+    effects: { research: 5, deterrence: 1 },
+    maint: 6,
     category: '战略',
     requires: 'advanced_tech'
   },
@@ -209,8 +209,8 @@ const BUILDINGS = {
     desc: '混凝土巨兽沿北海与波罗的海延绵，炮口朝向永远不来的登陆。它们存在的意义，是让敌人知道代价。',
     cost: 200,
     buildTime: 3,
-    effects: { deterrence: 1 },
-    maint: 3,
+    effects: { deterrence: 3 },
+    maint: 2,
     category: '国防'
   },
   imperial_broadcasting: {
@@ -220,8 +220,8 @@ const BUILDINGS = {
     desc: '从日耳曼尼亚到东方总督辖区，广播电波穿越铁幕。每一台收音机都是帝国的延伸——也是它最脆弱的神经。',
     cost: 150,
     buildTime: 2,
-    effects: { stability: 1 },
-    maint: 2,
+    effects: { stability: 3, money: 1 },
+    maint: 1,
     category: '文化'
   },
   national_highway: {
@@ -231,7 +231,7 @@ const BUILDINGS = {
     desc: '帝国高速公路网横贯欧陆，从大西洋到乌拉尔。柏油之下埋着战俘的骨头，柏油之上跑着新贵的大众汽车。',
     cost: 220,
     buildTime: 3,
-    effects: { money: 1 },
+    effects: { money: 10, stability: 1 },
     maint: 3,
     category: '经济'
   },
@@ -242,8 +242,8 @@ const BUILDINGS = {
     desc: '阿尔卑斯山融雪汇入涡轮，电流顺着铜线流向鲁尔区的工厂。水坝下的村庄已无人记得名字。',
     cost: 280,
     buildTime: 4,
-    effects: { money: 2 },
-    maint: 4,
+    effects: { money: 12, research: 1 },
+    maint: 3,
     category: '经济'
   },
   synthetic_oil_plant: {
@@ -253,8 +253,8 @@ const BUILDINGS = {
     desc: '当罗马尼亚的油井不再可靠，帝国的化学家从煤中榨出黑色的命脉。每一升合成油，都燃烧着五倍于天然的代价。',
     cost: 300,
     buildTime: 4,
-    effects: { money: 1 },
-    maint: 5,
+    effects: { money: 6, deterrence: 1, stability: 1 },
+    maint: 4,
     category: '军事'
   },
   agricultural_collective: {
@@ -264,7 +264,7 @@ const BUILDINGS = {
     desc: '东方土地上的集体农庄。德意志移民与斯拉夫劳工在同一片黑土上弯腰，收割着不属于任何人的麦穗。',
     cost: 120,
     buildTime: 2,
-    effects: { manpower: 1 },
+    effects: { manpower: 3, money: 1 },
     maint: 1,
     category: '民生'
   },
@@ -275,7 +275,7 @@ const BUILDINGS = {
     desc: '北海的雾中，拖网渔船颠簸着归来。鱼罐头运往前线，鱼骨磨成肥料——大海从不拒绝帝国的索取。',
     cost: 90,
     buildTime: 1,
-    effects: { manpower: 1 },
+    effects: { manpower: 2, money: 1 },
     maint: 1,
     category: '民生'
   },
@@ -286,8 +286,8 @@ const BUILDINGS = {
     desc: '棉纱在纺锤间飞转，缝制着军装与平民的衬衫。机器昼夜不息，工人三班倒，肺里积满棉尘。',
     cost: 110,
     buildTime: 2,
-    effects: { money: 1 },
-    maint: 2,
+    effects: { money: 6 },
+    maint: 1,
     category: '经济'
   },
   chemical_plant: {
@@ -297,8 +297,8 @@ const BUILDINGS = {
     desc: '法本工业的遗产。从染料到炸药，从化肥到毒气——化学家的坩埚里熬着帝国的双重面孔。',
     cost: 250,
     buildTime: 3,
-    effects: { research: 1 },
-    maint: 4,
+    effects: { research: 4, money: 3 },
+    maint: 3,
     category: '科技'
   },
   pharmaceutical_lab: {
@@ -308,8 +308,8 @@ const BUILDINGS = {
     desc: '无菌实验室里培养着青霉素与希望。在前线，一针抗生素能换回一条命——这正是帝国最稀缺的货币。',
     cost: 200,
     buildTime: 3,
-    effects: { manpower: 1 },
-    maint: 3,
+    effects: { manpower: 2, research: 2, money: 2 },
+    maint: 2,
     category: '科技'
   },
   luxury_goods: {
@@ -319,7 +319,7 @@ const BUILDINGS = {
     desc: '为还能负担得起的人而开。水晶、香水、丝绸领带——让纳粹新贵们忘记自己曾在哪条战壕里啃过黑面包。',
     cost: 180,
     buildTime: 2,
-    effects: { money: 1 },
+    effects: { money: 10 },
     maint: 2,
     category: '经济'
   },
@@ -330,7 +330,7 @@ const BUILDINGS = {
     desc: '绿色的邮政卡车穿越废墟与新生。信件是家书的载体，也是审查官的猎场——每一封都拆开过两次。',
     cost: 100,
     buildTime: 2,
-    effects: { stability: 1 },
+    effects: { stability: 2, manpower: 1, money: 1 },
     maint: 1,
     category: '民生'
   },
@@ -341,7 +341,7 @@ const BUILDINGS = {
     desc: '从格陵兰到高加索，气象站织成一张看不见的网。预报风向，也预报到哪里投毒气最有效。',
     cost: 130,
     buildTime: 2,
-    effects: { research: 1 },
+    effects: { research: 3, deterrence: 1 },
     maint: 1,
     category: '科技'
   },
@@ -352,7 +352,7 @@ const BUILDINGS = {
     desc: '地质学家带着钻头走遍东方。他们在寻找铁矿、油田与稀土——也在为帝国的棺材钉最后一颗钉子。',
     cost: 160,
     buildTime: 2,
-    effects: { money: 1 },
+    effects: { money: 7, research: 1 },
     maint: 2,
     category: '科技'
   },
@@ -363,7 +363,7 @@ const BUILDINGS = {
     desc: '乌发电影公司的摄影棚里，胶片记录着帝国的英雄与谎言。娱乐片换外汇，纪录片换人心。',
     cost: 190,
     buildTime: 3,
-    effects: { stability: 1 },
+    effects: { stability: 2, money: 4 },
     maint: 2,
     category: '文化'
   },
@@ -376,7 +376,7 @@ const BUILDINGS = {
     desc: '豹式与虎式的产床。每一辆出厂的坦克都载着五名乘员驶向不可知的东方——工厂只负责制造铁棺材，不负责填埋死者。',
     cost: 350,
     buildTime: 5,
-    effects: { militaryPower: 1 },
+    effects: { militaryPower: 6, money: 2 },
     maint: 5,
     category: '陆军'
   },
@@ -387,7 +387,7 @@ const BUILDINGS = {
     desc: 'Me 262的喷气啸叫划破巴伐利亚的天空。当盟军轰炸机还在用螺旋桨思考时，帝国已飞向未来——只是未来来得太晚。',
     cost: 320,
     buildTime: 4,
-    effects: { militaryPower: 1 },
+    effects: { militaryPower: 4, deterrence: 2, money: 2 },
     maint: 4,
     category: '空军'
   },
@@ -398,8 +398,8 @@ const BUILDINGS = {
     desc: 'XXI型潜艇的船台彻夜灯火通明。电池驱动的狼群潜伏在北海深处，等待一个永远不会到来的胜仗。',
     cost: 400,
     buildTime: 5,
-    effects: { deterrence: 1 },
-    maint: 6,
+    effects: { deterrence: 5, militaryPower: 2 },
+    maint: 5,
     category: '海军'
   },
   coastal_battery: {
@@ -409,7 +409,7 @@ const BUILDINGS = {
     desc: '380毫米巨炮蹲守在混凝土炮台里，炮管指向海平线。它们开火的机会寥寥，但开火时地动山摇。',
     cost: 250,
     buildTime: 3,
-    effects: { deterrence: 1 },
+    effects: { deterrence: 4, militaryPower: 1 },
     maint: 3,
     category: '海军'
   },
@@ -420,8 +420,8 @@ const BUILDINGS = {
     desc: '雷达天线旋转，扫描着看不见的天空。荧光屏上的每一个亮点，都可能是死神，也可能是误报。',
     cost: 200,
     buildTime: 3,
-    effects: { deterrence: 1 },
-    maint: 3,
+    effects: { deterrence: 3, research: 1 },
+    maint: 2,
     category: '空军'
   },
   missile_silo: {
@@ -431,8 +431,8 @@ const BUILDINGS = {
     desc: '竖井深处，V-2的后裔静静伫立。按下按钮的人永远不会看到目标——也永远不用面对它。',
     cost: 500,
     buildTime: 5,
-    effects: { nukeDeter: 1 },
-    maint: 8,
+    effects: { nukeDeter: 4, deterrence: 2 },
+    maint: 6,
     category: '战略'
   },
   underground_bunker: {
@@ -442,8 +442,8 @@ const BUILDINGS = {
     desc: '阿尔卑斯山腹的混凝土迷宫。元首地堡的翻版——为下一位元首准备的坟墓，也是指挥所。',
     cost: 300,
     buildTime: 4,
-    effects: { stability: 1 },
-    maint: 4,
+    effects: { stability: 2, deterrence: 3, nukeDeter: 1 },
+    maint: 3,
     category: '战略'
   },
   munitions_plant: {
@@ -453,8 +453,8 @@ const BUILDINGS = {
     desc: '炮弹流水线昼夜轰鸣。每一发7.92毫米子弹都在等待一个胸膛，每一发88毫米炮弹都在等待一辆坦克。',
     cost: 220,
     buildTime: 3,
-    effects: { militaryPower: 1 },
-    maint: 3,
+    effects: { militaryPower: 3, money: 1 },
+    maint: 2,
     category: '陆军'
   },
   naval_academy: {
@@ -464,7 +464,7 @@ const BUILDINGS = {
     desc: '基尔港的海军学院。学员们在风帆时代留下的铜钟下成长，毕业时多数将奔赴海底。',
     cost: 180,
     buildTime: 3,
-    effects: { militaryPower: 1 },
+    effects: { militaryPower: 2, research: 2 },
     maint: 2,
     category: '海军'
   },
@@ -475,7 +475,7 @@ const BUILDINGS = {
     desc: '混凝土跑道延伸至天际。地勤挥舞荧光棒，引导战机归巢——有时归巢的是飞机，有时只剩飞行员。',
     cost: 280,
     buildTime: 4,
-    effects: { militaryPower: 1 },
+    effects: { militaryPower: 3, deterrence: 2, research: 1 },
     maint: 4,
     category: '空军'
   },
@@ -486,7 +486,7 @@ const BUILDINGS = {
     desc: '大西洋壁垒的东方翻版。碉堡、反坦克壕、雷场连成一线，等着不会到来的进攻者耗尽耐心。',
     cost: 350,
     buildTime: 5,
-    effects: { deterrence: 1 },
+    effects: { deterrence: 6, militaryPower: 2 },
     maint: 5,
     category: '陆军'
   },
@@ -497,8 +497,8 @@ const BUILDINGS = {
     desc: 'P4级密封实验室里，穿防护服的人影培养着看不见的死神。样本编号是数字，解药编号是问号。',
     cost: 400,
     buildTime: 5,
-    effects: { research: 1 },
-    maint: 6,
+    effects: { research: 4, nukeDeter: 1 },
+    maint: 5,
     category: '战略'
   },
   electronic_warfare: {
@@ -508,8 +508,8 @@ const BUILDINGS = {
     desc: '看不见的频谱战场上，干扰与反干扰无声搏杀。一个错误信号能让一个师偏离战场，也能让一枚导弹偏离城市。',
     cost: 330,
     buildTime: 4,
-    effects: { deterrence: 1 },
-    maint: 5,
+    effects: { deterrence: 4, research: 2 },
+    maint: 4,
     category: '战略'
   },
   space_launch_facility: {
@@ -519,8 +519,8 @@ const BUILDINGS = {
     desc: '佩内明德的延伸。发射塔直指苍穹，火箭升空时尾焰照亮半个波罗的海——帝国最后的浪漫。',
     cost: 600,
     buildTime: 6,
-    effects: { research: 1 },
-    maint: 10,
+    effects: { research: 6, nukeDeter: 2, deterrence: 1 },
+    maint: 7,
     category: '战略'
   },
   nuclear_research_center: {
@@ -530,8 +530,8 @@ const BUILDINGS = {
     desc: '重水反应堆在岩洞深处低鸣。海森堡的方程式指向两种未来：发电，或者毁灭——帝国只对后者感兴趣。',
     cost: 550,
     buildTime: 6,
-    effects: { nukeDeter: 1 },
-    maint: 8,
+    effects: { nukeDeter: 4, research: 4, nukes: 0.05 },
+    maint: 6,
     category: '战略'
   }
 };

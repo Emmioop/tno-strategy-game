@@ -805,8 +805,7 @@ const Game = {
     let income = { money: 0, manpower: 0, stability: 0, deterrence: 0,
                    militaryPower: 0, nukeDeter: 0, nukes: 0, research: 0 };
 
-    // 建筑产出：只允许 money/manpower/efficiency/nukes（其他资源只能通过事件获得）
-    const passiveKeys = { money: 1, manpower: 1, efficiency: 1, nukes: 1 };
+    // 建筑产出：所有资源键都生效（money/manpower/stability/deterrence/militaryPower/nukeDeter/nukes/research/efficiency）
     const BUILDINGS = _getBuildings();
     for (const bid in this.state.buildings) {
       const count = this.state.buildings[bid];
@@ -814,11 +813,11 @@ const Game = {
       if (!b) continue;
       const eff_multi = b.type === 'civilian' ? eff : 1.0;
       for (const key in b.effects) {
-        if (passiveKeys[key]) {
-          income[key] = (income[key] || 0) + b.effects[key] * count * eff_multi;
-        }
+        // nukes 是核弹建造(非常慢, 累积值)，不乘效率以防过快
+        const m = (key === 'nukes') ? 1.0 : eff_multi;
+        income[key] = (income[key] || 0) + b.effects[key] * count * m;
       }
-      // 维护成本
+      // 维护成本（只扣资金）
       income.money -= b.maint * count;
     }
 
