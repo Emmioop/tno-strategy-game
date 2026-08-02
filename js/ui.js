@@ -958,6 +958,17 @@ const UI = {
           }
         });
       }
+
+      // 势力卡片点击 → 打开外交面板
+      const factionCards = document.querySelectorAll('.faction-clickable[data-faction]');
+      factionCards.forEach(card => {
+        if (card._diploBound) return;
+        card._diploBound = true;
+        card.onclick = () => {
+          const fid = card.dataset.faction;
+          if (fid) this._showDiplomacyPanel(fid);
+        };
+      });
     }, 0);
   },
 
@@ -971,6 +982,14 @@ const UI = {
     // 重置绑定标志，强制重新绑定 canvas/缩放/选择器
     this._mapPostRenderBound = false;
     this._bindMapPostRender();
+    // 绑定势力卡片点击 → 外交面板 (独立于地图canvas初始化，确保始终生效)
+    const UI = this;
+    overlay.querySelectorAll('.faction-clickable[data-faction]').forEach(card => {
+      card.onclick = () => {
+        const fid = card.dataset.faction;
+        if (fid) UI._showDiplomacyPanel(fid);
+      };
+    });
     // 关闭按钮
     const btnClose = document.getElementById('btn-close-map');
     if (btnClose) btnClose.onclick = () => this.closeMapPage();
@@ -1029,17 +1048,19 @@ const UI = {
           </div>
           <div class="map-rotate-hint">📱 建议横屏查看以获得更好体验</div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);padding:6px 14px;text-align:center;flex-shrink:0;border-top:1px solid var(--border);">滚轮缩放 · 拖拽平移 · 点击国家查看详情 · 矢量地图 by lilaui (CC-BY-SA 3.0)</div>
+        <div class="map-overlay-factions">
+          <div style="font-family:var(--font-serif);color:var(--accent-gold);letter-spacing:0.1em;font-size:12px;padding:8px 14px 4px;flex-shrink:0;">势力关系 <span style="color:var(--text-muted);font-size:10px">（点击势力进行外交）</span></div>
+          <div class="map-overlay-factions-list">${this._renderFactionCards()}</div>
+        </div>
       </div>
     `;
   },
 
-  // ===== 势力地图页 =====
-  renderMap() {
-    const s = Game.state || { flags: {}, relations: {}, turn: 1, totalTurns: 156 };
+  // ===== 渲染势力卡片 (地图页与全屏地图共用) =====
+  _renderFactionCards() {
+    const s = Game.state || { flags: {}, relations: {} };
     const f = s.flags || {};
 
-    // 势力详情数据 (保留在地图下方)
     const germanyColor = f.civil_war_imminent && !f.civil_war_over ? '#6a2a2a' : '#a83232';
     const germanyLabel = f.civil_war_imminent && !f.civil_war_over ? '大日耳曼国（内战）' : '大日耳曼国';
     const italyColor = f.italy_accepted || f.italy_leaves_sphere ? '#3a6a3a' : '#5a8a4a';
@@ -1057,15 +1078,15 @@ const UI = {
     else if (f.russia_monarchist) { russiaColor = '#4a4a8a'; russiaLabel = '俄罗斯帝国'; russiaFragments = false; }
 
     const factionDetails = [
-      { name: '大日耳曼国', rel: null, desc: germanyLabel, color: germanyColor, isPlayer: true },
-      { name: '美国 (OFN)', rel: s.relations.ofn, desc: '自由世界残部，民主灯塔', color: '#3a5a8a' },
-      { name: '日本', rel: s.relations.japan, desc: '共荣圈霸主，太平洋帝国', color: '#8a7a3a' },
-      { name: '意大利', rel: s.relations.italy, desc: italyLabel, color: italyColor },
-      { name: '勃艮第', rel: s.relations.burgundy, desc: '希姆莱的黑暗国度', color: burgundyColor },
+      { id: null, name: '大日耳曼国', rel: null, desc: germanyLabel, color: germanyColor, isPlayer: true },
+      { id: 'ofn', name: '美国 (OFN)', rel: s.relations.ofn, desc: '自由世界残部，民主灯塔', color: '#3a5a8a' },
+      { id: 'japan', name: '日本', rel: s.relations.japan, desc: '共荣圈霸主，太平洋帝国', color: '#8a7a3a' },
+      { id: 'italy', name: '意大利', rel: s.relations.italy, desc: italyLabel, color: italyColor },
+      { id: 'burgundy', name: '勃艮第', rel: s.relations.burgundy, desc: '希姆莱的黑暗国度', color: burgundyColor },
       ...(russiaFragments ? [
-        { name: '俄罗斯（军阀割据）', rel: s.relations.russia, desc: '群雄割据，前途未卜', color: russiaColor },
+        { id: 'russia', name: '俄罗斯（军阀割据）', rel: s.relations.russia, desc: '群雄割据，前途未卜', color: russiaColor },
       ] : [
-        { name: russiaLabel, rel: s.relations.russia, desc: '已统一的东方巨人', color: russiaColor },
+        { id: 'russia', name: russiaLabel, rel: s.relations.russia, desc: '已统一的东方巨人', color: russiaColor },
       ]),
     ];
 
@@ -1080,19 +1101,31 @@ const UI = {
     const relColor = (v) => v === null ? 'var(--text-muted)' : v <= -40 ? 'var(--accent-blood-bright)' : v <= -10 ? '#c97a3a' : v <= 10 ? 'var(--text-muted)' : v <= 40 ? 'var(--accent-toxic)' : 'var(--accent-gold-bright)';
 
     const factionHtml = factionDetails.map(fd => `
-      <div class="faction-detail-card">
+      <div class="faction-detail-card${fd.id ? ' faction-clickable' : ''}"${fd.id ? ` data-faction="${fd.id}"` : ''}>
         <div class="fdc-color" style="background:${fd.color}"></div>
         <div class="fdc-info"><div class="fdc-name">${fd.name}</div><div class="fdc-desc">${fd.desc}</div></div>
         <div class="fdc-rel" style="color:${relColor(fd.rel)}">${relText(fd.rel)}${fd.rel !== null ? ` ${fd.rel > 0 ? '+' : ''}${fd.rel}` : ''}</div>
       </div>`).join('');
 
     const satelliteHtml = `
-      <div class="satellite-group" style="margin-top:16px;padding:12px;background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--accent-steel);border-radius:2px;">
-        <div style="font-family:var(--font-serif);color:var(--accent-gold);margin-bottom:8px;letter-spacing:0.1em;font-size:12px">帝国卫星国 / 傀儡国</div>
+      <div class="satellite-group" style="margin-top:12px;padding:10px 12px;background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--accent-steel);border-radius:2px;">
+        <div style="font-family:var(--font-serif);color:var(--accent-gold);margin-bottom:6px;letter-spacing:0.1em;font-size:12px">帝国卫星国 / 傀儡国</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${satelliteStates.map(s => `<div style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:2px;font-size:10px;color:var(--text-secondary)"><span style="display:inline-block;width:8px;height:8px;background:${s.color};border-radius:1px"></span>${s.name}</div>`).join('')}
+          ${satelliteStates.map(st => `<div style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:2px;font-size:10px;color:var(--text-secondary)"><span style="display:inline-block;width:8px;height:8px;background:${st.color};border-radius:1px"></span>${st.name}</div>`).join('')}
         </div>
       </div>`;
+
+    return factionHtml + satelliteHtml;
+  },
+
+  // ===== 势力地图页 =====
+  renderMap() {
+    const s = Game.state || { flags: {}, relations: {}, turn: 1, totalTurns: 156 };
+    const f = s.flags || {};
+
+    // 势力卡片 + 卫星国 (复用共享渲染逻辑)
+    const factionHtml = this._renderFactionCards();
+    const satelliteHtml = '';
 
     const timelineHtml = this.renderTimeline();
 
@@ -1131,6 +1164,81 @@ const UI = {
         </div>
       </div>
     `;
+  },
+
+  // ===== 外交面板 =====
+  _showDiplomacyPanel(factionId) {
+    const s = Game.state;
+    const FACTIONS = (typeof _getFactions === 'function') ? _getFactions() : {};
+    const fdata = FACTIONS[factionId];
+    if (!fdata) return;
+    const rel = s.relations[factionId] || 0;
+    const r = s.resources;
+    const relText = rel <= -40 ? '敌对' : rel <= -10 ? '冷淡' : rel <= 10 ? '中立' : rel <= 40 ? '友好' : '盟友';
+    const relColor = rel <= -40 ? 'var(--accent-blood-bright)' : rel <= -10 ? '#c97a3a' : rel <= 10 ? 'var(--text-muted)' : rel <= 40 ? 'var(--accent-toxic)' : 'var(--accent-gold-bright)';
+
+    const actions = [
+      { id: 'improve', name: '改善关系', icon: '🤝', cost: '💰30', desc: '派遣外交使团，改善双边关系 (+8)', canAfford: r.money >= 30 },
+      { id: 'trade', name: '贸易协定', icon: '📋', cost: '💰50', desc: '签订贸易协定，获💰40回报并改善关系 (+5)', canAfford: r.money >= 50 },
+      { id: 'pressure', name: '外交施压', icon: '⚔️', cost: '💰20 威慑3', desc: '利用威慑施压，恶化关系(-10)但稳定+2', canAfford: r.money >= 20 && r.deterrence >= 3 },
+      { id: 'intrigue', name: '秘密行动', icon: '🕵️', cost: '💰60 研发10', desc: '派遣特工破坏，大幅恶化关系(-15)但获研发+8', canAfford: r.money >= 60 && r.research >= 10 },
+    ];
+
+    const actionsHtml = actions.map(a => `
+      <button class="btn btn-build diplo-action-btn" data-diplo-action="${a.id}" ${a.canAfford ? '' : 'disabled'}
+        style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;${a.canAfford ? '' : 'opacity:0.4;'}">
+        <span style="font-size:18px">${a.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:var(--text-primary)">${a.name}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${a.desc}</div>
+        </div>
+        <div style="font-size:10px;color:var(--accent-gold);white-space:nowrap">${a.cost}</div>
+      </button>`).join('');
+
+    const html = `
+      <div style="padding:16px;max-width:500px;margin:0 auto">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-family:var(--font-serif);font-size:18px;color:var(--accent-gold-bright);letter-spacing:0.08em">${fdata.name}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.5">${fdata.desc}</div>
+          <div style="margin-top:10px;padding:6px 14px;display:inline-block;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel)">
+            <span style="font-size:11px;color:var(--text-muted)">关系: </span>
+            <span style="font-size:14px;color:${relColor};font-weight:bold">${relText} ${rel > 0 ? '+' : ''}${rel}</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;text-align:center;border-top:1px solid var(--border);padding-top:10px">
+          友好关系 → 贸易收入加成 · 敌对关系 → 军费开支增加
+        </div>
+        <div>${actionsHtml}</div>
+      </div>`;
+
+    this.showModal('外交: ' + fdata.short, html);
+    const modal = document.getElementById('event-modal');
+    if (modal) {
+      modal.querySelectorAll('[data-diplo-action]').forEach(btn => {
+        btn.onclick = () => {
+          const result = Game.doDiplomacy(factionId, btn.dataset.diploAction);
+          this.toast(result.msg, result.ok ? 'success' : 'error');
+          if (result.ok) {
+            // 刷新面板
+            this._showDiplomacyPanel(factionId);
+            this.renderTopbar();
+            this.state._dirtyMap = true;
+            // 刷新全屏地图中的势力卡片关系显示
+            const factionsList = document.querySelector('.map-overlay-factions-list');
+            if (factionsList) {
+              factionsList.innerHTML = this._renderFactionCards();
+              factionsList.querySelectorAll('.faction-clickable[data-faction]').forEach(card => {
+                card.onclick = () => {
+                  const fid = card.dataset.faction;
+                  if (fid) this._showDiplomacyPanel(fid);
+                };
+              });
+            }
+            this.requestRender();
+          }
+        };
+      });
+    }
   },
 
   // ===== 时间轴 =====

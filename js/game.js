@@ -844,6 +844,28 @@ const Game = {
     income.money += 1;
     income.manpower += 1;
 
+    // 势力关系影响收支
+    // 友好势力: 贸易收入加成; 敌对势力: 军费开支增加
+    const rel = this.state.relations || {};
+    const majorFactions = ['ofn', 'japan', 'italy', 'burgundy', 'russia'];
+    let tradeBonus = 0;
+    let tensionCost = 0;
+    for (const fid of majorFactions) {
+      const v = rel[fid] || 0;
+      if (v > 10) {
+        // 友好: 每点关系 +0.1 贸易收入
+        tradeBonus += v * 0.1;
+      } else if (v < -10) {
+        // 敌对: 每点负关系 +0.15 军费
+        tensionCost += Math.abs(v) * 0.15;
+      }
+    }
+    income.money += tradeBonus;
+    income.money -= tensionCost;
+    // 高紧张度(多个敌对势力)额外消耗人力
+    const hostileCount = majorFactions.filter(fid => (rel[fid] || 0) < -30).length;
+    if (hostileCount >= 2) income.manpower -= hostileCount;
+
     // 国策树持续加成：已完成国策提供每回合buff
     const NATIONAL_FOCI = _getFoci();
     for (const fid of this.state.completedFoci) {
@@ -1063,6 +1085,74 @@ const Game = {
     ];
     const n = newsPool[Math.floor(Math.random() * newsPool.length)];
     this.addNews(n.text, n.type);
+  },
+
+  // ===== 外交系统 =====
+  // 外交行动: 改善关系/施压/贸易协定/秘密行动
+  doDiplomacy(factionId, action) {
+    const s = this.state;
+    const r = s.resources;
+    const rel = s.relations[factionId] || 0;
+    const FACTIONS = (typeof _getFactions === 'function') ? _getFactions() : (typeof FCTIONS !== 'undefined' ? FCTIONS : {});
+    const factionName = (FACTIONS[factionId] && FACTIONS[factionId].short) || factionId;
+
+    const actions = {
+      improve: {
+        name: '改善关系',
+        cost: { money: 30 },
+        relChange: 8,
+        desc: '派遣外交使团，赠送礼物，改善双边关系'
+      },
+      trade: {
+        name: '贸易协定',
+        cost: { money: 50 },
+        relChange: 5,
+        desc: '签订贸易协定，获得一次性资金回报和关系改善',
+        onSuccess: () => { r.money += 40; }
+      },
+      pressure: {
+        name: '外交施压',
+        cost: { money: 20, deterrence: 3 },
+        relChange: -10,
+        desc: '利用威慑力迫使对方让步，恶化关系但提升国内威望',
+        onSuccess: () => { r.stability = Math.min(100, (r.stability || 0) + 2); }
+      },
+      intrigue: {
+        name: '秘密行动',
+        cost: { money: 60, research: 10 },
+        relChange: -15,
+        desc: '派遣特工进行破坏活动，大幅恶化关系但获取情报',
+        onSuccess: () => { r.research += 8; }
+      }
+    };
+
+    const act = actions[action];
+    if (!act) return { ok: false, msg: '未知行动' };
+
+    // 检查资源
+    for (const [k, v] of Object.entries(act.cost)) {
+      if ((r[k] || 0) < v) {
+        return { ok: false, msg: `${k === 'money' ? '资金' : k === 'research' ? '研发点' : k === 'deterrence' ? '威慑' : k}不足` };
+      }
+    }
+
+    // 扣除资源
+    for (const [k, v] of Object.entries(act.cost)) {
+      r[k] = (r[k] || 0) - v;
+    }
+
+    // 应用关系变化 (带随机波动)
+    const variance = Math.floor(Math.random() * 5) - 2;
+    const actualChange = act.relChange + variance;
+    s.relations[factionId] = Math.max(-100, Math.min(100, rel + actualChange));
+
+    // 成功效果
+    if (act.onSuccess) act.onSuccess();
+
+    const dir = actualChange > 0 ? '改善' : '恶化';
+    this.addNews(`对${factionName}外交行动: ${act.name} → 关系${dir} ${Math.abs(actualChange)}点`, 'world');
+
+    return { ok: true, msg: `${act.name}成功！与${factionName}关系${dir} ${Math.abs(actualChange)}点`, change: actualChange };
   },
 
   // ===== 检查结局条件 =====

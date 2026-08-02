@@ -696,12 +696,12 @@
       // 人口
       n.population = Math.round(n.population * (1 + (n.lifeExpectancy > 60 ? 0.0005 : -0.0005)));
 
-      // 战略对德关系影响 (每季度微调, 缓慢累积)
+      // 战略对德关系影响 (每季度调整, 玩家可感知)
       if (ai.diploMod && gameState.relations) {
         const rk = this._relKey(id);
         const cur = gameState.relations[rk] || 0;
-        // diploMod为正→关系缓慢改善, 为负→缓慢恶化
-        gameState.relations[rk] = Math.max(-100, Math.min(100, cur + ai.diploMod * 0.05));
+        // diploMod为正→关系改善, 为负→关系恶化 (系数0.2, 约5回合变10点)
+        gameState.relations[rk] = Math.max(-100, Math.min(100, cur + ai.diploMod * 0.2));
       }
     },
 
@@ -880,15 +880,25 @@
       const n = this.nations.GER;
       if (!n || !gameState.resources) return;
       const r = gameState.resources;
-      // 综合威慑 = 军事威慑 + 核威慑
       const milPower = Math.round((n.army + n.airforce * 1.2 + n.navy * 0.8) * 0.1 * n.industry.efficiency);
       r.militaryPower = milPower;
-      r.nukeDeter = n.nuclear.deterrence;
       r.nukes = n.nuclear.warheads;
-      r.deterrence = Math.min(150, milPower + n.nuclear.deterrence);
       r.efficiency = n.industry.efficiency;
-      // 稳定度直接同步
       r.stability = Math.round(n.stability);
+
+      // 核威慑: 只降不升 —— 保留 calculateIncome 的衰减和事件效果
+      // 仅当国家实际核能力下降时（核弹被销毁/投送能力丧失）才拉低
+      // 回升只能通过建筑产出、事件、外交行动
+      const targetNuke = n.nuclear.deterrence;
+      if (targetNuke < r.nukeDeter) {
+        r.nukeDeter = targetNuke;
+      }
+
+      // 综合威慑: 只降不升 —— 军力/核威慑下降时拉低，不自动回升
+      const targetDeter = Math.min(150, milPower + r.nukeDeter);
+      if (targetDeter < r.deterrence) {
+        r.deterrence = Math.max(0, targetDeter);
+      }
     },
 
     // ===== 获取综合国力排名 =====
