@@ -740,7 +740,7 @@ const UI = {
               <p style="margin:0 0 6px;"><strong>第一年（1962）：</strong>先造 <span style="color:#60a0e0;">消费品工厂</span> 和 <span style="color:#60a0e0;">基础设施</span>，保证资金+10以上。</p>
               <p style="margin:0 0 6px;"><strong>希特勒死前：</strong>至少积累 <span style="color:#e06060;">军力 ≥ 30</span>，否则内战难平。</p>
               <p style="margin:0 0 6px;"><strong>1970年代：</strong>开始造 <span style="color:#e06060;">核武器设施</span>，1989核危机前核弹 ≥ 5 较安全。</p>
-              <p style="margin:0;"><strong>资金紧张时：</strong>去商店发 <strong>帝国债券</strong>（换 120 资金，扣 5 稳定，30 年限一次）。</p>
+              <p style="margin:0;"><strong>资金紧张时：</strong>去商店发 <strong>帝国债券</strong>（换 120 资金，5 年后还本金+利息，利率随难度变化）。</p>
             </div>
 
           </div>
@@ -2270,93 +2270,240 @@ const UI = {
   },
 
   // ===== 商店页 =====
+  // ===== 黑市掮客 / 对话式商店 =====
+  _shopGetSteiner() {
+    if (!this._shopSteiner) {
+      const year = Game.state.year;
+      const greetings = [
+        `* 上校先生，您来了。雪茄已经切好，放在桌上。`,
+        `* （他从堆着文件的办公桌后抬头）帝国需要什么，直接说。`,
+        `* 先生，门从里面反锁了。这里很安全。`,
+        `* （他点燃了一支烟，指了指椅子）坐。 ${year}年了，我这地下仓库堆满了好东西。`,
+        `* （他瞥了眼角落里的党卫军军帽）别担心，我已经退休，这里只做生意。`
+      ];
+      this._shopSteiner = {
+        greeting: greetings[Math.floor(Math.random() * greetings.length)]
+      };
+    }
+    return this._shopSteiner;
+  },
+
+  get _shopChatOptions() {
+    return [
+      { id: 'greet', text: '打招呼', reply: `* （他微微点头）老客户了，不用客套。` },
+      { id: 'what', text: '这里能做什么', reply: `* 应急物资、军火、情报，偶尔还能帮您搞点钱。当然——按老规矩，等价交换。` },
+      { id: 'story', text: '你的故事', reply: `* （他沉默片刻，指了指脸上的旧伤疤）东方总计划撤退时留下的。现在嘛…帮帝国做些桌面上不方便的事。` },
+      { id: 'life', text: '你的生活', reply: `* （他笑了笑）每天早上九点开门，凌晨两点关门。和盖世太保的查岗时间错开——这是我多年的生存智慧。` },
+      { id: 'advise', text: '有什么建议', reply: (() => {
+        const s = Game.state;
+        if (s.resources.stability < 15) return `* 稳定度太低了。先维稳，否则哪天早上您的名字就会出现在绞刑名单上。`;
+        if (s.resources.deterrence < 10) return `* 外面盛传帝国快不行了。威慑力撑住了吗？不然美国佬会先动手。`;
+        if (s.year >= 1985 && s.resources.nukes < 3) return `* 听我一句，核弹准备好。1989年…那不是普通人能睡安稳觉的一年。`;
+        return `* （耸耸肩）您的帝国您最清楚。但记住——现金永远比承诺可靠。`;
+      })() }
+    ];
+  },
+
+  get _shopOpenBoxPool() {
+    return [
+      { name: '意外好运', desc: '一位匿名贵族的捐款。', effect: { money: +60, stability: +2 } },
+      { name: '情报截获', desc: '破译了一份同盟国电报。', effect: { research: +8, deterrence: +3 } },
+      { name: '军火被查抄', desc: '盖世太保扣了您一批货。', effect: { money: -40, militaryPower: -4 } },
+      { name: '黑市涨价', desc: '近期物价暴涨。', effect: { money: -20 } },
+      { name: '党卫军老朋友', desc: '希姆莱旧部带来了见面礼。', effect: { militaryPower: +6, stability: -2 } },
+      { name: '科研蓝图', desc: '从瑞士搞到了民用技术图纸。', effect: { research: +12 } },
+      { name: '铀矿小批量', desc: '从刚果走私的一公斤铀。', effect: { nukeDeter: +3, nukes: +1 } },
+      { name: '民众暴动', desc: '占领区又闹了点小麻烦。', effect: { stability: -4, deterrence: -2 } },
+      { name: '老兵捐款', desc: '一战老战友集体募捐。', effect: { manpower: +25, stability: +3 } },
+      { name: '勃艮第密信', desc: '希姆莱那边来了封信…打开前先深呼吸。', effect: { deterrence: +6, burgundy_relation: +10 } }
+    ];
+  },
+
   renderShop() {
+    this._shopGetSteiner(); // 初始化施坦纳台词
     const s = Game.state;
     const r = s.resources;
     const isDebug = this.isDebugMode();
+    if (!this._shopView) this._shopView = 'main'; // main | buy:<cat> | openbox | chat
+    if (!this._shopDialog) this._shopDialog = this._shopSteiner.greeting;
 
-    // 商店商品定义
-    const shopItems = [
-      { id: 'shop_stab', name: '维稳拨款', desc: '派遣党卫军巡逻队，恢复秩序。', cost: { money: 80 }, gain: { stability: 5 }, icon: '⚖' },
-      { id: 'shop_det', name: '军事演习', desc: '在东部边境举行大规模演习，展示武力。', cost: { money: 120, manpower: 25 }, gain: { deterrence: 5 }, icon: '⚔' },
-      { id: 'shop_mil', name: '雇佣兵合同', desc: '从海外招募职业军人。', cost: { money: 180 }, gain: { militaryPower: 8 }, icon: '🎖' },
-      { id: 'shop_res', name: '科研资助', desc: '向帝国大学拨发专项经费。', cost: { money: 150 }, gain: { research: 6 }, icon: '🔬' },
-      { id: 'shop_nuke', name: '核材料采购', desc: '从铀矿采购浓缩铀。', cost: { money: 250, research: 25 }, gain: { nukeDeter: 5, nukes: 1 }, icon: '☢', reqFlag: 'nuclear_tech' },
-      { id: 'shop_recruit', name: '征兵动员', desc: '在占领区强制征兵。', cost: { money: 60 }, gain: { manpower: 15 }, icon: '👥' },
-      { id: 'shop_loan', name: '帝国债券', desc: `发行战争债券，换取现金。<strong>每30年只能发行一次</strong>，到期必须偿还本金+利息。${s.flags.loan_active ? '<span style="color:#e74c3c;">当前有未偿还债券</span>' : (s.flags.loan_cooldown ? `<span style="color:#e8a030;">冷却中（${s.flags.loan_cooldown}年后可再次发行）</span>` : '<span style="color:#3a7a4a;">可发行</span>')}`, cost: { stability: -5 }, gain: { money: 120 }, icon: '💰', reqNoLoan: true },
-      { id: 'shop_propa', name: '宣传套餐', desc: '戈培尔亲自操刀的宣传攻势。', cost: { money: 70 }, gain: { stability: 3, deterrence: 2 }, icon: '📻' }
-    ];
+    // ===== 商品总表（按分类） =====
+    const diff = DIFFICULTIES[s.difficulty] || DIFFICULTIES.normal;
+    const loanRate = Math.round(diff.loanInterest * 100);
+    const loanDue = Math.round(120 * (1 + diff.loanInterest));
+    const loanDisabled = s.flags.loan_active || s.flags.loan_cooldown;
+    const loanTag = s.flags.loan_active ? '进行中' : (s.flags.loan_cooldown ? `违约冷却(${s.flags.loan_cooldown}回合)` : '');
 
-    let itemsHtml = '';
-    for (const item of shopItems) {
-      if (item.reqFlag && !s.flags[item.reqFlag]) continue;
-      if (item.reqNoLoan && (s.flags.loan_active || s.flags.loan_cooldown)) continue;
-      const canAfford = Object.entries(item.cost).every(([k, v]) => (r[k] || 0) + v >= 0);
-      const costStr = Object.entries(item.cost).map(([k, v]) => {
-        const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发' };
-        return `${labels[k] || k} ${v > 0 ? '-' : '+'}${Math.abs(v)}`;
-      }).join(' · ');
-      const gainStr = Object.entries(item.gain).map(([k, v]) => {
-        const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发', nukes: '核弹' };
-        return `+${v} ${labels[k] || k}`;
-      }).join(' · ');
-      itemsHtml += `
-        <div class="shop-item ${canAfford ? '' : 'disabled'}" data-shop-id="${item.id}">
-          <div class="shop-icon">${item.icon}</div>
-          <div class="shop-info">
-            <div class="shop-name">${item.name}</div>
-            <div class="shop-desc">${item.desc}</div>
-            <div class="shop-cost">${costStr}</div>
-          </div>
-          <div class="shop-gain">${gainStr}</div>
-          <button class="shop-buy-btn" data-shop-buy="${item.id}" ${canAfford ? '' : 'disabled'}>购买</button>
-        </div>
-      `;
-    }
+    const CATEGORIES = {
+      emergency: {
+        name: '应急物资',
+        items: [
+          { id: 'shop_stab', name: '维稳拨款', desc: '派遣党卫军巡逻队，恢复秩序。', cost: { money: 80 }, gain: { stability: 5 }, icon: '⚖' },
+          { id: 'shop_recruit', name: '征兵动员', desc: '在占领区强制征兵。', cost: { money: 60 }, gain: { manpower: 15 }, icon: '👥' },
+          { id: 'shop_propa', name: '宣传套餐', desc: '戈培尔亲自操刀的宣传攻势。', cost: { money: 70 }, gain: { stability: 3, deterrence: 2 }, icon: '📻' }
+        ]
+      },
+      arms: {
+        name: '军备供应',
+        items: [
+          { id: 'shop_det', name: '军事演习', desc: '在东部边境举行大规模演习，展示武力。', cost: { money: 120, manpower: 25 }, gain: { deterrence: 5 }, icon: '⚔' },
+          { id: 'shop_mil', name: '雇佣兵合同', desc: '从海外招募职业军人。', cost: { money: 180 }, gain: { militaryPower: 8 }, icon: '🎖' },
+          { id: 'shop_nuke', name: '核材料采购', desc: '从铀矿采购浓缩铀。', cost: { money: 250, research: 25 }, gain: { nukeDeter: 5, nukes: 1 }, icon: '☢', reqFlag: 'nuclear_tech' }
+        ]
+      },
+      intel: {
+        name: '情报科研',
+        items: [
+          { id: 'shop_res', name: '科研资助', desc: '向帝国大学拨发专项经费。', cost: { money: 150 }, gain: { research: 6 }, icon: '🔬' }
+        ]
+      },
+      finance: {
+        name: '金融渠道',
+        items: [
+          { id: 'shop_loan', name: '帝国债券', desc: `发行战争债券，换取120资金。<strong>5年后偿还本金+利息</strong>（当前难度利率${loanRate}%，到期还${loanDue}）。${loanTag ? `<span style="color:#e8a030;">${loanTag}</span>` : ''}`, cost: { stability: -5 }, gain: { money: 120 }, icon: '💰', reqNoLoan: loanDisabled }
+        ]
+      }
+    };
 
-    // 借贷状态面板
+    // ===== 借贷状态面板（进入金融分类时显示） =====
     let loanPanel = '';
     if (s.flags.loan_active) {
       const yearsLeft = Math.ceil(s.flags.loan_remaining / 4);
       const due = s.flags.loan_total_due || 180;
       const canRepay = r.money >= due;
       loanPanel = `
-        <div style="margin:12px 0;padding:12px;border:1px solid #e74c3c;border-radius:8px;background:rgba(231,76,60,0.08);">
-          <div style="font-weight:bold;color:#e74c3c;margin-bottom:6px;">💰 帝国债券状态</div>
-          <div style="font-size:12px;color:var(--text-muted);line-height:1.6;">
-            借款金额: ${s.flags.loan_amount || 120} 资金<br>
-            利息: ${s.flags.loan_interest || 60} 资金 (50%)<br>
-            <strong style="color:#e74c3c;">到期需还: ${due} 资金</strong><br>
-            剩余期限: ${yearsLeft} 年 (${s.flags.loan_remaining} 回合)
+        <div style="margin:10px 0;padding:10px;border:1px solid #e74c3c;border-radius:6px;background:rgba(231,76,60,0.08);">
+          <div style="font-weight:bold;color:#e74c3c;margin-bottom:4px;font-size:12px;">💰 债券状态</div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">
+            借${s.flags.loan_amount||120} · 还<strong style="color:#e74c3c;">${due}</strong><br>剩余 ${yearsLeft} 年 (${s.flags.loan_remaining}回合)
           </div>
           <button data-loan-repay="1" ${canRepay ? '' : 'disabled'}
-            style="margin-top:8px;padding:6px 16px;border-radius:4px;font-size:12px;cursor:${canRepay ? 'pointer' : 'not-allowed'};
-            background:${canRepay ? '#e74c3c' : 'var(--bg-dark)'};color:white;border:none;">
-            ${canRepay ? `提前偿还 (${due} 资金)` : `资金不足 (需 ${due})`}
+            style="margin-top:6px;padding:4px 12px;border-radius:3px;font-size:11px;cursor:${canRepay ? 'pointer' : 'not-allowed'};background:${canRepay ? '#e74c3c' : 'var(--bg-dark)'};color:white;border:none;">
+            ${canRepay ? `提前偿还 (${due})` : `资金不足`}
           </button>
         </div>
       `;
     }
 
+    // ===== 渲染左侧：对话气泡 =====
+    const dialogHtml = `<div class="shop-dialog-bubble">${this._shopDialog}</div>`;
+
+    // ===== 渲染右侧：菜单选项 =====
+    let menuHtml = '';
+    let menuTitle = '';
+
+    if (this._shopView === 'main') {
+      menuTitle = '你想做点什么？';
+      const openBoxAfford = r.money >= 60;
+      menuHtml = this._renderShopMenuItems([
+        { key: 'buy', label: '购买物资', sub: '应急/军备/情报/金融', cmd: `shop-enter-buy` },
+        { key: 'box', label: '黑箱抽卡', sub: `花费 60 资金 · 随机好货或踩雷 · ${openBoxAfford ? '' : '（资金不足）'}`, cmd: `shop-openbox`, disabled: !openBoxAfford },
+        { key: 'chat', label: '闲聊几句', sub: '问问建议或听听故事', cmd: `shop-chat-menu` },
+        { key: 'leave', label: '离开', sub: '回到帝国政务', cmd: `shop-leave` }
+      ]);
+    } else if (this._shopView.startsWith('buy:')) {
+      const catId = this._shopView.split(':')[1];
+      const cat = CATEGORIES[catId];
+      menuTitle = cat ? cat.name : '购买物资';
+      // 先加个返回按钮
+      let items = [{ key: 'back', label: '‹ 返回分类', sub: '回到主菜单', cmd: `shop-view-main` }];
+      if (cat) {
+        for (const it of cat.items) {
+          if (it.reqFlag && !s.flags[it.reqFlag]) {
+            items.push({ key: it.id, label: `🔒 ${it.name}`, sub: `需要科技解锁`, cmd: '', disabled: true });
+            continue;
+          }
+          if (it.id === 'shop_loan' && loanDisabled) {
+            items.push({ key: it.id, label: it.name, sub: it.desc, cmd: '', disabled: true, raw: it });
+            continue;
+          }
+          const canAfford = Object.entries(it.cost).every(([k, v]) => (r[k] || 0) + v >= 0);
+          items.push({ key: it.id, label: it.name, sub: it.desc, cmd: `shop-buy:${it.id}`, disabled: !canAfford, raw: it });
+        }
+      }
+      menuHtml = this._renderShopMenuItems(items, true);
+    } else if (this._shopView === 'buy-cats') {
+      menuTitle = '请选择分类';
+      const cats = [
+        { key: 'emergency', label: '🩹 应急物资', sub: '维稳 / 征兵 / 宣传', cmd: `shop-buy-cat:emergency` },
+        { key: 'arms', label: '🛡 军备供应', sub: '演习 / 雇佣兵 / 核材料', cmd: `shop-buy-cat:arms` },
+        { key: 'intel', label: '🔬 情报科研', sub: '科研资助', cmd: `shop-buy-cat:intel` },
+        { key: 'finance', label: '💰 金融渠道', sub: '帝国债券', cmd: `shop-buy-cat:finance` }
+      ];
+      menuHtml = this._renderShopMenuItems([
+        { key: 'back', label: '‹ 返回', sub: '回到主菜单', cmd: `shop-view-main` },
+        ...cats
+      ]);
+    } else if (this._shopView === 'openbox') {
+      menuTitle = '黑箱抽卡';
+      menuHtml = this._renderShopMenuItems([
+        { key: 'back', label: '‹ 返回', sub: '回到主菜单', cmd: `shop-view-main` },
+        { key: 'confirm', label: '🎲 抽一次', sub: '花费 60 资金 · 结果完全随机', cmd: `shop-openbox-do`, disabled: r.money < 60 }
+      ]);
+    } else if (this._shopView === 'chat') {
+      menuTitle = '闲聊';
+      const items = this._shopChatOptions.map(o => ({
+        key: o.id, label: o.text, sub: '', cmd: `shop-chat:${o.id}`
+      }));
+      menuHtml = this._renderShopMenuItems([
+        { key: 'back', label: '‹ 返回', sub: '回到主菜单', cmd: `shop-view-main` },
+        ...items
+      ]);
+    }
+
+    // 金融分类：在商品列表上方附借贷状态面板
+    if (this._shopView === 'buy:finance') {
+      menuHtml = loanPanel + menuHtml;
+    }
+
+    // 老板信息条
+    const moneyLine = `资金 ${Math.round(r.money)}`;
+
     return `
-      <div class="shop-container">
-        <div class="shop-header">
-          <h3>帝国特别采购</h3>
-          <p style="font-size:12px;color:var(--text-muted);margin:4px 0 16px;">用资源换取即时加成。谨慎使用。</p>
+      <div class="shop-container" id="shop-npc-wrap">
+        <!-- 老板场景 / 立绘区 -->
+        <div class="shop-scene">
+          <div class="shop-scene-bg"></div>
+          <div class="shop-scene-content">
+            <div class="shop-boss">
+              <div class="shop-boss-avatar">
+                <div style="font-size:64px;line-height:1;">🎩</div>
+              </div>
+              <div class="shop-boss-meta">
+                <div class="sb-name">施坦纳</div>
+                <div class="sb-title">前党卫军上校 · 黑市掮客</div>
+                <div class="sb-money">${moneyLine}</div>
+              </div>
+            </div>
+          </div>
         </div>
-        ${loanPanel}
-        <div class="shop-list">${itemsHtml}</div>
+
+        <!-- 对话框 / 菜单 左右分栏 -->
+        <div class="shop-body">
+          <div class="shop-dialog">
+            ${dialogHtml}
+            <div style="font-size:10px;color:var(--text-muted);margin-top:10px;text-align:right;">
+              ${s.year}年 · 柏林地下仓库
+            </div>
+          </div>
+          <div class="shop-menu">
+            <div class="shop-menu-title">› ${menuTitle}</div>
+            <div class="shop-menu-list">
+              ${menuHtml}
+            </div>
+          </div>
+        </div>
 
         ${isDebug ? this.renderDebugPanel() : `
-          <div class="shop-footer">
-            <div style="font-size:11px;color:var(--text-muted);margin-top:32px;padding-top:16px;border-top:1px solid var(--border);">
-              帝国总理府 · 物资调配司
+          <div class="shop-footer-npc">
+            <div style="font-size:11px;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border);">
+              帝国总理府 · 物资调配司 / 外部联络人
             </div>
-            <div style="margin-top:12px;">
+            <div style="margin-top:8px;">
               <input type="password" id="shop-code-input" placeholder="授权码"
-                style="background:var(--bg-dark);border:1px solid var(--border);color:var(--text-muted);padding:6px 10px;border-radius:4px;font-size:12px;width:140px;font-family:var(--font-mono);" />
+                style="background:var(--bg-dark);border:1px solid var(--border);color:var(--text-muted);padding:5px 8px;border-radius:3px;font-size:11px;width:120px;font-family:var(--font-mono);" />
               <button id="shop-code-btn"
-                style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer;">验证</button>
+                style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:3px;font-size:11px;cursor:pointer;">验证</button>
             </div>
           </div>
         `}
@@ -2364,14 +2511,43 @@ const UI = {
     `;
   },
 
+  _renderShopMenuItems(items, withDetail = false) {
+    return items.map(it => {
+      let costGain = '';
+      if (withDetail && it.raw) {
+        const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发', nukes: '核弹' };
+        const costParts = Object.entries(it.raw.cost).map(([k, v]) => `${labels[k] || k} ${v > 0 ? '-' : '+'}${Math.abs(v)}`).join(' ');
+        const gainParts = Object.entries(it.raw.gain).map(([k, v]) => `+${v} ${labels[k] || k}`).join(' ');
+        costGain = `<div class="sm-detail">${costParts}　<span style="color:#4a8a4a;">⇒ ${gainParts}</span></div>`;
+      }
+      const cls = it.disabled ? 'sm-item disabled' : 'sm-item';
+      return `
+        <div class="${cls}" data-sm-cmd="${it.cmd || ''}" ${it.disabled ? 'style="opacity:0.5;pointer-events:none;"' : ''}>
+          <div class="sm-arrow">▸</div>
+          <div class="sm-body">
+            <div class="sm-label">${it.label}</div>
+            ${it.sub ? `<div class="sm-sub">${it.sub}</div>` : ''}
+            ${costGain}
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
   // ===== 商店事件绑定 =====
   bindShopEvents() {
-    // 商品购买
-    document.querySelectorAll('[data-shop-buy]').forEach(btn => {
-      btn.onclick = () => {
-        const id = btn.dataset.shopBuy;
-        this.shopBuy(id);
-      };
+    const wrap = document.getElementById('shop-npc-wrap');
+    if (!wrap) {
+      // fallback: 兼容旧商品卡片（如果有）
+      document.querySelectorAll('[data-shop-buy]').forEach(btn => {
+        btn.onclick = () => this.shopBuy(btn.dataset.shopBuy);
+      });
+      return;
+    }
+
+    // 菜单项点击
+    wrap.querySelectorAll('[data-sm-cmd]').forEach(el => {
+      el.onclick = () => this._shopHandleCmd(el.dataset.smCmd);
     });
 
     // 借贷还款
@@ -2381,34 +2557,85 @@ const UI = {
         const s = Game.state;
         if (!s.flags.loan_active) return;
         const due = s.flags.loan_total_due || 180;
-        if (s.resources.money < due) {
-          this.toast('资金不足，无法偿还', 'error');
-          return;
-        }
+        if (s.resources.money < due) { this.toast('资金不足', 'error'); return; }
         s.resources.money -= due;
         s.flags.loan_active = false;
-        s.flags.loan_cooldown = 120; // 30年冷却
+        delete s.flags.loan_cooldown;
         this.addNews(`帝国债券已提前偿还，支付 ${due} 资金`, 'economy');
-        this.toast(`已偿还 ${due} 资金，债券结清`, 'success');
+        this._shopDialog = `* 现金交易。${due} 资金，一分不差。债券结清。`;
+        this.toast(`已偿还 ${due} 资金`, 'success');
         this.requestRender();
         this.autoSave();
       };
     }
 
-    // 密码输入
+    // 密码
     const codeBtn = document.getElementById('shop-code-btn');
     const codeInput = document.getElementById('shop-code-input');
     if (codeBtn && codeInput) {
       codeBtn.onclick = () => this.checkShopCode();
-      codeInput.onkeydown = (e) => {
-        if (e.key === 'Enter') this.checkShopCode();
-      };
+      codeInput.onkeydown = (e) => { if (e.key === 'Enter') this.checkShopCode(); };
     }
+  },
 
-    // debug按钮
-    document.querySelectorAll('[data-dbg-act]').forEach(btn => {
-      btn.onclick = () => this.debugAction(btn.dataset.dbgAct);
-    });
+  _shopHandleCmd(cmd) {
+    if (!cmd) return;
+    if (cmd === 'shop-leave') {
+      this._shopView = 'main';
+      this._shopDialog = this._shopSteiner.greeting;
+      this.renderTab('overview');
+      return;
+    }
+    if (cmd === 'shop-view-main') { this._shopView = 'main'; this._shopDialog = `* （他重新靠在椅背上）还有什么吩咐？`; this.requestRender(); return; }
+    if (cmd === 'shop-enter-buy') { this._shopView = 'buy-cats'; this._shopDialog = `* 看对什么就说。东西都是正路，只是…不上账面。`; this.requestRender(); return; }
+    if (cmd === 'shop-openbox') { this._shopView = 'openbox'; this._shopDialog = `* （他从柜台下拉出一个蒙尘的木箱）60资金。抽一次，手气好不好都不退。`; this.requestRender(); return; }
+    if (cmd === 'shop-chat-menu') { this._shopView = 'chat'; this._shopDialog = `* （他又点了支烟）想问什么？别太敏感就行。`; this.requestRender(); return; }
+    if (cmd.startsWith('shop-buy-cat:')) {
+      const cat = cmd.split(':')[1];
+      this._shopView = 'buy:' + cat;
+      const catNames = { emergency: '应急物资', arms: '军备供应', intel: '情报科研', finance: '金融渠道' };
+      this._shopDialog = `* ${catNames[cat] || '这一类'}…您要的都在清单里，挑吧。`;
+      this.requestRender();
+      return;
+    }
+    if (cmd.startsWith('shop-buy:')) {
+      const id = cmd.split(':')[1];
+      this.shopBuy(id);
+      return;
+    }
+    if (cmd === 'shop-openbox-do') {
+      this._shopOpenBox();
+      return;
+    }
+    if (cmd.startsWith('shop-chat:')) {
+      const id = cmd.split(':')[1];
+      const opt = this._shopChatOptions.find(o => o.id === id);
+      if (opt) {
+        this._shopDialog = typeof opt.reply === 'function' ? opt.reply() : opt.reply;
+        this.requestRender();
+      }
+      return;
+    }
+  },
+
+  _shopOpenBox() {
+    const s = Game.state;
+    const r = s.resources;
+    if (r.money < 60) { this.toast('资金不足', 'error'); return; }
+    r.money -= 60;
+    const roll = this._shopOpenBoxPool[Math.floor(Math.random() * this._shopOpenBoxPool.length)];
+    const labels = { money: '资金', manpower: '人力', stability: '稳定', deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', research: '研发', nukes: '核弹', burgundy_relation: '勃艮第关系' };
+    for (const [k, v] of Object.entries(roll.effect)) {
+      if (k === 'burgundy_relation') { s.relations.burgundy = Math.max(-100, Math.min(100, (s.relations.burgundy || 0) + v)); continue; }
+      r[k] = (r[k] || 0) + v;
+    }
+    Game.clampResources();
+    const eff = Object.entries(roll.effect).map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${labels[k] || k}`).join('  ');
+    this._shopDialog = `* （他从箱里摸出个东西递给你）<strong style="color:#e8c860;">「${roll.name}」</strong> — ${roll.desc}<br><span style="color:#bbb;">结果：${eff}</span>`;
+    this.addNews(`黑市抽卡·${roll.name}：${eff}`, 'economy');
+    this.toast(`抽卡：${roll.name}`, 'success');
+    this.requestRender();
+    this.autoSave();
   },
 
   checkShopCode() {
@@ -2470,15 +2697,31 @@ const UI = {
       else r[k] = (r[k] || 0) + v;
     }
 
-    // 借贷特殊处理：设置30年（120回合）后到期
+    // 借贷特殊处理：5年（20回合）后到期，利率按难度
     if (id === 'shop_loan') {
+      const diff = DIFFICULTIES[s.difficulty] || DIFFICULTIES.normal;
+      const rate = diff.loanInterest;
+      const amount = 120;
+      const interest = Math.round(amount * rate);
+      const totalDue = amount + interest;
       s.flags.loan_active = true;
-      s.flags.loan_remaining = 120;  // 30年 = 120回合
-      s.flags.loan_amount = 120;     // 借款金额
-      s.flags.loan_interest = 60;    // 利息50%
-      s.flags.loan_total_due = 180;  // 总需偿还180
-      this.toast('债券发行成功！30年后需偿还180资金（含利息）', 'success');
+      s.flags.loan_remaining = 20;   // 5年 = 20回合
+      s.flags.loan_amount = amount;  // 借款金额
+      s.flags.loan_interest = interest; // 利息（按难度）
+      s.flags.loan_total_due = totalDue; // 总需偿还
+      this._shopDialog = `* （他在账本上签了字，把一叠钞票推过来）<strong style="color:#e8c860;">${amount}</strong> 资金，5年后还 ${totalDue}。别让我上门讨债。`;
+      this.toast(`债券发行成功！5年后需偿还${totalDue}资金（本金${amount}+利息${interest}，利率${Math.round(rate*100)}%）`, 'success');
     } else {
+      const lines = {
+        shop_stab: `* 巡逻队已经派出去了。您这就看明天的报纸——柏林街头会清净不少。`,
+        shop_det: `* 东部边境的装甲师已经就位。美国人的卫星拍不到什么，但他们能感觉到。`,
+        shop_mil: `* （他翻了翻一本黑色名册）南非和西班牙的老兵，明天上午到新兵营报到。`,
+        shop_res: `* 帝国大学收到经费了，院长亲自拍了电报——说「决不辜负元首」。`,
+        shop_nuke: `* （他压低声音）刚果的货，三艘潜艇秘密运送。千万别让盖世太保查到记录。`,
+        shop_recruit: `* 占领区那边已经安排好了。今天下午火车站就有新人送过来。`,
+        shop_propa: `* 戈培尔博士亲自操刀。明天全帝国电台同时广播，内容包您满意。`
+      };
+      this._shopDialog = lines[id] || `* 货已交割。下一位。`;
       this.toast('购买成功', 'success');
     }
 

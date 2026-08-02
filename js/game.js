@@ -49,6 +49,7 @@ const DIFFICULTIES = {
     stabFloor: 5,     // 稳定度下限保护
     deterFloor: 10,   // 威慑下限保护
     crisisChance: 0.25, // 随机危机概率
+    loanInterest: 0.20, // 帝国债券利率20%
     unlocked: true
   },
   normal: {
@@ -62,6 +63,7 @@ const DIFFICULTIES = {
     stabFloor: 0,
     deterFloor: 5,
     crisisChance: 0.4,
+    loanInterest: 0.35, // 35%
     unlocked: true
   },
   hard: {
@@ -75,6 +77,7 @@ const DIFFICULTIES = {
     stabFloor: 0,
     deterFloor: 0,
     crisisChance: 0.55,
+    loanInterest: 0.50, // 50%
     unlocked: true
   },
   hell: {
@@ -88,6 +91,7 @@ const DIFFICULTIES = {
     stabFloor: 0,
     deterFloor: 0,
     crisisChance: 0.7,
+    loanInterest: 0.70, // 70%
     unlocked: false  // 需通关困难难度解锁
   }
 };
@@ -966,7 +970,7 @@ const Game = {
           // 自动扣除还款
           this.state.resources.money -= due;
           this.state.flags.loan_active = false;
-          this.state.flags.loan_cooldown = 120; // 30年冷却
+          delete this.state.flags.loan_cooldown; // 还清后立即可再借
           this.addNews(`帝国债券到期，已偿还 ${due} 资金（含利息）`, 'economy');
         } else {
           // 无法偿还，严厉惩罚
@@ -977,7 +981,7 @@ const Game = {
           this.state.relations.ofn = Math.max(-100, this.state.relations.ofn - 20);
           this.state.flags.loan_active = false;
           this.state.flags.loan_defaulted = true;
-          this.state.flags.loan_cooldown = 240; // 违约后60年不能借
+          this.state.flags.loan_cooldown = 40; // 违约后10年不能借
           this.addNews(`帝国债券违约！信用崩溃，损失 ${shortfall.toFixed(0)} 资金。稳定-30，威慑-15`, 'crisis');
         }
       } else if (this.state.flags.loan_remaining % 4 === 0) {
