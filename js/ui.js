@@ -757,6 +757,9 @@ const UI = {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
 
     const content = document.getElementById('tab-content');
+    // 保存滚动位置，商店内部切换对话/菜单时保持不跳
+    const savedScroll = (tab === 'shop') ? content.scrollTop : null;
+    const savedMenuScroll = (tab === 'shop') ? (content.querySelector('.shop-menu-list')?.scrollTop || 0) : null;
     switch (tab) {
       case 'overview':
         content.innerHTML = this.renderOverview();
@@ -794,6 +797,14 @@ const UI = {
         content.innerHTML = this.renderShop();
         this._tabCache.shop = { html: content.innerHTML };
         this.bindShopEvents();
+        // 恢复滚动位置，避免点击菜单后页面跳到对话框
+        if (savedScroll !== null) {
+          requestAnimationFrame(() => {
+            content.scrollTop = savedScroll;
+            const ml = content.querySelector('.shop-menu-list');
+            if (ml && savedMenuScroll !== null) ml.scrollTop = savedMenuScroll;
+          });
+        }
         break;
       case 'events':
         content.innerHTML = this.renderEventLog();
@@ -2547,7 +2558,14 @@ const UI = {
 
     // 菜单项点击
     wrap.querySelectorAll('[data-sm-cmd]').forEach(el => {
-      el.onclick = () => this._shopHandleCmd(el.dataset.smCmd);
+      // 在 mousedown/touchstart 阶段就阻止默认行为，防止浏览器给元素加焦点并自动滚动
+      el.addEventListener('mousedown', (e) => { e.preventDefault(); }, { passive: false });
+      el.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+      el.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this._shopHandleCmd(el.dataset.smCmd);
+      };
     });
 
     // 借贷还款
@@ -2607,14 +2625,39 @@ const UI = {
       this._shopOpenBox();
       return;
     }
+    // 同视图内切换（闲聊选项等）：只更对话文字，不重建 HTML，避免滚动跳动
     if (cmd.startsWith('shop-chat:')) {
       const id = cmd.split(':')[1];
       const opt = this._shopChatOptions.find(o => o.id === id);
       if (opt) {
         this._shopDialog = typeof opt.reply === 'function' ? opt.reply() : opt.reply;
-        this.requestRender();
+        this._shopPatchDialog();
       }
       return;
+    }
+  },
+
+  // 仅更新对话气泡内容，不重建商店 HTML，不触发滚动
+  _shopPatchDialog() {
+    const tc = document.getElementById('tab-content');
+    const savedTop = tc ? tc.scrollTop : 0;
+    const savedMenu = document.querySelector('.shop-menu-list')?.scrollTop || 0;
+    const bubble = document.querySelector('.shop-dialog-bubble');
+    if (bubble) {
+      bubble.innerHTML = this._shopDialog;
+      // 强制恢复滚动位置，防止浏览器因焦点/重排导致跳动
+      if (tc) {
+        tc.scrollTop = savedTop;
+        const ml = document.querySelector('.shop-menu-list');
+        if (ml) ml.scrollTop = savedMenu;
+        requestAnimationFrame(() => {
+          tc.scrollTop = savedTop;
+          const ml2 = document.querySelector('.shop-menu-list');
+          if (ml2) ml2.scrollTop = savedMenu;
+        });
+      }
+    } else {
+      this.requestRender();
     }
   },
 
@@ -2634,7 +2677,8 @@ const UI = {
     this._shopDialog = `* （他从箱里摸出个东西递给你）<strong style="color:#e8c860;">「${roll.name}」</strong> — ${roll.desc}<br><span style="color:#bbb;">结果：${eff}</span>`;
     this.addNews(`黑市抽卡·${roll.name}：${eff}`, 'economy');
     this.toast(`抽卡：${roll.name}`, 'success');
-    this.requestRender();
+    this._shopPatchDialog();
+    this.renderTopbar();
     this.autoSave();
   },
 
@@ -2726,7 +2770,10 @@ const UI = {
     }
 
     Game.clampResources();
-    this.requestRender();
+    this._shopPatchDialog();
+    this.renderTopbar();
+    this.renderLeftPanel();
+    this.renderRightPanel();
     this.autoSave();
   },
 
