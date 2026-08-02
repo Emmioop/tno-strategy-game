@@ -2204,6 +2204,7 @@ const UI = {
                       const sc = statusColor[tier.status];
                       const sl = statusLabel[tier.status];
                       const isAvail = tier.status === 'available';
+                      const canAfford = s.resources.research >= tier.cost;
                       return `
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,0.04);">
                           <div style="flex:1;min-width:0;">
@@ -2215,7 +2216,7 @@ const UI = {
                           <div style="text-align:right;min-width:60px;">
                             <div style="font-size:9px;color:var(--text-muted);">${tier.eraName || ''} ${tier.cost}💰</div>
                             ${isAvail
-                              ? `<button class="btn btn-build" data-tree="${treeId}" style="padding:2px 8px;font-size:10px;margin-top:2px;">研发</button>`
+                              ? `<button class="btn btn-build" data-tree="${treeId}" ${canAfford ? '' : 'disabled'} style="padding:2px 8px;font-size:10px;margin-top:2px;">研发</button>`
                               : `<span style="font-size:9px;color:${sc};">${sl}</span>`
                             }
                           </div>
