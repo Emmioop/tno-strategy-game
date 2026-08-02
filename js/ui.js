@@ -3175,6 +3175,9 @@ const UI = {
         modal.classList.remove('active');
         this.currentEventIndex++;
 
+        // 立即刷新顶栏资源数值（不等待所有事件处理完）
+        this.renderTopbar();
+
         // 检查是否触发结局（如核毁灭）
         if (Game.state.ended) {
           this.showEnding();
