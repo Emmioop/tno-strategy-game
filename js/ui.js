@@ -2467,7 +2467,7 @@ const UI = {
           <div class="shop-scene-content">
             <div class="shop-boss">
               <div class="shop-boss-avatar">
-                <div style="font-size:64px;line-height:1;">🎩</div>
+                <div style="font-size:48px;line-height:1;">🎩</div>
               </div>
               <div class="shop-boss-meta">
                 <div class="sb-name">施坦纳</div>
