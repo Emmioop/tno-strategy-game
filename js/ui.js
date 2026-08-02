@@ -635,74 +635,117 @@ const UI = {
     const modal = document.getElementById('tutorial-modal');
     modal.innerHTML = `
       <div style="position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;" onclick="if(event.target===this){document.getElementById('tutorial-modal').innerHTML='';}">
-        <div class="tutorial-modal" style="background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:4px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;margin:auto;">
+        <div class="tutorial-modal" style="background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:4px;max-width:620px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;margin:auto;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
-            <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:20px;letter-spacing:0.1em;">游戏教程</h2>
+            <h2 style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:20px;letter-spacing:0.1em;">帝国操作手册</h2>
             <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;line-height:1;">×</button>
           </div>
 
           <div style="color:var(--text-secondary);font-size:13px;line-height:1.8;">
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">一、游戏目标</h3>
-            <p>你扮演大日耳曼国权力核心的一员，从1962年希特勒垂危之际开始，在三十八年间为帝国的未来做出抉择，直到2000年迎来终局。根据你的路线与决策，将走向<strong style="color:var(--accent-gold-bright);">15种不同结局</strong>之一。</p>
 
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">二、核心资源（顶栏）</h3>
-            <p>顶部状态栏显示八项关键资源，每季度会增减：</p>
-            <ul style="margin:6px 0 6px 18px;">
-              <li><strong style="color:var(--text-primary);">资金</strong> — 建造与研发的基础，由民工业产出</li>
-              <li><strong style="color:var(--text-primary);">人力</strong> — 建造所需，由住宅与农业产出</li>
-              <li><strong style="color:var(--text-primary);">稳定</strong> — 低于0帝国崩溃，影响结局</li>
-              <li><strong style="color:var(--text-primary);">威慑</strong> — 综合威慑力，过低会被敌国入侵</li>
-              <li><strong style="color:var(--text-primary);">军力</strong> — 常规军事力量，由军工业产出</li>
-              <li><strong style="color:var(--text-primary);">核慑</strong> — 核威慑力，由核武器设施产出</li>
-              <li><strong style="color:var(--text-primary);">核弹</strong> — 核武器数量，终极威慑</li>
-              <li><strong style="color:var(--text-primary);">研发</strong> — 科技研发点数，由研发中心产出</li>
+            <div style="background:linear-gradient(135deg,rgba(232,200,96,0.06),rgba(168,50,50,0.04));border-left:3px solid var(--accent-gold);padding:12px 14px;margin:8px 0 14px;border-radius:0 4px 4px 0;">
+              <strong style="color:var(--accent-gold-bright);">你的使命：</strong>
+              从 1962 年起掌控大日耳曼国，穿越 38 年的风暴，在 <strong>希特勒之死、内战、核危机</strong> 等关键节点做出抉择，带领帝国走向 15 种结局之一。
+            </div>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 8px;font-size:15px;letter-spacing:0.05em;">① 八项资源</h3>
+            <p style="margin-bottom:6px;">顶部状态栏是帝国的脉搏，每季度自动结算：</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:6px 0 10px;">
+              <div><span style="color:#e8c860;">💰 资金</span> — 建造/研发/采购的基础，民工业产出</div>
+              <div><span style="color:#4fa3e8;">👥 人力</span> — 建造所需，住宅与农业产出</div>
+              <div><span style="color:#e07070;">⚖ 稳定</span> — <strong style="color:#e74c3c;">≤0 立刻崩溃</strong>，结局关键</div>
+              <div><span style="color:#c87830;">⚔ 威慑</span> — 综合国力，<strong style="color:#e74c3c;">过低会被入侵</strong></div>
+              <div><span style="color:#d06060;">🛡 军力</span> — 常规战力，兵工厂产出</div>
+              <div><span style="color:#b040b0;">☢ 核慑</span> — 核威慑力，核设施产出</div>
+              <div><span style="color:#a040a0;">💣 核弹</span> — 终极威慑，数量决定存亡</div>
+              <div><span style="color:#50c0a0;">🔬 研发</span> — 科技点数，研发中心产出</div>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);">括号中的 <span style="color:var(--accent-toxic);">+X</span> / <span style="color:var(--accent-blood-bright);">-X</span> 是每季度自动变化量。</p>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:16px 0 8px;font-size:15px;letter-spacing:0.05em;">② 标签页导航</h3>
+            <div style="display:grid;gap:8px;margin:6px 0;">
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #c8a040;">
+                <strong>📊 帝国概览</strong> — 全局状态、外交关系、产出明细
+              </div>
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #6080b0;">
+                <strong>🏭 工业建设</strong> — 核心玩法。<span style="color:#60a0e0;">民工业</span>保经济，<span style="color:#e06060;">军工业</span>保生存
+              </div>
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #b07040;">
+                <strong>📜 国策政策</strong> — 立法改革决定路线，<strong>奴隶制存废、军事改革</strong>等
+              </div>
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #50c0a0;">
+                <strong>🔬 科技研发</strong> — 四大科技树×五个时代，消耗研发点获永久增益
+              </div>
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #8050a0;">
+                <strong>🛒 黑市商店</strong> — 应急救场：维稳拨款、雇佣兵、核材料、帝国债券
+              </div>
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #a08050;">
+                <strong>🌍 势力面板</strong> — GDP、人口、国力排名，监控各超级大国动向
+              </div>
+              <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:4px;border-left:2px solid #606060;">
+                <strong>📰 新闻简报</strong> — 世界大事日志，了解局势变化
+              </div>
+            </div>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:16px 0 8px;font-size:15px;letter-spacing:0.05em;">③ 工业建设进阶</h3>
+            <p style="margin-bottom:4px;">两类建筑互为表里，不可偏废：</p>
+            <div style="background:rgba(60,100,160,0.08);border:1px solid rgba(96,160,224,0.2);padding:10px 14px;border-radius:4px;margin:6px 0;">
+              <strong style="color:#60a0e0;">民工业（蓝框）</strong>
+              <div style="font-size:12px;margin-top:4px;color:var(--text-secondary);">
+                消费品工厂→资金 · 工人住宅区→人力+稳定 · 研发中心→研发 · 基础设施→降低建造成本 · 农业综合体→人力
+              </div>
+            </div>
+            <div style="background:rgba(160,60,60,0.08);border:1px solid rgba(224,96,96,0.2);padding:10px 14px;border-radius:4px;margin:6px 0;">
+              <strong style="color:#e06060;">军工业（红框）</strong>
+              <div style="font-size:12px;margin-top:4px;color:var(--text-secondary);">
+                兵工厂→军力 · 核武器设施→核弹+核慑 · 奇迹武器实验室→高级研发 · 国土防空网→防御+威慑
+              </div>
+            </div>
+            <div style="background:rgba(232,200,96,0.08);padding:8px 12px;border-radius:2px;font-size:12px;margin-top:8px;">
+              <strong style="color:var(--accent-gold-bright);">进阶技巧：</strong>
+              基础设施越多，后续建筑越便宜。前期建议先造 3-5 个基础设施 + 消费品工厂打底，再转军工业。
+            </div>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:16px 0 8px;font-size:15px;letter-spacing:0.05em;">④ 关键剧情节点</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;margin:6px 0;">
+              <div style="display:flex;gap:10px;align-items:flex-start;">
+                <span style="background:rgba(232,80,80,0.2);color:#e85050;padding:2px 8px;border-radius:3px;font-size:11px;white-space:nowrap;font-weight:bold;">1963</span>
+                <div><strong>希特勒之死</strong> — 选择继任者：<span style="color:#60a0e0;">施佩尔</span>·<span style="color:#b07040;">鲍曼</span>·<span style="color:#a04040;">戈林</span>·<span style="color:#404040;">海德里希</span>，<strong>决定四条路线</strong></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;">
+                <span style="background:rgba(200,100,40,0.2);color:#e07030;padding:2px 8px;border-radius:3px;font-size:11px;white-space:nowrap;font-weight:bold;">1963-65</span>
+                <div><strong>德国内战</strong> — 希姆莱的勃艮第可能窃取核武器，<strong>需足够军力平叛</strong></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;">
+                <span style="background:rgba(120,80,200,0.2);color:#a070e0;padding:2px 8px;border-radius:3px;font-size:11px;white-space:nowrap;font-weight:bold;">1989</span>
+                <div><strong>核危机</strong> — 午夜差一分钟，<strong>核弹+核慑是否足够</strong>决定存亡</div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;">
+                <span style="background:rgba(232,200,96,0.2);color:#e8c860;padding:2px 8px;border-radius:3px;font-size:11px;white-space:nowrap;font-weight:bold;">2000</span>
+                <div><strong>终局来临</strong> — 根据路线、稳定、威慑、核弹综合判定结局</div>
+              </div>
+            </div>
+
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:16px 0 8px;font-size:15px;letter-spacing:0.05em;">⑤ 操作速查</h3>
+            <ul style="margin:6px 0 6px 18px;line-height:2;">
+              <li><strong>推进回合：</strong>电脑按 <code style="background:var(--bg-elevated);padding:1px 6px;border-radius:2px;">空格</code>，手机点底部按钮</li>
+              <li><strong>存档：</strong>右上角存档按钮，或自动保存到浏览器本地</li>
+              <li><strong>事件选择：</strong>必须点击选项才能继续，每个选择影响资源和剧情</li>
+              <li><strong>帝国崩溃：</strong>稳定 ≤ 0 <span style="color:#e74c3c;">立即游戏结束</span></li>
+              <li><strong>外敌入侵：</strong>威慑 <span style="color:#e74c3c;">低于 10</span> 可能被宣战</li>
             </ul>
-            <p style="font-size:12px;color:var(--text-muted);">括号内的 <span style="color:var(--accent-toxic);">+数字</span> / <span style="color:var(--accent-blood-bright);">-数字</span> 表示每季度变化量。</p>
 
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">三、工业建设（核心玩法）</h3>
-            <p>切换到「工业建设」标签，可建造两类建筑：</p>
-            <p style="margin:8px 0;"><strong style="color:var(--accent-steel);">民工业</strong>（蓝色边框）— 产出资金、人力、稳定、研发，保障经济：</p>
-            <ul style="margin:4px 0 8px 18px;">
-              <li>消费品工厂 → 资金</li>
-              <li>工人住宅区 → 人力与稳定</li>
-              <li>研发中心 → 研发点数</li>
-              <li>基础设施 → 降低建造成本</li>
-            </ul>
-            <p style="margin:8px 0;"><strong style="color:var(--accent-blood-bright);">军工业</strong>（红色边框）— 产出威慑、军力、核武，震慑敌国：</p>
-            <ul style="margin:4px 0 8px 18px;">
-              <li>兵工厂 → 军事实力</li>
-              <li>核武器设施 → 核弹与核威慑</li>
-              <li>奇迹武器实验室 → 高级研发</li>
-              <li>国土防空网 → 防御与威慑</li>
-            </ul>
-            <p style="background:rgba(168,50,50,0.1);padding:8px 12px;border-radius:2px;font-size:12px;">建议：前期平衡发展，保证资金与稳定不为负；中期重点军工业提升威慑；后期视路线决定核武或民生。</p>
-
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">四、国策与科技</h3>
-            <p><strong>国策政策</strong> — 通过立法影响帝国走向（如奴隶制存废、军事改革等），不同路线解锁不同政策。</p>
-            <p><strong>科技研发</strong> — 消耗研发点数解锁永久增益，如「核聚变研究」「计算机革命」等。</p>
-
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">五、事件与抉择</h3>
-            <p>剧情事件会自动触发并弹窗，每个选择都有不同后果。关键节点：</p>
-            <ul style="margin:6px 0 6px 18px;">
-              <li><strong>1963 希特勒之死</strong> — 选择继任者（施佩尔/鲍曼/戈林/海德里希），决定四条路线</li>
-              <li><strong>1963-65 德国内战</strong> — 勃艮第可能窃取核武器</li>
-              <li><strong>1989 核危机</strong> — 午夜差一分钟，抉择决定存亡</li>
-            </ul>
-
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">六、操作方式</h3>
-            <ul style="margin:6px 0 6px 18px;">
-              <li><strong>电脑端</strong>：按 <code style="background:var(--bg-elevated);padding:1px 5px;border-radius:2px;">空格键</code> 推进下一季度</li>
-              <li><strong>手机端</strong>：点底部「下一季度」按钮推进；点「势力」「新闻」打开侧边面板</li>
-              <li>事件弹窗出现时，必须做出选择才能继续</li>
-              <li>威慑过低时敌国可能入侵，稳定为负则帝国崩溃</li>
-            </ul>
-
-            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:14px 0 6px;font-size:15px;">七、结局判定</h3>
-            <p>2000年游戏结束（或提前触发结局），根据<strong>稳定度、威慑、核弹、路线</strong>综合判定。从「帝国之春」（民主化改革成功）到「诸神黄昏」（核子末日），命运在你手中。</p>
+            <h3 style="color:var(--accent-gold);font-family:var(--font-serif);margin:16px 0 8px;font-size:15px;letter-spacing:0.05em;">⑥ 新手指引</h3>
+            <div style="background:rgba(74,138,74,0.08);padding:10px 14px;border-radius:4px;font-size:12px;line-height:1.9;">
+              <p style="margin:0 0 6px;"><strong>第一年（1962）：</strong>先造 <span style="color:#60a0e0;">消费品工厂</span> 和 <span style="color:#60a0e0;">基础设施</span>，保证资金+10以上。</p>
+              <p style="margin:0 0 6px;"><strong>希特勒死前：</strong>至少积累 <span style="color:#e06060;">军力 ≥ 30</span>，否则内战难平。</p>
+              <p style="margin:0 0 6px;"><strong>1970年代：</strong>开始造 <span style="color:#e06060;">核武器设施</span>，1989核危机前核弹 ≥ 5 较安全。</p>
+              <p style="margin:0;"><strong>资金紧张时：</strong>去商店发 <strong>帝国债券</strong>（换 120 资金，扣 5 稳定，30 年限一次）。</p>
+            </div>
 
           </div>
 
-          <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="display:block;width:100%;margin-top:20px;padding:12px;background:linear-gradient(180deg,rgba(168,50,50,0.25),rgba(168,50,50,0.08));border:1px solid var(--accent-blood);color:var(--accent-gold-bright);font-family:var(--font-serif);font-size:15px;letter-spacing:0.15em;cursor:pointer;border-radius:2px;">明白了</button>
+          <button onclick="document.getElementById('tutorial-modal').innerHTML='';" style="display:block;width:100%;margin-top:20px;padding:12px;background:linear-gradient(180deg,rgba(168,50,50,0.25),rgba(168,50,50,0.08));border:1px solid var(--accent-blood);color:var(--accent-gold-bright);font-family:var(--font-serif);font-size:15px;letter-spacing:0.15em;cursor:pointer;border-radius:2px;">Jawohl!</button>
         </div>
       </div>
     `;
