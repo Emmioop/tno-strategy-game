@@ -273,7 +273,12 @@ const Game = {
  // ===== v0.4.2: 判断事件的政治方向 =====
  classifyDirection(ev) {
  if (!ev) return 'other';
- const text = (ev.title || '') + ' ' + (ev.desc || '') + ' ' + (ev.text || '');
+ // v0.4.2 修复：覆盖 body/desc/text/content 所有可能承载描述的字段
+ const text = (ev.title || '') + ' ' +
+             (ev.desc  || '') + ' ' +
+             (ev.text  || '') + ' ' +
+             (ev.body  || '') + ' ' +
+             (ev.content || '');
 
  // 按优先级匹配：russia > japan > america > italy > internal > other
  const directions = ['russia', 'japan', 'america', 'italy', 'internal'];
