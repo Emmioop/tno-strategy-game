@@ -78,10 +78,8 @@ const SaveSystem = {
         Game.state.techs['nuclear_tech'] = true;
         Game.state.flags['nuclear_tech'] = true;
       }
-      // 兼容性修复: 旧存档补 flavorLog
-      if (!Array.isArray(Game.state.flavorLog)) {
-        Game.state.flavorLog = [];
-      }
+      // v0.4.2 兼容: 旧存档补 flavorLog
+      if (!Game.state.flavorLog) Game.state.flavorLog = [];
       // 恢复NationSim国家数据
       if (payload.nations && typeof NationSim !== 'undefined') {
         NationSim._initialized = true;

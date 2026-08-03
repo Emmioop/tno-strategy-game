@@ -837,10 +837,6 @@ const UI = {
         content.innerHTML = this.renderEventLog();
         this._tabCache.events = { html: content.innerHTML };
         break;
-      case 'flavor':
-        content.innerHTML = this.renderFlavorLog();
-        this._tabCache.flavor = { html: content.innerHTML };
-        break;
     }
     if (tab === 'shop' && !this._tabCache.shop) {
       this.bindShopEvents();
@@ -2969,20 +2965,6 @@ const UI = {
   },
 
   // ===== 事件日志页 =====
-  // ===== 方向徽章 HTML =====
-  _directionBadge(ev) {
-    const dir = (Game.classifyDirection && Game.classifyDirection(ev)) || 'internal';
-    const map = {
-      internal: { label: '🏛️ 国内', cls: 'badge-internal' },
-      japan:    { label: '⛩️ 对日',  cls: 'badge-japan' },
-      us:       { label: '🦅 对美',  cls: 'badge-us' },
-      russia:   { label: '🪖 对俄',  cls: 'badge-russia' },
-      other:    { label: '🌐 其他',  cls: 'badge-other' }
-    };
-    const m = map[dir] || map.internal;
-    return `<span class="dir-badge ${m.cls}">${m.label}</span>`;
-  },
-
   renderEventLog() {
     const s = Game.state;
     if (s.eventLog.length === 0) {
@@ -2991,9 +2973,9 @@ const UI = {
     return `
       <div class="events-feed">
         ${s.eventLog.map(e => `
-          <div class="event-card major dir-${e.category || 'internal'}">
+          <div class="event-card major">
             <div class="e-date">${e.date}</div>
-            <div class="e-title">${this._directionBadge({title:e.title,id:'',body:''})}${e.title}</div>
+            <div class="e-title">${e.title}</div>
             <div class="e-desc">抉择: <em style="color:var(--accent-gold)">${e.choice}</em></div>
           </div>
         `).join('')}
@@ -3001,30 +2983,7 @@ const UI = {
     `;
   },
 
-  // ===== 时代风貌 Tab =====
-  renderFlavorLog() {
-    const s = Game.state;
-    if (!s.flavorLog || s.flavorLog.length === 0) {
-      return `
-        <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px">
-          📰 暂无时代风貌记录<br><br>
-          <span style="font-size:12px">登月、奥运、庆典、阅兵、流行病等"时代切片"事件<br>会自动归档于此，不打断你的政治抉择。</span>
-        </div>`;
-    }
-    return `
-      <div class="events-feed flavor-feed">
-        ${s.flavorLog.map(e => `
-          <div class="event-card flavor-card">
-            <div class="e-date">${e.date}</div>
-            <div class="e-title">📰 ${e.title}</div>
-            <div class="e-desc" style="color:var(--text-muted);font-size:12px">已自动归档 · ${e.resolved || ''}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  },
-
-  // ===== 下一回合 =====
+  // ===== 下一回合（v0.4.2 修复：单一事件流，避免双触发）=====
   nextTurn() {
     if (Game.state.ended) return;
     const btn = document.getElementById('btn-next-turn');
@@ -3032,36 +2991,34 @@ const UI = {
     if (btn) { btn.disabled = true; btn.textContent = '处理中...'; }
     if (mBtn) { mBtn.disabled = true; mBtn.textContent = '处理中...'; }
 
-    // 暂存待处理事件队列(仅核心政治事件)
+    // 清空队列，由 Game.advanceTurn → UI.onEvents 回调统一填充
     this.pendingEvents = [];
 
-    const result = Game.advanceTurn([], (events) => {
-      // events 现在是 {core, flavor}; 弹窗只消费 core
-      this.pendingEvents = (events && events.core) || events || [];
-    });
-
-    this.requestRender();
+    // advanceTurn 内部会调用 UI.onEvents(turnEvents)
+    // 也会调用 UI.onTurnEnd() 触发 requestRender
+    Game.advanceTurn();
 
     // 自动保存
     this.autoSave();
 
-    // 处理事件
-    if (this.pendingEvents.length > 0) {
-      this.currentEventIndex = 0;
-      this.showNextEvent();
-    } else if (Game.state.ended) {
-      this.showEnding();
-    } else {
-      if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
-      if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
+    // 如果 onEvents 已经填充了 pendingEvents，showNextEvent 会处理
+    // 如果本回合无事件，需要手动恢复按钮状态
+    if (this.pendingEvents.length === 0) {
+      if (Game.state.ended) {
+        this.showEnding();
+      } else {
+        if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
+        if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
+        this.requestRender();
+      }
     }
+    // 有事件时，showNextEvent → 用户选完 → onTurnEnd → requestRender
   },
 
   // ===== 处理本回合事件 =====
   processTurnEvents() {
     // 开场触发第一回合事件
-    const result = Game.getEventsForTurn();
-    const events = (result && result.core) ? result.core : (result || []);
+    const events = Game.getEventsForTurn();
     if (events.length > 0) {
       this.pendingEvents = events;
       this.currentEventIndex = 0;
@@ -3627,7 +3584,7 @@ const UI = {
         </div>
         <div class="modal-header">
           <div class="m-date">${dateStr}</div>
-          <div class="m-title">${this._directionBadge(ev)}${ev.title}</div>
+          <div class="m-title">${ev.title}</div>
           <span class="m-tag ${ev.tag || 'minor'}">${tagText[ev.tag] || '事件'}</span>
         </div>
         <div class="modal-body">${ev.body}</div>
@@ -4044,3 +4001,246 @@ if (typeof window !== 'undefined') {
   window.UI = UI;
   window.ENDINGS = ENDINGS;
 }
+
+/* ============================================================
+ * v0.4.2: 事件方向徽章 + 时代风貌Tab
+ * ============================================================ */
+(function() {
+ 'use strict';
+
+ // ============================================================
+ // v0.4.2 事件分类系统 · 完整补丁
+ // 直接重写关键函数，避免装饰器选择器不匹配的问题
+ // ============================================================
+
+ // ===== 方向 → 徽章 HTML =====
+ UI._directionBadge = function(direction) {
+ var map = {
+ 'internal': { icon: '\uD83C\uDFDB\uFE0F', label: '\u56FD\u5185', cls: 'badge-internal' },
+ 'japan':    { icon: '\u26E9\uFE0F',    label: '\u5BF9\u65E5', cls: 'badge-japan' },
+ 'america':  { icon: '\uD83D\uDC85',    label: '\u5BF9\u7F8E', cls: 'badge-america' },
+ 'russia':   { icon: '\uD83D\uDE96',    label: '\u5BF9\u4FC4', cls: 'badge-russia' },
+ 'italy':    { icon: '\uD83C\uDDEE\uD83C\uDDF9', label: '\u5BF9\u610F/\u5730\u4E2D\u6D77', cls: 'badge-italy' },
+ 'other':    { icon: '\uD83C\uDF10',    label: '\u5176\u4ED6', cls: 'badge-other' }
+ };
+ var b = map[direction] || map['other'];
+ return '<span class="dir-badge ' + b.cls + '">' + b.icon + ' ' + b.label + '</span>';
+ };
+
+ // ===== 辅助：从事件对象获取方向 =====
+ UI._getEventDir = function(ev) {
+ if (!ev) return 'other';
+ if (typeof Game !== 'undefined' && Game.classifyDirection) {
+ return Game.classifyDirection(ev);
+ }
+ return 'other';
+ };
+
+ // ===== 重写 showEventModal：在生成 HTML 时直接内嵌徽章 =====
+ UI.showEventModal = function(ev) {
+ if (!ev) return;
+ var s = Game.state;
+ var tagText = { critical: '\u5173\u952E\u4E8B\u4EF6', major: '\u91CD\u5927\u4E8B\u4EF6', minor: '\u4E00\u822C\u4E8B\u4EF6' };
+ var modal = document.getElementById('event-modal');
+ var dateStr = Game.getDateStr();
+ var dir = UI._getEventDir(ev);
+ var badge = UI._directionBadge(dir);
+
+ // 检查所有选项可用性
+ var results = ev.choices.map(function(c) { return Game.canChooseEventOption(ev, c); });
+ var allDisabled = results.every(function(ok) { return !ok; });
+ if (allDisabled && ev.choices.length > 0) results[0] = true;
+
+ var choicesHtml = ev.choices.map(function(c, i) {
+ var canChoose = results[i];
+ var cls = canChoose ? '' : 'disabled';
+ var effectsHtml = c.effects ? UI.renderEffectsPreview(c.effects) : '';
+ return ''
+ + '<button class="choice-btn ' + cls + '" data-choice="' + i + '" ' + (canChoose ? '' : 'disabled') + '>'
+ + '<div class="choice-title">' + c.text + '</div>'
+ + '<div class="choice-desc">' + (c.desc || '') + '</div>'
+ + effectsHtml
+ + '</button>';
+ }).join('');
+
+ var imgSrc = UI._getEventImage(ev);
+ var svgFallback = UI._getEventSvgFallback(ev);
+
+ modal.innerHTML = ''
+ + '<div class="modal-box">'
+ + '<div class="event-image-banner-wrap">'
+ + '<img class="event-image-banner" src="' + imgSrc + '" alt="\u5386\u53F2\u56FE\u7247"'
+ + ' onerror="this.onerror=null;this.src=\'' + svgFallback + '\';" />'
+ + '</div>'
+ + '<div class="modal-header">'
+ + '<div class="m-date">' + dateStr + '</div>'
+ + '<div class="m-title">' + badge + ' ' + ev.title + '</div>'
+ + '<span class="m-tag ' + (ev.tag || 'minor') + '">' + (tagText[ev.tag] || '\u4E8B\u4EF6') + '</span>'
+ + '</div>'
+ + '<div class="modal-body">' + ev.body + '</div>'
+ + '<div class="modal-choices">' + choicesHtml + '</div>'
+ + '</div>';
+ modal.classList.add('active');
+
+ // 绑定选项
+ var _this = this;
+ modal.querySelectorAll('[data-choice]').forEach(function(btn) {
+ btn.onclick = function() {
+ if (btn.disabled) return;
+ var idx = parseInt(btn.dataset.choice);
+ var choice = ev.choices[idx];
+ Game.chooseEventOption(ev, choice);
+ if (choice.showToast) _this.toast(choice.showToast, 'info');
+ modal.classList.remove('active');
+ _this.currentEventIndex++;
+ _this.renderTopbar();
+ if (Game.state.ended) { _this.showEnding(); return; }
+ setTimeout(function() { _this.showNextEvent(); }, 200);
+ };
+ });
+ };
+
+ // ===== 重写 renderEventLog：在生成 HTML 时直接内嵌徽章 + 方向色条 =====
+ UI.renderEventLog = function() {
+ var s = Game.state;
+ if (!s || !s.eventLog || s.eventLog.length === 0) {
+ return '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px">\u5C1A\u65E0\u91CD\u5927\u4E8B\u4EF6\u8BB0\u5F55</div>';
+ }
+ var html = '<div class="events-feed">';
+ for (var i = 0; i < s.eventLog.length; i++) {
+ var e = s.eventLog[i];
+ var dir = (e.direction) || UI._getEventDir({ title: e.title || '', desc: e.choice || '' });
+ var badge = UI._directionBadge(dir);
+ html += ''
+ + '<div class="event-card major dir-' + dir + '">'
+ + '<div class="e-date">' + (e.date || '') + '</div>'
+ + '<div class="e-title">' + badge + ' ' + (e.title || '') + '</div>'
+ + '<div class="e-desc">\u6289\u62E9: <em style="color:var(--accent-gold)">' + (e.choice || '') + '</em></div>'
+ + '</div>';
+ }
+ html += '</div>';
+ return html;
+ };
+
+ // ===== 渲染时代风貌Tab =====
+ UI.renderFlavorLog = function() {
+ var container = document.getElementById('tab-flavor');
+ if (!container) {
+ var gameEl = document.getElementById('game');
+ if (!gameEl) return;
+ container = document.createElement('div');
+ container.id = 'tab-flavor';
+ container.className = 'tab-content';
+ gameEl.appendChild(container);
+ }
+ if (!Game.state || !Game.state.flavorLog || !Game.state.flavorLog.length) {
+ container.innerHTML = '<div class="empty-hint">\uD83D\uDCF0 \u5C1A\u65E0\u65F6\u4EE3\u98CE\u8303\u8BB0\u5F55 \u2014 \u7EE7\u7EED\u6E38\u620F\u4EE5\u6536\u96C6\u65F6\u4EE3\u98CE\u8303</div>';
+ return;
+ }
+ var html = '<div class="flavor-header">\uD83D\uDCF0 \u65F6\u4EE3\u98CE\u8303 \u00B7 \u4E86\u89E3\u90A3\u4E2A\u65F6\u4EE3\u7684\u98CE\u8C8C</div><div class="flavor-list">';
+ var logs = Game.state.flavorLog.slice(0, 80);
+ for (var i = 0; i < logs.length; i++) {
+ var log = logs[i];
+ var dir = log.direction || 'other';
+ var badge = UI._directionBadge(dir);
+ html += '<div class="flavor-card dir-' + dir + '">'
+ + '<div class="flavor-date">' + (log.date || '') + '</div>'
+ + '<div class="flavor-title">' + badge + ' ' + (log.title || '\u672A\u547D\u540D') + '</div>'
+ + (log.text ? '<div class="flavor-text">' + log.text + '</div>' : '')
+ + '</div>';
+ }
+ html += '</div>';
+ container.innerHTML = html;
+ };
+
+ // ===== 重写 renderTab：添加 flavor 分支 =====
+ UI.renderTab = function(tabName) {
+ // 调用原始渲染逻辑（保留原函数的tab切换+渲染）
+ var _origRenderTab = UI._origRenderTab;
+ if (_origRenderTab) {
+ _origRenderTab.call(this, tabName);
+ } else {
+ // 首次进入时缓存原始函数
+ UI._origRenderTab = UI.renderTab;
+ // 直接执行原始逻辑（不递归）
+ UI._renderTabBody(tabName);
+ }
+ if (tabName === 'flavor') {
+ UI.renderFlavorLog();
+ }
+ };
+
+ // ===== 辅助：渲染Tab主体内容 =====
+ UI._renderTabBody = function(tabName) {
+ UI.currentTab = tabName;
+ var content = document.getElementById('tab-content');
+ if (!content) return;
+ // 触发各tab的渲染
+ switch(tabName) {
+ case 'overview': UI.renderOverview(content); break;
+ case 'nation': UI.renderNation(content); break;
+ case 'world': UI.renderWorld(content); break;
+ case 'industry': UI.renderIndustry(content); break;
+ case 'policy': UI.renderPolicy(content); break;
+ case 'tech': UI.renderTech(content); break;
+ case 'shop': UI.renderShop(content); break;
+ case 'events': UI.renderEventsTab(content); break;
+ default: break;
+ }
+ // 更新tab高亮
+ document.querySelectorAll('.tab').forEach(function(t) {
+ t.classList.toggle('active', t.dataset.tab === tabName);
+ });
+ };
+
+ // ===== 重写 showNextEvent：完成后刷新风貌Tab =====
+ UI.showNextEvent = function() {
+ if (this.currentEventIndex >= this.pendingEvents.length) {
+ this.pendingEvents = [];
+ this.autoSave();
+ if (Game.state.ended) {
+ this.showEnding();
+ } else {
+ var btn = document.getElementById('btn-next-turn');
+ var mBtn = document.getElementById('m-btn-next');
+ if (btn) { btn.disabled = false; btn.textContent = '\u63A8\u8FDB\u81F3\u4E0B\u4E00\u5B63\u5EA6 \u25B8'; }
+ if (mBtn) { mBtn.disabled = false; mBtn.textContent = '\u4E0B\u4E00\u5B63\u5EA6 \u25B8'; }
+ // 刷新风貌Tab（如果正在查看）
+ var flavorTab = document.getElementById('tab-flavor');
+ if (flavorTab && flavorTab.style.display !== 'none') {
+ UI.renderFlavorLog();
+ }
+ this.requestRender();
+ }
+ return;
+ }
+ var ev = this.pendingEvents[this.currentEventIndex];
+ this.showEventModal(ev);
+ };
+
+ // ===== onEvents 回调（Game.advanceTurn 调用） =====
+ UI.onEvents = function(events) {
+ if (!events || events.length === 0) return;
+ UI.pendingEvents = events.slice();
+ UI.currentEventIndex = 0;
+ UI.showNextEvent();
+ };
+
+ // ===== onTurnEnd 回调 =====
+ UI.onTurnEnd = function() {
+ UI.requestRender();
+ };
+
+ // ===== 修复 processTurnEvents：防止事件被触发两次 =====
+ // 原版在 nextTurn 里已经通过 Game.advanceTurn 获取事件，
+ // processTurnEvents 不应再单独调 getEventsForTurn
+ UI.processTurnEvents = function() {
+ // 如果已有 pendingEvents（由 onEvents 回调设置），直接开始显示
+ if (this.pendingEvents && this.pendingEvents.length > 0) {
+ this.currentEventIndex = 0;
+ this.showNextEvent();
+ }
+ // 否则不做事（advanceTurn 会通过 onEvents 回调传入事件）
+ };
+
+})();

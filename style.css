@@ -1788,57 +1788,75 @@ body {
   .shop-gain { width: 100%; }
 }
 
-/* ===== 方向徽章 (事件弹窗/日志) ===== */
+/* ============================================================
+ * v0.4.2: 事件方向徽章 + 时代风貌Tab
+ * ============================================================ */
+
+/* ===== 方向徽章（通用） ===== */
 .dir-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-right: 8px;
-  vertical-align: middle;
-  letter-spacing: 0.02em;
-  border: 1px solid currentColor;
-  background: rgba(255,255,255,0.04);
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  padding: 2px 7px; border-radius: 3px; margin-right: 6px;
+  vertical-align: middle; white-space: nowrap;
 }
-.badge-internal { color: #c9a84a; }
-.badge-japan    { color: #e07aaa; }
-.badge-us       { color: #5a9ad4; }
-.badge-russia   { color: #d45a5a; }
-.badge-other    { color: #9a9a9a; }
+.badge-internal { background: rgba(201,168,74,0.18); color: #e8c860; border: 1px solid rgba(201,168,74,0.35); }
+.badge-japan    { background: rgba(232,130,170,0.16); color: #f0a0c0; border: 1px solid rgba(232,130,170,0.32); }
+.badge-america  { background: rgba(90,140,200,0.16); color: #7ab0e0; border: 1px solid rgba(90,140,200,0.32); }
+.badge-russia   { background: rgba(180,60,60,0.18);  color: #e07070; border: 1px solid rgba(180,60,60,0.35); }
+.badge-italy    { background: rgba(80,160,100,0.15); color: #80c090; border: 1px solid rgba(80,160,100,0.30); }
+.badge-other    { background: rgba(120,120,130,0.14); color: #a0a0b0; border: 1px solid rgba(120,120,130,0.28); }
 
-/* 事件日志卡片 - 方向色条 */
+/* ===== 事件弹窗标题区的徽章 ===== */
+.event-modal .event-title .dir-badge { font-size: 12px; padding: 3px 8px; }
+
+/* ===== 事件日志卡片的方向色条 ===== */
+.event-log-item.dir-internal,
 .event-card.dir-internal { border-left: 3px solid #c9a84a; }
-.event-card.dir-japan    { border-left: 3px solid #e07aaa; }
-.event-card.dir-us       { border-left: 3px solid #5a9ad4; }
-.event-card.dir-russia   { border-left: 3px solid #d45a5a; }
-.event-card.dir-other    { border-left: 3px solid #9a9a9a; }
+.event-log-item.dir-japan,
+.event-card.dir-japan    { border-left: 3px solid #e882aa; }
+.event-log-item.dir-america,
+.event-card.dir-america  { border-left: 3px solid #5a8cc8; }
+.event-log-item.dir-russia,
+.event-card.dir-russia   { border-left: 3px solid #b43c3c; }
+.event-log-item.dir-italy,
+.event-card.dir-italy    { border-left: 3px solid #50a064; }
+.event-log-item.dir-other,
+.event-card.dir-other    { border-left: 3px solid #787882; }
 
-/* ===== 时代风貌卡片 ===== */
-.flavor-feed .flavor-card {
-  background: linear-gradient(135deg, rgba(90,122,154,0.08), rgba(201,168,74,0.05));
-  border: 1px solid rgba(201,168,74,0.18);
-  border-radius: 6px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+/* ===== 时代风貌 Tab ===== */
+#tab-flavor { padding: 16px 20px; }
+.flavor-header {
+  font-family: var(--font-serif); font-size: 18px; color: var(--accent-gold-bright);
+  letter-spacing: 0.06em; margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
 }
-.flavor-feed .flavor-card .e-title {
-  color: var(--text-primary);
-  font-size: 13.5px;
-  font-weight: 500;
-  margin: 4px 0;
+.flavor-list { display: flex; flex-direction: column; gap: 8px; }
+.flavor-card {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px;
+  transition: all 0.2s;
+}
+.flavor-card:hover { background: var(--bg-panel-2); border-color: var(--border-bright); }
+.flavor-card.dir-internal { border-left: 3px solid #c9a84a; }
+.flavor-card.dir-japan    { border-left: 3px solid #e882aa; }
+.flavor-card.dir-america  { border-left: 3px solid #5a8cc8; }
+.flavor-card.dir-russia   { border-left: 3px solid #b43c3c; }
+.flavor-card.dir-italy    { border-left: 3px solid #50a064; }
+.flavor-card.dir-other    { border-left: 3px solid #787882; }
+.flavor-date { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+.flavor-title { font-size: 13.5px; color: var(--text-primary); font-weight: 500; }
+.flavor-text { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+
+/* ===== 风味新闻的特殊样式 ===== */
+.news-item.flavor { opacity: 0.75; font-style: italic; }
+
+/* ===== 空状态提示 ===== */
+.empty-hint {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-muted); font-size: 13px;
+  border: 1px dashed var(--border); border-radius: 8px;
+  margin: 20px 0;
 }
 
-/* ===== 时代风貌 Tab 高亮 ===== */
-.tab[data-tab="flavor"].active {
-  color: var(--accent-gold-bright);
-  border-bottom-color: var(--accent-gold-bright);
-  text-shadow: 0 0 8px rgba(201,168,74,0.4);
-}
-
-/* ===== Toast - flavor 类型 ===== */
-.toast.flavor {
-  background: linear-gradient(135deg, #2a3040, #1c2030);
-  border-left: 3px solid var(--accent-gold);
-  color: var(--text-primary);
-}
+/* ===== Tab 高亮（风味Tab激活时） ===== */
+.tab[data-tab="flavor"].active { color: var(--accent-gold-bright); border-bottom-color: var(--accent-gold); }
