@@ -81,7 +81,8 @@
 
     <button class="btn-enter" id="btn-start">进入帝国总理府 ▸</button>
     <button class="btn-secondary" id="btn-quick-start-splash" style="margin-top:10px;border-color:var(--accent-gold);color:var(--accent-gold);padding:10px 24px;font-size:14px;">⚡ 快速开始（普通·历史模式）</button>
-    <button class="btn-secondary" id="btn-continue" style="margin-top:10px;display:none;">继续游戏 ▸</button>
+    <button class="btn-secondary" id="btn-continue" style="margin-top:10px;display:none;">选择存档载入 ▸</button>
+    <button class="btn-secondary" id="btn-load-splash" style="margin-top:6px;display:none;background:transparent;border-color:var(--border);color:var(--text-secondary);padding:8px 20px;font-size:12px;">管理存档 · 读取/删除</button>
     <button class="btn-secondary" id="btn-tutorial-splash" style="margin-top:10px;background:transparent;border-color:var(--border);color:var(--text-secondary);padding:8px 24px;font-size:13px;">阅读教程</button>
   </div>
 
@@ -154,7 +155,7 @@
   <script src="js/save_system.js?v=3"></script>
   <script src="js/nation_sim.js?v=41"></script>
   <script src="js/game.js?v=44"></script>
-  <script src="js/ui.js?v=78"></script>
+  <script src="js/ui.js?v=79"></script>
   <script>
     // 难度选择初始化
     (function initDifficultySelect() {
@@ -188,20 +189,34 @@
       });
     })();
 
-    // 检查是否有存档（版本匹配才显示继续游戏）
+    // 检查是否有存档（版本匹配才显示继续游戏 + 管理存档按钮）
     (function checkSave() {
       try {
-        // 兼容新SaveSystem: 检查槽位1或自动存档
         let saved = null;
+        let slotCount = 0;
+        let latestSave = null;
         try {
           if (typeof SaveSystem !== 'undefined') {
             SaveSystem.migrateLegacy();
-            const meta1 = SaveSystem.getSlotMeta(1);
-            const meta0 = SaveSystem.getSlotMeta(0);
-            const target = meta1 || meta0;
-            if (target) {
-              saved = JSON.parse(localStorage.getItem('tno_save_' + target.slotId) || '{}');
-              saved._slotId = target.slotId;
+            const slots = SaveSystem.getAllSlots();
+            // 统计有效存档数量 + 找最新存档
+            for (const s of slots) {
+              if (s.occupied && s.meta) {
+                slotCount++;
+                if (!latestSave || new Date(s.meta.savedAt) > new Date(latestSave.meta.savedAt)) {
+                  latestSave = s;
+                }
+                const raw = localStorage.getItem('tno_save_' + s.id);
+                if (raw && !saved) {
+                  try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.state && !parsed.state.ended && parsed.state.saveVersion === Game.SAVE_VERSION) {
+                      saved = parsed;
+                      saved._slotId = s.id;
+                    }
+                  } catch(_) {}
+                }
+              }
             }
           }
         } catch(_) {}
@@ -209,17 +224,31 @@
         if (!saved) saved = JSON.parse(localStorage.getItem('tno_game_save') || 'null');
         if (saved) {
           const state = saved.state || saved;
-          // 版本检查：旧存档不显示继续按钮
           if (state && !state.ended && state.saveVersion === Game.SAVE_VERSION) {
             const btn = document.getElementById('btn-continue');
             btn.style.display = '';
             const diffName = (window.DIFFICULTIES && DIFFICULTIES[state.difficulty]?.name) || '普通';
-            btn.textContent = `继续游戏（${state.year}年Q${state.quarter} · ${diffName}）▸`;
+            if (slotCount > 1) {
+              btn.textContent = `选择存档载入（共${slotCount}档）▸`;
+            } else if (latestSave) {
+              btn.textContent = `选择存档载入（最新：${state.year}年Q${state.quarter} · ${diffName}）▸`;
+            } else {
+              btn.textContent = `继续游戏（${state.year}年Q${state.quarter} · ${diffName}）▸`;
+            }
+            // 显示管理存档按钮
+            const loadBtn = document.getElementById('btn-load-splash');
+            if (loadBtn) loadBtn.style.display = '';
           } else if (state && (!state.saveVersion || state.saveVersion !== Game.SAVE_VERSION)) {
-            // 旧版存档，清除并提示
             try { localStorage.removeItem('tno_game_save'); } catch(_) {}
             console.log('旧版存档已清除，请开始新游戏');
           }
+        } else if (slotCount > 0 && latestSave) {
+          // 有存档但版本不匹配旧存档 → 还是显示入口
+          const btn = document.getElementById('btn-continue');
+          btn.style.display = '';
+          btn.textContent = `选择存档载入（共${slotCount}档）▸`;
+          const loadBtn = document.getElementById('btn-load-splash');
+          if (loadBtn) loadBtn.style.display = '';
         }
       } catch(e) {}
     })();
@@ -261,18 +290,33 @@
       UI.start('historical');
     });
 
-    // 继续游戏
+    // 选择存档载入 → 打开存档管理面板
     document.getElementById('btn-continue').addEventListener('click', () => {
-      if (UI.loadGame()) {
-        document.getElementById('splash').style.display = 'none';
-        document.getElementById('game').classList.add('active');
-        UI.renderAll();
-        UI.preloadEventImages();
-        UI.toast('存档已载入', 'success');
+      if (typeof UI !== 'undefined' && typeof UI.showSavePanel === 'function') {
+        UI.showSavePanel('load');
       } else {
-        UI.toast('加载失败', 'error');
+        // 回退：直接加载最新存档
+        if (UI.loadGame()) {
+          document.getElementById('splash').style.display = 'none';
+          document.getElementById('game').classList.add('active');
+          UI.renderAll();
+          UI.preloadEventImages();
+          UI.toast('存档已载入', 'success');
+        } else {
+          UI.toast('加载失败', 'error');
+        }
       }
     });
+
+    // 管理存档 → 读取/删除面板
+    const loadSplashBtn = document.getElementById('btn-load-splash');
+    if (loadSplashBtn) {
+      loadSplashBtn.addEventListener('click', () => {
+        if (typeof UI !== 'undefined' && typeof UI.showSavePanel === 'function') {
+          UI.showSavePanel('load');
+        }
+      });
+    }
 
     // 教程按钮（启动画面）
     document.getElementById('btn-tutorial-splash').addEventListener('click', () => {

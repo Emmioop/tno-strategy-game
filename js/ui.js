@@ -3910,10 +3910,12 @@ const UI = {
                 <div style="display:flex;gap:4px;">
                   ${mode === 'save'
                     ? (isAuto
-                      ? '<span style="font-size:10px;color:var(--text-muted);padding:4px 8px;">自动</span>'
-                      : `<button class="btn btn-build" data-save-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">${occupied ? '覆盖' : '保存'}</button>`)
+                      ? `<button class="btn btn-build" data-load-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">读取</button>`
+                      : occupied
+                        ? `<button class="btn" data-load-slot="${slot.id}" style="padding:4px 10px;font-size:11px;background:var(--accent-blue);color:#fff;border:1px solid var(--accent-blue);">读取</button><button class="btn btn-build" data-save-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">覆盖</button>`
+                        : `<button class="btn btn-build" data-save-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">保存</button>`)
                     : (occupied
-                      ? `<button class="btn btn-build" data-load-slot="${slot.id}" style="padding:4px 10px;font-size:11px;">读取</button>${!isAuto ? `<button class="btn-secondary" data-del-slot="${slot.id}" style="padding:4px 8px;font-size:10px;margin-left:2px;">删除</button>` : ''}`
+                      ? `<button class="btn" data-load-slot="${slot.id}" style="padding:4px 10px;font-size:11px;background:var(--accent-blue);color:#fff;border:1px solid var(--accent-blue);">读取</button>${!isAuto ? `<button class="btn-secondary" data-del-slot="${slot.id}" style="padding:4px 8px;font-size:10px;margin-left:2px;">删除</button>` : ''}`
                       : '<span style="font-size:10px;color:var(--text-muted);padding:4px 8px;">空</span>')
                   }
                 </div>
@@ -3948,7 +3950,18 @@ const UI = {
         this.toast(result.msg, result.ok ? 'success' : 'error');
         if (result.ok) {
           overlay.remove();
+          // 如果在开始页面（splash 可见），则切换到游戏界面
+          const splash = document.getElementById('splash');
+          const game = document.getElementById('game');
+          if (splash && splash.style.display !== 'none') {
+            splash.style.display = 'none';
+            if (game) game.classList.add('active');
+          }
           this.requestRender();
+          // 如果有预加载事件图片，也加载一下
+          if (typeof this.preloadEventImages === 'function') {
+            try { this.preloadEventImages(); } catch(_) {}
+          }
         }
       };
     });
