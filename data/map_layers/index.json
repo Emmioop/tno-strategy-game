@@ -1,0 +1,66 @@
+{
+  "layers": {
+    "subregions": {
+      "id": "subregions",
+      "name": "子区域划分",
+      "desc": "国家内部子区域边界+名称",
+      "defaultOn": false,
+      "opacity": 0.15,
+      "file": "data/map_layers/subregions.json",
+      "elementCount": 2000,
+      "sizeKB": 443
+    },
+    "terrain": {
+      "id": "terrain",
+      "name": "地形地貌",
+      "desc": "山脉、高原、沙漠、平原",
+      "defaultOn": false,
+      "opacity": 0.1,
+      "file": "data/map_layers/terrain.json",
+      "elementCount": 3000,
+      "sizeKB": 376
+    },
+    "water": {
+      "id": "water",
+      "name": "水系",
+      "desc": "河流、湖泊、内海",
+      "defaultOn": false,
+      "opacity": 0.2,
+      "file": "data/map_layers/water.json",
+      "elementCount": 1500,
+      "sizeKB": 447
+    },
+    "transit": {
+      "id": "transit",
+      "name": "交通线",
+      "desc": "铁路、公路、重要通路",
+      "defaultOn": false,
+      "opacity": 0.18,
+      "file": "data/map_layers/transit.json",
+      "elementCount": 1000,
+      "sizeKB": 205
+    },
+    "history": {
+      "id": "history",
+      "name": "历史标记",
+      "desc": "战役、历史事件、争议地",
+      "defaultOn": false,
+      "opacity": 0.22,
+      "file": "data/map_layers/history.json",
+      "elementCount": 0,
+      "sizeKB": 0
+    },
+    "cities": {
+      "id": "cities",
+      "name": "重要城市",
+      "desc": "首都、大城市、人口中心",
+      "defaultOn": true,
+      "opacity": 0.85,
+      "file": "data/map_layers/cities.json",
+      "elementCount": 1200,
+      "sizeKB": 116
+    }
+  },
+  "totalElements": 8700,
+  "totalKB": 1587
+}

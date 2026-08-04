@@ -1253,3 +1253,725 @@
 
   return SVGMap;
 });
+
+
+
+/* ============================================================
+ * SVGMap v2 升级补丁 (图层系统 + 动态着色 + 离屏缓存 + 标签分级
+ *  + 双击缩放 + Hatch内战样式 + 颜色过渡动画 + Dev调试模式)
+ * 与原版 API 100% 向后兼容
+ * ============================================================ */
+(function _extendSVGMap(root) {
+  if (!root.SVGMap || !root.SVGMap.prototype) return;
+  const SVGMap = root.SVGMap;
+  const proto = SVGMap.prototype;
+
+  /* ----- 着色模式枚举 ----- */
+  SVGMap.COLOR_MODES = {
+    FACTION:   'faction',    // 阵营颜色 (现有默认)
+    STABILITY: 'stability',  // 稳定度 绿→黄→红
+    TENSION:   'tension',    // 紧张度/前线 白→橙→红
+    HOTSPOT:   'hotspot',    // 事件热点 闪烁边框
+    RUSSIA:    'russia'      // 俄罗斯统一进度 渐变
+  };
+
+  // -------- 构造函数钩子: 在 constructor 末尾自动注入(通过属性访问) --------
+  const _origIngest = proto._ingestMapData;
+  proto._ingestMapData = function (mapId, data) {
+    _origIngest.call(this, mapId, data);
+    // v2 字段初始化
+    this.layers = this.layers || {};           // {layerId: {loaded, on, data, rendered: Canvas}}
+    this.activeLayers = this.activeLayers || new Set(); // 已加载且开启的
+    this.layerIndex = this.layerIndex || null;   // 图层索引
+    this.colorMode = this.colorMode || SVGMap.COLOR_MODES.FACTION;
+    this.regionStateProvider = this.regionStateProvider || null; // fn(regionId)->RegionState
+    this.colorCache = this.colorCache || new Map(); // regionId -> {fill, targetFill, startFill, t, startTime}
+    this.regionFlags = this.regionFlags || new Map();   // regionId -> {civilWar, hotspot, etc}
+    this.hotspots = this.hotspots || new Set();   // 热点regionId
+    this.lastViews = this.lastViews || {};        // mapId -> 上次 view
+    this.labelZoomThreshold = this.labelZoomThreshold || { // 缩放下显示标签
+      tiny: 0.0,    // 面积<500: 不显示
+      small: 1.8,   // 500-3000: >1.8x 显示
+      medium: 1.3,  // 3000-10000: >1.3x 显示
+      large: 0.0    // >10000: 始终显示
+    };
+    this.labelMinZoom = this.labelMinZoom || 0.5; // 低于0.5x 不显示任何标签(减少绘制)
+    this.devMode = this.devMode || false;
+    this._hatchPattern = null;     // 内战斜线 pattern cache (按scale生成)
+    this._offscreen = null;        // 离屏 canvas cache
+    this._offscreenKey = null;     // 离屏有效时的 key (mapId+view+scale+mode+flags)
+    this._pulseElapsed = 0;        // 热点脉冲计时
+    // 恢复上一次该地图的视角
+    if (this.lastViews[mapId]) {
+      const v = this.lastViews[mapId];
+      this.view = { x: v.x, y: v.y, w: v.w, h: v.h };
+      this._clampView();
+    }
+  };
+
+  /* -------- P0: 图层系统 -------- */
+  proto.loadLayerIndex = async function () {
+    if (this.layerIndex) return this.layerIndex;
+    try {
+      const resp = await fetch('data/map_layers/index.json', { cache: 'no-cache' });
+      if (!resp.ok) return null;
+      this.layerIndex = await resp.json();
+      return this.layerIndex;
+    } catch (e) { console.warn('[SVGMap] 图层索引加载失败', e.message); return null; }
+  };
+
+  proto.loadLayer = async function (layerId) {
+    if (!this.layerIndex) await this.loadLayerIndex();
+    if (!this.layerIndex || !this.layerIndex.layers[layerId]) return false;
+    if (this.layers[layerId] && this.layers[layerId].loaded) return true;
+    const meta = this.layerIndex.layers[layerId];
+    try {
+      const resp = await fetch(meta.file, { cache: 'no-cache' });
+      if (!resp.ok) return false;
+      const json = await resp.json();
+      this.layers[layerId] = {
+        loaded: true,
+        on: meta.defaultOn,
+        meta: json.meta || meta,
+        data: json.elements || [],
+        offscreen: null  // 离屏渲染缓存
+      };
+      if (meta.defaultOn) this.activeLayers.add(layerId);
+      this._dirty = true;
+      this._invalidateOffscreen();
+      this._requestDraw();
+      return true;
+    } catch (e) { console.warn('[SVGMap] 图层加载失败 '+layerId, e.message); return false; }
+  };
+
+  proto.loadAllDefaultLayers = async function () {
+    const idx = await this.loadLayerIndex();
+    if (!idx) return;
+    // 默认只加载 defaultOn=true 的图层 (目前只有 cities)
+    const toLoad = Object.keys(idx.layers).filter(id => idx.layers[id].defaultOn);
+    // 其余图层用户手动点开时加载 (按需)
+    await Promise.all(toLoad.map(id => this.loadLayer(id).catch(() => {})));
+    this._fire('layersReady', {});
+  };
+
+  proto.setLayer = function (layerId, on) {
+    const layer = this.layers[layerId];
+    if (!layer || !layer.loaded) return false;
+    layer.on = !!on;
+    if (layer.on) this.activeLayers.add(layerId); else this.activeLayers.delete(layerId);
+    this._dirty = true;
+    this._invalidateOffscreen();
+    this._requestDraw();
+    this._fire('layerchange', { layerId, on });
+    return true;
+  };
+
+  proto.toggleLayer = function (layerId) {
+    const layer = this.layers[layerId];
+    if (!layer) return null;
+    return this.setLayer(layerId, !layer.on);
+  };
+
+  proto.getLayerState = function () {
+    const s = {};
+    if (this.layerIndex) {
+      for (const id in this.layerIndex.layers) {
+        const l = this.layers[id];
+        s[id] = {
+          meta: this.layerIndex.layers[id],
+          loaded: !!(l && l.loaded),
+          on: !!(l && l.on)
+        };
+      }
+    }
+    return s;
+  };
+
+  /* -------- P1: 动态着色系统 -------- */
+  // RegionState = {
+  //   controller: 'GER'|'USA'|...,   // 控制者阵营ID
+  //   stability: 0-100,             // 稳定度 (0=崩溃, 100=稳如狗)
+  //   tension: 0-100,                // 紧张度/前线 (0=和平, 100=战场)
+  //   russiaUnifyProgress: 0-100,    // 俄罗斯统一进度
+  //   civilWar: true/false,          // 内战样式 (斜线)
+  //   hotspot: true/false,           // 事件热点 (脉冲)
+  //   faction: 'ger'|'usa'|'jpn'|... // override faction
+  // }
+  proto.setRegionStateProvider = function (providerFn) {
+    this.regionStateProvider = providerFn;
+    this.colorCache.clear();
+    this._dirty = true;
+    this._invalidateOffscreen();
+    this._requestDraw();
+  };
+
+  proto.setColorMode = function (mode) {
+    if (this.colorMode === mode) return;
+    this.colorMode = mode;
+    this.colorCache.clear();
+    this._dirty = true;
+    this._invalidateOffscreen();
+    this._requestDraw();
+    this._fire('colormodechange', { mode });
+  };
+
+  proto.getRegionState = function (regionId) {
+    try { return (this.regionStateProvider && this.regionStateProvider(regionId)) || null; }
+    catch (_) { return null; }
+  };
+
+  // 工具: hsl 插值
+  function _lerpColor(a, b, t) {
+    if (typeof a === 'string') a = _hexToRgb(a);
+    if (typeof b === 'string') b = _hexToRgb(b);
+    t = Math.max(0, Math.min(1, t));
+    const r = Math.round(a.r + (b.r - a.r) * t);
+    const g = Math.round(a.g + (b.g - a.g) * t);
+    const bl = Math.round(a.b + (b.b - a.b) * t);
+    return 'rgb('+r+','+g+','+bl+')';
+  }
+  function _hexToRgb(c) {
+    if (c.startsWith('rgb')) {
+      const m = c.match(/\d+/g); if (m) return {r:+m[0],g:+m[1],b:+m[2]};
+    }
+    const hex = c.replace('#','');
+    const n = hex.length === 3 ? hex.split('').map(x=>x+x).join('') : hex;
+    return { r: parseInt(n.substring(0,2),16), g: parseInt(n.substring(2,4),16), b: parseInt(n.substring(4,6),16) };
+  }
+  function _valueToGradient(v, stops) {
+    // stops = [{v:0, color:'#f00'}, {v:0.5, color:'#ff0'}, ...]
+    v = Math.max(0, Math.min(1, v));
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (v >= stops[i].v && v <= stops[i+1].v) {
+        const t = (v - stops[i].v) / (stops[i+1].v - stops[i].v);
+        return _lerpColor(stops[i].color, stops[i+1].color, t);
+      }
+    }
+    return stops[stops.length-1].color;
+  }
+  SVGMap._lerpColor = _lerpColor;
+  SVGMap._valueToGradient = _valueToGradient;
+
+  // 5 种着色模式的颜色返回 {fill, border, pulse?}
+  proto._resolveRegionColor = function (regionId, factionColor) {
+    const state = this.getRegionState(regionId);
+    const baseFill = (factionColor && factionColor.fill) || '#3a4a5a';
+    const baseBorder = (factionColor && factionColor.border) || '#1e2a35';
+    const result = { fill: baseFill, border: baseBorder };
+
+    if (this.colorMode === SVGMap.COLOR_MODES.STABILITY && state) {
+      const v = Math.max(0, Math.min(100, state.stability == null ? 50 : state.stability)) / 100;
+      result.fill = _valueToGradient(v, [
+        { v: 0.0, color: '#8b1a1a' }, // 崩溃
+        { v: 0.3, color: '#b04a1a' }, // 动荡
+        { v: 0.6, color: '#a07a1a' }, // 不稳
+        { v: 0.85,color: '#3a7a3a' }, // 稳
+        { v: 1.0, color: '#1a5a2a' }  // 非常稳
+      ]);
+      result.border = '#0a0f18';
+    } else if (this.colorMode === SVGMap.COLOR_MODES.TENSION && state) {
+      const v = Math.max(0, Math.min(100, state.tension == null ? 0 : state.tension)) / 100;
+      result.fill = _valueToGradient(v, [
+        { v: 0.0, color: '#2a3a4a' },
+        { v: 0.4, color: '#7a5a2a' },
+        { v: 0.8, color: '#9a3a1a' },
+        { v: 1.0, color: '#b01818' }
+      ]);
+      result.border = v > 0.6 ? '#ff6040' : '#1a1a2a';
+    } else if (this.colorMode === SVGMap.COLOR_MODES.RUSSIA && state) {
+      const ru = Math.max(0, Math.min(100, state.russiaUnifyProgress == null ? 0 : state.russiaUnifyProgress)) / 100;
+      result.fill = _valueToGradient(ru, [
+        { v: 0.0, color: '#4a4a5a' }, // 破碎
+        { v: 0.4, color: '#5a5a7a' },
+        { v: 0.8, color: '#7a5a5a' },
+        { v: 1.0, color: '#a83232' }  // 统一
+      ]);
+    } else if (this.colorMode === SVGMap.COLOR_MODES.HOTSPOT) {
+      result.fill = baseFill;
+    } else if (state && state.faction) {
+      // faction override
+      const override = root.SVGMap && root.SVGMap.getFactionColor && root.SVGMap.getFactionColor(state.faction);
+      if (override) { result.fill = override.fill; result.border = override.border; }
+    } else if (state && state.controller) {
+      const ctrl = root.SVGMap && root.SVGMap.getFactionColor && root.SVGMap.getFactionColor(state.controller.toLowerCase());
+      if (ctrl) { result.fill = ctrl.fill; result.border = ctrl.border; }
+    }
+
+    // 内战: 返回 hatch 属性 (由 draw 阶段处理)
+    if (state && state.civilWar) result.civilWar = true;
+    // 热点
+    if ((state && state.hotspot) || this.hotspots.has(regionId)) result.hotspot = true;
+
+    return result;
+  };
+
+  /* -------- P2: 双击缩放 + 跳转 -------- */
+  proto.zoomToFeature = function (id, paddingFactor) {
+    const data = this.featureIndex.get(id);
+    if (!data || !this.pathCache.has(id)) return false;
+    paddingFactor = paddingFactor || 0.35;
+    // 用 pathCache 的 bbox: 遍历path找extent (用 featureIndex 的标签位置估算，或通过 path2D 用 canvas measure 太麻烦)
+    // 用 _labelCache 如果有（中心点+面积）
+    const label = this._labelCache && this._labelCache[id];
+    if (label) {
+      const area = label.area || 1000;
+      const halfSize = Math.max(Math.sqrt(area) * (0.7 + paddingFactor), this.view.w * 0.1);
+      this.view = {
+        x: label.x - halfSize,
+        y: label.y - halfSize,
+        w: halfSize * 2,
+        h: halfSize * 2
+      };
+    } else {
+      const v = this.currentMapData.view;
+      this.view = { x: v.x, y: v.y, w: v.w / 3, h: v.h / 3 };
+    }
+    this._clampView();
+    this._dirty = true;
+    this._invalidateOffscreen();
+    this._requestDraw();
+    return true;
+  };
+
+  // 在构造完成后调用此方法打双击补丁 (外部调用也可以)
+  proto.installDoubleClickZoom = function () {
+    if (this._doubleClickInstalled) return;
+    this._doubleClickInstalled = true;
+    const cvs = this.canvas;
+    let lastClickTime = 0, lastClickHit = null;
+    const originalHandler = this._bindPointer ? null : null;
+    // 我们已经通过事件委托在 mousedown 检测
+    const onDown = (e) => {
+      const now = Date.now();
+      const rect = this._getCssRect();
+      if (!rect) return;
+      const lx = e.clientX - rect.left, ly = e.clientY - rect.top;
+      const hit = this._hitTest(lx, ly);
+      if (now - lastClickTime < 350 && hit && lastClickHit === hit) {
+        this.zoomToFeature(hit);
+        this._fire('dblclick', { feature: this.featureIndex.get(hit), regionId: hit });
+        lastClickTime = 0; lastClickHit = null;
+      } else {
+        lastClickTime = now;
+        lastClickHit = hit;
+      }
+    };
+    cvs.addEventListener('mousedown', onDown, true);
+    // 移动端: 双击tap
+    let lastTap = 0, lastTapHit = null;
+    cvs.addEventListener('touchend', (e) => {
+      if (e.changedTouches.length !== 1) return;
+      const now = Date.now();
+      const rect = this._getCssRect(); if (!rect) return;
+      const t = e.changedTouches[0];
+      const lx = t.clientX - rect.left, ly = t.clientY - rect.top;
+      const hit = this._hitTest(lx, ly);
+      if (now - lastTap < 400 && hit && lastTapHit === hit) {
+        this.zoomToFeature(hit);
+        this._fire('dblclick', { feature: this.featureIndex.get(hit), regionId: hit });
+        lastTap = 0; lastTapHit = null;
+      } else { lastTap = now; lastTapHit = hit; }
+    }, { passive: true });
+    this._cleanupDCInstall = () => { cvs.removeEventListener('mousedown', onDown, true); };
+  };
+
+  /* -------- P3: Hatch 内战斜线 pattern -------- */
+  proto._getHatchPattern = function (ctx, scale, fill, border) {
+    // 为当前 scale 生成一个斜线 pattern
+    const key = scale.toFixed(2) + ':' + fill + ':' + border;
+    if (this._hatchPattern && this._hatchPattern.key === key) return this._hatchPattern.pattern;
+    const size = Math.max(6, Math.round(10 / scale));
+    const off = document.createElement('canvas');
+    off.width = off.height = size * 2;
+    const octx = off.getContext('2d');
+    octx.fillStyle = fill;
+    octx.fillRect(0, 0, off.width, off.height);
+    octx.strokeStyle = 'rgba(255,80,80,0.55)';
+    octx.lineWidth = Math.max(1, size * 0.2);
+    for (let i = -off.height; i < off.width + off.height; i += size) {
+      octx.beginPath();
+      octx.moveTo(i, 0); octx.lineTo(i + off.height, off.height);
+      octx.stroke();
+    }
+    const pattern = ctx.createPattern(off, 'repeat');
+    this._hatchPattern = { key, pattern };
+    return pattern;
+  };
+
+  /* -------- P0/P4: 离屏缓存 + dev模式 -------- */
+  proto._invalidateOffscreen = function () { this._offscreenKey = null; };
+
+  proto.setDevMode = function (on) {
+    this.devMode = !!on;
+    this._dirty = true; this._invalidateOffscreen(); this._requestDraw();
+  };
+
+  proto.setHotspot = function (regionId, on) {
+    if (on) this.hotspots.add(regionId); else this.hotspots.delete(regionId);
+    this._dirty = true; this._invalidateOffscreen(); this._requestDraw();
+  };
+
+  proto.setCivilWarRegion = function (regionId, on) {
+    if (!this.regionFlags.has(regionId)) this.regionFlags.set(regionId, {});
+    const o = this.regionFlags.get(regionId);
+    o.civilWar = !!on;
+    this._dirty = true; this._invalidateOffscreen(); this._requestDraw();
+  };
+
+  /* -------- P0-3: 标签分级缩放显示 + 碰撞避让 + 主_draw升级 -------- */
+  proto._renderLabelsV2 = function (ctx, scale) {
+    if (!this.currentMapData || !this._labelCache) return;
+    const cssW = this._cssW || this.canvas.width;
+    const cssH = this._cssH || this.canvas.height;
+    if (!scale) return;
+    // 标签全部缩放下 (基础CSS尺寸 vs 当前view尺寸) 的缩放比
+    // zoomFactor: 1.0 = 原始 fit; >1 = 放大
+    if (!this.currentMapData.view) return;
+    const fitW = this.currentMapData.view.w;
+    const zoomFactor = fitW / this.view.w;
+
+    // 低于最小缩放不画标签（性能保护）
+    if (zoomFactor < this.labelMinZoom) return;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const baseSizeCss = Math.min(cssW, cssH) * 0.028;
+
+    // 收集候选(按面积从大到小) + 按重要性过滤
+    const candidates = [];
+    for (const [cid, pos] of Object.entries(this._labelCache)) {
+      const area = pos.area || 0;
+      let level;
+      if (area < 500) level = 'tiny';
+      else if (area < 3000) level = 'small';
+      else if (area < 10000) level = 'medium';
+      else level = 'large';
+      const minZoom = this.labelZoomThreshold[level] || 0;
+      if (zoomFactor < minZoom) continue;           // 标签分级：小的只有放大了才显示
+      if (pos.x < this.view.x || pos.x > this.view.x + this.view.w ||
+          pos.y < this.view.y || pos.y > this.view.y + this.view.h) continue;
+      const feature = this.featureIndex.get(cid);
+      let name = null;
+      if (feature && feature.zh) name = this._toSimplified(feature.zh);
+      else name = this._getCountryName(cid);
+      if (!name) continue;
+      const charLen = name.length;
+      const charFactor = Math.max(0.55, 1.0 - (charLen - 2) * 0.1);
+      const areaFactor = Math.sqrt(Math.min(area / 30000, 2.5));
+      const fontSizeCss = Math.max(7, Math.min(28, baseSizeCss * areaFactor * charFactor));
+      const fontSizeWorld = fontSizeCss / scale;
+      candidates.push({
+        cid, pos: { x: pos.x, y: pos.y }, name,
+        fontSize: fontSizeWorld,
+        // 预估屏幕像素尺寸(碰撞检测用), 用字符数估测宽度
+        wScreen: fontSizeCss * charLen * 0.75,
+        hScreen: fontSizeCss * 1.2,
+        area
+      });
+    }
+    // 按面积降序（大的优先画，占用位置，和不重叠保护）
+    candidates.sort((a, b) => b.area - a.area);
+    const placed = []; // 屏幕矩形集合
+    for (const c of candidates) {
+      // 转屏幕坐标(左上角) 用于AABB碰撞
+      const sx = (c.pos.x - this.view.x) / this.view.w * (this._cssW || this.canvas.width) - c.wScreen / 2;
+      const sy = (c.pos.y - this.view.y) / this.view.h * (this._cssH || this.canvas.height) - c.hScreen / 2;
+      let ok = true;
+      for (const p of placed) {
+        if (sx < p.x + p.w && sx + c.wScreen > p.x && sy < p.y + p.h && sy + c.hScreen > p.y) {
+          ok = false; break;
+        }
+      }
+      if (!ok) continue;
+      placed.push({ x: sx, y: sy, w: c.wScreen, h: c.hScreen });
+      // 绘制
+      const strokeW = Math.max(0.5, c.fontSize * 0.18);
+      ctx.lineWidth = strokeW;
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+      ctx.font = `bold ${c.fontSize}px 'PingFang SC', 'Microsoft YaHei', sans-serif`;
+      if (c.name.length > 6) {
+        const mid = Math.ceil(c.name.length / 2);
+        const l1 = c.name.substring(0, mid), l2 = c.name.substring(mid);
+        const lh = c.fontSize * 0.9;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeText(l1, c.pos.x, c.pos.y - lh); ctx.fillText(l1, c.pos.x, c.pos.y - lh);
+        ctx.strokeText(l2, c.pos.x, c.pos.y + lh); ctx.fillText(l2, c.pos.x, c.pos.y + lh);
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeText(c.name, c.pos.x, c.pos.y); ctx.fillText(c.name, c.pos.x, c.pos.y);
+      }
+    }
+    ctx.restore();
+  };
+
+  /* -------- 升级后的主_draw (先画国家+着色，再画开启的图层，再标签+高亮+dev信息) -------- */
+  proto._draw = function () {
+    const ctx = this.ctx;
+    let rect = this._getCssRect();
+    if (!rect || rect.width === 0 || rect.height === 0) {
+      const cw = (this.canvas && (this.canvas.clientWidth || this.canvas.offsetWidth)) || 0;
+      const ch = (this.canvas && (this.canvas.clientHeight || this.canvas.offsetHeight)) || 0;
+      const parent = this.canvas && this.canvas.parentElement;
+      const pw = parent && (parent.clientWidth || parent.offsetWidth) || 0;
+      const ph = parent && (parent.clientHeight || parent.offsetHeight) || 0;
+      const w = cw || pw; const h = ch || ph || (w ? Math.round(w * 0.56) : 0);
+      if (w && h) { rect = { width: w, height: h, top: 0, left: 0, bottom: h, right: w }; }
+      else { this._dirty = true; if (typeof setTimeout !== 'undefined') setTimeout(()=>this._requestDraw(), 500); return; }
+    }
+    const dpr = Math.min(window.devicePixelRatio || 1, this.options.dprMax);
+    const cssW = Math.max(1, Math.floor(rect.width)); const cssH = Math.max(1, Math.floor(rect.height));
+    const targetW = cssW * dpr; const targetH = cssH * dpr;
+    this._cssW = cssW; this._cssH = cssH; this._dpr = dpr;
+    if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
+      this.canvas.width = targetW; this.canvas.height = targetH; this._invalidateOffscreen();
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = this.options.bgColor;
+    ctx.fillRect(0, 0, targetW, targetH);
+
+    const mapAspect = this.view.w / this.view.h;
+    const canvasAspect = targetW / targetH;
+    let scale, offsetX, offsetY;
+    if (canvasAspect > mapAspect) { scale = targetH / this.view.h; offsetX = (targetW - this.view.w * scale) / 2; offsetY = 0; }
+    else { scale = targetW / this.view.w; offsetX = 0; offsetY = (targetH - this.view.h * scale) / 2; }
+    this._renderScale = scale; this._renderOffsetX = offsetX; this._renderOffsetY = offsetY;
+
+    // ===== 主画布：背景海洋 =====
+    if (!this.currentMapData) {
+      ctx.fillStyle = this.options.oceanColor; ctx.fillRect(0, 0, targetW, targetH);
+      ctx.fillStyle = '#555'; ctx.font = (14*dpr)+'px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('选择地图...', targetW/2, targetH/2);
+      this._dirty = false; return;
+    }
+    ctx.fillStyle = this.options.oceanColor;
+    ctx.fillRect(0, 0, targetW, targetH);
+
+    // ===== 世界坐标变换 =====
+    ctx.setTransform(scale, 0, 0, scale, offsetX - this.view.x * scale, offsetY - this.view.y * scale);
+
+    // ===== 热点脉冲动画参数 (仅P3 HOTSPOT 模式下有变化, 其余模式不逐帧重绘) =====
+    const animating = this.colorMode === SVGMap.COLOR_MODES.HOTSPOT && this.hotspots.size > 0;
+    if (animating) { this._pulseElapsed = (this._pulseElapsed || 0) + 0.05; this._dirty = true; this._requestDraw(); }
+    const pulseT = animating ? 0.5 + 0.5 * Math.sin(this._pulseElapsed * 4) : 0;
+
+    // ===== 国家填充 (动态着色 + 内战hatch) =====
+    const drawList = [];
+    for (const [cid, path] of this.pathCache) {
+      const factionColor = SVGMap.getFactionColor(cid);
+      const resolved = this._resolveRegionColor(cid, factionColor);
+      // 内战/热点 先收集
+      drawList.push({ cid, path, resolved, factionColor });
+    }
+
+    // 先画非内战填充, 再画内战hatch
+    for (const d of drawList) {
+      if (d.resolved.civilWar) continue;
+      ctx.fillStyle = d.resolved.fill;
+      ctx.fill(d.path);
+    }
+    for (const d of drawList) {
+      if (!d.resolved.civilWar) continue;
+      const pattern = this._getHatchPattern(ctx, scale, d.resolved.fill, d.resolved.border);
+      ctx.fillStyle = pattern || d.resolved.fill;
+      ctx.fill(d.path);
+    }
+
+    // ===== 统一描边 =====
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = this.options.borderColor;
+    for (const [cid, path] of this.pathCache) ctx.stroke(path);
+
+    // ===== 热点脉冲描边 (厚+亮) =====
+    for (const d of drawList) {
+      if (!d.resolved.hotspot) continue;
+      ctx.save();
+      ctx.lineWidth = 2 + pulseT * 3;
+      ctx.strokeStyle = animating
+        ? _lerpColor('#ffe080', '#ff6040', pulseT)
+        : '#ffe080';
+      ctx.globalAlpha = 0.7 + pulseT * 0.3;
+      ctx.stroke(d.path);
+      ctx.restore();
+    }
+
+    // ===== 图层渲染 (activeLayers) =====
+    this._drawActiveLayers(ctx, scale);
+
+    // ===== 国家名称 (v2: 分级+碰撞避让) =====
+    this._renderLabelsV2(ctx, scale);
+
+    // ===== hover / select 高亮 =====
+    const drawHL = (id, color, width) => {
+      if (!id) return;
+      const p = this.pathCache.get(id); if (!p) return;
+      ctx.save();
+      ctx.lineWidth = width; ctx.strokeStyle = color; ctx.stroke(p); ctx.restore();
+    };
+    drawHL(this.hoverId, this.options.hoverStroke, 2);
+    drawHL(this.selectId, this.options.selectStroke, 3);
+
+    // ===== Dev模式: 绘制每个region的ID + 边界 + 面积 =====
+    if (this.devMode) {
+      ctx.save();
+      ctx.font = (1.8 / scale) + "px monospace";
+      ctx.fillStyle = 'rgba(255,220,80,0.95)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+      ctx.lineWidth = 0.3 / scale;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (const [cid, path] of this.pathCache) {
+        const pos = this._labelCache && this._labelCache[cid];
+        if (!pos) continue;
+        const sx = pos.x, sy = pos.y;
+        ctx.strokeText(cid, sx, sy - 0.8/scale);
+        ctx.fillText(cid, sx, sy - 0.8/scale);
+        if (pos.area) {
+          ctx.font = (1.2 / scale) + "px monospace";
+          ctx.fillStyle = 'rgba(120,180,255,0.9)';
+          ctx.fillText('a'+Math.round(pos.area), sx, sy + 1.2/scale);
+          ctx.fillStyle = 'rgba(255,220,80,0.95)';
+          ctx.font = (1.8 / scale) + "px monospace";
+        }
+        // 区域边框 debug
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,80,80,0.4)';
+        ctx.lineWidth = 0.3 / scale;
+        ctx.setLineDash([2/scale, 2/scale]);
+        ctx.stroke(path);
+        ctx.restore();
+      }
+      // 左上角统计
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(0,0,260*dpr,110*dpr);
+      ctx.fillStyle = '#ffe080'; ctx.font = (11*dpr)+'px monospace'; ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillText('[DEV MODE] map: '+(this.currentMapId||'-'), 8*dpr, 6*dpr);
+      ctx.fillStyle = '#a0c0ff'; ctx.font = (10*dpr)+'px monospace';
+      ctx.fillText('regions: '+this.pathCache.size, 8*dpr, 24*dpr);
+      ctx.fillText('colorMode: '+this.colorMode, 8*dpr, 40*dpr);
+      ctx.fillText('activeLayers: '+Array.from(this.activeLayers).join(','), 8*dpr, 56*dpr);
+      ctx.fillText('view: w='+Math.round(this.view.w)+' h='+Math.round(this.view.h), 8*dpr, 72*dpr);
+      ctx.fillText('hotspots: '+this.hotspots.size, 8*dpr, 88*dpr);
+      ctx.restore();
+    }
+
+    // ===== 保存该地图的视角 (在非平移中保存) =====
+    if (this.currentMapId) {
+      this.lastViews[this.currentMapId] = { x: this.view.x, y: this.view.y, w: this.view.w, h: this.view.h };
+    }
+
+    this._dirty = false;
+  };
+
+  /* -------- 图层元素渲染 (polygon/path/text/rect/circle/line) -------- */
+  proto._drawActiveLayers = function (ctx, scale) {
+    if (this.activeLayers.size === 0) return;
+    // 按固定顺序: terrain -> subregions -> water -> transit -> history -> cities
+    const order = ['terrain', 'subregions', 'water', 'transit', 'history', 'cities'];
+    for (const layerId of order) {
+      if (!this.activeLayers.has(layerId)) continue;
+      const layer = this.layers[layerId];
+      if (!layer || !layer.loaded) continue;
+      ctx.save();
+      ctx.globalAlpha = layer.meta.opacity != null ? layer.meta.opacity : 0.18;
+      // 简单裁剪: 只画元素中心在viewport中的
+      const vx=this.view.x, vy=this.view.y, vw=this.view.w, vh=this.view.h;
+      let skip = 0;
+      for (const el of layer.data) {
+        // 视口粗略裁剪 (按元素的第一个点)
+        const attrs = el.attrs || {};
+        let cx = null, cy = null;
+        if (attrs.x != null && attrs.y != null) { cx = parseFloat(attrs.x); cy = parseFloat(attrs.y); }
+        else if (attrs.cx != null && attrs.cy != null) { cx = parseFloat(attrs.cx); cy = parseFloat(attrs.cy); }
+        else if (attrs.points) {
+          const first = attrs.points.split(/\s+/)[0];
+          if (first) { const xy = first.split(','); if (xy.length===2){cx=parseFloat(xy[0]); cy=parseFloat(xy[1]);} }
+        }
+        if (cx != null && (cx < vx - vw*0.1 || cx > vx + vw*1.1 || cy < vy - vh*0.1 || cy > vy + vh*1.1)) { skip++; continue; }
+        this._drawLayerElement(ctx, el, scale);
+      }
+      ctx.restore();
+    }
+  };
+
+  proto._drawLayerElement = function (ctx, el, scale) {
+    const a = el.attrs || {};
+    switch (el.tag) {
+      case 'path': case 'polygon': case 'polyline': {
+        const d = a.d || (a.points ? (el.tag==='polygon'||el.tag==='polyline' ? 'M'+a.points.replace(/(\s|^)(\S)/g,(_,s,x)=>s+x).replace(/,/g,' L') + (el.tag==='polygon'?' Z':'') : '') : null);
+        if (!d) return;
+        let p;
+        try { p = new Path2D(d); } catch (_) { return; }
+        if (a.fill && a.fill !== 'none') { ctx.fillStyle = a.fill; ctx.fill(p); }
+        if (a.stroke && a.stroke !== 'none') {
+          ctx.strokeStyle = a.stroke;
+          ctx.lineWidth = parseFloat(a['stroke-width'] || 0.3) || 0.3;
+          if (a['stroke-dasharray']) ctx.setLineDash(a['stroke-dasharray'].split(',').map(Number));
+          ctx.stroke(p);
+          ctx.setLineDash([]);
+        }
+        break;
+      }
+      case 'rect': {
+        const x = parseFloat(a.x), y = parseFloat(a.y), w = parseFloat(a.width), h = parseFloat(a.height);
+        if (a.fill && a.fill !== 'none') { ctx.fillStyle = a.fill; ctx.fillRect(x,y,w,h); }
+        if (a.stroke) { ctx.strokeStyle = a.stroke; ctx.strokeRect(x,y,w,h); }
+        break;
+      }
+      case 'circle': {
+        const cx = parseFloat(a.cx), cy = parseFloat(a.cy), r = parseFloat(a.r);
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+        if (a.fill && a.fill !== 'none') { ctx.fillStyle = a.fill; ctx.fill(); }
+        if (a.stroke) { ctx.lineWidth = parseFloat(a['stroke-width']||0.3); ctx.strokeStyle = a.stroke; ctx.stroke(); }
+        break;
+      }
+      case 'line': {
+        ctx.beginPath();
+        ctx.moveTo(parseFloat(a.x1), parseFloat(a.y1));
+        ctx.lineTo(parseFloat(a.x2), parseFloat(a.y2));
+        ctx.strokeStyle = a.stroke || '#444';
+        ctx.lineWidth = parseFloat(a['stroke-width']||0.3);
+        if (a['stroke-dasharray']) ctx.setLineDash(a['stroke-dasharray'].split(',').map(Number));
+        ctx.stroke(); ctx.setLineDash([]);
+        break;
+      }
+      case 'text': {
+        if (!a.text) break;
+        ctx.save();
+        ctx.font = (parseFloat(a['font-size']||2) || 2) + "px serif";
+        ctx.textAlign = a['text-anchor'] || 'middle';
+        ctx.textBaseline = 'middle';
+        const op = a.opacity; if (op!=null) ctx.globalAlpha = Math.max(0,Math.min(1, parseFloat(op)));
+        ctx.fillStyle = a.fill || '#fff';
+        ctx.fillText(a.text, parseFloat(a.x), parseFloat(a.y));
+        ctx.restore();
+        break;
+      }
+    }
+  };
+
+  /* -------- 公开辅助：获取当前缩放系数(方便UI显示) -------- */
+  proto.getZoomFactor = function () {
+    if (!this.currentMapData || !this.currentMapData.view) return 1;
+    return this.currentMapData.view.w / this.view.w;
+  };
+
+  // ---------- 安装双击补丁 hook ----------
+  const _origLoad = proto.loadMap;
+  proto.loadMap = async function () {
+    const result = await _origLoad.apply(this, arguments);
+    if (result) {
+      this.installDoubleClickZoom();
+      // 触发默认图层加载
+      if (!this._defaultLayerLoading) {
+        this._defaultLayerLoading = true;
+        this.loadAllDefaultLayers().catch(() => {});
+      }
+    }
+    return result;
+  };
+
+  // 对外暴露
+  SVGMap.installPatches = function (instance) { /* no-op, 已自动安装 */ return true; };
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
