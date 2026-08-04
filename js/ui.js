@@ -886,10 +886,10 @@ const UI = {
       const canvas = document.getElementById('tno-map-canvas');
       if (!canvas || typeof SVGMap === 'undefined') return;
 
-      // 创建tooltip
+      // 创建tooltip (已禁用：用户反馈国家名弹窗烦人，保留DOM结构但不挂事件)
       const tooltip = document.createElement('div');
       tooltip.id = 'tno-map-tooltip';
-      tooltip.style.cssText = 'position:absolute;pointer-events:none;background:rgba(10,14,22,0.92);border:1px solid #4a4030;color:#f0e8c8;padding:4px 8px;border-radius:3px;font-size:11px;line-height:1.4;white-space:nowrap;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.6);';
+      tooltip.style.cssText = 'display:none;position:absolute;pointer-events:none;z-index:5;';
       container.appendChild(tooltip);
 
       const selector = document.getElementById('tno-map-selector');
@@ -901,16 +901,10 @@ const UI = {
         autoLoad: false,
       });
 
-      UI._svgMapInstance.on('hover', (evt) => {
-        const f = evt && evt.feature;
-        if (!f) { tooltip.style.display = 'none'; return; }
-        const rect = container.getBoundingClientRect();
-        tooltip.innerHTML = `<b>${f.zh}</b><br><span style="color:#a0a0b0">ID: ${f.id}</span>`;
-        tooltip.style.left = Math.min(rect.width - 80, evt.x - rect.left + 12) + 'px';
-        tooltip.style.top = Math.min(rect.height - 40, evt.y - rect.top + 12) + 'px';
-        tooltip.style.display = 'block';
-      });
-      UI._svgMapInstance.on('hoverout', () => { tooltip.style.display = 'none'; });
+      // hover/click 国家名弹窗已禁用 (用户明确要求不再显示)
+      // UI._svgMapInstance.on('hover', ...)
+      // UI._svgMapInstance.on('hoverout', ...)
+      // UI._svgMapInstance.on('click', ...)
 
       UI._svgMapInstance.loadMap(lastMap);
 

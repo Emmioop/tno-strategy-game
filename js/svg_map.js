@@ -875,6 +875,12 @@
 
     _toSimplified(text) {
       if (!text) return text;
+      // 先做词组级固定替换（如繁体「義大利」→ 简体「意大利」，
+      // 因为「義」单独转「义」但国名应转「意」）
+      const phraseMap = { '義大利':'意大利', '愛爾蘭':'爱尔兰' };
+      for (const [from, to] of Object.entries(phraseMap)) {
+        if (text.includes(from)) text = text.split(from).join(to);
+      }
       if (!this._t2sMap) {
         this._t2sMap = {
           '國':'国','東':'东','車':'车','馬':'马','義':'义','專':'专','轄':'辖','區':'区',
@@ -1344,12 +1350,12 @@
     this.hotspots = this.hotspots || new Set();   // 热点regionId
     this.lastViews = this.lastViews || {};        // mapId -> 上次 view
     this.labelZoomThreshold = this.labelZoomThreshold || { // 缩放下显示标签
-      tiny: 0.0,    // 面积<500: 不显示
-      small: 1.8,   // 500-3000: >1.8x 显示
-      medium: 1.3,  // 3000-10000: >1.3x 显示
-      large: 0.0    // >10000: 始终显示
+      tiny: 3.0,     // 面积<500: >3x才显示 (太小不常用)
+      small: 0.8,    // 500-3000: >0.8x 显示 (默认1.0x就可显示)
+      medium: 0.4,   // 3000-10000: >0.4x 显示 (默认1.0x必然显示)
+      large: 0.0     // >10000: 始终显示
     };
-    this.labelMinZoom = this.labelMinZoom || 0.5; // 低于0.5x 不显示任何标签(减少绘制)
+    this.labelMinZoom = this.labelMinZoom || 0.2; // 缩小到0.2x以下才隐藏所有标签
     this.devMode = this.devMode || false;
     this._hatchPattern = null;     // 内战斜线 pattern cache (按scale生成)
     this._offscreen = null;        // 离屏 canvas cache
