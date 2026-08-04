@@ -1968,11 +1968,8 @@
     const result = await _origLoad.apply(this, arguments);
     if (result) {
       this.installDoubleClickZoom();
-      // 触发默认图层加载
-      if (!this._defaultLayerLoading) {
-        this._defaultLayerLoading = true;
-        this.loadAllDefaultLayers().catch(() => {});
-      }
+      // 已禁用：cities图层散点太重，默认不加载
+      // this.loadAllDefaultLayers().catch(() => {});
     }
     return result;
   };
