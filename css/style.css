@@ -178,14 +178,33 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  position: relative;
+  overflow: hidden;
 }
 .diff-btn:hover:not(.locked) {
   background: var(--bg-panel-2);
   transform: translateY(-1px);
+  border-color: var(--accent-gold);
 }
 .diff-btn.selected {
   background: var(--bg-elevated);
-  box-shadow: 0 0 0 1px currentColor inset;
+  border: 1px solid var(--accent-gold);
+  box-shadow: 0 0 0 1px var(--accent-gold) inset, 0 0 12px rgba(212, 175, 55, 0.25);
+}
+.diff-btn.selected::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent-gold);
+}
+.diff-btn.selected::after {
+  content: '✓';
+  position: absolute;
+  right: 10px; top: 8px;
+  color: var(--accent-gold);
+  font-size: 14px;
+  font-weight: bold;
 }
 .diff-btn.locked {
   opacity: 0.4;
