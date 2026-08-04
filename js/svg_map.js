@@ -20,19 +20,24 @@
     moscow: { fill: '#9a3030', border: '#5a1c1c' },
     caucasus: { fill: '#9a3030', border: '#5a1c1c' },
 
+    // ===== 总督府 (波兰) (浅灰/米白) =====
+    generalgouvernement: { fill: '#b8b4a0', border: '#706850' },
+
     // ===== 勃艮第 (暗红/紫红) =====
     burgundy: { fill: '#6b1a3a', border: '#3d0d22' },
     burgundy_antarctica: { fill: '#6b1a3a', border: '#3d0d22' },
 
-    // ===== 三头同盟 - 意大利/伊比利亚 (暗红/橙) =====
+    // ===== 三头同盟 - 意大利/伊比利亚/土耳其 (暗红/橙) =====
     italy: { fill: '#7a4a2a', border: '#4a2c18' },
     italian_east_africa: { fill: '#7a4a2a', border: '#4a2c18' },
+    iberia: { fill: '#8a5a2a', border: '#52341a' },
     spain: { fill: '#8a5a2a', border: '#52341a' },
     croatia: { fill: '#7a4a2a', border: '#4a2c18' },
     greece: { fill: '#7a4a2a', border: '#4a2c18' },
     montenegro: { fill: '#7a4a2a', border: '#4a2c18' },
     san_marino: { fill: '#7a4a2a', border: '#4a2c18' },
     monaco: { fill: '#7a4a2a', border: '#4a2c18' },
+    turkey: { fill: '#7a3838', border: '#461818' },
 
     // ===== 团结协定仆从国 (浅灰/粉) =====
     slovakia: { fill: '#8a6a6a', border: '#503a3a' },
