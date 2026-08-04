@@ -79,7 +79,21 @@ body {
   color: var(--text-muted);
   font-size: 13px;
   letter-spacing: 0.15em;
-  margin-bottom: 36px;
+  margin-bottom: 18px;
+}
+
+/* 世界观改编徽章 */
+#splash .splash-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  margin-bottom: 28px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--accent-gold-bright);
+  background: rgba(168, 50, 50, 0.12);
+  border: 1px solid rgba(168, 50, 50, 0.5);
+  border-radius: 2px;
+  font-family: var(--font-serif);
 }
 
 #splash .prologue {
@@ -135,6 +149,28 @@ body {
   position: absolute;
   left: 0;
   color: var(--accent-blood);
+}
+
+/* 三大分歧点列表 — 突出显示 */
+#splash .prologue .pl-divergence {
+  margin: 14px 0 16px;
+  padding: 14px 16px;
+  background: rgba(168, 50, 50, 0.06);
+  border-left: 2px solid var(--accent-blood-bright);
+  border-radius: 2px;
+}
+#splash .prologue .pl-divergence li {
+  margin-bottom: 10px;
+  padding-left: 16px;
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+#splash .prologue .pl-divergence li:last-child { margin-bottom: 0; }
+#splash .prologue .pl-divergence li::before {
+  content: '◆';
+  color: var(--accent-gold-bright);
+  font-size: 10px;
+  top: 4px;
 }
 
 #splash .disclaimer {
