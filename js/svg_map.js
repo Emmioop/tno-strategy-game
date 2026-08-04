@@ -370,7 +370,9 @@
           mapId
         });
 
-        // 计算标签位置：过滤异常大的路径，选最大路径的中心点
+        // 计算标签位置：过滤异常大的路径，选最大路径的中心点；
+        // 若该点不在本国闭合路径内（如罗马尼亚/挪威多岛/勃艮第不规则形状），
+        // 则在本国总 bbox 内做网格精搜，找一个确实在 path 内的点。
         const mapArea = data.view.w * data.view.h;
         const filtered = allBBoxes.filter(b => b.area < mapArea * 0.4 && b.area > 10);
         const candidates = filtered.length > 0 ? filtered : allBBoxes;
@@ -380,6 +382,46 @@
         if (candidates.length > 0) {
           const b = candidates[0];
           labelPos = { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, area: totalArea };
+
+          // 验证：labelPos 是否在本国 combinedPath 内
+          const hitCtx = this.ctx;
+          hitCtx.save();
+          hitCtx.setTransform(1, 0, 0, 1, 0, 0);
+          const pointInside = hitCtx.isPointInPath(combinedPath, labelPos.x, labelPos.y);
+          hitCtx.restore();
+
+          if (!pointInside) {
+            // 取所有路径的总 bbox（合并 allBBoxes）
+            let tMinX = Infinity, tMinY = Infinity, tMaxX = -Infinity, tMaxY = -Infinity;
+            for (const bb of candidates) {
+              if (bb.minX < tMinX) tMinX = bb.minX;
+              if (bb.minY < tMinY) tMinY = bb.minY;
+              if (bb.maxX > tMaxX) tMaxX = bb.maxX;
+              if (bb.maxY > tMaxY) tMaxY = bb.maxY;
+            }
+            if (tMinX < Infinity) {
+              // 20x20 网格搜索：第一条路径命中就采纳，再精搜找更接近中心的
+              let found = null;
+              let bestDist2 = Infinity;
+              const cx = (tMinX + tMaxX) / 2, cy = (tMinY + tMaxY) / 2;
+              const GRID = 20;
+              for (let gy = 1; gy <= GRID; gy++) {
+                for (let gx = 1; gx <= GRID; gx++) {
+                  const px = tMinX + (tMaxX - tMinX) * gx / (GRID + 1);
+                  const py = tMinY + (tMaxY - tMinY) * gy / (GRID + 1);
+                  hitCtx.save();
+                  hitCtx.setTransform(1, 0, 0, 1, 0, 0);
+                  const inside = hitCtx.isPointInPath(combinedPath, px, py);
+                  hitCtx.restore();
+                  if (inside) {
+                    const d2 = (px - cx) ** 2 + (py - cy) ** 2;
+                    if (d2 < bestDist2) { bestDist2 = d2; found = { x: px, y: py }; }
+                  }
+                }
+              }
+              if (found) labelPos = { x: found.x, y: found.y, area: totalArea };
+            }
+          }
         }
         if (labelPos) this._labelCache[cid] = labelPos;
       }
@@ -741,12 +783,19 @@
 
     _hitTest(sx, sy) {
       if (!this.currentMapData) return null;
-      const wc = this._screenToWorld(sx, sy);
+      const dpr = Math.min(window.devicePixelRatio || 1, this.options.dprMax);
+      const scale = this._renderScale || 1;
+      const offX = this._renderOffsetX || 0;
+      const offY = this._renderOffsetY || 0;
+      const pxX = sx * dpr;
+      const pxY = sy * dpr;
       const ctx = this.ctx;
       ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.setTransform(scale, 0, 0, scale,
+        offX - this.view.x * scale,
+        offY - this.view.y * scale);
       for (const [cid, path] of this.pathCache) {
-        if (ctx.isPointInPath(path, wc[0], wc[1])) {
+        if (ctx.isPointInPath(path, pxX, pxY)) {
           ctx.restore();
           return cid;
         }
@@ -1679,9 +1728,18 @@
     candidates.sort((a, b) => b.area - a.area);
     const placed = []; // 屏幕矩形集合
     for (const c of candidates) {
-      // 转屏幕坐标(左上角) 用于AABB碰撞
-      const sx = (c.pos.x - this.view.x) / this.view.w * (this._cssW || this.canvas.width) - c.wScreen / 2;
-      const sy = (c.pos.y - this.view.y) / this.view.h * (this._cssH || this.canvas.height) - c.hScreen / 2;
+      // 转屏幕坐标(左上角) 用于AABB碰撞。
+      // 注：必须加入 letterboxing 偏移 offsetX/offsetY，否则宽高比不匹配时
+      // 标签碰撞矩形的判断位置和实际绘制位置不一致，会出现误判（点A判为点B）
+      const cssW = this._cssW || this.canvas.width;
+      const cssH = this._cssH || this.canvas.height;
+      const fitScale = Math.min(cssW / this.view.w, cssH / this.view.h);
+      const drawW = this.view.w * fitScale;
+      const drawH = this.view.h * fitScale;
+      const letterX = (cssW - drawW) / 2;
+      const letterY = (cssH - drawH) / 2;
+      const sx = letterX + (c.pos.x - this.view.x) / this.view.w * drawW - c.wScreen / 2;
+      const sy = letterY + (c.pos.y - this.view.y) / this.view.h * drawH - c.hScreen / 2;
       let ok = true;
       for (const p of placed) {
         if (sx < p.x + p.w && sx + c.wScreen > p.x && sy < p.y + p.h && sy + c.hScreen > p.y) {
