@@ -13,6 +13,18 @@
     norway: { fill: '#8b2a2a', border: '#5a1818' },
     norway_port: { fill: '#8b2a2a', border: '#5a1818' },
     bohemia: { fill: '#8b3a3a', border: '#5a2020' },
+    generalgouvernement: { fill: '#8b3232', border: '#5a1c1c' },
+    belgium: { fill: '#8b3030', border: '#5a1c1c' },
+    luxembourg: { fill: '#8b3030', border: '#5a1c1c' },
+    estonia: { fill: '#8b2e2e', border: '#5a1c1c' },
+    latvia: { fill: '#8b2e2e', border: '#5a1c1c' },
+    lithuania: { fill: '#8b2e2e', border: '#5a1c1c' },
+    austria: { fill: '#8b2a2a', border: '#5a1818' },
+
+    // ===== 斯堪的纳维亚：瑞典/芬兰 (中立/亲德) =====
+    sweden: { fill: '#6a7aa8', border: '#3d4a70' },
+    finland: { fill: '#7a8ab0', border: '#45557c' },
+    iceland: { fill: '#5a7aa5', border: '#304560' },
 
     // ===== 团结协定 - 专员辖区 (深红, 略浅) =====
     ukraine: { fill: '#9a3030', border: '#5a1c1c' },
@@ -28,11 +40,15 @@
     italy: { fill: '#7a4a2a', border: '#4a2c18' },
     italian_east_africa: { fill: '#7a4a2a', border: '#4a2c18' },
     spain: { fill: '#8a5a2a', border: '#52341a' },
+    iberia: { fill: '#8a5a2a', border: '#52341a' },
     croatia: { fill: '#7a4a2a', border: '#4a2c18' },
     greece: { fill: '#7a4a2a', border: '#4a2c18' },
     montenegro: { fill: '#7a4a2a', border: '#4a2c18' },
+    macedonia: { fill: '#7a4a2a', border: '#4a2c18' },
+    albania: { fill: '#7a4a2a', border: '#4a2c18' },
     san_marino: { fill: '#7a4a2a', border: '#4a2c18' },
     monaco: { fill: '#7a4a2a', border: '#4a2c18' },
+    switzerland: { fill: '#9a6030', border: '#5a3818' },
 
     // ===== 团结协定仆从国 (浅灰/粉) =====
     slovakia: { fill: '#8a6a6a', border: '#503a3a' },
@@ -41,6 +57,7 @@
     serbia: { fill: '#8a6a6a', border: '#503a3a' },
     bulgaria: { fill: '#8a6a6a', border: '#503a3a' },
     crimea: { fill: '#7a4a4a', border: '#4a2c2c' },
+    moldova: { fill: '#8a6a6a', border: '#503a3a' },
 
     // ===== 法国残余 (蓝) =====
     france: { fill: '#3b5998', border: '#1e3560' },

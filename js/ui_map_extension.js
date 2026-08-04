@@ -93,41 +93,68 @@
     `).join('');
 
     return `
-      <!-- 着色模式：移到右上角（避开左上角的图层开关），移动端自动换行 -->
-      <div class="map-ext-panel" style="position:absolute;top:6px;right:12px;z-index:8;pointer-events:auto;max-width:60%;">
-        <div style="background:rgba(10,14,22,0.92);border:1px solid #2a3548;border-radius:6px;padding:5px 7px;box-shadow:0 4px 14px rgba(0,0,0,0.55);">
-          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;text-align:center;margin-bottom:2px;">着色模式</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">${cmHtml}</div>
+      <!-- ========================================== -->
+      <!-- 1. 【全局按钮】：一键隐藏/显示所有面板（最优先，保证地图能完整看）-->
+      <button class="map-ext-toggle-all" id="map-toggle-all-panels"
+        style="position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:auto;\
+               padding:3px 10px;background:rgba(40,25,20,0.95);border:1px solid #8a5a30;border-radius:100px;\
+               color:#ffe0a0;font-size:10px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.6);\
+               font-family:var(--font-serif);letter-spacing:0.06em;">
+        ⊟ 面板显隐
+      </button>
+
+      <!-- 着色模式（右上角），带折叠按钮 -->
+      <div class="map-ext-panel" data-extblock="color" style="position:absolute;top:6px;right:12px;z-index:8;pointer-events:auto;max-width:60%;">
+        <div style="background:rgba(10,14,22,0.92);border:1px solid #2a3548;border-radius:6px;padding:4px 7px 5px 7px;box-shadow:0 4px 14px rgba(0,0,0,0.55);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;">着色模式</div>
+            <button class="map-ext-foldbtn" data-fold="color"
+              style="background:none;border:none;color:#c0c8d0;cursor:pointer;font-size:11px;padding:0 2px;line-height:1;" title="折叠/展开">—</button>
+          </div>
+          <div class="map-ext-fold-body" data-foldbody="color">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">${cmHtml}</div>
+          </div>
         </div>
       </div>
 
-      <!-- 左上面板：图层开关 + 快速区域 -->
-      <div class="map-ext-tl" style="position:absolute;top:6px;left:8px;z-index:8;pointer-events:auto;width:200px;max-width:45vw;">
-        <div style="background:rgba(10,14,22,0.92);border:1px solid #2a3548;border-radius:6px;padding:6px 8px;box-shadow:0 4px 14px rgba(0,0,0,0.55);">
-          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;margin-bottom:3px;">图层开关 <span style="color:var(--text-muted);font-size:8px;letter-spacing:normal;">(按需加载)</span></div>
-          <div>${layersHtml}</div>
-          <div style="border-top:1px dashed #2a3548;margin:5px 0 4px;"></div>
-          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;margin-bottom:3px;">快速跳转</div>
-          <div style="display:flex;flex-wrap:wrap;gap:3px;">${areasHtml}</div>
-          <div style="border-top:1px dashed #2a3548;margin:5px 0 4px;"></div>
-          <label style="display:flex;align-items:center;gap:4px;padding:2px 1px;cursor:pointer;font-size:9px;color:#c8c8b8;user-select:none;">
-            <input type="checkbox" id="map-dev-toggle" style="accent-color:#a83232;">
-            <span>🪲 开发者模式</span>
-          </label>
+      <!-- 左上面板：图层开关 + 快速区域 + 折叠按钮 -->
+      <div class="map-ext-tl" data-extblock="tl" style="position:absolute;top:6px;left:8px;z-index:8;pointer-events:auto;width:200px;max-width:45vw;">
+        <div style="background:rgba(10,14,22,0.92);border:1px solid #2a3548;border-radius:6px;padding:4px 8px 6px 8px;box-shadow:0 4px 14px rgba(0,0,0,0.55);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+            <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;">图层 & 快捷</div>
+            <button class="map-ext-foldbtn" data-fold="tl"
+              style="background:none;border:none;color:#c0c8d0;cursor:pointer;font-size:11px;padding:0 2px;line-height:1;" title="折叠/展开">—</button>
+          </div>
+          <div class="map-ext-fold-body" data-foldbody="tl">
+            <div style="font-size:8.5px;color:var(--accent-gold);letter-spacing:0.08em;margin:1px 0 2px;">图层开关 <span style="color:var(--text-muted);font-size:8px;letter-spacing:normal;">(按需加载)</span></div>
+            <div>${layersHtml}</div>
+            <div style="border-top:1px dashed #2a3548;margin:4px 0 3px;"></div>
+            <div style="font-size:8.5px;color:var(--accent-gold);letter-spacing:0.08em;margin:1px 0 2px;">快速跳转</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;">${areasHtml}</div>
+            <div style="border-top:1px dashed #2a3548;margin:4px 0 3px;"></div>
+            <label style="display:flex;align-items:center;gap:4px;padding:2px 1px;cursor:pointer;font-size:9px;color:#c8c8b8;user-select:none;">
+              <input type="checkbox" id="map-dev-toggle" style="accent-color:#a83232;">
+              <span>🪲 开发者模式</span>
+            </label>
+          </div>
         </div>
       </div>
 
-      <!-- 右下信息卡片 -->
-      <div class="map-info-card" id="map-info-card" style="position:absolute;right:8px;bottom:8px;z-index:8;pointer-events:auto;width:280px;max-width:55vw;display:none;">
+      <!-- 右下信息卡片（单独折叠按钮在卡片标题旁） -->
+      <div class="map-info-card" id="map-info-card" data-extblock="info" style="position:absolute;right:8px;bottom:8px;z-index:8;pointer-events:auto;width:280px;max-width:55vw;display:none;">
         <div style="background:rgba(10,14,22,0.96);border:1px solid #3a4a5a;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.65);">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #2a3548;">
             <div style="min-width:0;flex:1;">
               <div class="mic-title" style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:13px;letter-spacing:0.08em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未选择区域</div>
               <div class="mic-id" style="font-size:9px;color:var(--text-muted);margin-top:1px;">—</div>
             </div>
-            <button id="mic-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0;margin-left:6px;" title="关闭">✕</button>
+            <div style="display:flex;gap:2px;align-items:center;flex-shrink:0;">
+              <button class="map-ext-foldbtn" data-fold="info"
+                style="background:none;border:none;color:#c0c8d0;cursor:pointer;font-size:11px;padding:0 4px;line-height:1;" title="折叠/展开">—</button>
+              <button id="mic-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0;" title="关闭卡片">✕</button>
+            </div>
           </div>
-          <div class="mic-body" style="padding:8px 10px;font-size:11px;color:#d0d8e0;max-height:38vh;overflow-y:auto;">
+          <div class="map-ext-fold-body mic-body" data-foldbody="info" style="padding:8px 10px;font-size:11px;color:#d0d8e0;max-height:38vh;overflow-y:auto;">
             <div style="color:var(--text-muted);text-align:center;padding:14px 6px;">点击地图任意国家/地区<br>查看其实时状态与相关事件</div>
           </div>
           <div class="mic-footer" style="display:none;border-top:1px solid #2a3548;padding:4px 10px;">
@@ -514,6 +541,67 @@
       devChk.addEventListener('change', () => {
         if (mapInst.setDevMode) mapInst.setDevMode(devChk.checked);
       });
+    }
+
+    // ===================== 新增：折叠按钮 / 全局面板显隐 =====================
+    // 单面板折叠 (— 按钮)
+    document.querySelectorAll('.map-ext-foldbtn').forEach(btn => {
+      if (btn._boundFold) return; btn._boundFold = true;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const key = btn.getAttribute('data-fold');
+        if (!key) return;
+        const body = document.querySelector(`[data-foldbody="${key}"]`);
+        if (!body) return;
+        const hidden = body.style.display === 'none';
+        body.style.display = hidden ? '' : 'none';
+        btn.textContent = hidden ? '—' : '+';
+      });
+    });
+
+    // 全局面板显隐按钮 (⊟ 面板显隐) - 一键隐藏/显示所有扩展面板
+    const toggleBtn = document.getElementById('map-toggle-all-panels');
+    if (toggleBtn && !toggleBtn._boundToggleAll) {
+      toggleBtn._boundToggleAll = true;
+      const panelSelectors = [
+        '[data-extblock="color"]',
+        '[data-extblock="tl"]',
+        '[data-extblock="info"]'
+      ];
+      // 记忆上次状态
+      let panelsHidden = false;
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panelsHidden = !panelsHidden;
+        for (const sel of panelSelectors) {
+          const p = document.querySelector(sel);
+          if (p) p.style.display = panelsHidden ? 'none' : '';
+        }
+        toggleBtn.textContent = panelsHidden ? '⊞ 显示面板' : '⊟ 隐藏面板';
+        toggleBtn.style.color = panelsHidden ? '#e0f0ff' : '#ffe0a0';
+        toggleBtn.style.borderColor = panelsHidden ? '#3a6a8a' : '#8a5a30';
+        toggleBtn.style.background = panelsHidden ? 'rgba(20,35,55,0.95)' : 'rgba(40,25,20,0.95)';
+        if (self.toast) self.toast(panelsHidden ? '已隐藏所有面板（纯地图视图）' : '已恢复显示所有面板', 'info');
+      });
+      // ESC 键 = 也触发面板显隐（与 ESC 关地图 overlay 解耦：只在打开地图 overlay 时生效）
+      if (!document._mapExtEscBound) {
+        document._mapExtEscBound = true;
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && toggleBtn && toggleBtn.isConnected) {
+            const overlay = document.getElementById('map-overlay-page');
+            const mapPage = document.getElementById('map-page');
+            const mapOpen = (overlay && getComputedStyle(overlay).display !== 'none') ||
+                            (mapPage && getComputedStyle(mapPage).display !== 'none');
+            if (mapOpen) {
+              // 只在面板没全部隐藏时才触发（保留原有ESC关地图的优先级）
+              if (panelsHidden) return;
+              toggleBtn.click();
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }
+        }, true);
+      }
     }
 
     // RegionState Provider 与 click→信息卡片 / dblclick hook
