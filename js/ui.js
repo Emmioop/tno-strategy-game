@@ -562,7 +562,7 @@ const UI = {
     document.getElementById('news-ticker').innerHTML = newsHtml;
 
     document.getElementById('action-bar').innerHTML = `
-      <button class="btn-next-turn" id="btn-next-turn">推进至下一季度 ▸</button>
+      <button class="btn-next-turn" id="btn-next-turn">${Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸'}</button>
       <button class="btn-secondary" id="btn-save">保存</button>
       <button class="btn-secondary" id="btn-load">读取</button>
       <button class="btn-secondary" id="btn-restart">重启</button>
@@ -599,7 +599,7 @@ const UI = {
         <span>势力</span>
         ${crisisBadge}
       </button>
-      <button class="btn-next-turn" id="m-btn-next">下一季度 ▸</button>
+      <button class="btn-next-turn" id="m-btn-next">${Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸'}</button>
       <button class="mobile-nav-btn" id="m-btn-save" aria-label="存档">
         <span class="nav-icon">💾</span>
         <span>存档</span>
@@ -3066,8 +3066,10 @@ const UI = {
     } else if (Game.state.ended) {
       this.showEnding();
     } else {
-      if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
-      if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
+      const nextLabel = Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸';
+      const mNextLabel = Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸';
+      if (btn) { btn.disabled = false; btn.textContent = nextLabel; }
+      if (mBtn) { mBtn.disabled = false; mBtn.textContent = mNextLabel; }
     }
   },
 
@@ -3101,8 +3103,10 @@ const UI = {
       } else {
         const btn = document.getElementById('btn-next-turn');
         const mBtn = document.getElementById('m-btn-next');
-        if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
-        if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
+        const nL = Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸';
+        const mL = Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸';
+        if (btn) { btn.disabled = false; btn.textContent = nL; }
+        if (mBtn) { mBtn.disabled = false; mBtn.textContent = mL; }
         this.requestRender();
         // 刷新风貌Tab（如果当前正在显示）
         const flavorTab = document.getElementById('tab-flavor');

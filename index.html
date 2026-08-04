@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>千年帝国的最后一息 · TNO策略游戏</title>
-  <link rel="stylesheet" href="css/style.css?v=79">
+  <link rel="stylesheet" href="css/style.css?v=80">
 </head>
 <body>
 
@@ -71,6 +71,21 @@
     <div class="difficulty-select" id="mode-select">
       <div class="diff-label">选择游戏模式：</div>
       <div class="diff-options" id="mode-options"></div>
+    </div>
+
+    <!-- 回合模式选择 -->
+    <div class="difficulty-select" id="turn-mode-select">
+      <div class="diff-label">选择回合节奏：</div>
+      <div class="diff-options" id="turn-mode-options">
+        <button class="diff-btn selected" data-turn-mode="quarterly" style="font-size:13px;">
+          <strong>📅 季度模式</strong>
+          <small>156回合，每回合=1季度</small>
+        </button>
+        <button class="diff-btn" data-turn-mode="bimonthly" style="font-size:13px;">
+          <strong>🌗 半月模式</strong>
+          <small>936回合，每回合=半个月</small>
+        </button>
+      </div>
     </div>
 
     <div class="disclaimer">
@@ -154,10 +169,10 @@
   <script src="js/events.js?v=32"></script>
   <script src="js/datastore.js?v=32"></script>
   <script src="js/svg_map.js?v=2"></script>
-  <script src="js/save_system.js?v=4"></script>
+  <script src="js/save_system.js?v=5"></script>
   <script src="js/nation_sim.js?v=41"></script>
-  <script src="js/game.js?v=48"></script>
-  <script src="js/ui.js?v=84"></script>
+  <script src="js/game.js?v=49"></script>
+  <script src="js/ui.js?v=85"></script>
   <script>
     // 难度选择初始化
     (function initDifficultySelect() {
@@ -280,15 +295,30 @@
       });
     })();
 
+    // 回合模式选择初始化
+    (function initTurnModeSelect() {
+      const container = document.getElementById('turn-mode-options');
+      if (!container) return;
+      Game.turnMode = 'quarterly';
+      container.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.onclick = () => {
+          container.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          Game.turnMode = btn.dataset.turnMode;
+        };
+      });
+    })();
+
     // 启动逻辑
     document.getElementById('btn-start').addEventListener('click', () => {
       UI.start(Game.gameMode);
     });
 
-    // 快速开始：普通难度 + 历史模式
+    // 快速开始：普通难度 + 历史模式 + 季度模式
     document.getElementById('btn-quick-start-splash').addEventListener('click', () => {
       Game.difficulty = 'normal';
       Game.gameMode = 'historical';
+      Game.turnMode = 'quarterly';
       UI.start('historical');
     });
 

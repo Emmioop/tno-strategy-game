@@ -166,6 +166,7 @@ const Game = {
   state: null,
   difficulty: 'normal',
   gameMode: 'historical',  // 默认历史模式
+  turnMode: 'quarterly',   // 'quarterly'(季度,156回合) 或 'bimonthly'(半月,936回合)
 
   // ===== 检查地狱难度是否解锁 =====
   isHellUnlocked() {
@@ -218,7 +219,7 @@ const Game = {
   },
 
   // 存档版本号（修改资源平衡时递增，旧存档将被重置）
-  SAVE_VERSION: 17,
+  SAVE_VERSION: 18,
 
   // ===== 事件分类配置 =====
   EVENT_CONFIG: {
@@ -361,15 +362,17 @@ const Game = {
     const rm = diff.resMod;
 
     this.state = {
-      // 时间：1962Q1 开始，2000Q4 结束（共156回合）
+      // 时间：1962Q1 开始，2000Q4 结束
       year: 1962,
       quarter: 1,
+      halfMonth: 0,   // 半月模式: 0=上半月, 1=下半月
       turn: 1,
-      totalTurns: 156, // (2000-1962)*4
+      totalTurns: this.turnMode === 'bimonthly' ? 936 : 156, // 半月模式936回合，季度模式156回合
 
       // 难度 + 模式
       difficulty: this.difficulty,
       gameMode: this.gameMode,
+      turnMode: this.turnMode,
 
       // 当前路线与领导人
       leader: {
@@ -545,11 +548,24 @@ const Game = {
   // ===== 获取当前日期字符串 =====
   getDateStr() {
     const q = ['一', '二', '三', '四'];
+    if (this.state.turnMode === 'bimonthly') {
+      const half = this.state.halfMonth === 0 ? '上旬' : '下旬';
+      return `${this.state.year}年 第${q[this.state.quarter - 1]}季度${half}`;
+    }
     return `${this.state.year}年 第${q[this.state.quarter - 1]}季度`;
   },
 
   // ===== 计算回合数（用于事件触发） =====
   turnToYearQuarter(turn) {
+    if (this.state.turnMode === 'bimonthly') {
+      // 半月模式：每8回合=1年(4季度×2半月)
+      const year = 1962 + Math.floor((turn - 1) / 8);
+      const remainder = (turn - 1) % 8;
+      const quarter = Math.floor(remainder / 2) + 1;
+      const halfMonth = remainder % 2;
+      return { year, quarter, halfMonth };
+    }
+    // 季度模式：每4回合=1年
     const year = 1962 + Math.floor((turn - 1) / 4);
     const quarter = ((turn - 1) % 4) + 1;
     return { year, quarter };
@@ -558,6 +574,12 @@ const Game = {
   // ===== 当前是否匹配指定年/季度 =====
   matchesTurn(turnMatch) {
     if (!turnMatch) return true;
+    // 半月模式下，事件按季度匹配（上下旬都触发）
+    if (this.state.turnMode === 'bimonthly' && turnMatch.halfMonth !== undefined) {
+      return this.state.year === turnMatch.year &&
+             this.state.quarter === turnMatch.quarter &&
+             this.state.halfMonth === turnMatch.halfMonth;
+    }
     return this.state.year === turnMatch.year && this.state.quarter === turnMatch.quarter;
   },
 
@@ -596,20 +618,23 @@ const Game = {
       : ((typeof STORY_EVENTS !== 'undefined') ? STORY_EVENTS
         : ((typeof window !== 'undefined' && window.STORY_EVENTS) ? window.STORY_EVENTS : []));
 
-    // 1. 匹配回合的剧情事件
+    // 1. 匹配回合的剧情事件（必须触发，不受空白回合影响）
     for (const ev of pool) {
       if (ev.turn && this.checkEventCondition(ev)) {
         allEvents.push(ev);
       }
     }
 
-    // 2. 随机事件（每回合最多1个，按权重）
+    // 2. 随机事件 — 大幅降低频率
+    // 普通难度: 15%概率触发一个随机事件（原25%），且至少间隔3回合
+    const mode = this.getMode();
+    const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance * 0.5 + (mode.crisisBoost || 0)));
+    const turnsSinceRandom = this.state.turn - (this.state._lastRandomTurn || 0);
+    const canRandom = turnsSinceRandom >= 3; // 至少间隔3回合
     const randomCandidates = pool.filter(ev =>
       !ev.turn && ev.weight && this.checkEventCondition(ev)
     );
-    const mode = this.getMode();
-    const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance + (mode.crisisBoost || 0)));
-    if (randomCandidates.length > 0 && Math.random() < crisisChance) {
+    if (canRandom && randomCandidates.length > 0 && Math.random() < crisisChance) {
       const wMod = mode.eventWeightMod || 1.0;
       const totalWeight = randomCandidates.reduce((s, e) => s + e.weight * wMod, 0);
       let r = Math.random() * totalWeight;
@@ -617,6 +642,7 @@ const Game = {
         r -= ev.weight * wMod;
         if (r <= 0) {
           allEvents.push(ev);
+          this.state._lastRandomTurn = this.state.turn;
           break;
         }
       }
@@ -633,7 +659,22 @@ const Game = {
       }
     }
 
-    // 4. 核心事件按 tag 优先级排序，限制弹窗数量
+    // 4. 空白回合机制：如果没有剧情事件，约40%的回合为"平静回合"（不弹窗）
+    // 仅当没有 critical/major/story 级核心事件时才生效
+    const hasStoryEvent = core.some(ev => ['critical', 'major', 'story'].includes(ev.tag));
+    if (!hasStoryEvent && core.length > 0) {
+      // 用回合数做伪随机：每3回合中约1个回合为空白
+      const quietHash = (this.state.turn * 7 + 13) % 10;
+      if (quietHash < 4) {
+        // 平静回合：所有核心事件降级为风味事件自动结算
+        for (const ev of core) {
+          flavor.push(ev);
+        }
+        core.length = 0;
+      }
+    }
+
+    // 5. 核心事件按 tag 优先级排序，限制弹窗数量
     const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, minor: 6 };
     core.sort((a, b) => (tagPriority[a.tag] || 7) - (tagPriority[b.tag] || 7));
     const budget = this.EVENT_CONFIG.coreBudget;
@@ -819,21 +860,6 @@ const Game = {
     this.state._dirtyIndustry = true;
     this.state._dirtyNation = true;
     return { ok: true, msg: `${b.name} 已拆除，返还部分资金` };
-  },
-
-  // ===== 研发科技 =====
-  researchTech(techId) {
-    const TECHS = _getTechs();
-    const t = TECHS[techId];
-    if (!t) return { ok: false, msg: '科技不存在' };
-    if (this.state.techs[techId]) return { ok: false, msg: '已研发完成' };
-    if (this.state.resources.research < t.cost) return { ok: false, msg: '研发点数不足' };
-
-    this.state.resources.research -= t.cost;
-    this.state.techs[techId] = true;
-    this.state.flags[techId] = true; // 同时设为flag，便于事件条件判断
-
-    return { ok: true, msg: `${t.name} 研发完成` };
   },
 
   // ===== 设置政策 =====
@@ -1132,10 +1158,24 @@ const Game = {
     // 4. 推进时间
     this.state.turn++;
     const prevYear = this.state.year;
-    this.state.quarter++;
-    if (this.state.quarter > 4) {
-      this.state.quarter = 1;
-      this.state.year++;
+    if (this.state.turnMode === 'bimonthly') {
+      // 半月模式：0上旬→1下旬→下个季度上旬
+      this.state.halfMonth++;
+      if (this.state.halfMonth > 1) {
+        this.state.halfMonth = 0;
+        this.state.quarter++;
+        if (this.state.quarter > 4) {
+          this.state.quarter = 1;
+          this.state.year++;
+        }
+      }
+    } else {
+      // 季度模式
+      this.state.quarter++;
+      if (this.state.quarter > 4) {
+        this.state.quarter = 1;
+        this.state.year++;
+      }
     }
 
     // 4.1 借贷系统：每回合递减剩余期限
@@ -1258,7 +1298,7 @@ const Game = {
     const s = this.state;
     const r = s.resources;
     const rel = s.relations[factionId] || 0;
-    const FACTIONS = (typeof _getFactions === 'function') ? _getFactions() : (typeof FCTIONS !== 'undefined' ? FCTIONS : {});
+    const FACTIONS = (typeof _getFactions === 'function') ? _getFactions() : (typeof FACTIONS !== 'undefined' ? FACTIONS : {});
     const factionName = (FACTIONS[factionId] && FACTIONS[factionId].short) || factionId;
 
     const actions = {
@@ -1457,6 +1497,8 @@ const Game = {
       return;
     }
     if (s.year === 2000 && s.quarter === 4 && s.turn >= s.totalTurns) {
+      // 季度模式: 2000Q4=156回合; 半月模式: 2000Q4下旬=936回合
+      if (s.turnMode === 'bimonthly' && s.halfMonth === 0) return; // 半月模式还需下旬
       this.determineFinalEnding();
       return;
     }

@@ -71,8 +71,11 @@ const SaveSystem = {
       }
       // 恢复游戏状态
       Game.state = payload.state;
-      // 兼容性修复：旧存档没有 flavorLog 字段
+      // 兼容性修复：旧存档没有 flavorLog / halfMonth / turnMode 字段
       if (!Game.state.flavorLog) Game.state.flavorLog = [];
+      if (Game.state.turnMode === undefined) Game.state.turnMode = 'quarterly';
+      if (Game.state.halfMonth === undefined) Game.state.halfMonth = 0;
+      if (Game.state.turnMode) Game.turnMode = Game.state.turnMode;
       if (Game.state.difficulty) Game.difficulty = Game.state.difficulty;
       if (Game.state.gameMode && Game.setMode) Game.setMode(Game.state.gameMode);
       // 兼容性修复: 有核弹无核武技术
