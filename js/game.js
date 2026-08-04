@@ -219,7 +219,7 @@ const Game = {
   },
 
   // 存档版本号（修改资源平衡时递增，旧存档将被重置）
-  SAVE_VERSION: 18,
+  SAVE_VERSION: 19,
 
   // ===== 事件分类配置 =====
   EVENT_CONFIG: {
@@ -228,20 +228,30 @@ const Game = {
   },
 
   // ===== 回合模式事件密度配置 =====
-  // 精简版(quarterly, 156回合): 事件精简, 大量空白回合, 仅核心政治事件弹窗
-  // 沉浸完整版(bimonthly, 936回合): 完整事件体验, 空白回合少, 弹窗密度正常
+  // 精简版(quarterly, 156回合): 极简, 85% 空白回合, 仅 critical 能阻止空白, 约30个弹窗, 无随机事件
+  // 沉浸完整版(bimonthly, 936回合): 克制, 70% 空白回合, critical/story 阻止空白, 约80个弹窗, 随机事件极稀
   TURN_MODE_CONFIG: {
     quarterly: {
-      coreBudget: 2,          // 每回合最多2个弹窗
-      quietChance: 0.65,      // 65% 概率为空白回合（无剧情事件时）
-      randomChanceMod: 0.25,  // 随机事件概率 ×0.25（精简版大幅削减）
-      demoteMinor: true       // 非 critical/major/story 核心事件降级为风味
+      coreBudget: 1,          // 每回合最多1个弹窗
+      quietChance: 0.85,      // 85% 空白回合（让玩家专注游戏玩法）
+      blockQuietTags: ['critical'], // 仅 critical 事件能阻止空白回合（story/major 允许降级）
+      randomChanceMod: 0,     // 精简版完全不生成随机事件
+      demoteMinor: true,      // 非 critical/story 降级为风味
+      demoteMajor: true,      // major 也降级为风味自动结算
+      criticalSparseRate: 0.3,// critical 事件仅 30% 弹窗（130个→约39个，配合空白回合实际更少）
+      storySparseRate: 0.5,   // story 事件仅 50% 弹窗
+      randomMinInterval: 999  // 精简版不生成随机事件
     },
     bimonthly: {
-      coreBudget: 5,          // 每回合最多5个弹窗
-      quietChance: 0.35,      // 35% 空白回合
-      randomChanceMod: 0.55,  // 随机事件概率 ×0.55
-      demoteMinor: false      // 保留所有核心事件
+      coreBudget: 1,          // 每回合最多1个弹窗（从2降到1，控制密度）
+      quietChance: 0.70,      // 70% 空白回合（从50%提高）
+      blockQuietTags: ['critical', 'story'], // critical/story 阻止空白，major 允许被空白吞掉
+      randomChanceMod: 0.05,  // 随机事件概率 ×0.05（极低）
+      demoteMinor: false,     // 保留所有核心事件分类
+      demoteMajor: false,     // 保留 major（通过空白回合+coreBudget自然削减，保留叙事丰富度）
+      criticalSparseRate: 0.4,// critical 事件仅 40% 弹窗（130个→约52个）
+      storySparseRate: 0.7,   // story 事件 70% 弹窗
+      randomMinInterval: 15   // 随机事件至少间隔15回合（从8提高）
     }
   },
 
@@ -660,16 +670,17 @@ const Game = {
     }
 
     // 2. 随机事件 — 按回合模式调整频率
-    // 精简版: crisisChance × 0.25, 沉浸完整版: × 0.55, 至少间隔3回合
+    // 精简版: 完全不生成 (randomChanceMod=0)
+    // 沉浸完整版: ×0.15, 至少间隔8回合
     const mode = this.getMode();
     const tmCfg = this.getTurnModeCfg();
     const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance * tmCfg.randomChanceMod + (mode.crisisBoost || 0)));
     const turnsSinceRandom = this.state.turn - (this.state._lastRandomTurn || 0);
-    const canRandom = turnsSinceRandom >= 3; // 至少间隔3回合
+    const canRandom = turnsSinceRandom >= (tmCfg.randomMinInterval || 3);
     const randomCandidates = pool.filter(ev =>
       !ev.turn && ev.weight && this.checkEventCondition(ev)
     );
-    if (canRandom && randomCandidates.length > 0 && Math.random() < crisisChance) {
+    if (canRandom && randomCandidates.length > 0 && crisisChance > 0 && Math.random() < crisisChance) {
       const wMod = mode.eventWeightMod || 1.0;
       const totalWeight = randomCandidates.reduce((s, e) => s + e.weight * wMod, 0);
       let r = Math.random() * totalWeight;
@@ -695,10 +706,12 @@ const Game = {
     }
 
     // 4. 空白回合机制：按回合模式调整空白概率
-    // 精简版: 65% 空白回合, 沉浸完整版: 35%
-    // 仅当没有 critical/major/story 级核心事件时才生效
-    const hasStoryEvent = core.some(ev => ['critical', 'major', 'story'].includes(ev.tag));
-    if (!hasStoryEvent && core.length > 0) {
+    // 仅当没有"阻止空白"级别的核心事件时才生效（由 blockQuietTags 控制）
+    // 精简版: 仅 critical 阻止空白 → story/major 都可被空白回合吞掉
+    // 沉浸版: critical/story 阻止空白 → major 可被空白回合吞掉
+    const blockTags = tmCfg.blockQuietTags || ['critical', 'major', 'story'];
+    const hasBlockingEvent = core.some(ev => blockTags.includes(ev.tag));
+    if (!hasBlockingEvent && core.length > 0) {
       // 用回合数做伪随机分布
       const quietHash = (this.state.turn * 7 + 13) % 100;
       if (quietHash < tmCfg.quietChance * 100) {
@@ -710,13 +723,52 @@ const Game = {
       }
     }
 
-    // 4b. 精简版额外削减：非 critical/major/story 的核心事件降级为风味
+    // 4b. 精简版额外削减：非关键核心事件降级为风味
     if (tmCfg.demoteMinor) {
       for (let i = core.length - 1; i >= 0; i--) {
         const ev = core[i];
         if (!['critical', 'major', 'story'].includes(ev.tag)) {
           flavor.push(ev);
           core.splice(i, 1);
+        }
+      }
+    }
+    // 4c. 精简版深度削减：major 也降级为风味自动结算（仅 critical/story 弹窗）
+    if (tmCfg.demoteMajor) {
+      for (let i = core.length - 1; i >= 0; i--) {
+        const ev = core[i];
+        if (!['critical', 'story'].includes(ev.tag)) {
+          flavor.push(ev);
+          core.splice(i, 1);
+        }
+      }
+    }
+    // 4d. 稀疏化：critical 事件按比例降级为风味（让玩家有更多空白期专注玩法）
+    const sparseRate = tmCfg.criticalSparseRate;
+    if (sparseRate !== undefined && sparseRate < 1) {
+      for (let i = core.length - 1; i >= 0; i--) {
+        const ev = core[i];
+        if (ev.tag === 'critical') {
+          // 用事件ID做稳定哈希，保证同一事件在不同对局中行为一致
+          const hash = (ev.id || '').split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 100;
+          if (hash >= sparseRate * 100) {
+            flavor.push(ev);
+            core.splice(i, 1);
+          }
+        }
+      }
+    }
+    // 4e. story 事件稀疏化：按比例降级为风味（控制叙事事件密度）
+    const storySparseRate = tmCfg.storySparseRate;
+    if (storySparseRate !== undefined && storySparseRate < 1) {
+      for (let i = core.length - 1; i >= 0; i--) {
+        const ev = core[i];
+        if (ev.tag === 'story') {
+          const hash = ((ev.id || '').split('').reduce((h, c) => h + c.charCodeAt(0), 0) * 3 + 7) % 100;
+          if (hash >= storySparseRate * 100) {
+            flavor.push(ev);
+            core.splice(i, 1);
+          }
         }
       }
     }
