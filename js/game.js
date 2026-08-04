@@ -433,10 +433,10 @@ const Game = {
         money: Math.round(200 * rm),         // 帝国马克（百万元）
         manpower: Math.round(30 * rm),       // 可用人力
         stability: Math.round(45 * rm),      // 稳定度 0-100
-        deterrence: Math.round(120 * rm),    // 综合威慑（军力80+核威慑75≈155，取120作为初始整合度）
+        deterrence: Math.round(125 * rm),    // 综合威慑（军力80+核威慑78≈158，取125作为初始整合度）
         militaryPower: Math.round(80 * rm),  // 军事实力
-        nukeDeter: Math.round(75 * rm),     // 核威慑
-        nukes: 480,                          // 核武器数量（1946试爆后16年积累）
+        nukeDeter: Math.round(78 * rm),     // 核威慑
+        nukes: 580,                          // 核武器数量（1946试爆后16年积累，三极之首）
         research: Math.round(20 * rm),       // 研发点数
         efficiency: 1.0                       // 工业效率系数
       },

@@ -27,13 +27,13 @@
   "airforce": 380,
   "navy": 480,
   "nuclear": {
-    "warheads": 2100,
+    "warheads": 420,
     "delivery": {
-      "icbm": 450,
-      "slbm": 320,
-      "bomber": 580
+      "icbm": 90,
+      "slbm": 40,
+      "bomber": 180
     },
-    "deterrence": 92
+    "deterrence": 72
   },
   "population": 190000000,
   "unemployment": 0.052,
