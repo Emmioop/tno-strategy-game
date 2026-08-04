@@ -777,9 +777,17 @@ const Game = {
       }
     }
 
-    // 5. 核心事件按 tag 优先级排序，限制弹窗数量（按回合模式）
+    // 5. 核心事件按 tag 优先级 + 显式 priority 排序，限制弹窗数量（按回合模式）
     const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, minor: 6 };
-    core.sort((a, b) => (tagPriority[a.tag] || 7) - (tagPriority[b.tag] || 7));
+    core.sort((a, b) => {
+      const ta = (a.tag in tagPriority) ? tagPriority[a.tag] : 7;
+      const tb = (b.tag in tagPriority) ? tagPriority[b.tag] : 7;
+      if (ta !== tb) return ta - tb;
+      // 同 tag 内：显式 priority 小的优先（默认100）
+      const pa = (a.priority !== undefined) ? a.priority : 100;
+      const pb = (b.priority !== undefined) ? b.priority : 100;
+      return pa - pb;
+    });
     const budget = tmCfg.coreBudget;
 
     // 精简版事件分散机制:

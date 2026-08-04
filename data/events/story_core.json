@@ -26,7 +26,8 @@
           },
           "showToast": "登月庆典振奋了帝国的士气"
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_hitler_assassinated",
@@ -52,7 +53,8 @@
           },
           "showToast": "元首遇刺，帝国陷入恐慌"
         }
-      ]
+      ],
+      "priority": 20
     },
     {
       "id": "ev_succession_announcement",
@@ -76,7 +78,8 @@
           },
           "showToast": "你选择保持中立"
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_student_protests_1962",
@@ -234,7 +237,8 @@
           },
           "showToast": "元首驾崩。内战即将爆发。"
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_choose_successor",
@@ -308,7 +312,8 @@
             "__path": "7.choices.3.condition"
           }
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_civil_war_battles",
@@ -359,7 +364,8 @@
             "foreign_intervention": true
           }
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_civil_war_burgundy",
@@ -414,7 +420,8 @@
             "__path": "9.choices.2.condition"
           }
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_civil_war_climax",
@@ -462,7 +469,8 @@
             "defections_engineered": true
           }
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_civil_war_end",
@@ -493,7 +501,8 @@
         "__type": "fn",
         "__source": "(s) => {\n      // 根据路线应用不同加成\n      const path = s.flags.chosen_path;\n      if (path && SUCCESSION_PATHS[path]) {\n        const bonuses = SUCCESSION_PATHS[path].bonuses;\n        for (const k in bonuses) {\n          s.resources[k] = (s.resources[k] || 0) + bonuses[k];\n        }\n        s.leader = SUCCESSION_PATHS[path];\n      }\n    }",
         "__path": "11.onTrigger"
-      }
+      },
+      "priority": 10
     },
     {
       "id": "ev_reconstruction_plan",
@@ -2199,7 +2208,8 @@
         "__type": "fn",
         "__source": "(s) => {\n      const types = ['democratic', 'communist', 'fascist', 'madman', 'monarchist'];\n      s.flags.russia_unifier = types[Math.floor(Math.random() * types.length)];\n    }",
         "__path": "46.onTrigger"
-      }
+      },
+      "priority": 11
     },
     {
       "id": "ev_russia_democratic_unified",
@@ -2253,7 +2263,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.russia_unifier === 'democratic'",
         "__path": "47.condition"
-      }
+      },
+      "priority": 20
     },
     {
       "id": "ev_russia_communist_unified",
@@ -2309,7 +2320,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.russia_unifier === 'communist'",
         "__path": "48.condition"
-      }
+      },
+      "priority": 21
     },
     {
       "id": "ev_russia_fascist_unified",
@@ -2366,7 +2378,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.russia_unifier === 'fascist'",
         "__path": "49.condition"
-      }
+      },
+      "priority": 22
     },
     {
       "id": "ev_russia_madman_unified",
@@ -2436,7 +2449,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.russia_unifier === 'madman'",
         "__path": "50.condition"
-      }
+      },
+      "priority": 23
     },
     {
       "id": "ev_russia_recovery_1",
@@ -2487,7 +2501,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.russia_unifier && s.flags.russia_unifier !== 'madman'",
         "__path": "51.condition"
-      }
+      },
+      "priority": 20
     },
     {
       "id": "ev_russia_recovery_2",
@@ -2770,7 +2785,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.russia_unifier === 'monarchist'",
         "__path": "56.condition"
-      }
+      },
+      "priority": 24
     },
     {
       "id": "ev_second_west_russian_war",
@@ -3770,7 +3786,8 @@
             "stability": -3
           }
         }
-      ]
+      ],
+      "priority": 40
     },
     {
       "id": "ev_french_civil_war",
@@ -3987,7 +4004,8 @@
             "__path": "79.choices.2.condition"
           }
         }
-      ]
+      ],
+      "priority": 30
     },
     {
       "id": "ev_italian_africa_collapse",
@@ -7201,7 +7219,8 @@
           },
           "showToast": "谈判正在进行"
         }
-      ]
+      ],
+      "priority": 20
     },
     {
       "id": "ev_crimea_hofer",
@@ -7252,7 +7271,8 @@
           },
           "showToast": "霍费尔愿意谈判"
         }
-      ]
+      ],
+      "priority": 20
     },
     {
       "id": "ev_student_movement_1968",
@@ -7653,7 +7673,8 @@
           },
           "showToast": "新帝国马克发行"
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_italian_democracy_movement",
@@ -8580,7 +8601,8 @@
           },
           "showToast": "一个更强大的美国也是更好的对手"
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_us_presidential_election_1968",
@@ -9549,7 +9571,8 @@
             "ofn_relation": -8
           }
         }
-      ]
+      ],
+      "priority": 20
     },
     {
       "id": "ev_speer_ofn_backchannel",
@@ -9598,7 +9621,8 @@
           },
           "showToast": "你背叛了信任"
         }
-      ]
+      ],
+      "priority": 30
     },
     {
       "id": "ev_speer_slave_reform",
@@ -9701,7 +9725,8 @@
             "__path": "194.choices.2.condition"
           }
         }
-      ]
+      ],
+      "priority": 30
     },
     {
       "id": "ev_speer_victory_consolidation",
@@ -9757,7 +9782,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.speer_path",
         "__path": "195.condition"
-      }
+      },
+      "priority": 15
     },
     {
       "id": "ev_bormann_party_machine",
@@ -9799,7 +9825,8 @@
             "research": 3
           }
         }
-      ]
+      ],
+      "priority": 21
     },
     {
       "id": "ev_bormann_naval_buildup",
@@ -9847,7 +9874,8 @@
             "militaryPower": -3
           }
         }
-      ]
+      ],
+      "priority": 50
     },
     {
       "id": "ev_bormann_conservative_coalition",
@@ -9894,7 +9922,8 @@
             "deterrence": 3
           }
         }
-      ]
+      ],
+      "priority": 31
     },
     {
       "id": "ev_bormann_purge_reformers",
@@ -9997,7 +10026,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.bormann_path",
         "__path": "200.condition"
-      }
+      },
+      "priority": 25
     },
     {
       "id": "ev_bormann_victory_hollow",
@@ -10052,7 +10082,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.bormann_path",
         "__path": "201.condition"
-      }
+      },
+      "priority": 16
     },
     {
       "id": "ev_goring_war_plans",
@@ -10098,7 +10129,8 @@
             "militaryPower": -5
           }
         }
-      ]
+      ],
+      "priority": 22
     },
     {
       "id": "ev_goring_airforce_loyalty",
@@ -10146,7 +10178,8 @@
             "stability": 2
           }
         }
-      ]
+      ],
+      "priority": 51
     },
     {
       "id": "ev_goring_eastern_campaign",
@@ -10203,7 +10236,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.goring_path",
         "__path": "204.condition"
-      }
+      },
+      "priority": 32
     },
     {
       "id": "ev_goring_economic_spiral",
@@ -10313,7 +10347,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.goring_path",
         "__path": "206.condition"
-      }
+      },
+      "priority": 20
     },
     {
       "id": "ev_goring_downfall",
@@ -10357,7 +10392,8 @@
             "money": -10
           }
         }
-      ]
+      ],
+      "priority": 20
     },
     {
       "id": "ev_heydrich_ss_state",
@@ -10402,7 +10438,8 @@
             "research": 2
           }
         }
-      ]
+      ],
+      "priority": 23
     },
     {
       "id": "ev_heydrich_civil_war_terror",
@@ -10449,7 +10486,8 @@
             "deterrence": -6
           }
         }
-      ]
+      ],
+      "priority": 52
     },
     {
       "id": "ev_heydrich_himmler_puppet",
@@ -10504,7 +10542,8 @@
         "__type": "fn",
         "__source": "(s) => s.flags.heydrich_path",
         "__path": "210.condition"
-      }
+      },
+      "priority": 15
     },
     {
       "id": "ev_heydrich_descent",
@@ -10604,7 +10643,8 @@
             "deterrence": -3
           }
         }
-      ]
+      ],
+      "priority": 21
     },
     {
       "id": "ev_speidal_neutral_zone",
@@ -10647,7 +10687,8 @@
             "stability": -2
           }
         }
-      ]
+      ],
+      "priority": 25
     },
     {
       "id": "ev_rommel_mediation",
@@ -10691,7 +10732,8 @@
             "stability": -3
           }
         }
-      ]
+      ],
+      "priority": 40
     },
     {
       "id": "ev_neutral_zone_diplomats",
@@ -10734,7 +10776,8 @@
             "deterrence": 2
           }
         }
-      ]
+      ],
+      "priority": 25
     },
     {
       "id": "ev_hofer_crimea_navy",
@@ -10781,7 +10824,8 @@
             "hofer_hostile": true
           }
         }
-      ]
+      ],
+      "priority": 30
     },
     {
       "id": "ev_hofer_pirate_kingdom",
@@ -10880,7 +10924,8 @@
             "stability": -5
           }
         }
-      ]
+      ],
+      "priority": 40
     },
     {
       "id": "ev_neutral_zone_refugees",
@@ -10928,7 +10973,8 @@
             "ofn_relation": -10
           }
         }
-      ]
+      ],
+      "priority": 30
     },
     {
       "id": "ev_neutral_zone_resolution",
@@ -11024,7 +11070,8 @@
             "deterrence": -3
           }
         }
-      ]
+      ],
+      "priority": 16
     },
     {
       "id": "ev_burgundy_deep_infiltration",
@@ -11072,7 +11119,8 @@
             "double_agents": true
           }
         }
-      ]
+      ],
+      "priority": 20
     },
     {
       "id": "ev_burgundy_nuclear_theft",
@@ -11742,7 +11790,8 @@
             "deterrence": 4
           }
         }
-      ]
+      ],
+      "priority": 10
     },
     {
       "id": "ev_russia_unified_emergence",
@@ -12054,7 +12103,8 @@
             "stability": 2
           }
         }
-      ]
+      ],
+      "priority": 50
     },
     {
       "id": "ev_us_race_riots",
@@ -12377,7 +12427,8 @@
             "japan_relation": -3
           }
         }
-      ]
+      ],
+      "priority": 50
     },
     {
       "id": "ev_japan_navy_army_split",
@@ -12811,7 +12862,8 @@
             "deterrence": 3
           }
         }
-      ]
+      ],
+      "priority": 40
     },
     {
       "id": "ev_iberia_strain",
@@ -13464,7 +13516,8 @@
           },
           "showToast": "新千年已开启"
         }
-      ]
+      ],
+      "priority": 10
     }
   ]
 }
