@@ -218,7 +218,142 @@ const Game = {
   },
 
   // 存档版本号（修改资源平衡时递增，旧存档将被重置）
-  SAVE_VERSION: 16,
+  SAVE_VERSION: 17,
+
+  // ===== 事件分类配置 =====
+  EVENT_CONFIG: {
+    coreBudget: 4,           // 每回合最多弹窗的核心事件数
+    autoArchiveFlavor: true  // 风味事件自动结算归档
+  },
+
+  // ===== 判断事件是否为风味事件（不影响大局，自动结算） =====
+  FLAVOR_KEYWORDS: [
+    'moon_landing', 'space_race', 'space_station', 'mars_landing', 'us_space_program',
+    '登月', '星辰大海', '火星', '天空之城', '太空',
+    'computer_revolution', 'internet_era', 'personal_computer', 'german_internet',
+    'technology_revolution', 'information_age', 'genetic_engineering',
+    '硅与火', '网络', '计算机', '数字革命', '信息时代', '基因', '上帝的剪刀',
+    'environmental_crisis', 'environmental_movement', 'env_cold_war', 'env_nuclear',
+    'atlantropa', 'gibraltar_dam', 'mediterranean_draining',
+    '燃烧的地球', '灰色的天空', '绿色的觉醒', '干涸的海洋', '亚特兰特罗帕', '直布罗陀大坝',
+    'demographic_winter', '人口寒冬', '千禧年', 'millennium',
+    'pandemic_flu', 'rnd_plague', '瘟疫', '白色瘟疫',
+    'chernobyl', 'nuclear_accident_germany', '哈茨山', '熔毁', '易北河',
+    'rnd_natural_disaster', 'rnd_industrial_accident', 'rnd_scientist_defects',
+    'rnd_research_breakthrough', 'rnd_youth_subculture', '亚文化'
+  ],
+
+  // ===== 核心事件方向分类关键词 =====
+  DIRECTION_KEYWORDS: {
+    japan: [
+      'japan', 'cps_', '共荣圈', '日本', '日元', '东京', '樱花', '满洲', '朝鲜的怒',
+      '中国', '万隆', '海陆的对立', '日元的', '东京之春', '中国大崩溃', '中国的碎片化',
+      '满洲的火种', '朝鲜的怒火', '中国腹地', '共荣圈的解体'
+    ],
+    us: [
+      'us_civil', 'us_kennedy', 'us_race', 'us_second_civil', 'us_ofn', 'us_recovery',
+      'us_presidential', 'us_detente', 'us_new_era', 'us_economic', 'us_space',
+      'ofn_diplomacy', 'ofn_intervention',
+      '美国', 'OFN', '民权', '肯尼迪', '达拉斯', '缓和', '阿留申', '华盛顿的游行',
+      '燃烧的城市', '瘫痪的灯塔', '合众国', '变革之风', '美洲的动荡', '代理人战争'
+    ],
+    russia: [
+      'russia', 'wrrf', 'west_russia', 'ev_ural', 'ev_aryan_brotherhood',
+      '俄罗斯', '巨熊', '红色幽灵', '西俄', '乌拉尔', '克里米亚', '鄂木斯克',
+      '科米', '托木斯克', '西伯利亚', '马加丹', '赤塔', '贝加尔', '伊尔库茨克',
+      '克麦罗沃', '维亚特卡', '萨马拉', '黑龙江', 'tabortsy', 'taboritsky', '阿穆尔',
+      '群雄逐鹿', '东方的曙光', '东方的暗夜', '新俄罗斯', '红色巨熊', '黑色俄罗斯',
+      '摄政的疯狂', '钢铁复苏', '铁幕降临', '最后通牒', '核阴影', '黑暗的终结',
+      '双头鹰', 'AA线', '命运的抉择', '战后余波', '千年之战', '北方', '红旗',
+      '民主之灯', '地下城', '元帅', '学者', '自由领土', '投机者', '白军',
+      '沙皇', '理想主义者', '旧影', '疯王', '复辟', '叛军', '崇拜仇敌',
+      '乌拉尔山的枪声', '东方的和解', '统一之战', '巨熊苏醒', '第四极',
+      '俄罗斯的决战', '神权恐怖', '俄罗斯难民'
+    ],
+    other: [
+      'italy', 'iberian', 'iberia', 'turkey', 'france', 'french', 'british',
+      'mediterranean', 'suez', 'africa', 'saharan', 'india', 'indian', 'indonesia',
+      'indonesian', 'brazil', 'argentina', 'iran', 'iranian', 'lebanon', 'somali',
+      'korean_uprising', 'oil_crisis', 'decolonization', 'colonial', 'triumvirate',
+      'italian', 'slave_revolt', 'slave_rebellion', 'slave_question',
+      '意大利', '伊比利亚', '土耳其', '法兰西', '不列颠', '地中海', '苏伊士',
+      '非洲', '撒哈拉', '印度', '次大陆', '印尼', '香料群岛', '巴西', '阿根廷',
+      '伊朗', '波斯', '黎巴嫩', '雪松', '索马里', '非洲之角', '石油', '黑金',
+      '殖民', '三头同盟', '意属', '北非', '南非', '好望角', '刚果', '无政府',
+      '尼罗河', '苏伊士运河', '戴高乐', '自由法国', '法国内战', '不列颠的',
+      '安卡拉', '土耳其的', '伊比利亚内战', '告别的', '意大利之春', '沉没的海岸',
+      '直布罗陀大坝危机', '干涸的', '帝国的黄昏：意属', '中立区', '中立区的归宿',
+      '废墟上的集市', '逃亡者的洪流', '日耳曼尼亚保护区', '沙漠之狐', '大使馆的灯',
+      '黑海的海盗', '巴尔干', '白色瘟疫'
+    ]
+  },
+
+  // ===== 判断事件类别 =====
+  classifyEvent(ev) {
+    // 显式字段优先
+    if (ev.category) return ev.category;
+    // 只匹配 ID 和标题，避免 body 中的关键词导致误分类
+    const text = ((ev.id || '') + ' ' + (ev.title || '')).toLowerCase();
+    // 检查是否为风味事件
+    for (const kw of this.FLAVOR_KEYWORDS) {
+      if (text.includes(kw.toLowerCase())) return 'flavor';
+    }
+    return 'core';
+  },
+
+  // ===== 判断核心事件的方向 =====
+  classifyDirection(ev) {
+    if (ev.direction) return ev.direction;
+    const text = ((ev.title || '') + ' ' + (ev.desc || '') + ' ' +
+                  (ev.body || '') + ' ' + (ev.text || '') + ' ' + (ev.content || '')).toLowerCase();
+    const id = (ev.id || '').toLowerCase();
+    const fullText = id + ' ' + text;
+    // 按优先级检查：russia > japan > us > other > internal(默认)
+    for (const dir of ['russia', 'japan', 'us', 'other']) {
+      const kws = this.DIRECTION_KEYWORDS[dir];
+      for (const kw of kws) {
+        if (fullText.includes(kw.toLowerCase())) return dir;
+      }
+    }
+    return 'internal'; // 默认：德国内部事务
+  },
+
+  // ===== 自动结算风味事件（不弹窗） =====
+  autoResolveFlavorEvent(ev) {
+    // 选取第一个可用选项
+    if (ev.choices && ev.choices.length > 0) {
+      let choice = ev.choices[0];
+      // 找第一个可用选项
+      for (const c of ev.choices) {
+        if (this.canChooseEventOption(ev, c)) { choice = c; break; }
+      }
+      this.applyEffects(choice.effects);
+      this.setFlags(choice.setFlags);
+    }
+    // 标记已触发
+    if (ev.once) {
+      this.state.triggeredEvents[ev.id] = true;
+    } else {
+      this.state.triggeredEvents[ev.id + '_' + this.state.turn] = true;
+    }
+    // 执行 onTrigger
+    if (ev.onTrigger) {
+      try { ev.onTrigger(this.state); } catch(e) { console.warn('[Game] onTrigger error:', e); }
+    }
+    // 记录到风味日志
+    this.state.flavorLog = this.state.flavorLog || [];
+    this.state.flavorLog.unshift({
+      turn: this.state.turn,
+      date: this.getDateStr(),
+      title: ev.title,
+      body: (ev.body || '').replace(/<[^>]+>/g, '').substring(0, 200),
+      direction: this.classifyDirection(ev)
+    });
+    if (this.state.flavorLog.length > 60) this.state.flavorLog.pop();
+    // 添加新闻提示
+    this.addNews('📰 时代风貌 · ' + ev.title, 'world');
+    this.clampResources();
+  },
 
   // ===== 初始化新游戏 =====
   init() {
@@ -316,6 +451,9 @@ const Game = {
 
       // 事件日志（最近的事件）
       eventLog: [],
+
+      // 风味事件日志（时代风貌）
+      flavorLog: [],
 
       // 新闻流
       newsLog: [],
@@ -449,12 +587,10 @@ const Game = {
     return true;
   },
 
-  // ===== 获取本回合应触发的事件 =====
+  // ===== 获取本回合应触发的事件（分类返回） =====
   getEventsForTurn() {
-    const events = [];
+    const allEvents = [];
     // 优先走 DataStore (年份拆分, 内存占用 <50%原加载)
-    // DataStore.getEventPool() 会返回「story_core剧情事件 + 当前年±1年随机池」
-    // 若启用 fallback，返回旧版 STORY_EVENTS 全局数组，兼容老代码
     const ds = (typeof DataStore !== 'undefined') ? DataStore : null;
     const pool = (ds && typeof ds.getEventPool === 'function') ? ds.getEventPool()
       : ((typeof STORY_EVENTS !== 'undefined') ? STORY_EVENTS
@@ -463,7 +599,7 @@ const Game = {
     // 1. 匹配回合的剧情事件
     for (const ev of pool) {
       if (ev.turn && this.checkEventCondition(ev)) {
-        events.push(ev);
+        allEvents.push(ev);
       }
     }
 
@@ -471,7 +607,6 @@ const Game = {
     const randomCandidates = pool.filter(ev =>
       !ev.turn && ev.weight && this.checkEventCondition(ev)
     );
-    // 游戏模式影响: 危机概率 + eventWeightMod 调整触发频率
     const mode = this.getMode();
     const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance + (mode.crisisBoost || 0)));
     if (randomCandidates.length > 0 && Math.random() < crisisChance) {
@@ -481,13 +616,34 @@ const Game = {
       for (const ev of randomCandidates) {
         r -= ev.weight * wMod;
         if (r <= 0) {
-          events.push(ev);
+          allEvents.push(ev);
           break;
         }
       }
     }
 
-    return events;
+    // 3. 按分类拆分：风味事件 vs 核心政治事件
+    const core = [];
+    const flavor = [];
+    for (const ev of allEvents) {
+      if (this.classifyEvent(ev) === 'flavor') {
+        flavor.push(ev);
+      } else {
+        core.push(ev);
+      }
+    }
+
+    // 4. 核心事件按 tag 优先级排序，限制弹窗数量
+    const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, minor: 6 };
+    core.sort((a, b) => (tagPriority[a.tag] || 7) - (tagPriority[b.tag] || 7));
+    const budget = this.EVENT_CONFIG.coreBudget;
+    const coreCapped = core.slice(0, budget);
+    // 超出预算的核心事件降级为风味事件（自动结算）
+    for (const ev of core.slice(budget)) {
+      flavor.push(ev);
+    }
+
+    return { core: coreCapped, flavor };
   },
 
   // ===== 应用事件效果 =====
@@ -580,7 +736,8 @@ const Game = {
       turn: this.state.turn,
       date: this.getDateStr(),
       title: ev.title,
-      choice: choice.text
+      choice: choice.text,
+      direction: this.classifyDirection(ev)
     });
     if (this.state.eventLog.length > 30) this.state.eventLog.pop();
 
@@ -1028,8 +1185,16 @@ const Game = {
       }
     }
 
-    // 5. 检查事件
-    const turnEvents = this.getEventsForTurn();
+    // 5. 检查事件（分类处理：风味事件自动结算，核心事件弹窗）
+    const turnResult = this.getEventsForTurn();
+    // 5.1 自动结算风味事件
+    if (turnResult.flavor && turnResult.flavor.length > 0) {
+      for (const fev of turnResult.flavor) {
+        this.autoResolveFlavorEvent(fev);
+      }
+    }
+    // 5.2 核心事件交给UI弹窗
+    const turnEvents = turnResult.core || [];
     if (turnEvents.length > 0 && onEvent) {
       onEvent(turnEvents);
     }

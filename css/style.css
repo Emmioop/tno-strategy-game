@@ -648,6 +648,61 @@ body {
 .event-card .e-title { font-family: var(--font-serif); font-size: 14px; color: var(--text-primary); margin: 2px 0; }
 .event-card .e-desc { font-size: 12px; color: var(--text-secondary); }
 
+/* 方向色条 */
+.event-card.dir-internal { border-left-color: #c9a84a; }
+.event-card.dir-japan    { border-left-color: #e87a9e; }
+.event-card.dir-us       { border-left-color: #5a8af2; }
+.event-card.dir-russia   { border-left-color: #e85040; }
+.event-card.dir-other    { border-left-color: #7a7a8a; }
+
+/* 方向徽章 */
+.dir-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.dir-badge.dir-internal { background: rgba(201,168,74,0.2);  color: #c9a84a; border: 1px solid rgba(201,168,74,0.4); }
+.dir-badge.dir-japan    { background: rgba(232,122,158,0.2); color: #e87a9e; border: 1px solid rgba(232,122,158,0.4); }
+.dir-badge.dir-us       { background: rgba(90,138,242,0.2);  color: #5a8af2; border: 1px solid rgba(90,138,242,0.4); }
+.dir-badge.dir-russia   { background: rgba(232,80,64,0.2);   color: #e85040; border: 1px solid rgba(232,80,64,0.4); }
+.dir-badge.dir-other    { background: rgba(122,122,138,0.2); color: #7a7a8a; border: 1px solid rgba(122,122,138,0.4); }
+
+/* 时代风貌 Tab */
+.flavor-header { padding: 16px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.flavor-header h3 { font-family: var(--font-serif); font-size: 18px; color: var(--text-primary); margin: 0; }
+.flavor-subtitle { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
+
+.flavor-list { display: flex; flex-direction: column; gap: 10px; }
+.flavor-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-steel);
+  border-radius: 2px;
+  padding: 10px 14px;
+}
+.flavor-card.dir-internal { border-left-color: #c9a84a; }
+.flavor-card.dir-japan    { border-left-color: #e87a9e; }
+.flavor-card.dir-us       { border-left-color: #5a8af2; }
+.flavor-card.dir-russia   { border-left-color: #e85040; }
+.flavor-card.dir-other    { border-left-color: #7a7a8a; }
+.flavor-date { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+.flavor-title { font-family: var(--font-serif); font-size: 14px; color: var(--text-primary); margin: 2px 0; }
+.flavor-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+/* 空状态提示 */
+.empty-hint {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-size: 16px;
+  font-family: var(--font-serif);
+  line-height: 2;
+}
+
 /* 右侧面板 */
 #right-panel {
   width: 300px;

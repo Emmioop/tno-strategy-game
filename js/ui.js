@@ -776,6 +776,20 @@ const UI = {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
 
     const content = document.getElementById('tab-content');
+    const flavorTab = document.getElementById('tab-flavor');
+    // 控制双容器显隐
+    if (tab === 'flavor') {
+      content.style.display = 'none';
+      if (flavorTab) {
+        flavorTab.style.display = 'block';
+        flavorTab.innerHTML = this.renderFlavorLog();
+      }
+      return;
+    }
+    // 非flavor Tab：隐藏flavor容器，显示常规容器
+    if (flavorTab) flavorTab.style.display = 'none';
+    content.style.display = '';
+
     // 保存滚动位置，商店内部切换对话/菜单时保持不跳
     const savedScroll = (tab === 'shop') ? content.scrollTop : null;
     const savedMenuScroll = (tab === 'shop') ? (content.querySelector('.shop-menu-list')?.scrollTop || 0) : null;
@@ -2970,15 +2984,57 @@ const UI = {
     if (s.eventLog.length === 0) {
       return '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px">尚无重大事件记录</div>';
     }
+    const dirInfo = {
+      internal: { label: '🏛️ 国内', cls: 'dir-internal' },
+      japan:    { label: '⛩️ 对日', cls: 'dir-japan' },
+      us:       { label: '🦅 对美', cls: 'dir-us' },
+      russia:   { label: '🪖 对俄', cls: 'dir-russia' },
+      other:    { label: '🌐 其他', cls: 'dir-other' }
+    };
     return `
       <div class="events-feed">
-        ${s.eventLog.map(e => `
-          <div class="event-card major">
-            <div class="e-date">${e.date}</div>
+        ${s.eventLog.map(e => {
+          const di = dirInfo[e.direction] || dirInfo.other;
+          return `
+          <div class="event-card major ${di.cls}">
+            <div class="e-date">${e.date} <span class="dir-badge ${di.cls}">${di.label}</span></div>
             <div class="e-title">${e.title}</div>
             <div class="e-desc">抉择: <em style="color:var(--accent-gold)">${e.choice}</em></div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  },
+
+  // ===== 时代风貌 Tab =====
+  renderFlavorLog() {
+    const s = Game.state;
+    const log = s.flavorLog || [];
+    if (log.length === 0) {
+      return '<div class="empty-hint">📰 时代风貌<br><span style="font-size:12px">这里记录着不影响帝国大局、却折射时代风貌的事件——登月庆典、科技革命、文化浪潮……<br>随着游戏推进，历史的车辙将在此留下印记。</span></div>';
+    }
+    const dirInfo = {
+      internal: { label: '🏛️', cls: 'dir-internal' },
+      japan:    { label: '⛩️', cls: 'dir-japan' },
+      us:       { label: '🦅', cls: 'dir-us' },
+      russia:   { label: '🪖', cls: 'dir-russia' },
+      other:    { label: '🌐', cls: 'dir-other' }
+    };
+    return `
+      <div class="flavor-header">
+        <h3>📰 时代风貌</h3>
+        <p class="flavor-subtitle">不影响帝国走向、却折射时代切片的事件编年</p>
+      </div>
+      <div class="flavor-list">
+        ${log.map(e => {
+          const di = dirInfo[e.direction] || dirInfo.other;
+          return `
+          <div class="flavor-card ${di.cls}">
+            <div class="flavor-date">${e.date} <span class="dir-badge ${di.cls}">${di.label}</span></div>
+            <div class="flavor-title">${e.title}</div>
+            <div class="flavor-text">${e.body || ''}</div>
+          </div>`;
+        }).join('')}
       </div>
     `;
   },
@@ -3018,9 +3074,16 @@ const UI = {
   // ===== 处理本回合事件 =====
   processTurnEvents() {
     // 开场触发第一回合事件
-    const events = Game.getEventsForTurn();
-    if (events.length > 0) {
-      this.pendingEvents = events;
+    const result = Game.getEventsForTurn();
+    // 自动结算风味事件
+    if (result.flavor && result.flavor.length > 0) {
+      for (const fev of result.flavor) {
+        Game.autoResolveFlavorEvent(fev);
+      }
+    }
+    // 弹窗核心事件
+    if (result.core && result.core.length > 0) {
+      this.pendingEvents = result.core;
       this.currentEventIndex = 0;
       this.showNextEvent();
     }
@@ -3041,6 +3104,11 @@ const UI = {
         if (btn) { btn.disabled = false; btn.textContent = '推进至下一季度 ▸'; }
         if (mBtn) { mBtn.disabled = false; mBtn.textContent = '下一季度 ▸'; }
         this.requestRender();
+        // 刷新风貌Tab（如果当前正在显示）
+        const flavorTab = document.getElementById('tab-flavor');
+        if (flavorTab && flavorTab.style.display !== 'none') {
+          flavorTab.innerHTML = this.renderFlavorLog();
+        }
       }
       return;
     }
@@ -3550,9 +3618,21 @@ const UI = {
 
   showEventModal(ev) {
     const s = Game.state;
-    const tagText = { critical: '关键事件', major: '重大事件', minor: '一般事件' };
+    const tagText = { critical: '关键事件', major: '重大事件', minor: '一般事件', story: '剧情事件', diplomacy: '外交事件', economy: '经济事件', military: '军事事件', tech: '科技事件', culture: '文化事件' };
     const modal = document.getElementById('event-modal');
     const dateStr = Game.getDateStr();
+
+    // 方向徽章
+    const dirInfo = {
+      internal: { label: '🏛️ 国内', cls: 'dir-internal' },
+      japan:    { label: '⛩️ 对日', cls: 'dir-japan' },
+      us:       { label: '🦅 对美', cls: 'dir-us' },
+      russia:   { label: '🪖 对俄', cls: 'dir-russia' },
+      other:    { label: '🌐 其他', cls: 'dir-other' }
+    };
+    const dir = Game.classifyDirection(ev);
+    const di = dirInfo[dir] || dirInfo.other;
+    const badgeHtml = `<span class="dir-badge ${di.cls}">${di.label}</span>`;
 
     // 检查所有选项可用性，若全禁用则启用第一个作为兜底
     const results = ev.choices.map((c) => Game.canChooseEventOption(ev, c));
@@ -3583,7 +3663,7 @@ const UI = {
                onerror="this.onerror=null;this.src='${svgFallback}';" />
         </div>
         <div class="modal-header">
-          <div class="m-date">${dateStr}</div>
+          <div class="m-date">${dateStr} ${badgeHtml}</div>
           <div class="m-title">${ev.title}</div>
           <span class="m-tag ${ev.tag || 'minor'}">${tagText[ev.tag] || '事件'}</span>
         </div>
