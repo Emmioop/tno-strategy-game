@@ -87,14 +87,14 @@
 
   // ===== 默认初始数据 (JSON加载失败时fallback) =====
   const DEFAULTS = {
-    GER: { leader: '阿登纳', capital: '日耳曼尼亚', ideology: '纳粹主义',
+    GER: { leader: '阿道夫·希特勒(垂死)', capital: '柏林', ideology: '纳粹主义',
       gdp: 1800000, gdpGrowth: 0.012, inflation: 0.035, treasury: 120000, taxRate: 0.42,
       stability: 45, support: 40, corruption: 0.18, army: 480, airforce: 220, navy: 140,
       nuclear: { warheads: 2, delivery: { icbm: 15, slbm: 0, bomber: 80 }, deterrence: 30 },
       population: 85000000, industry: { civilSlots: 320, militarySlots: 210, hiTechSlots: 38, energySlots: 96, efficiency: 0.82 },
       tech: { militaryTier: 2, civilTier: 3, nuclearTier: 1, rocketTier: 1 },
       resources: { oil: 60, steel: 240, rare_metal: 18, uranium: 3, grain: 210, consumer: 240 } },
-    USA: { leader: '尼克松', capital: '华盛顿', ideology: '共和主义',
+    USA: { leader: '约翰·肯尼迪', capital: '华盛顿', ideology: '民主主义',
       gdp: 3200000, gdpGrowth: 0.018, inflation: 0.028, treasury: 260000, taxRate: 0.32,
       stability: 58, support: 54, corruption: 0.1, army: 360, airforce: 380, navy: 480,
       nuclear: { warheads: 6, delivery: { icbm: 120, slbm: 80, bomber: 220 }, deterrence: 85 },
@@ -108,7 +108,7 @@
       population: 430000000, industry: { civilSlots: 420, militarySlots: 280, hiTechSlots: 60, energySlots: 100, efficiency: 0.72 },
       tech: { militaryTier: 2, civilTier: 2, nuclearTier: 0, rocketTier: 1 },
       resources: { oil: 180, steel: 300, rare_metal: 40, uranium: 1, grain: 260, consumer: 220 } },
-    ITA: { leader: '墨索里尼', capital: '罗马', ideology: '法西斯主义',
+    ITA: { leader: '齐亚诺', capital: '罗马', ideology: '法西斯主义',
       gdp: 580000, gdpGrowth: 0.01, inflation: 0.068, treasury: 54000, taxRate: 0.4,
       stability: 48, support: 44, corruption: 0.28, army: 220, airforce: 140, navy: 180,
       nuclear: { warheads: 0, delivery: { icbm: 0, slbm: 0, bomber: 10 }, deterrence: 6 },
