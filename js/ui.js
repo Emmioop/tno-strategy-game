@@ -3198,6 +3198,9 @@ const UI = {
       'ev_nuclear_near_miss': 'img/events/ev_nuclear_near_miss.jpg',
       'ev_third_world_war_crisis': 'img/events/ev_third_world_war_crisis.jpg',
       'ev_russia_nuclear_threat': 'img/events/ev_third_world_war_crisis.jpg',
+      // env_前缀拼写错误的事件 → 正确图片映射
+      'env_cold_war_thaw': 'img/events/ev_env_cold_war_thaw.jpg',
+      'env_nuclear_free_world': 'img/events/ev_nuclear_free_world.jpg',
       // 俄罗斯
       'ev_russia_reunification_threat': 'img/events/ev_russia_reunification_threat.jpg',
       'ev_russia_unified': 'img/events/ev_russia_unified.jpg',
@@ -3493,8 +3496,8 @@ const UI = {
     };
     if (themeImages[theme]) return themeImages[theme];
 
-    // 默认真实图片（兜底，确保所有事件都返回真实图片而非SVG）
-    return 'img/events/ev_millennium_anxiety.jpg';
+    // 直接用事件ID作为文件名（兜底，确保每个有图片文件的事件都能命中）
+    return 'img/events/' + id + '.jpg';
   },
 
   // ===== SVG 占位图（用于真实图片加载前的秒开占位） =====
