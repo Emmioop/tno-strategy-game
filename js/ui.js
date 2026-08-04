@@ -136,6 +136,16 @@ const UI = {
   currentTab: 'overview',
   pendingEvents: [],
   currentEventIndex: 0,
+
+  // ===== 回合模式按钮文字 =====
+  // 精简版(quarterly): 下一季度 / 沉浸完整版(bimonthly): 下半月
+  _nextTurnLabel() {
+    return Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸';
+  },
+  _nextTurnLabelShort() {
+    return Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸';
+  },
+
   // 懒加载状态标记
   _lazy: {
     eventsGenLoaded: false,
@@ -373,8 +383,10 @@ const UI = {
     if (!this._topbarCache) {
       const diffInfo = DIFFICULTIES[s.difficulty] || DIFFICULTIES.normal;
       const modeInfo = (typeof GAME_MODES !== 'undefined' && GAME_MODES[s.gameMode]) ? GAME_MODES[s.gameMode] : GAME_MODES.historical;
+      const turnModeName = s.turnMode === 'bimonthly' ? '沉浸完整版' : '精简版';
+      const turnModeColor = s.turnMode === 'bimonthly' ? 'var(--accent-gold)' : 'var(--accent-toxic)';
       topbar.innerHTML = `
-        <div class="faction-emblem">大日耳曼国 <span class="diff-tag" style="font-size:10px;color:${diffInfo.color};border:1px solid ${diffInfo.color};padding:1px 5px;border-radius:2px;margin-left:6px">${diffInfo.name}</span><span class="diff-tag" style="font-size:10px;color:${modeInfo.color};border:1px solid ${modeInfo.color};padding:1px 5px;border-radius:2px;margin-left:4px">${modeInfo.icon} ${modeInfo.name}</span></div>
+        <div class="faction-emblem">大日耳曼国 <span class="diff-tag" style="font-size:10px;color:${diffInfo.color};border:1px solid ${diffInfo.color};padding:1px 5px;border-radius:2px;margin-left:6px">${diffInfo.name}</span><span class="diff-tag" style="font-size:10px;color:${modeInfo.color};border:1px solid ${modeInfo.color};padding:1px 5px;border-radius:2px;margin-left:4px">${modeInfo.icon} ${modeInfo.name}</span><span class="diff-tag" style="font-size:10px;color:${turnModeColor};border:1px solid ${turnModeColor};padding:1px 5px;border-radius:2px;margin-left:4px">${turnModeName}</span></div>
         <div class="leader-info">
           <div>元首</div>
           <div class="leader-name" data-k="leader">${s.leader.name}</div>
@@ -562,7 +574,7 @@ const UI = {
     document.getElementById('news-ticker').innerHTML = newsHtml;
 
     document.getElementById('action-bar').innerHTML = `
-      <button class="btn-next-turn" id="btn-next-turn">${Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸'}</button>
+      <button class="btn-next-turn" id="btn-next-turn">${this._nextTurnLabel()}</button>
       <button class="btn-secondary" id="btn-save">保存</button>
       <button class="btn-secondary" id="btn-load">读取</button>
       <button class="btn-secondary" id="btn-restart">重启</button>
@@ -599,7 +611,7 @@ const UI = {
         <span>势力</span>
         ${crisisBadge}
       </button>
-      <button class="btn-next-turn" id="m-btn-next">${Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸'}</button>
+      <button class="btn-next-turn" id="m-btn-next">${this._nextTurnLabelShort()}</button>
       <button class="mobile-nav-btn" id="m-btn-save" aria-label="存档">
         <span class="nav-icon">💾</span>
         <span>存档</span>
@@ -3066,8 +3078,8 @@ const UI = {
     } else if (Game.state.ended) {
       this.showEnding();
     } else {
-      const nextLabel = Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸';
-      const mNextLabel = Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸';
+      const nextLabel = this._nextTurnLabel();
+      const mNextLabel = this._nextTurnLabelShort();
       if (btn) { btn.disabled = false; btn.textContent = nextLabel; }
       if (mBtn) { mBtn.disabled = false; mBtn.textContent = mNextLabel; }
     }
@@ -3103,8 +3115,8 @@ const UI = {
       } else {
         const btn = document.getElementById('btn-next-turn');
         const mBtn = document.getElementById('m-btn-next');
-        const nL = Game.turnMode === 'bimonthly' ? '推进至下半月 ▸' : '推进至下一季度 ▸';
-        const mL = Game.turnMode === 'bimonthly' ? '下半月 ▸' : '下一季度 ▸';
+        const nL = this._nextTurnLabel();
+        const mL = this._nextTurnLabelShort();
         if (btn) { btn.disabled = false; btn.textContent = nL; }
         if (mBtn) { mBtn.disabled = false; mBtn.textContent = mL; }
         this.requestRender();

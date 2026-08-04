@@ -223,8 +223,31 @@ const Game = {
 
   // ===== 事件分类配置 =====
   EVENT_CONFIG: {
-    coreBudget: 4,           // 每回合最多弹窗的核心事件数
+    coreBudget: 4,           // 默认每回合最多弹窗的核心事件数（按 turnMode 动态调整）
     autoArchiveFlavor: true  // 风味事件自动结算归档
+  },
+
+  // ===== 回合模式事件密度配置 =====
+  // 精简版(quarterly, 156回合): 事件精简, 大量空白回合, 仅核心政治事件弹窗
+  // 沉浸完整版(bimonthly, 936回合): 完整事件体验, 空白回合少, 弹窗密度正常
+  TURN_MODE_CONFIG: {
+    quarterly: {
+      coreBudget: 2,          // 每回合最多2个弹窗
+      quietChance: 0.65,      // 65% 概率为空白回合（无剧情事件时）
+      randomChanceMod: 0.25,  // 随机事件概率 ×0.25（精简版大幅削减）
+      demoteMinor: true       // 非 critical/major/story 核心事件降级为风味
+    },
+    bimonthly: {
+      coreBudget: 5,          // 每回合最多5个弹窗
+      quietChance: 0.35,      // 35% 空白回合
+      randomChanceMod: 0.55,  // 随机事件概率 ×0.55
+      demoteMinor: false      // 保留所有核心事件
+    }
+  },
+
+  // ===== 获取当前回合模式配置 =====
+  getTurnModeCfg() {
+    return this.TURN_MODE_CONFIG[this.turnMode] || this.TURN_MODE_CONFIG.quarterly;
   },
 
   // ===== 判断事件是否为风味事件（不影响大局，自动结算） =====
@@ -633,10 +656,11 @@ const Game = {
       }
     }
 
-    // 2. 随机事件 — 大幅降低频率
-    // 普通难度: 15%概率触发一个随机事件（原25%），且至少间隔3回合
+    // 2. 随机事件 — 按回合模式调整频率
+    // 精简版: crisisChance × 0.25, 沉浸完整版: × 0.55, 至少间隔3回合
     const mode = this.getMode();
-    const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance * 0.5 + (mode.crisisBoost || 0)));
+    const tmCfg = this.getTurnModeCfg();
+    const crisisChance = Math.max(0, Math.min(1, this.getDiff().crisisChance * tmCfg.randomChanceMod + (mode.crisisBoost || 0)));
     const turnsSinceRandom = this.state.turn - (this.state._lastRandomTurn || 0);
     const canRandom = turnsSinceRandom >= 3; // 至少间隔3回合
     const randomCandidates = pool.filter(ev =>
@@ -667,13 +691,14 @@ const Game = {
       }
     }
 
-    // 4. 空白回合机制：如果没有剧情事件，约40%的回合为"平静回合"（不弹窗）
+    // 4. 空白回合机制：按回合模式调整空白概率
+    // 精简版: 65% 空白回合, 沉浸完整版: 35%
     // 仅当没有 critical/major/story 级核心事件时才生效
     const hasStoryEvent = core.some(ev => ['critical', 'major', 'story'].includes(ev.tag));
     if (!hasStoryEvent && core.length > 0) {
-      // 用回合数做伪随机：每3回合中约1个回合为空白
-      const quietHash = (this.state.turn * 7 + 13) % 10;
-      if (quietHash < 4) {
+      // 用回合数做伪随机分布
+      const quietHash = (this.state.turn * 7 + 13) % 100;
+      if (quietHash < tmCfg.quietChance * 100) {
         // 平静回合：所有核心事件降级为风味事件自动结算
         for (const ev of core) {
           flavor.push(ev);
@@ -682,10 +707,21 @@ const Game = {
       }
     }
 
-    // 5. 核心事件按 tag 优先级排序，限制弹窗数量
+    // 4b. 精简版额外削减：非 critical/major/story 的核心事件降级为风味
+    if (tmCfg.demoteMinor) {
+      for (let i = core.length - 1; i >= 0; i--) {
+        const ev = core[i];
+        if (!['critical', 'major', 'story'].includes(ev.tag)) {
+          flavor.push(ev);
+          core.splice(i, 1);
+        }
+      }
+    }
+
+    // 5. 核心事件按 tag 优先级排序，限制弹窗数量（按回合模式）
     const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, minor: 6 };
     core.sort((a, b) => (tagPriority[a.tag] || 7) - (tagPriority[b.tag] || 7));
-    const budget = this.EVENT_CONFIG.coreBudget;
+    const budget = tmCfg.coreBudget;
     const coreCapped = core.slice(0, budget);
     // 超出预算的核心事件降级为风味事件（自动结算）
     for (const ev of core.slice(budget)) {
