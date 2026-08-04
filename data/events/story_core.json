@@ -6219,7 +6219,7 @@
       ]
     },
     {
-      "id": "ev_genetic_engineering",
+      "id": "ev_genetic_engineering_alt",
       "turn": {
         "year": 1985,
         "quarter": 3
@@ -6388,7 +6388,7 @@
       ]
     },
     {
-      "id": "ev_german_economic_crisis_1985",
+      "id": "ev_slavery_end_crisis",
       "turn": {
         "year": 1985,
         "quarter": 2
@@ -8929,7 +8929,7 @@
       ]
     },
     {
-      "id": "ev_german_internet",
+      "id": "ev_german_internet_alt",
       "turn": {
         "year": 1975,
         "quarter": 1
@@ -8998,7 +8998,7 @@
       ]
     },
     {
-      "id": "ev_personal_computer",
+      "id": "ev_pc_revolution_alt",
       "turn": {
         "year": 1980,
         "quarter": 2
@@ -9050,7 +9050,7 @@
       ]
     },
     {
-      "id": "ev_space_race_mars",
+      "id": "ev_mars_race_final",
       "turn": {
         "year": 1985,
         "quarter": 1
@@ -9111,63 +9111,7 @@
       ]
     },
     {
-      "id": "ev_genetic_engineering",
-      "turn": {
-        "year": 1985,
-        "quarter": 3
-      },
-      "once": true,
-      "tag": "major",
-      "title": "上帝的剪刀",
-      "body": "<p>德国的遗传学家们完成了一项不可能的任务：他们成功地修改了人类胚胎的基因。</p>\n    <p>这项技术——基因编辑——可以消除遗传疾病，增强人体特征，甚至……\"改良\"人种。最后一点让帝国的高层们兴奋得发抖。</p>\n    <p>党卫军的\"生命之泉\"项目立刻表示了兴趣：如果基因编辑可以\"制造\"完美的雅利安人，那就不需要麻烦的繁殖计划了。改革派则担心这项技术的伦理后果——修改人类基因，是否走得太远了？</p>\n    <p>而OFN和日本也在竞相开发类似技术。基因工程竞赛——一场比核竞赛更隐蔽、但可能更危险的竞赛——已经开始了。</p>",
-      "choices": [
-        {
-          "text": "全面支持基因工程",
-          "desc": "+研发 -稳定",
-          "effects": {
-            "research": 10,
-            "stability": -5
-          },
-          "setFlags": {
-            "genetic_engineering": true
-          }
-        },
-        {
-          "text": "只允许医学用途",
-          "desc": "折中",
-          "effects": {
-            "research": 5,
-            "stability": 2,
-            "manpower": 3
-          }
-        },
-        {
-          "text": "与SS合作\"人种改良\"计划",
-          "desc": "黑暗",
-          "effects": {
-            "research": 8,
-            "stability": -10,
-            "manpower": -10
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.extremist",
-            "__path": "179.choices.2.condition"
-          },
-          "showToast": "党卫军开始了新的\"优生\"计划"
-        },
-        {
-          "text": "禁止基因编辑",
-          "desc": "保守",
-          "effects": {
-            "research": -3,
-            "stability": 5
-          }
-        }
-      ]
-    },
-    {
-      "id": "ev_environmental_movement",
+      "id": "ev_green_awakening",
       "turn": {
         "year": 1986,
         "quarter": 1
@@ -9228,7 +9172,7 @@
       ]
     },
     {
-      "id": "ev_chernobyl_equivalent",
+      "id": "ev_elbe_meltdown",
       "turn": {
         "year": 1986,
         "quarter": 3
@@ -9372,7 +9316,7 @@
       ]
     },
     {
-      "id": "ev_reform_movement_1987",
+      "id": "ev_reform_wind_alt",
       "turn": {
         "year": 1987,
         "quarter": 1
@@ -9441,7 +9385,7 @@
       }
     },
     {
-      "id": "ev_berlin_wall_equivalent",
+      "id": "ev_wall_falls",
       "turn": {
         "year": 1989,
         "quarter": 1
@@ -9495,7 +9439,7 @@
       }
     },
     {
-      "id": "ev_nuclear_disarmament",
+      "id": "ev_nuclear_cuts",
       "turn": {
         "year": 1989,
         "quarter": 3
@@ -9562,183 +9506,6 @@
       ]
     },
     {
-      "id": "ev_end_of_cold_war",
-      "turn": {
-        "year": 1991,
-        "quarter": 1
-      },
-      "once": true,
-      "tag": "critical",
-      "title": "冷战的终结",
-      "body": "<p>1991年。在日内瓦，三国领导人签署了一份将被载入史册的文件：<strong>《新世纪宣言》</strong>。</p>\n    <p>这份宣言宣布：三极冷战正式结束。德国、美国和日本同意在互尊互惠的基础上建立新关系，结束军事对抗，推动经济合作，共同应对全球挑战。</p>\n    <p>这不是和平——三方之间仍有分歧、竞争和不信任。但这不再是冷战——核武器不再是外交工具，代理人战争不再是常态，铁幕不再是不可逾越的。</p>\n    <p>帝国的改革者们在日耳曼尼亚举杯庆祝。OFN的领导人在华盛顿发表演讲。日本的改革派在东京街头游行。全世界——除了勃艮第——都在欢呼。</p>\n    <p>希特勒的阴影，终于开始散去。新世纪的曙光，在地平线上闪烁。</p>",
-      "choices": [
-        {
-          "text": "拥抱和平新纪元",
-          "desc": "需要改革派",
-          "effects": {
-            "stability": 20,
-            "research": 10,
-            "money": 30,
-            "deterrence": -10
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.reformist",
-            "__path": "186.choices.0.condition"
-          },
-          "setFlags": {
-            "cold_war_ended": true
-          }
-        },
-        {
-          "text": "谨慎乐观",
-          "desc": "温和",
-          "effects": {
-            "stability": 10,
-            "research": 5,
-            "deterrence": -3
-          }
-        },
-        {
-          "text": "不信任，保持警惕",
-          "desc": "保守",
-          "effects": {
-            "stability": -3,
-            "deterrence": 3
-          }
-        }
-      ],
-      "condition": {
-        "__type": "fn",
-        "__source": "(s) => s.flags.reformist || s.flags.disarmament_signed",
-        "__path": "186.condition"
-      }
-    },
-    {
-      "id": "ev_new_world_order_1992",
-      "turn": {
-        "year": 1992,
-        "quarter": 1
-      },
-      "once": true,
-      "tag": "critical",
-      "title": "新世界秩序",
-      "body": "<p>冷战结束了。但新世界的模样，还没有人知道。</p>\n    <p>三极对抗让位给了三极合作——但合作并不意味着平等。美国的经济和科技实力最强，日本控制着亚洲的供应链，而德国——改革后的德国——拥有欧洲的市场和俄罗斯的边缘资源。</p>\n    <p>全球化成为新的关键词。跨国公司在三国之间穿梭，资本流动前所未有地自由。互联网（如果帝国开放了它）连接了全世界的信息。文化、思想、人才在三极之间流动。</p>\n    <p>但新世界也有新问题。恐怖主义、网络战、经济泡沫、气候变化——这些跨国界的威胁需要跨国界的合作。而旧时代的幽灵——民族主义、军国主义、极端主义——并没有消失，只是在等待时机。</p>\n    <p>1992年。新世界秩序的蓝图，正在绘制中。</p>",
-      "choices": [
-        {
-          "text": "积极融入全球化",
-          "desc": "需要改革派",
-          "effects": {
-            "money": 30,
-            "research": 8,
-            "stability": 5
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.reformist",
-            "__path": "187.choices.0.condition"
-          }
-        },
-        {
-          "text": "保护帝国经济，有限融入",
-          "desc": "务实",
-          "effects": {
-            "money": 15,
-            "stability": 3
-          }
-        },
-        {
-          "text": "抗拒全球化",
-          "desc": "保守",
-          "effects": {
-            "money": -10,
-            "stability": 5,
-            "research": -3
-          }
-        }
-      ]
-    },
-    {
-      "id": "ev_technology_revolution_1995",
-      "turn": {
-        "year": 1995,
-        "quarter": 1
-      },
-      "once": true,
-      "tag": "major",
-      "title": "数字革命",
-      "body": "<p>1995年。互联网已经连接了数百万人，移动通信开始普及，生物科技突飞猛进。</p>\n    <p>如果帝国在1975年开放了网络，那么到1995年，德国已经有了成熟的互联网生态——电子商务、在线媒体、数字娱乐。德国的科技公司（如果它们能在帝国的体制下存活）正在与OFN和日本的企业竞争。</p>\n    <p>如果帝国封锁了网络，那么1995年的德国是一个数字荒漠——OFN和日本的企业主导着互联网，德国人只能通过走私的设备和翻墙软件窥探外面的数字世界。</p>\n    <p>技术革命不仅改变了经济，也改变了社会。信息流动加速，思想传播加快，旧体制的根基在新技术的冲刷下松动。</p>",
-      "choices": [
-        {
-          "text": "投资科技产业",
-          "desc": "拥抱数字时代",
-          "effects": {
-            "research": 10,
-            "money": 20,
-            "stability": 3
-          }
-        },
-        {
-          "text": "与OFN科技合作",
-          "desc": "需要改革派",
-          "effects": {
-            "research": 15,
-            "stability": 5
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.reformist",
-            "__path": "188.choices.1.condition"
-          }
-        },
-        {
-          "text": "军事化科技",
-          "desc": "军事路线",
-          "effects": {
-            "research": 5,
-            "militaryPower": 5,
-            "money": -20
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.militarist",
-            "__path": "188.choices.2.condition"
-          }
-        },
-        {
-          "text": "限制科技发展",
-          "desc": "保守",
-          "effects": {
-            "research": -5,
-            "stability": 3
-          }
-        }
-      ]
-    },
-    {
-      "id": "ev_millennium_celebration",
-      "turn": {
-        "year": 1999,
-        "quarter": 4
-      },
-      "once": true,
-      "tag": "critical",
-      "title": "千年之交",
-      "body": "<p>1999年12月31日。午夜的钟声即将敲响。</p>\n    <p>整个世界——从日耳曼尼亚到华盛顿，从东京到莫斯科——都在等待新千年的到来。烟花准备就绪，庆典排满日程，人们在广场上聚集，仰望着夜空。</p>\n    <p>三十八年前，你走进了帝国总理府。那时，希特勒还活着，帝国还在腐朽中苟延残喘，冷战笼罩着整个世界。三十八年后，世界已经面目全非——无论你做出了什么选择，这个世界的面貌，都有你的印记。</p>\n    <p>帝国还存在吗？它改革了吗？它崩溃了吗？它变得更强大了，还是更人道了？这些问题，都将在新千年的钟声中，找到答案。</p>\n    <p>而在勃艮第——如果它还存在——希姆莱的幽灵仍在黑暗中徘徊。新千年的曙光，并不意味着噩梦的终结。</p>\n    <p>但至少，此刻，全人类一起仰望着同一片星空，等待着同一个午夜。</p>\n    <p><strong>2000年，到了。</strong></p>",
-      "choices": [
-        {
-          "text": "迎接新千年",
-          "desc": "终局",
-          "effects": {
-            "stability": 10,
-            "research": 5,
-            "money": 10
-          },
-          "showToast": "新千年快乐"
-        }
-      ]
-    },
-    {
       "id": "ev_speer_economic_blueprint",
       "turn": {
         "year": 1963,
@@ -9780,63 +9547,6 @@
             "stability": 4,
             "deterrence": 3,
             "ofn_relation": -8
-          }
-        }
-      ]
-    },
-    {
-      "id": "ev_speer_student_guard",
-      "turn": {
-        "year": 1964,
-        "quarter": 1
-      },
-      "once": true,
-      "tag": "story",
-      "title": "学生卫队",
-      "body": "<p>施佩尔的处境岌岌可危：鲍曼控制着党部，戈林握着空军，海德里希掌控党卫军。而他，只有一个空荡荡的总理府办公室和一群理想主义的学生。</p>\n    <p>但正是这群学生，自发组织起了\"<strong>施佩尔青年护卫队</strong>\"。他们佩戴白底黑鹰袖标，在施佩尔的演讲会场外围成人墙，用血肉之躯挡住泼来的墨水瓶和石块。他们印发传单，在大学里宣讲经济自由化，把施佩尔的主张翻译成工人听得懂的语言。这群从未经历过战争的孩子，把改革当成了信仰。</p>\n    <p>施佩尔望着这些年轻的脸，心中五味杂陈。他知道，这些孩子中很多人会死在内战的流弹里——而他能否配得上他们的牺牲，是一个他不敢回答的问题。</p>",
-      "choices": [
-        {
-          "text": "武装学生护卫队",
-          "desc": "+军事 -稳定",
-          "effects": {
-            "militaryPower": 4,
-            "stability": -3,
-            "manpower": -5
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.speer_path",
-            "__path": "191.choices.0.condition"
-          },
-          "setFlags": {
-            "student_guard_armed": true
-          }
-        },
-        {
-          "text": "让学生负责宣传",
-          "desc": "+稳定 +研发",
-          "effects": {
-            "stability": 5,
-            "research": 4,
-            "ofn_relation": 5
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.speer_path",
-            "__path": "191.choices.1.condition"
-          }
-        },
-        {
-          "text": "解散护卫队，避免流血",
-          "desc": "保守",
-          "effects": {
-            "stability": 3,
-            "manpower": 3
-          },
-          "condition": {
-            "__type": "fn",
-            "__source": "(s) => s.flags.speer_path",
-            "__path": "191.choices.2.condition"
           }
         }
       ]
@@ -10235,7 +9945,7 @@
       ]
     },
     {
-      "id": "ev_bormann_stagnation",
+      "id": "ev_bormann_honeymoon_stagnation",
       "turn": {
         "year": 1965,
         "quarter": 1
@@ -10695,7 +10405,7 @@
       ]
     },
     {
-      "id": "ev_heydrich_terror",
+      "id": "ev_heydrich_civil_war_terror",
       "turn": {
         "year": 1964,
         "quarter": 1
@@ -13323,7 +13033,7 @@
       ]
     },
     {
-      "id": "ev_space_race_mars",
+      "id": "ev_mars_program_start",
       "turn": {
         "year": 1972,
         "quarter": 2
