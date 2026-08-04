@@ -7,20 +7,16 @@
 
   /* --- 着色模式元数据 --- */
   const COLOR_MODES = [
-    { id: 'faction',   label: '阵营', short: '阵营', desc: '按控制者阵营着色',
+    { id: 'faction',   label: '阵营', short: '营', desc: '按控制者阵营着色',
       legend: null, colorBar: null },
-    { id: 'stability', label: '稳定度', short: '稳', desc: '绿(稳定)→黄(不稳)→红(崩溃)',
-      legend: [{ pos:0, c:'#8b1a1a', t:'崩溃' }, { pos:0.3, c:'#b04a1a', t:'动荡' },
-               { pos:0.6, c:'#a07a1a', t:'不稳' }, { pos:0.85, c:'#3a7a3a', t:'稳定' },
-               { pos:1, c:'#1a5a2a', t:'安宁' }] },
-    { id: 'tension',   label: '紧张度', short: '紧', desc: '蓝(和平)→橙→红(激战)',
-      legend: [{ pos:0, c:'#2a3a4a', t:'和平' }, { pos:0.4, c:'#7a5a2a', t:'紧张' },
-               { pos:0.8, c:'#9a3a1a', t:'危机' }, { pos:1, c:'#b01818', t:'前线' }] },
+    { id: 'stability', label: '稳定', short: '稳', desc: '绿(稳定)→黄(不稳)→红(崩溃)',
+      legend: [{ pos:0, c:'#8b1a1a', t:'崩溃' }, { pos:0.5, c:'#a07a1a', t:'不稳' }, { pos:1, c:'#1a5a2a', t:'稳定' }], compact: true },
+    { id: 'tension',   label: '紧张', short: '紧', desc: '蓝(和平)→橙→红(激战)',
+      legend: [{ pos:0, c:'#2a3a4a', t:'和' }, { pos:1, c:'#b01818', t:'战' }], compact: true },
     { id: 'hotspot',   label: '热点', short: '热', desc: '高亮最近事件区域',
-      legend: [{ t:'🔆 最近发生重要事件的区域', c:'#ffe080' }] },
-    { id: 'russia',    label: '俄统一', short: '俄', desc: '俄罗斯军阀统一进度',
-      legend: [{ pos:0, c:'#4a4a5a', t:'分裂' }, { pos:0.4, c:'#5a5a7a', t:'整合中' },
-               { pos:0.8, c:'#7a5a5a', t:'大部' }, { pos:1, c:'#a83232', t:'统一' }] },
+      legend: [{ t:'🔆热点', c:'#ffe080' }] },
+    { id: 'russia',    label: '俄统', short: '俄', desc: '俄罗斯统一进度',
+      legend: [{ pos:0, c:'#4a4a5a', t:'分' }, { pos:1, c:'#a83232', t:'统' }], compact: true },
   ];
 
   /* --- 图层元数据 (与 data/map_layers/index.json 一致) --- */
@@ -48,7 +44,7 @@
   UIp._renderMapExtensionPanel = function () {
     const self = this;
 
-    // 着色模式按钮组
+    // 着色模式按钮组 (紧凑版，适合移动端显示)
     const cmHtml = COLOR_MODES.map(c => {
       const active = c.id === 'faction';  // 默认
       let barHtml = '';
@@ -59,20 +55,23 @@
           const w = Math.round((stops[i+1].pos - stops[i].pos) * 1000)/10;
           parts.push(`<span style="flex:0 0 ${w}%;background:linear-gradient(to right,${stops[i].c},${stops[i+1].c});height:100%;"></span>`);
         }
-        barHtml = `<div style="display:flex;height:8px;border-radius:2px;overflow:hidden;margin:2px 0 4px;">${parts.join('')}</div>
-                   <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--text-muted);padding:0 1px;">
-                     ${stops.map(s=>`<span style="color:${s.c};opacity:0.8;white-space:nowrap;">${s.t}</span>`).join('')}
-                   </div>`;
+        const labelsHtml = c.compact
+          ? `<div style="display:flex;justify-content:space-between;font-size:7.5px;color:var(--text-muted);padding:0 1px;margin-top:1px;">
+               ${stops.map(s=>`<span style="color:${s.c};opacity:0.85;white-space:nowrap;">${s.t}</span>`).join('')}
+             </div>`
+          : '';
+        barHtml = `<div style="display:flex;height:5px;border-radius:1px;overflow:hidden;margin:2px 0 1px;">${parts.join('')}</div>${labelsHtml}`;
       } else if (c.legend) {
-        barHtml = `<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text-muted);margin-top:2px;">
-          <span style="display:inline-block;width:14px;height:8px;background:${c.legend[0].c};border-radius:2px;"></span>
+        barHtml = `<div style="display:flex;align-items:center;gap:3px;font-size:8px;color:var(--text-muted);margin-top:1px;">
+          <span style="display:inline-block;width:10px;height:5px;background:${c.legend[0].c};border-radius:1px;"></span>
           <span>${c.legend[0].t}</span>
         </div>`;
       }
+      const compact = c.compact;
       return `<div class="map-cm-item${active?' active':''}" data-cm="${c.id}"
-        style="padding:6px 10px;background:rgba(20,25,38,0.9);border:1px solid ${active?'#a83232':'#2a3548'};border-radius:4px;cursor:pointer;min-width:56px;text-align:center;user-select:none;${active?'box-shadow:0 0 0 1px #a83232 inset;':''}"
+        style="padding:${compact?'3px 6px':'4px 8px'};background:rgba(20,25,38,0.9);border:1px solid ${active?'#a83232':'#2a3548'};border-radius:4px;cursor:pointer;min-width:${compact?'40px':'50px'};text-align:center;user-select:none;${active?'box-shadow:0 0 0 1px #a83232 inset;':''}"
         title="${c.desc}">
-        <div style="font-size:12px;color:${active?'#f0e0c0':'#c0c8d0'};font-weight:${active?'bold':'normal'}">${c.label}</div>
+        <div style="font-size:${compact?'11px':'12px'};color:${active?'#f0e0c0':'#c0c8d0'};font-weight:${active?'bold':'normal'};letter-spacing:0.03em;">${c.label}</div>
         ${barHtml}
       </div>`;
     }).join('');
@@ -94,45 +93,45 @@
     `).join('');
 
     return `
-      <!-- 着色模式 -->
-      <div class="map-ext-panel" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8;pointer-events:auto;">
-        <div style="background:rgba(10,14,22,0.85);border:1px solid #2a3548;border-radius:6px;padding:6px 8px;box-shadow:0 4px 14px rgba(0,0,0,0.5);">
-          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;text-align:center;margin-bottom:3px;">地图着色模式</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:82vw;">${cmHtml}</div>
+      <!-- 着色模式：移到右上角（避开左上角的图层开关），移动端自动换行 -->
+      <div class="map-ext-panel" style="position:absolute;top:6px;right:12px;z-index:8;pointer-events:auto;max-width:60%;">
+        <div style="background:rgba(10,14,22,0.92);border:1px solid #2a3548;border-radius:6px;padding:5px 7px;box-shadow:0 4px 14px rgba(0,0,0,0.55);">
+          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;text-align:center;margin-bottom:2px;">着色模式</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">${cmHtml}</div>
         </div>
       </div>
 
       <!-- 左上面板：图层开关 + 快速区域 -->
-      <div class="map-ext-tl" style="position:absolute;top:10px;left:10px;z-index:8;pointer-events:auto;width:210px;">
-        <div style="background:rgba(10,14,22,0.88);border:1px solid #2a3548;border-radius:6px;padding:8px 10px;box-shadow:0 4px 14px rgba(0,0,0,0.5);">
-          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;margin-bottom:4px;">图层开关 <span style="color:var(--text-muted);font-size:8px;letter-spacing:normal;">(按需加载)</span></div>
+      <div class="map-ext-tl" style="position:absolute;top:6px;left:8px;z-index:8;pointer-events:auto;width:200px;max-width:45vw;">
+        <div style="background:rgba(10,14,22,0.92);border:1px solid #2a3548;border-radius:6px;padding:6px 8px;box-shadow:0 4px 14px rgba(0,0,0,0.55);">
+          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;margin-bottom:3px;">图层开关 <span style="color:var(--text-muted);font-size:8px;letter-spacing:normal;">(按需加载)</span></div>
           <div>${layersHtml}</div>
-          <div style="border-top:1px dashed #2a3548;margin:6px 0 5px;"></div>
-          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;margin-bottom:4px;">快速跳转</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;">${areasHtml}</div>
-          <div style="border-top:1px dashed #2a3548;margin:6px 0 5px;"></div>
-          <label style="display:flex;align-items:center;gap:5px;padding:3px 2px;cursor:pointer;font-size:10px;color:#c8c8b8;user-select:none;">
+          <div style="border-top:1px dashed #2a3548;margin:5px 0 4px;"></div>
+          <div style="font-size:9px;color:var(--accent-gold);letter-spacing:0.12em;margin-bottom:3px;">快速跳转</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;">${areasHtml}</div>
+          <div style="border-top:1px dashed #2a3548;margin:5px 0 4px;"></div>
+          <label style="display:flex;align-items:center;gap:4px;padding:2px 1px;cursor:pointer;font-size:9px;color:#c8c8b8;user-select:none;">
             <input type="checkbox" id="map-dev-toggle" style="accent-color:#a83232;">
-            <span>🪲 开发者模式 (ID/面积/边框)</span>
+            <span>🪲 开发者模式</span>
           </label>
         </div>
       </div>
 
       <!-- 右下信息卡片 -->
-      <div class="map-info-card" id="map-info-card" style="position:absolute;right:10px;bottom:10px;z-index:8;pointer-events:auto;width:300px;max-width:45vw;display:none;">
-        <div style="background:rgba(10,14,22,0.95);border:1px solid #3a4a5a;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.6);">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #2a3548;">
-            <div>
-              <div class="mic-title" style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:14px;letter-spacing:0.08em;">未选择区域</div>
-              <div class="mic-id" style="font-size:10px;color:var(--text-muted);margin-top:1px;">—</div>
+      <div class="map-info-card" id="map-info-card" style="position:absolute;right:8px;bottom:8px;z-index:8;pointer-events:auto;width:280px;max-width:55vw;display:none;">
+        <div style="background:rgba(10,14,22,0.96);border:1px solid #3a4a5a;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.65);">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #2a3548;">
+            <div style="min-width:0;flex:1;">
+              <div class="mic-title" style="font-family:var(--font-serif);color:var(--accent-gold-bright);font-size:13px;letter-spacing:0.08em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未选择区域</div>
+              <div class="mic-id" style="font-size:9px;color:var(--text-muted);margin-top:1px;">—</div>
             </div>
-            <button id="mic-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 2px;" title="关闭">✕</button>
+            <button id="mic-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0;margin-left:6px;" title="关闭">✕</button>
           </div>
-          <div class="mic-body" style="padding:10px 12px;font-size:11px;color:#d0d8e0;max-height:44vh;overflow-y:auto;">
-            <div style="color:var(--text-muted);text-align:center;padding:18px 8px;">点击地图任意国家/地区<br>查看其实时状态与相关事件</div>
+          <div class="mic-body" style="padding:8px 10px;font-size:11px;color:#d0d8e0;max-height:38vh;overflow-y:auto;">
+            <div style="color:var(--text-muted);text-align:center;padding:14px 6px;">点击地图任意国家/地区<br>查看其实时状态与相关事件</div>
           </div>
-          <div class="mic-footer" style="display:none;border-top:1px solid #2a3548;padding:6px 12px;">
-            <button class="mic-zoom-btn" style="width:100%;padding:5px 8px;background:rgba(60,45,30,0.8);border:1px solid #6a5030;border-radius:3px;color:#f0d8a8;font-size:11px;cursor:pointer;">🔍 双击区域 = 自动缩放居中</button>
+          <div class="mic-footer" style="display:none;border-top:1px solid #2a3548;padding:4px 10px;">
+            <button class="mic-zoom-btn" style="width:100%;padding:4px 8px;background:rgba(60,45,30,0.8);border:1px solid #6a5030;border-radius:3px;color:#f0d8a8;font-size:10px;cursor:pointer;">🔍 双击区域 = 自动缩放居中</button>
           </div>
         </div>
       </div>
@@ -145,10 +144,49 @@
   const _origOpenMapPage = UIp.openMapPage ? UIp.openMapPage : null;
   UIp.openMapPage = function () {
     const self = this;
+    // FIX: 打开地图前强制关闭所有事件弹窗/modal，避免挡住地图
+    try {
+      const selectors = [
+        '#event-modal.active', '.event-modal.active', '.modal.active',
+        '.event-overlay.active', '.overlay.active'
+      ];
+      selectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          if (el.classList) el.classList.remove('active');
+          if (el.style) el.style.display = 'none';
+        });
+      });
+      // 关闭后点击背景时事件弹窗也会隐藏，我们直接手动触发一次 UI 的关闭逻辑（如果存在）
+      if (self && typeof self.toast === 'function') {
+        /* no-op, 不主动 toast (避免打断) */
+      }
+    } catch (_) { /* ignore */ }
+
     if (_origOpenMapPage) _origOpenMapPage.call(self);
-    // 稍后：overlay HTML 已写入 + bindMapPostRender 运行后 (120ms timeout) 再加
-    setTimeout(() => self._injectMapExtensionDOM(), 250);
-    setTimeout(() => self._injectMapExtensionDOM(), 800); // 双重保险
+    // FIX: overlay 注入完成后 再额外关掉一次 弹窗 + 调高 map-overlay-page z-index
+    setTimeout(() => {
+      try {
+        document.querySelectorAll('#event-modal, .event-modal, .modal').forEach(el => {
+          if (el.style) el.style.display = 'none';
+          if (el.classList) el.classList.remove('active');
+        });
+        const ov = document.getElementById('map-overlay-page');
+        if (ov) {
+          ov.style.display = '';
+          ov.style.zIndex = Math.max(1000, parseInt(getComputedStyle(ov).zIndex || '0') || 1000);
+        }
+      } catch (_) {}
+      self._injectMapExtensionDOM();
+    }, 280);
+    setTimeout(() => {
+      try {
+        const ov = document.getElementById('map-overlay-page');
+        if (ov) ov.style.zIndex = Math.max(1200, parseInt(getComputedStyle(ov).zIndex || '0') || 1200);
+        document.querySelectorAll('#event-modal, .event-modal').forEach(el => { if (el.style) el.style.display = 'none'; });
+      } catch (_) {}
+      self._injectMapExtensionDOM();
+      self._bindMapExtensionEvents();
+    }, 900);
   };
 
   // 原版 renderMap() 是导航tab: 显示/隐藏 content 中的 tab，同样需要后注入
