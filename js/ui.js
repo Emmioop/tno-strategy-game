@@ -1387,8 +1387,8 @@ const UI = {
       { id:'GER', name:'大日耳曼国', short:'德国', flag:'#a83232', sphere:'pakt', tier:'major', capital:'柏林', leader:'希特勒(垂死)' },
       { id:'USA', name:'美利坚合众国', short:'美国', flag:'#3a6a9a', sphere:'ofn', tier:'major', capital:'华盛顿', leader:'肯尼迪' },
       { id:'JAP', name:'大日本帝国', short:'日本', flag:'#d8d0a8', sphere:'japanese_sphere', tier:'major', capital:'东京', leader:'昭和天皇' },
-      { id:'ITA', name:'意大利帝国', short:'意大利', flag:'#b0a060', sphere:'italian_sphere', tier:'major', capital:'罗马', leader:'齐亚诺' },
-      { id:'BUR', name:'勃艮第骑士团国', short:'勃艮第', flag:'#3a1a3a', sphere:'pakt', tier:'major', capital:'南锡', leader:'海德里希' },
+      { id:'ITA', name:'意大利帝国', short:'意大利', flag:'#b0a060', sphere:'italian_sphere', tier:'major', capital:'罗马', leader:'墨索里尼' },
+      { id:'BUR', name:'勃艮第骑士团国', short:'勃艮第', flag:'#3a1a3a', sphere:'pakt', tier:'major', capital:'南锡', leader:'希姆莱' },
       { id:'RUS', name:'俄罗斯诸军阀', short:'俄罗斯', flag:'#7a3a3a', sphere:'none', tier:'major', capital:'莫斯科', leader:'—' },
     ];
     const regional = [
