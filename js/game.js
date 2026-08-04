@@ -228,30 +228,34 @@ const Game = {
   },
 
   // ===== 回合模式事件密度配置 =====
-  // 精简版(quarterly, 156回合): 极简, 85% 空白回合, 仅 critical 能阻止空白, 约30个弹窗, 无随机事件
-  // 沉浸完整版(bimonthly, 936回合): 克制, 70% 空白回合, critical/story 阻止空白, 约80个弹窗, 随机事件极稀
+  // 精简版(quarterly, 156回合): 剧情+玩法平衡, 45% 空白回合, 约80个弹窗, 无随机事件
+  //   - critical/story 阻止空白, major 降级为风味自动结算
+  //   - critical 85% 弹窗, story 90% 弹窗
+  // 沉浸完整版(bimonthly, 936回合): 非常完整, 25% 空白回合, 约240个弹窗, 随机事件稀少
+  //   - critical/story/major 全部阻止空白, 全部弹窗, 完整呈现剧情
+  //   - 每回合最多2个弹窗, 避免同回合过载
   TURN_MODE_CONFIG: {
     quarterly: {
       coreBudget: 1,          // 每回合最多1个弹窗
-      quietChance: 0.85,      // 85% 空白回合（让玩家专注游戏玩法）
-      blockQuietTags: ['critical'], // 仅 critical 事件能阻止空白回合（story/major 允许降级）
-      randomChanceMod: 0,     // 精简版完全不生成随机事件
-      demoteMinor: true,      // 非 critical/story 降级为风味
-      demoteMajor: true,      // major 也降级为风味自动结算
-      criticalSparseRate: 0.3,// critical 事件仅 30% 弹窗（130个→约39个，配合空白回合实际更少）
-      storySparseRate: 0.5,   // story 事件仅 50% 弹窗
+      quietChance: 0.45,      // 45% 空白回合（剧情与玩法平衡）
+      blockQuietTags: ['critical', 'story'], // critical/story 阻止空白，major 可被空白吞掉
+      randomChanceMod: 0,     // 精简版不生成随机事件
+      demoteMinor: true,      // minor/diplomacy/economy/military 降级为风味
+      demoteMajor: true,      // major 降级为风味自动结算（精简版聚焦 critical+story 主线）
+      criticalSparseRate: 0.85,// critical 事件 85% 弹窗（130个→约110个，配合空白回合实际约70个）
+      storySparseRate: 0.9,   // story 事件 90% 弹窗
       randomMinInterval: 999  // 精简版不生成随机事件
     },
     bimonthly: {
-      coreBudget: 1,          // 每回合最多1个弹窗（从2降到1，控制密度）
-      quietChance: 0.70,      // 70% 空白回合（从50%提高）
-      blockQuietTags: ['critical', 'story'], // critical/story 阻止空白，major 允许被空白吞掉
-      randomChanceMod: 0.05,  // 随机事件概率 ×0.05（极低）
+      coreBudget: 2,          // 每回合最多2个弹窗（完整呈现剧情，允许同回合多事件）
+      quietChance: 0.25,      // 仅 25% 空白回合（936回合→约700个有事件回合，足够承载全部剧情）
+      blockQuietTags: ['critical', 'story', 'major'], // 所有关键事件都阻止空白回合
+      randomChanceMod: 0.15,  // 随机事件概率 ×0.15（稀少但存在，增加变数）
       demoteMinor: false,     // 保留所有核心事件分类
-      demoteMajor: false,     // 保留 major（通过空白回合+coreBudget自然削减，保留叙事丰富度）
-      criticalSparseRate: 0.4,// critical 事件仅 40% 弹窗（130个→约52个）
-      storySparseRate: 0.7,   // story 事件 70% 弹窗
-      randomMinInterval: 15   // 随机事件至少间隔15回合（从8提高）
+      demoteMajor: false,     // 保留 major（完整剧情）
+      criticalSparseRate: 1.0,// critical 事件全部弹窗（完整呈现）
+      storySparseRate: 1.0,   // story 事件全部弹窗
+      randomMinInterval: 10   // 随机事件至少间隔10回合
     }
   },
 
