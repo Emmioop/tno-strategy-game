@@ -244,48 +244,58 @@ const Game = {
     'rnd_research_breakthrough', 'rnd_youth_subculture', '亚文化'
   ],
 
-  // ===== 核心事件方向分类关键词 =====
+  // ===== 核心事件方向分类关键词（只匹配ID+标题，不匹配body） =====
   DIRECTION_KEYWORDS: {
     japan: [
-      'japan', 'cps_', '共荣圈', '日本', '日元', '东京', '樱花', '满洲', '朝鲜的怒',
-      '中国', '万隆', '海陆的对立', '日元的', '东京之春', '中国大崩溃', '中国的碎片化',
-      '满洲的火种', '朝鲜的怒火', '中国腹地', '共荣圈的解体'
+      'ev_japan', 'ev_cps', 'japan_', 'cps_',
+      '共荣圈', '日本', '日元', '东京', '樱花', '满洲', '海陆的对立',
+      '东京之春', '中国大崩溃', '中国的碎片化', '满洲的火种', '朝鲜的怒火',
+      '中国腹地', '共荣圈的解体', '万隆之火', '中原烽火', '满洲的钢铁',
+      '香料群岛的怒火', '次大陆的撕裂', '波斯的怒吼', '非洲之角的战争'
     ],
     us: [
-      'us_civil', 'us_kennedy', 'us_race', 'us_second_civil', 'us_ofn', 'us_recovery',
-      'us_presidential', 'us_detente', 'us_new_era', 'us_economic', 'us_space',
-      'ofn_diplomacy', 'ofn_intervention',
-      '美国', 'OFN', '民权', '肯尼迪', '达拉斯', '缓和', '阿留申', '华盛顿的游行',
-      '燃烧的城市', '瘫痪的灯塔', '合众国', '变革之风', '美洲的动荡', '代理人战争'
+      'ev_us_', 'us_civil', 'us_kennedy', 'us_race', 'us_second_civil', 'us_ofn',
+      'us_recovery', 'us_presidential', 'us_detente', 'us_new_era', 'us_economic',
+      'us_space', 'ofn_diplomacy', 'ofn_intervention', 'ev_ofn_',
+      '美国', '美洲的动荡', '达拉斯的枪声', '华盛顿的游行', '燃烧的城市',
+      '瘫痪的灯塔', '合众国', '我有一个梦想', '美国回来了', '星辰大海',
+      '美国的新时代', '苏黎世的密使', '华盛顿的勃艮第影子'
     ],
     russia: [
-      'russia', 'wrrf', 'west_russia', 'ev_ural', 'ev_aryan_brotherhood',
-      '俄罗斯', '巨熊', '红色幽灵', '西俄', '乌拉尔', '克里米亚', '鄂木斯克',
-      '科米', '托木斯克', '西伯利亚', '马加丹', '赤塔', '贝加尔', '伊尔库茨克',
-      '克麦罗沃', '维亚特卡', '萨马拉', '黑龙江', 'tabortsy', 'taboritsky', '阿穆尔',
-      '群雄逐鹿', '东方的曙光', '东方的暗夜', '新俄罗斯', '红色巨熊', '黑色俄罗斯',
-      '摄政的疯狂', '钢铁复苏', '铁幕降临', '最后通牒', '核阴影', '黑暗的终结',
-      '双头鹰', 'AA线', '命运的抉择', '战后余波', '千年之战', '北方', '红旗',
-      '民主之灯', '地下城', '元帅', '学者', '自由领土', '投机者', '白军',
-      '沙皇', '理想主义者', '旧影', '疯王', '复辟', '叛军', '崇拜仇敌',
-      '乌拉尔山的枪声', '东方的和解', '统一之战', '巨熊苏醒', '第四极',
-      '俄罗斯的决战', '神权恐怖', '俄罗斯难民'
+      'ev_russia', 'ev_wrrf', 'ev_west_russia', 'ev_ural', 'ev_aryan_brotherhood',
+      'russia', 'wrrf', 'west_russia',
+      '俄罗斯', '巨熊', '红色幽灵', '西俄', '乌拉尔', '鄂木斯克',
+      '科米', '托木斯克', '西伯利亚', '马加丹', '赤塔', '贝加尔',
+      '伊尔库茨克', '克麦罗沃', '维亚特卡', '萨马拉', '阿穆尔',
+      '群雄逐鹿', '东方的曙光', '东方的暗夜', '新俄罗斯', '红色巨熊',
+      '黑色俄罗斯', '摄政的疯狂', '钢铁复苏', '铁幕降临', '最后通牒',
+      '核阴影', '黑暗的终结', '双头鹰', 'AA线', '命运的抉择',
+      '战后余波', '千年之战', '民主之灯', '自由领土', '巨熊苏醒',
+      '第四极', '俄罗斯的决战', '神权恐怖', '俄罗斯难民', '乌拉尔山的枪声',
+      '东方的和解', '统一之战', '东方废土的低语', '红色幽灵的归来'
     ],
     other: [
-      'italy', 'iberian', 'iberia', 'turkey', 'france', 'french', 'british',
+      'ev_italy', 'ev_italian', 'ev_iberian', 'ev_iberia', 'ev_turkey',
+      'ev_french', 'ev_france', 'ev_british', 'ev_britain',
+      'ev_suez', 'ev_africa', 'ev_saharan', 'ev_india', 'ev_indian',
+      'ev_indonesia', 'ev_indonesian', 'ev_brazil', 'ev_argentina',
+      'ev_iran', 'ev_iranian', 'ev_lebanon', 'ev_somali',
+      'ev_oil_crisis', 'ev_decolonization', 'ev_colonial',
+      'ev_triumvirate', 'ev_mediterranean', 'ev_atlantropa',
+      'ev_gibraltar', 'ev_congo', 'ev_nile', 'ev_south_africa',
+      'ev_north_africa', 'ev_spanish',
+      'italy', 'italian', 'iberian', 'iberia', 'turkey', 'france', 'french', 'british',
       'mediterranean', 'suez', 'africa', 'saharan', 'india', 'indian', 'indonesia',
       'indonesian', 'brazil', 'argentina', 'iran', 'iranian', 'lebanon', 'somali',
-      'korean_uprising', 'oil_crisis', 'decolonization', 'colonial', 'triumvirate',
-      'italian', 'slave_revolt', 'slave_rebellion', 'slave_question',
+      'oil_crisis', 'decolonization',
       '意大利', '伊比利亚', '土耳其', '法兰西', '不列颠', '地中海', '苏伊士',
       '非洲', '撒哈拉', '印度', '次大陆', '印尼', '香料群岛', '巴西', '阿根廷',
-      '伊朗', '波斯', '黎巴嫩', '雪松', '索马里', '非洲之角', '石油', '黑金',
-      '殖民', '三头同盟', '意属', '北非', '南非', '好望角', '刚果', '无政府',
-      '尼罗河', '苏伊士运河', '戴高乐', '自由法国', '法国内战', '不列颠的',
-      '安卡拉', '土耳其的', '伊比利亚内战', '告别的', '意大利之春', '沉没的海岸',
-      '直布罗陀大坝危机', '干涸的', '帝国的黄昏：意属', '中立区', '中立区的归宿',
-      '废墟上的集市', '逃亡者的洪流', '日耳曼尼亚保护区', '沙漠之狐', '大使馆的灯',
-      '黑海的海盗', '巴尔干', '白色瘟疫'
+      '伊朗', '波斯', '黎巴嫩', '雪松', '索马里', '非洲之角',
+      '殖民', '三头同盟', '意属', '北非', '南非', '好望角', '刚果',
+      '尼罗河', '苏伊士运河', '戴高乐', '自由法国', '法国内战',
+      '安卡拉', '伊比利亚内战', '意大利之春', '沉没的海岸',
+      '直布罗陀大坝', '干涸的海洋', '亚特兰特罗帕', '刚果之泪',
+      '巴尔干', '帝国的黄昏：意属', '告别的'
     ]
   },
 
@@ -302,18 +312,16 @@ const Game = {
     return 'core';
   },
 
-  // ===== 判断核心事件的方向 =====
+  // ===== 判断核心事件的方向（只匹配ID+标题，不匹配body） =====
   classifyDirection(ev) {
     if (ev.direction) return ev.direction;
-    const text = ((ev.title || '') + ' ' + (ev.desc || '') + ' ' +
-                  (ev.body || '') + ' ' + (ev.text || '') + ' ' + (ev.content || '')).toLowerCase();
-    const id = (ev.id || '').toLowerCase();
-    const fullText = id + ' ' + text;
+    // 只匹配 ID 和标题，避免 body 中偶尔提到外国名导致误分类
+    const text = ((ev.id || '') + ' ' + (ev.title || '')).toLowerCase();
     // 按优先级检查：russia > japan > us > other > internal(默认)
     for (const dir of ['russia', 'japan', 'us', 'other']) {
       const kws = this.DIRECTION_KEYWORDS[dir];
       for (const kw of kws) {
-        if (fullText.includes(kw.toLowerCase())) return dir;
+        if (text.includes(kw.toLowerCase())) return dir;
       }
     }
     return 'internal'; // 默认：德国内部事务

@@ -2985,11 +2985,11 @@ const UI = {
       return '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px">尚无重大事件记录</div>';
     }
     const dirInfo = {
-      internal: { label: '🏛️ 国内', cls: 'dir-internal' },
-      japan:    { label: '⛩️ 对日', cls: 'dir-japan' },
-      us:       { label: '🦅 对美', cls: 'dir-us' },
-      russia:   { label: '🪖 对俄', cls: 'dir-russia' },
-      other:    { label: '🌐 其他', cls: 'dir-other' }
+      internal: { label: '国内', cls: 'dir-internal' },
+      japan:    { label: '对日', cls: 'dir-japan' },
+      us:       { label: '对美', cls: 'dir-us' },
+      russia:   { label: '对俄', cls: 'dir-russia' },
+      other:    { label: '其他', cls: 'dir-other' }
     };
     return `
       <div class="events-feed">
@@ -3014,11 +3014,11 @@ const UI = {
       return '<div class="empty-hint">📰 时代风貌<br><span style="font-size:12px">这里记录着不影响帝国大局、却折射时代风貌的事件——登月庆典、科技革命、文化浪潮……<br>随着游戏推进，历史的车辙将在此留下印记。</span></div>';
     }
     const dirInfo = {
-      internal: { label: '🏛️', cls: 'dir-internal' },
-      japan:    { label: '⛩️', cls: 'dir-japan' },
-      us:       { label: '🦅', cls: 'dir-us' },
-      russia:   { label: '🪖', cls: 'dir-russia' },
-      other:    { label: '🌐', cls: 'dir-other' }
+      internal: { label: '国内', cls: 'dir-internal' },
+      japan:    { label: '对日', cls: 'dir-japan' },
+      us:       { label: '对美', cls: 'dir-us' },
+      russia:   { label: '对俄', cls: 'dir-russia' },
+      other:    { label: '其他', cls: 'dir-other' }
     };
     return `
       <div class="flavor-header">
@@ -3628,11 +3628,11 @@ const UI = {
 
     // 方向徽章
     const dirInfo = {
-      internal: { label: '🏛️ 国内', cls: 'dir-internal' },
-      japan:    { label: '⛩️ 对日', cls: 'dir-japan' },
-      us:       { label: '🦅 对美', cls: 'dir-us' },
-      russia:   { label: '🪖 对俄', cls: 'dir-russia' },
-      other:    { label: '🌐 其他', cls: 'dir-other' }
+      internal: { label: '国内', cls: 'dir-internal' },
+      japan:    { label: '对日', cls: 'dir-japan' },
+      us:       { label: '对美', cls: 'dir-us' },
+      russia:   { label: '对俄', cls: 'dir-russia' },
+      other:    { label: '其他', cls: 'dir-other' }
     };
     const dir = Game.classifyDirection(ev);
     const di = dirInfo[dir] || dirInfo.other;
