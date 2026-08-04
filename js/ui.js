@@ -911,10 +911,6 @@ const UI = {
         tooltip.style.display = 'block';
       });
       UI._svgMapInstance.on('hoverout', () => { tooltip.style.display = 'none'; });
-      UI._svgMapInstance.on('click', (evt) => {
-        const f = evt && evt.feature;
-        if (f) UI.toast(`${f.zh} [${f.id}]`, 'info');
-      });
 
       UI._svgMapInstance.loadMap(lastMap);
 

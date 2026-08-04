@@ -879,7 +879,7 @@
         this._t2sMap = {
           '國':'国','東':'东','車':'车','馬':'马','義':'义','專':'专','轄':'辖','區':'区',
           '總':'总','督':'督','條':'条','約':'约','黨':'党','衛':'卫','軍':'军','騎':'骑',
-          '士':'士','團':'团','聯':'联','合':'合','王':'王','愛':'爱','爾':'尔','蘭':'兰',
+          '員':'员','團':'团','聯':'联','合':'合','王':'王','愛':'爱','爾':'尔','蘭':'兰',
           '大':'大','日':'日','耳':'耳','曼':'曼','法':'法','蘭':'兰','西':'西','丹':'丹',
           '麥':'麦','挪':'挪','威':'威','斯':'斯','洛':'洛','伐':'伐','克':'克','匈':'匈',
           '牙':'牙','利':'利','羅':'罗','馬':'马','尼':'尼','亞':'亚','塞':'塞','維':'维',
@@ -1703,8 +1703,11 @@
       else level = 'large';
       const minZoom = this.labelZoomThreshold[level] || 0;
       if (zoomFactor < minZoom) continue;           // 标签分级：小的只有放大了才显示
-      if (pos.x < this.view.x || pos.x > this.view.x + this.view.w ||
-          pos.y < this.view.y || pos.y > this.view.y + this.view.h) continue;
+      // 视口过滤：放宽到标签周围一定范围仍在视口内即显示
+      // （之前只看中心点，国家大部分在视口内但中心移出时标签就消失了）
+      const margin = Math.max(this.view.w, this.view.h) * 0.15;
+      if (pos.x < this.view.x - margin || pos.x > this.view.x + this.view.w + margin ||
+          pos.y < this.view.y - margin || pos.y > this.view.y + this.view.h + margin) continue;
       const feature = this.featureIndex.get(cid);
       let name = null;
       if (feature && feature.zh) name = this._toSimplified(feature.zh);
