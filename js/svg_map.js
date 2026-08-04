@@ -6,53 +6,58 @@
   'use strict';
 
   const FACTION_COLORS = {
-    // ===== TNO 欧洲政治分区（严格按用户图一校准颜色） =====
-    // 大日耳曼国（德奥波希米亚阿尔萨斯比利时卢森堡等已吞并）：近黑深橄榄绿
-    germany: { fill: '#2e3a30', border: '#1a2218' },
-    // 专员辖区：略浅的暗灰
-    netherlands: { fill: '#3a3c3a', border: '#222422' },   // 尼德兰总督区
-    norway: { fill: '#5a5a5a', border: '#303030' },        // 挪威总督辖区
-    denmark: { fill: '#5a5a5a', border: '#303030' },       // 丹麦
-    ostland: { fill: '#4a5248', border: '#2a3228' },       // 东方专员辖区
-    ukraine: { fill: '#484e50', border: '#2a3032' },       // 乌克兰专员辖区
-    moscow: { fill: '#484e48', border: '#2a302a' },        // 莫斯科专员辖区
-    caucasus: { fill: '#4a4a42', border: '#2a2a22' },      // 高加索专员辖区
-    generalgouvernement: { fill: '#b8b4a0', border: '#706850' }, // 德属总督府(波兰) 浅灰白
-    crimea: { fill: '#2e3a30', border: '#1a2218' },        // 克里米亚(德属)
+    // ===== 团结协定成员国（绝大多数统一深灰，不做阵营区分） =====
+    germany: { fill: '#4b5563', border: '#2a323a' },        // 大日耳曼国
+    netherlands: { fill: '#4b5563', border: '#2a323a' },    // 尼德兰总督区
+    denmark: { fill: '#4b5563', border: '#2a323a' },        // 丹麦
+    norway: { fill: '#4b5563', border: '#2a323a' },         // 挪威总督辖区
+    norway_port: { fill: '#4b5563', border: '#2a323a' },    // 挪威条约港
+    bohemia: { fill: '#4b5563', border: '#2a323a' },        // 波希米亚（德国内部）
 
-    // 勃艮第骑士团国：近黑紫
-    burgundy: { fill: '#1e1a22', border: '#3a1a2a' },
-    burgundy_antarctica: { fill: '#1e1a22', border: '#3a1a2a' },
+    // ===== 团结协定 - 专员辖区（统一略深浅灰） =====
+    ukraine: { fill: '#4f5966', border: '#2d3640' },        // 乌克兰专员辖区
+    ostland: { fill: '#4f5966', border: '#2d3640' },        // 东方专员辖区
+    moscow: { fill: '#4f5966', border: '#2d3640' },         // 莫斯科专员辖区
+    caucasus: { fill: '#4f5966', border: '#2d3640' },       // 高加索专员辖区
 
-    // 三头同盟
-    italy: { fill: '#4a6a48', border: '#2a4228' },         // 意大利王国 暗绿
-    italian_east_africa: { fill: '#4a6a48', border: '#2a4228' },
-    iberia: { fill: '#b8a880', border: '#7a6848' },        // 伊比利亚联盟 米色卡其
-    croatia: { fill: '#6a5568', border: '#3c2f3a' },       // 克罗地亚王国 暗紫
-    montenegro: { fill: '#4a3a32', border: '#2a1f1c' },    // 黑山公国 暗褐
-    greece: { fill: '#557080', border: '#2d4250' },        // 希腊王国 蓝灰
-    san_marino: { fill: '#4a6a48', border: '#2a4228' },    // 圣马力诺
-    monaco: { fill: '#4a6e9c', border: '#2a4260' },        // 摩纳哥 跟随法国蓝
+    // ===== 勃艮第骑士团国（近黑紫，特征鲜明） =====
+    burgundy: { fill: '#1f1a24', border: '#3a1a2a' },
+    burgundy_antarctica: { fill: '#1f1a24', border: '#3a1a2a' },
 
-    // 中立国
-    sweden: { fill: '#40548c', border: '#243258' },        // 瑞典 深蓝
-    switzerland: { fill: '#9a6030', border: '#5a3818' },   // 瑞士 土橙
-    turkey: { fill: '#7a3838', border: '#461818' },        // 土耳其共和国 深红棕
+    // ===== 三头同盟：意大利系统一暗绿 =====
+    italy: { fill: '#4e6b48', border: '#2a4228' },
+    italian_east_africa: { fill: '#4e6b48', border: '#2a4228' },
+    spain: { fill: '#4e6b48', border: '#2a4228' },
+    iberia: { fill: '#c4b288', border: '#7a6848' },         // 伊比利亚 米色卡其
+    croatia: { fill: '#6d5568', border: '#3c2f3a' },         // 克罗地亚 暗紫
+    greece: { fill: '#4e6b48', border: '#2a4228' },          // 希腊 暗绿
+    montenegro: { fill: '#4e3a32', border: '#2a1f1c' },      // 黑山 暗褐
+    san_marino: { fill: '#4e6b48', border: '#2a4228' },
+    monaco: { fill: '#4a6e9c', border: '#2a4260' },          // 摩纳哥 随法国蓝
 
-    // 团结协定仆从国
-    slovakia: { fill: '#d4ccb8', border: '#887858' },      // 斯洛伐克国 极浅米
-    hungary: { fill: '#a06848', border: '#5c3828' },       // 匈牙利王国 棕
-    romania: { fill: '#c8b888', border: '#7e6838' },       // 罗马尼亚王国 米黄
-    serbia: { fill: '#3a5578', border: '#1e3048' },        // 塞尔维亚独立国 深蓝
-    bulgaria: { fill: '#5a5248', border: '#302c24' },      // 保加利亚沙皇国 暗灰
+    // ===== 德属总督府（波兰）：极浅米白 =====
+    generalgouvernement: { fill: '#c8c4aa', border: '#706850' },
 
-    // 法国/英国/爱尔兰
-    france: { fill: '#4a6e9c', border: '#284260' },        // 法兰西国 中蓝
+    // ===== 中立国：瑞典 / 瑞士 / 土耳其 =====
+    sweden: { fill: '#445892', border: '#243258' },          // 瑞典 深蓝
+    switzerland: { fill: '#9a6030', border: '#5a3818' },     // 瑞士 土橙
+    turkey: { fill: '#7a3838', border: '#461818' },          // 土耳其 深红棕
+
+    // ===== 团结协定仆从国 =====
+    slovakia: { fill: '#4b5563', border: '#2a323a' },        // 斯洛伐克（统一灰）
+    hungary: { fill: '#a06848', border: '#5c3828' },         // 匈牙利王国 棕
+    romania: { fill: '#c8b888', border: '#7e6838' },         // 罗马尼亚王国 米黄
+    serbia: { fill: '#3a5578', border: '#1e3048' },          // 塞尔维亚 深蓝
+    bulgaria: { fill: '#4b5563', border: '#2a323a' },        // 保加利亚（统一灰）
+    crimea: { fill: '#4f5966', border: '#2d3640' },          // 克里米亚（随专员辖区）
+
+    // ===== 西欧独立国 =====
+    france: { fill: '#4a6e9c', border: '#284260' },          // 法兰西国 中蓝
     free_france: { fill: '#4a6e9c', border: '#284260' },
     french_madagascar: { fill: '#4a6e9c', border: '#284260' },
     french_guiana: { fill: '#4a6e9c', border: '#284260' },
-    uk: { fill: '#6a3a3a', border: '#3c1e1e' },            // 联合王国 深棕红
-    ireland: { fill: '#2a5a35', border: '#14321c' },       // 爱尔兰共和国 深绿
+    uk: { fill: '#6a3a3a', border: '#3c1e1e' },              // 联合王国 深棕红
+    ireland: { fill: '#2a5a35', border: '#14321c' },         // 爱尔兰 深绿
 
     // ===== 大东亚共荣圈 (橙黄) =====
     japan: { fill: '#c4342d', border: '#802020' },
