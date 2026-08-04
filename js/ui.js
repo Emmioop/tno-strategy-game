@@ -3778,65 +3778,120 @@ const UI = {
     }
     panel = document.createElement('div');
     panel.id = 'debug-panel';
-    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:9999;width:320px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:9999;width:380px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;';
+    const s = Game.state;
+    const r = s ? s.resources : {};
     panel.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <strong style="color:var(--accent-gold);">DEBUG 控制台</strong>
-        <span id="dbg-close" style="cursor:pointer;color:var(--text-muted);">✕</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <strong style="color:var(--accent-gold);">⚡ DEBUG 控制台 v2</strong>
+        <span id="dbg-close" style="cursor:pointer;color:var(--text-muted);font-size:16px;">✕</span>
       </div>
-      <div style="display:grid;gap:8px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">资源调整</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button class="dbg-btn" data-act="money100">+100 资金</button>
-          <button class="dbg-btn" data-act="money500">+500 资金</button>
-          <button class="dbg-btn" data-act="mp50">+50 人力</button>
-          <button class="dbg-btn" data-act="mp200">+200 人力</button>
-          <button class="dbg-btn" data-act="stab20">+20 稳定</button>
-          <button class="dbg-btn" data-act="det20">+20 威慑</button>
-          <button class="dbg-btn" data-act="mil30">+30 军力</button>
-          <button class="dbg-btn" data-act="nuk20">+20 核慑</button>
-          <button class="dbg-btn" data-act="res20">+20 研发</button>
-          <button class="dbg-btn" data-act="nuke5">+5 核弹</button>
+      ${s ? `<div style="background:var(--bg-dark);padding:8px;border-radius:4px;margin-bottom:10px;font-size:11px;color:var(--text-secondary);line-height:1.6;">
+        <div>📅 ${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
+        <div>🎚 ${DIFFICULTIES[s.difficulty]?.name || '?'} · ${(GAME_MODES[s.gameMode]?.name) || '?'} · ${s.turnMode === 'bimonthly' ? '沉浸完整版' : '精简版'}</div>
+        <div>👥 ${s.leader?.name || '?'} · ${s.chosenPath ? (SUCCESSION_PATHS[s.chosenPath]?.title || s.chosenPath) : '未定路线'}</div>
+        <div style="color:var(--accent-gold);">💰${Math.round(r.money||0)} 👨‍🔧${Math.round(r.manpower||0)} 📊${Math.round(r.stability||0)} ⚔${Math.round(r.militaryPower||0)}</div>
+      </div>` : ''}
+      <div style="display:grid;gap:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">💰 资源调整</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+            <button class="dbg-btn" data-act="money100">+100💰</button>
+            <button class="dbg-btn" data-act="money500">+500💰</button>
+            <button class="dbg-btn" data-act="money9999">+9999💰</button>
+            <button class="dbg-btn" data-act="mp50">+50人力</button>
+            <button class="dbg-btn" data-act="mp200">+200人力</button>
+            <button class="dbg-btn" data-act="stab20">+20稳定</button>
+            <button class="dbg-btn" data-act="det20">+20威慑</button>
+            <button class="dbg-btn" data-act="mil30">+30军力</button>
+            <button class="dbg-btn" data-act="nuk20">+20核慑</button>
+            <button class="dbg-btn" data-act="res20">+20研发</button>
+            <button class="dbg-btn" data-act="nuke5">+5核弹</button>
+            <button class="dbg-btn" data-act="maxall">全满</button>
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">时间控制</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button class="dbg-btn" data-act="skip4">跳4回合</button>
-          <button class="dbg-btn" data-act="skip16">跳16回合</button>
-          <button class="dbg-btn" data-act="goto1980">跳到1980</button>
-          <button class="dbg-btn" data-act="goto2000">跳到2000</button>
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">⏱ 时间控制</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+            <button class="dbg-btn" data-act="skip1">+1回合</button>
+            <button class="dbg-btn" data-act="skip4">+4回合</button>
+            <button class="dbg-btn" data-act="skip16">+16回合</button>
+            <button class="dbg-btn" data-act="skip40">+40回合</button>
+            <button class="dbg-btn" data-act="goto1970">→1970</button>
+            <button class="dbg-btn" data-act="goto1980">→1980</button>
+            <button class="dbg-btn" data-act="goto1990">→1990</button>
+            <button class="dbg-btn" data-act="goto2000">→2000</button>
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">国策 / 科技</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button class="dbg-btn" data-act="focus">秒完当前国策</button>
-          <button class="dbg-btn" data-act="allfocus">完成所有国策</button>
-          <button class="dbg-btn" data-act="techs">解锁所有科技</button>
-          <button class="dbg-btn" data-act="flags">解锁所有标记</button>
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🎯 路线 / 国策 / 科技</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <button class="dbg-btn" data-act="focus">秒完国策</button>
+            <button class="dbg-btn" data-act="allfocus">全国策</button>
+            <button class="dbg-btn" data-act="techs">全科技</button>
+            <button class="dbg-btn" data-act="flags">关键标记</button>
+            <button class="dbg-btn dbg-path" data-act="path_reform">路线:改革</button>
+            <button class="dbg-btn dbg-path" data-act="path_militarist">路线:军国</button>
+            <button class="dbg-btn dbg-path" data-act="path_conservative">路线:保守</button>
+            <button class="dbg-btn dbg-path" data-act="path_none">清除路线</button>
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">其他</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button class="dbg-btn" data-act="relation">关系全+50</button>
-          <button class="dbg-btn" data-act="russia">俄罗斯立即统一</button>
-          <button class="dbg-btn" data-act="maxall">资源全满</button>
-          <button class="dbg-btn" data-act="reset">资源清零</button>
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🌐 外交 / 势力</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <button class="dbg-btn" data-act="relation">关系全+50</button>
+            <button class="dbg-btn" data-act="relation_max">关系全满</button>
+            <button class="dbg-btn" data-act="russia">俄统一(民主)</button>
+            <button class="dbg-btn" data-act="russia_war">俄统一(强硬)</button>
+            <button class="dbg-btn" data-act="japan_war">对日关系-50</button>
+            <button class="dbg-btn" data-act="us_war">对美关系-50</button>
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin:8px 0 4px;">查看状态</div>
-        <button class="dbg-btn" data-act="dump">输出状态到控制台</button>
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🧪 测试 / 终局</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <button class="dbg-btn dbg-warn" data-act="trigger_event">触发随机事件</button>
+            <button class="dbg-btn dbg-warn" data-act="dump">输出状态</button>
+            <button class="dbg-btn dbg-warn" data-act="test_ending">测试终局画面</button>
+            <button class="dbg-btn dbg-warn" data-act="reset">资源清零</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🔧 存档 / 模式</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <button class="dbg-btn" data-act="save">手动保存</button>
+            <button class="dbg-btn" data-act="autosave">自动保存</button>
+            <button class="dbg-btn dbg-warn" data-act="wipe_save">清空所有存档</button>
+            <button class="dbg-btn" data-act="reload">刷新页面</button>
+          </div>
+        </div>
       </div>
     `;
     document.body.appendChild(panel);
     panel.querySelector('#dbg-close').onclick = () => panel.remove();
     panel.querySelectorAll('.dbg-btn').forEach(btn => {
-      btn.style.cssText = 'background:var(--bg-dark);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;cursor:pointer;';
+      const isWarn = btn.classList.contains('dbg-warn');
+      const isPath = btn.classList.contains('dbg-path');
+      let borderColor = 'var(--border)';
+      let textColor = 'var(--text)';
+      if (isWarn) { borderColor = 'var(--accent-blood)'; textColor = 'var(--accent-blood-bright)'; }
+      else if (isPath) { borderColor = 'var(--accent-gold)'; textColor = 'var(--accent-gold)'; }
+      btn.style.cssText = `background:var(--bg-dark);border:1px solid ${borderColor};color:${textColor};padding:6px 4px;border-radius:4px;font-size:11px;cursor:pointer;transition:all 0.15s;`;
+      btn.onmouseenter = () => { btn.style.background = 'var(--bg-panel-2)'; };
+      btn.onmouseleave = () => { btn.style.background = 'var(--bg-dark)'; };
       btn.onclick = () => this.debugAction(btn.dataset.act);
     });
   },
 
   debugAction(act) {
     const s = Game.state;
+    if (!s) { this.toast('游戏未开始', 'error'); return; }
     const r = s.resources;
     switch(act) {
+      // ===== 资源 =====
       case 'money100': r.money += 100; this.toast('+100 资金', 'success'); break;
       case 'money500': r.money += 500; this.toast('+500 资金', 'success'); break;
+      case 'money9999': r.money += 9999; this.toast('+9999 资金', 'success'); break;
       case 'mp50': r.manpower += 50; this.toast('+50 人力', 'success'); break;
       case 'mp200': r.manpower += 200; this.toast('+200 人力', 'success'); break;
       case 'stab20': r.stability = Math.min(100, r.stability + 20); this.toast('+20 稳定', 'success'); break;
@@ -3845,21 +3900,43 @@ const UI = {
       case 'nuk20': r.nukeDeter += 20; this.toast('+20 核慑', 'success'); break;
       case 'res20': r.research += 20; this.toast('+20 研发', 'success'); break;
       case 'nuke5': r.nukes += 5; this.toast('+5 核弹', 'success'); break;
+      case 'maxall':
+        r.money = 99999; r.manpower = 9999; r.stability = 100; r.deterrence = 999;
+        r.militaryPower = 999; r.nukeDeter = 999; r.research = 999; r.nukes = 99;
+        this.toast('资源全满', 'success'); break;
+      case 'reset':
+        r.money = 200; r.manpower = 30; r.stability = 45; r.deterrence = 60;
+        r.militaryPower = 80; r.nukeDeter = 30; r.research = 20; r.nukes = 2;
+        this.toast('资源已重置', 'success'); break;
+      // ===== 时间 =====
+      case 'skip1':
+        Game.advanceTurn([], () => {}); this.toast('+1 回合', 'success'); break;
       case 'skip4':
         for (let i = 0; i < 4 && !s.ended; i++) { Game.advanceTurn([], () => {}); }
         this.toast('跳过4回合', 'success'); break;
       case 'skip16':
         for (let i = 0; i < 16 && !s.ended; i++) { Game.advanceTurn([], () => {}); }
         this.toast('跳过16回合', 'success'); break;
+      case 'skip40':
+        for (let i = 0; i < 40 && !s.ended; i++) { Game.advanceTurn([], () => {}); }
+        this.toast('跳过40回合', 'success'); break;
+      case 'goto1970':
+        while (s.year < 1970 && !s.ended) { Game.advanceTurn([], () => {}); }
+        this.toast(`跳到 ${s.year}Q${s.quarter}`, 'success'); break;
       case 'goto1980':
         while (s.year < 1980 && !s.ended) { Game.advanceTurn([], () => {}); }
+        this.toast(`跳到 ${s.year}Q${s.quarter}`, 'success'); break;
+      case 'goto1990':
+        while (s.year < 1990 && !s.ended) { Game.advanceTurn([], () => {}); }
         this.toast(`跳到 ${s.year}Q${s.quarter}`, 'success'); break;
       case 'goto2000':
         while (s.year < 2000 && !s.ended) { Game.advanceTurn([], () => {}); }
         this.toast(`跳到 ${s.year}Q${s.quarter}`, 'success'); break;
+      // ===== 路线 / 国策 / 科技 =====
       case 'focus':
         if (s.currentFocus) {
-          const f = NATIONAL_FOCI[s.currentFocus];
+          const foci = Game._getFoci();
+          const f = foci[s.currentFocus];
           if (f) {
             s.completedFoci.push(s.currentFocus);
             if (f.setFlags) { for (const k in f.setFlags) s.flags[k] = f.setFlags[k]; }
@@ -3873,23 +3950,17 @@ const UI = {
         } else { this.toast('当前无执行中国策', 'error'); }
         break;
       case 'allfocus':
-        for (const fid in NATIONAL_FOCI) {
+        for (const fid in Game._getFoci()) {
           if (!s.completedFoci.includes(fid)) {
             s.completedFoci.push(fid);
-            const f = NATIONAL_FOCI[fid];
+            const f = Game._getFoci()[fid];
             if (f.setFlags) { for (const k in f.setFlags) s.flags[k] = f.setFlags[k]; }
           }
         }
         s.currentFocus = null; s.focusProgress = 0;
-        s.flags.economic_reform_1 = true;
-        s.flags.slave_reform_1 = true;
-        s.flags.political_reform_1 = true;
-        s.flags.nuclear_tech = true;
-        s.flags.advanced_tech = true;
-        s.flags.burgundian_threat = true;
         this.toast('所有国策已完成', 'success'); break;
       case 'techs':
-        for (const tid in (typeof TECHS !== 'undefined' ? TECHS : {})) {
+        for (const tid in Game._getTechs()) {
           s.techs[tid] = true; s.flags[tid] = true;
         }
         this.toast('所有科技已解锁', 'success'); break;
@@ -3903,30 +3974,103 @@ const UI = {
         s.flags.rocketry_done = true;
         s.flags.burgundy_betrayed = false;
         this.toast('关键标记已解锁', 'success'); break;
+      case 'path_reform':
+        s.chosenPath = 'reform';
+        this.toast('路线已设为: 改革派', 'success'); break;
+      case 'path_militarist':
+        s.chosenPath = 'militarist';
+        this.toast('路线已设为: 军国派', 'success'); break;
+      case 'path_conservative':
+        s.chosenPath = 'conservative';
+        this.toast('路线已设为: 保守派', 'success'); break;
+      case 'path_none':
+        s.chosenPath = null;
+        this.toast('路线已清除', 'success'); break;
+      // ===== 外交 =====
       case 'relation':
         for (const k in s.relations) { s.relations[k] = Math.min(100, (s.relations[k]||0) + 50); }
         this.toast('所有关系+50', 'success'); break;
+      case 'relation_max':
+        for (const k in s.relations) { s.relations[k] = 100; }
+        this.toast('所有关系全满', 'success'); break;
       case 'russia':
         s.russiaState = 'unified';
         s.flags.russia_unified = true;
         s.flags.russia_democratic = true;
         this.toast('俄罗斯已统一（民主派）', 'success'); break;
-      case 'maxall':
-        r.money = 9999; r.manpower = 9999; r.stability = 100; r.deterrence = 999;
-        r.militaryPower = 999; r.nukeDeter = 999; r.research = 999; r.nukes = 99;
-        this.toast('资源全满', 'success'); break;
-      case 'reset':
-        r.money = 200; r.manpower = 30; r.stability = 45; r.deterrence = 60;
-        r.militaryPower = 80; r.nukeDeter = 30; r.research = 20; r.nukes = 2;
-        this.toast('资源已重置', 'success'); break;
+      case 'russia_war':
+        s.russiaState = 'unified';
+        s.flags.russia_unified = true;
+        s.flags.russia_democratic = false;
+        s.flags.russia_militarist = true;
+        this.toast('俄罗斯已统一（强硬派）', 'success'); break;
+      case 'japan_war':
+        s.relations.japan = Math.max(-100, (s.relations.japan||0) - 50);
+        this.toast('对日关系-50', 'success'); break;
+      case 'us_war':
+        s.relations.ofn = Math.max(-100, (s.relations.ofn||0) - 50);
+        this.toast('对美关系-50', 'success'); break;
+      // ===== 测试 =====
+      case 'trigger_event': {
+        const ds = (typeof DataStore !== 'undefined') ? DataStore : null;
+        const pool = (ds && typeof ds.getEventPool === 'function') ? ds.getEventPool()
+          : ((typeof STORY_EVENTS !== 'undefined') ? STORY_EVENTS : []);
+        const candidates = pool.filter(ev => !ev.turn && ev.weight && Game.checkEventCondition(ev));
+        if (candidates.length === 0) { this.toast('无可用随机事件', 'error'); break; }
+        const ev = candidates[Math.floor(Math.random() * candidates.length)];
+        if (ev) {
+          this.pendingEvents = [ev];
+          this.currentEventIndex = 0;
+          this.showNextEvent();
+          this.toast(`触发事件: ${ev.title}`, 'success');
+        }
+        break;
+      }
+      case 'test_ending':
+        s.ended = true;
+        s.endingId = s.endingId || 'democratic_reform';
+        this.showEnding();
+        this.toast('显示终局测试画面', 'success'); break;
       case 'dump':
         console.log('===== GAME STATE DUMP =====');
         console.log(JSON.parse(JSON.stringify(s)));
         console.log('===== END DUMP =====');
         this.toast('状态已输出到控制台(F12)', 'success'); break;
+      // ===== 存档 =====
+      case 'save':
+        if (typeof SaveSystem !== 'undefined') {
+          const result = SaveSystem.saveToSlot(1);
+          this.toast(result.msg, result.ok ? 'success' : 'error');
+        } else { this.toast('存档系统未加载', 'error'); }
+        break;
+      case 'autosave':
+        if (typeof SaveSystem !== 'undefined') {
+          SaveSystem.autoSave();
+          this.toast('已自动保存', 'success');
+        } else { this.toast('存档系统未加载', 'error'); }
+        break;
+      case 'wipe_save':
+        if (typeof SaveSystem !== 'undefined') {
+          try {
+            for (let i = 0; i < 10; i++) { localStorage.removeItem('tno_save_slot_' + i); }
+            this.toast('所有存档已清空', 'success');
+          } catch(e) { this.toast('清空失败: ' + e.message, 'error'); }
+        }
+        break;
+      case 'reload':
+        location.reload();
+        break;
     }
     Game.clampResources();
     this.requestRender();
+    // 刷新 debug 面板状态显示
+    if (act !== 'reload' && act !== 'test_ending' && act !== 'trigger_event') {
+      const panel = document.getElementById('debug-panel');
+      if (panel) {
+        panel.remove();
+        this.toggleDebugPanel();
+      }
+    }
     this.autoSave();
   },
 
