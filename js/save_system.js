@@ -71,8 +71,9 @@ const SaveSystem = {
       }
       // 恢复游戏状态
       Game.state = payload.state;
-      // 兼容性修复：旧存档没有 flavorLog / halfMonth / turnMode 字段
+      // 兼容性修复：旧存档没有 flavorLog / halfMonth / turnMode / deferredEvents 字段
       if (!Game.state.flavorLog) Game.state.flavorLog = [];
+      if (!Game.state.deferredEvents) Game.state.deferredEvents = [];
       if (Game.state.turnMode === undefined) Game.state.turnMode = 'quarterly';
       if (Game.state.halfMonth === undefined) Game.state.halfMonth = 0;
       if (Game.state.turnMode) Game.turnMode = Game.state.turnMode;

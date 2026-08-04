@@ -489,6 +489,9 @@ const Game = {
       // 风味事件日志（时代风貌）
       flavorLog: [],
 
+      // 推迟的核心事件队列（精简版事件分散机制）
+      deferredEvents: [],
+
       // 新闻流
       newsLog: [],
 
@@ -722,10 +725,26 @@ const Game = {
     const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, minor: 6 };
     core.sort((a, b) => (tagPriority[a.tag] || 7) - (tagPriority[b.tag] || 7));
     const budget = tmCfg.coreBudget;
-    const coreCapped = core.slice(0, budget);
-    // 超出预算的核心事件降级为风味事件（自动结算）
-    for (const ev of core.slice(budget)) {
-      flavor.push(ev);
+
+    // 精简版事件分散机制:
+    // - 上一回合推迟的事件(deferredEvents)优先加入本回合弹窗
+    // - 本回合新事件超出budget的, critical/major/story 推迟到下回合, 其他降级为风味
+    // - 保证关键事件不丢失, 但每回合弹窗数受控
+    this.state.deferredEvents = this.state.deferredEvents || [];
+    const deferred = this.state.deferredEvents.splice(0); // 取出上回合推迟的全部
+    const combined = [...deferred, ...core]; // 推迟的优先, 然后是本回合新的
+    const coreCapped = combined.slice(0, budget);
+    const overflow = combined.slice(budget);
+
+    for (const ev of overflow) {
+      const isKey = ['critical', 'major', 'story'].includes(ev.tag);
+      if (this.state.turnMode === 'quarterly' && isKey && this.state.deferredEvents.length < 15) {
+        // 精简版: 关键事件推迟到下回合, 最多累积15个
+        this.state.deferredEvents.push(ev);
+      } else {
+        // 沉浸完整版 或 非关键事件 或 积压已满: 降级为风味自动结算
+        flavor.push(ev);
+      }
     }
 
     return { core: coreCapped, flavor };
