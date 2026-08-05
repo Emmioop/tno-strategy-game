@@ -160,8 +160,51 @@ const GAME_MODES = {
     chaosRandomEventChance: 0.15,
     initialResourceBonus: 'random_±30%',
     unlocked: true
+  },
+  developer: {
+    id: 'developer',
+    name: '开发者模式',
+    desc: '⚡ 完整 God Mode：国策秒完、资源无限、事件零偏移、无失败结局、调试面板内置——开发测试专用',
+    color: '#3a8a3a',
+    icon: '⚡',
+    aiSpeedMod: 0.5,
+    eventWeightMod: 0.5,
+    randomLeaders: false,
+    randomPaths: false,
+    crisisBoost: -1.0,
+    focusSpeedMod: 999,
+    eventTurnJitter: 0,
+    allowFocusSwitch: true,
+    chaosStabilityJitter: 0,
+    chaosRelationJitter: 0,
+    chaosRandomEventChance: 0,
+    initialResourceBonus: { money: 9999, research: 999, manpower: 999, stability: 100, deterrence: 500, militaryPower: 500, nukeDeter: 500, nukes: 50 },
+    // 开发者模式专属标志
+    godMode: true,
+    noEndingFail: true,
+    devMode: true,
+    unlocked: false
   }
 };
+
+// ===== 开发者模式解锁（sessionStorage 持久化当前会话） =====
+(function _tryUnlockDevMode() {
+  try {
+    if (sessionStorage.getItem('tno_debug') === '1' ||
+        sessionStorage.getItem('tno_dev_unlocked') === '1') {
+      GAME_MODES.developer.unlocked = true;
+    }
+  } catch(e) {}
+})();
+
+function unlockDeveloperMode() {
+  try {
+    sessionStorage.setItem('tno_debug', '1');
+    sessionStorage.setItem('tno_dev_unlocked', '1');
+    GAME_MODES.developer.unlocked = true;
+    return true;
+  } catch(e) { return false; }
+}
 
 // 混乱模式可选领导人池 (替代希特勒)
 const CHAOS_LEADERS = [
@@ -570,10 +613,19 @@ const Game = {
     const bonus = mode.initialResourceBonus;
     if (bonus && typeof bonus === 'object') {
       const r = this.state.resources;
-      if (bonus.money) r.money += bonus.money;
-      if (bonus.research) r.research += bonus.research;
-      if (bonus.manpower) r.manpower += bonus.manpower;
-      this.addNews(`沙盒模式: 初始资源加成（资金+${bonus.money||0} 研发+${bonus.research||0}）`, 'world');
+      let bonusInfo = [];
+      const resLabels = { money: '资金', research: '研发', manpower: '人力', stability: '稳定',
+                          deterrence: '威慑', militaryPower: '军力', nukeDeter: '核慑', nukes: '核弹', efficiency: '效率' };
+      for (const key in bonus) {
+        if (bonus[key]) {
+          if (key === 'stability') r.stability = Math.min(100, r.stability + bonus[key]);
+          else r[key] = (r[key] || 0) + bonus[key];
+          if (resLabels[key]) bonusInfo.push(`${resLabels[key]}+${bonus[key]}`);
+        }
+      }
+      if (bonusInfo.length > 0) {
+        this.addNews(`${mode.name}: 初始资源加成（${bonusInfo.join(' ')}）${mode.godMode ? ' ⚡ God Mode' : ''}`, mode.godMode ? 'world' : 'info');
+      }
     } else if (bonus === 'random_±30%') {
       const r = this.state.resources;
       const fluc = () => 0.7 + Math.random() * 0.6;
@@ -592,6 +644,16 @@ const Game = {
     const treeIds = ['military', 'civil', 'nuclear', 'rocket'];
     if (treeIds.indexOf(techId) >= 0) {
       if (typeof NationSim === 'undefined') return { ok: false, msg: '系统未加载' };
+      const mode = this.getMode();
+      if (mode.godMode) {
+        // God模式: 免费研发新科技树
+        const prevRes = this.state.resources.research;
+        this.state.resources.research = Math.max(this.state.resources.research, 9999);
+        const result = NationSim.researchTech(techId, this.state);
+        if (result.ok) this.state.resources.research = prevRes;
+        this.clampResources();
+        return result;
+      }
       const result = NationSim.researchTech(techId, this.state);
       if (result.ok) this.clampResources();
       return result;
@@ -601,13 +663,14 @@ const Game = {
     const t = TECHS[techId];
     if (!t) return { ok: false, msg: '科技不存在' };
     if (this.state.techs[techId]) return { ok: false, msg: '已研发' };
-    if (this.state.resources.research < t.cost) return { ok: false, msg: '研发点数不足' };
-    this.state.resources.research -= t.cost;
+    const mode = this.getMode();
+    if (!mode.godMode && this.state.resources.research < t.cost) return { ok: false, msg: '研发点数不足' };
+    if (!mode.godMode) this.state.resources.research -= t.cost;
     this.state.techs[techId] = true;
     this.state.flags[techId] = true;
-    this.addNews('科技突破: ' + t.name, 'tech');
+    this.addNews('科技突破: ' + t.name + (mode.godMode ? ' ⚡' : ''), 'tech');
     this.clampResources();
-    return { ok: true, msg: t.name + ' 研发成功' };
+    return { ok: true, msg: t.name + ' 研发成功' + (mode.godMode ? '（God Mode）' : '') };
   },
 
   // ===== 获取科技树状态 (UI用) =====
@@ -1084,34 +1147,34 @@ const Game = {
   startFocus(focusId) {
     const NATIONAL_FOCI = _getFoci();
     const f = NATIONAL_FOCI[focusId];
+    const mode = this.getMode();
     if (!f) return { ok: false, msg: '国策不存在' };
     if (this.state.completedFoci.includes(focusId)) return { ok: false, msg: '该国策已完成' };
-    if (this.state.resources.money < f.cost) return { ok: false, msg: '资金不足' };
+    if (!mode.godMode && this.state.resources.money < f.cost) return { ok: false, msg: '资金不足' };
     for (const req of (f.requires || [])) {
       if (!this.state.completedFoci.includes(req)) return { ok: false, msg: '需要前置国策' };
     }
     if (f.ideology && this.state.leader.ideology !== f.ideology && !this.state.flags[f.ideology]) {
-      return { ok: false, msg: '路线不符' };
+      if (!mode.godMode) return { ok: false, msg: '路线不符' };
     }
     if (f.requiresFlag && !this.state.flags[f.requiresFlag]) {
-      return { ok: false, msg: '需要前置条件' };
+      if (!mode.godMode) return { ok: false, msg: '需要前置条件' };
     }
-    // 沙盒/混乱模式: 允许中断当前国策切换到新国策 (退款50%资金)
+    // 沙盒/混乱/开发者模式: 允许中断当前国策切换到新国策
     if (this.state.currentFocus) {
-      const mode = this.getMode();
-      if (!mode.allowFocusSwitch) return { ok: false, msg: '正在执行其他国策' };
+      if (!mode.allowFocusSwitch && !mode.godMode) return { ok: false, msg: '正在执行其他国策' };
       const cur = NATIONAL_FOCI[this.state.currentFocus];
-      const refund = Math.round((cur.cost || 0) * 0.5);
+      const refund = mode.godMode ? (cur.cost || 0) : Math.round((cur.cost || 0) * 0.5);
       this.state.resources.money += refund;
       this.state.currentFocus = null;
       this.state.focusProgress = 0;
-      this.addNews(`国策中断: 退款 ${refund} 资金（沙盒/混乱模式可自由切换）`, 'info');
+      this.addNews(`国策中断: 退款 ${refund} 资金${mode.godMode ? '（开发者模式全额退款）' : '（沙盒/混乱模式可自由切换）'}`, 'info');
     }
 
-    this.state.resources.money -= f.cost;
+    if (!mode.godMode) this.state.resources.money -= f.cost;
     this.state.currentFocus = focusId;
     this.state.focusProgress = 0;
-    return { ok: true, msg: `开始执行: ${f.name}` };
+    return { ok: true, msg: `开始执行: ${f.name}${mode.godMode ? ' ⚡' : ''}` };
   },
 
   abandonFocus() {
@@ -1268,6 +1331,18 @@ const Game = {
     if (this.difficulty === 'hell') {
       income.stability -= 0.5;   // 持续动荡
       income.deterrence -= 0.5;  // 威慑持续衰减
+    }
+
+    // God模式: 每回合大量基础收入，抵消所有衰减
+    if (this.getMode().godMode) {
+      income.money = (income.money || 0) + 500;
+      income.manpower = (income.manpower || 0) + 50;
+      income.stability = (income.stability || 0) + 5;
+      income.deterrence = (income.deterrence || 0) + 10;
+      income.militaryPower = (income.militaryPower || 0) + 10;
+      income.nukeDeter = (income.nukeDeter || 0) + 10;
+      income.research = (income.research || 0) + 10;
+      income.nukes = (income.nukes || 0) + 1;
     }
 
     return income;
@@ -1648,6 +1723,10 @@ const Game = {
     const s = this.state;
     const r = s.resources;
     const diff = this.getDiff();
+    const mode = this.getMode();
+
+    // God模式: 跳过所有失败结局（核毁灭除外）
+    if (mode.noEndingFail && !s.flags.nuclear_holocaust) return;
 
     // 初始化危机计数器（首次运行时）
     if (s._crisis === undefined) s._crisis = {

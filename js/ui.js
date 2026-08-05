@@ -2842,9 +2842,13 @@ const UI = {
     const input = document.getElementById('shop-code-input');
     if (!input) return;
     const val = (input.value || '').trim().toUpperCase();
-    if (val === 'WOLFSCHANZE') {
-      sessionStorage.setItem('tno_debug', '1');
-      this.toast('授权成功。开发者模式已激活。', 'success');
+    if (val === 'WOLFSCHANZE' || val === 'DEVELOPER') {
+      if (typeof unlockDeveloperMode === 'function') {
+        unlockDeveloperMode();
+      } else {
+        sessionStorage.setItem('tno_debug', '1');
+      }
+      this.toast('⚡ 开发者模式已解锁（当前会话）', 'success');
       this.renderTab('shop');
     } else {
       this.toast('授权码无效', 'error');
@@ -3771,21 +3775,36 @@ const UI = {
     }
     panel = document.createElement('div');
     panel.id = 'debug-panel';
-    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:9999;width:380px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;';
+    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:9999;width:420px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;';
     const s = Game.state;
     const r = s ? s.resources : {};
+    const curMode = s ? GAME_MODES[s.gameMode] : null;
+    const isGod = curMode && curMode.godMode;
+    const isDevUnlocked = (typeof GAME_MODES !== 'undefined') && GAME_MODES.developer && GAME_MODES.developer.unlocked;
     panel.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
-        <strong style="color:var(--accent-gold);">⚡ DEBUG 控制台 v2</strong>
+        <strong style="color:var(--accent-gold);">⚡ DEBUG 控制台 v3</strong>
         <span id="dbg-close" style="cursor:pointer;color:var(--text-muted);font-size:16px;">✕</span>
       </div>
       ${s ? `<div style="background:var(--bg-dark);padding:8px;border-radius:4px;margin-bottom:10px;font-size:11px;color:var(--text-secondary);line-height:1.6;">
         <div>📅 ${Game.getDateStr()} · 回合 ${s.turn}/${s.totalTurns}</div>
-        <div>🎚 ${DIFFICULTIES[s.difficulty]?.name || '?'} · ${(GAME_MODES[s.gameMode]?.name) || '?'} · ${s.turnMode === 'bimonthly' ? '沉浸完整版' : '精简版'}</div>
+        <div>🎚 ${DIFFICULTIES[s.difficulty]?.name || '?'} · <span style="color:${curMode?.color||'var(--text)'}">${curMode?.icon||''} ${curMode?.name||'?'}</span>${isGod ? ' <span style="color:#3a8a3a;">[GOD]</span>' : ''} · ${s.turnMode === 'bimonthly' ? '沉浸完整版' : '精简版'}</div>
         <div>👥 ${s.leader?.name || '?'} · ${s.chosenPath ? (SUCCESSION_PATHS[s.chosenPath]?.title || s.chosenPath) : '未定路线'}</div>
         <div style="color:var(--accent-gold);">💰${Math.round(r.money||0)} 👨‍🔧${Math.round(r.manpower||0)} 📊${Math.round(r.stability||0)} ⚔${Math.round(r.militaryPower||0)}</div>
       </div>` : ''}
       <div style="display:grid;gap:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🎛 模式切换</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+            ${['historical','sandbox','chaos'].filter(k => GAME_MODES[k] && GAME_MODES[k].unlocked).map(k => {
+              const m = GAME_MODES[k];
+              const active = s && s.gameMode === k;
+              return `<button class="dbg-btn dbg-mode ${active?'dbg-active':''}" data-mode="${k}" style="border-color:${m.color};color:${active?'#fff':m.color};">${m.icon}</button>`;
+            }).join('')}
+            ${isDevUnlocked ? `<button class="dbg-btn dbg-mode ${(s && s.gameMode==='developer')?'dbg-active':''}" data-mode="developer" style="border-color:#3a8a3a;color:#fff;background:#3a8a3a;">⚡</button>` : ''}
+          </div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:4px;">点击图标切换游戏模式 ${isDevUnlocked ? '' : '· 输入授权码解锁开发者模式'}</div>
+        </div>
         <div>
           <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">💰 资源调整</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
@@ -3844,34 +3863,62 @@ const UI = {
           <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🧪 测试 / 终局</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
             <button class="dbg-btn dbg-warn" data-act="trigger_event">触发随机事件</button>
+            <button class="dbg-btn dbg-warn" data-act="trigger_pick_event">📋 选事件触发</button>
             <button class="dbg-btn dbg-warn" data-act="dump">输出状态</button>
             <button class="dbg-btn dbg-warn" data-act="test_ending">测试终局画面</button>
             <button class="dbg-btn dbg-warn" data-act="reset">资源清零</button>
+            <button class="dbg-btn dbg-warn" data-act="nuke_holocaust">☢ 核毁灭</button>
           </div>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🔧 存档 / 模式</div>
+          <div style="font-size:10px;color:var(--accent-gold);margin-bottom:5px;letter-spacing:0.05em;">🔧 存档 / 系统</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
             <button class="dbg-btn" data-act="save">手动保存</button>
             <button class="dbg-btn" data-act="autosave">自动保存</button>
-            <button class="dbg-btn dbg-warn" data-act="wipe_save">清空所有存档</button>
+            <button class="dbg-btn dbg-warn" data-act="wipe_save">清空存档</button>
             <button class="dbg-btn" data-act="reload">刷新页面</button>
+            <button class="dbg-btn" data-act="map_dev">🪲 地图调试</button>
+            <button class="dbg-btn" data-act="end_turn_10">连推10回合</button>
           </div>
         </div>
       </div>
     `;
     document.body.appendChild(panel);
     panel.querySelector('#dbg-close').onclick = () => panel.remove();
+    panel.querySelectorAll('.dbg-mode').forEach(btn => {
+      btn.onclick = () => {
+        const newMode = btn.dataset.mode;
+        if (s && s.gameMode !== newMode) {
+          const oldName = GAME_MODES[s.gameMode]?.name;
+          Game.gameMode = newMode;
+          const newName = GAME_MODES[newMode]?.name;
+          this.toast(`模式切换: ${oldName} → ${newName}${GAME_MODES[newMode].godMode ? ' ⚡ God Mode' : ''}`, 'success');
+          // 如果切换到 developer 模式，自动开启地图 devMode
+          if (newMode === 'developer') {
+            setTimeout(() => {
+              const mapInst = (typeof getMapInstance === 'function') ? getMapInstance() : window._mapInstance;
+              if (mapInst && mapInst.setDevMode) mapInst.setDevMode(true);
+            }, 100);
+          }
+          panel.remove();
+          this.toggleDebugPanel();
+          this.renderTopbar();
+          this.renderLeftPanel();
+        }
+      };
+    });
     panel.querySelectorAll('.dbg-btn').forEach(btn => {
       const isWarn = btn.classList.contains('dbg-warn');
       const isPath = btn.classList.contains('dbg-path');
+      const isMode = btn.classList.contains('dbg-mode');
       let borderColor = 'var(--border)';
       let textColor = 'var(--text)';
+      let bgColor = 'var(--bg-dark)';
       if (isWarn) { borderColor = 'var(--accent-blood)'; textColor = 'var(--accent-blood-bright)'; }
       else if (isPath) { borderColor = 'var(--accent-gold)'; textColor = 'var(--accent-gold)'; }
-      btn.style.cssText = `background:var(--bg-dark);border:1px solid ${borderColor};color:${textColor};padding:6px 4px;border-radius:4px;font-size:11px;cursor:pointer;transition:all 0.15s;`;
+      btn.style.cssText = `background:${bgColor};border:1px solid ${borderColor};color:${textColor};padding:6px 4px;border-radius:4px;font-size:11px;cursor:pointer;transition:all 0.15s;`;
       btn.onmouseenter = () => { btn.style.background = 'var(--bg-panel-2)'; };
-      btn.onmouseleave = () => { btn.style.background = 'var(--bg-dark)'; };
+      btn.onmouseleave = () => { btn.style.background = bgColor; };
       btn.onclick = () => this.debugAction(btn.dataset.act);
     });
   },
@@ -4053,6 +4100,38 @@ const UI = {
       case 'reload':
         location.reload();
         break;
+      // ===== 新增: 事件选择触发 / 核毁灭 / 地图调试 / 连推 =====
+      case 'trigger_pick_event': {
+        const ds = (typeof DataStore !== 'undefined') ? DataStore : null;
+        const pool = (ds && typeof ds.getEventPool === 'function') ? ds.getEventPool()
+          : ((typeof STORY_EVENTS !== 'undefined') ? STORY_EVENTS : []);
+        const candidates = pool.filter(ev => Game.checkEventCondition(ev));
+        if (candidates.length === 0) { this.toast('无可用事件', 'error'); break; }
+        // 弹出选择列表
+        this._showEventPicker(candidates.slice(0, 30));
+        break;
+      }
+      case 'nuke_holocaust':
+        s.flags.nuclear_holocaust = true;
+        s.resources.stability = 0;
+        this.toast('☢ 核战争爆发！触发核毁灭结局', 'crisis');
+        Game.endGame('nuclear_holocaust');
+        break;
+      case 'map_dev': {
+        const mapInst = (typeof getMapInstance === 'function') ? getMapInstance() : window._mapInstance;
+        if (mapInst && mapInst.setDevMode) {
+          const newVal = !mapInst.devMode;
+          mapInst.setDevMode(newVal);
+          this.toast(`地图调试模式: ${newVal ? '开启' : '关闭'}`, 'success');
+        } else {
+          this.toast('地图未加载', 'error');
+        }
+        break;
+      }
+      case 'end_turn_10':
+        for (let i = 0; i < 10 && !s.ended; i++) { Game.advanceTurn([], () => {}); }
+        this.toast(`连推10回合 → ${s.year}Q${s.quarter}`, 'success');
+        break;
     }
     Game.clampResources();
     this.requestRender();
@@ -4065,6 +4144,60 @@ const UI = {
       }
     }
     this.autoSave();
+  },
+
+  // ===== 开发者事件选择器 =====
+  _showEventPicker(candidates) {
+    let picker = document.getElementById('event-picker');
+    if (picker) picker.remove();
+    picker = document.createElement('div');
+    picker.id = 'event-picker';
+    picker.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:10000;width:460px;max-height:80vh;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+    picker.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <strong style="color:var(--accent-gold);">📋 选择事件触发 (${candidates.length} 个可用)</strong>
+        <span id="ep-close" style="cursor:pointer;color:var(--text-muted);font-size:16px;">✕</span>
+      </div>
+      <input id="ep-search" placeholder="搜索事件标题..." style="width:100%;padding:6px 10px;background:var(--bg-dark);border:1px solid var(--border);color:var(--text);border-radius:4px;font-size:12px;margin-bottom:8px;box-sizing:border-box;" />
+      <div id="ep-list" style="max-height:60vh;overflow-y:auto;display:grid;gap:3px;"></div>
+    `;
+    document.body.appendChild(picker);
+    picker.querySelector('#ep-close').onclick = () => picker.remove();
+
+    const listEl = picker.querySelector('#ep-list');
+    const searchEl = picker.querySelector('#ep-search');
+
+    const render = (filter = '') => {
+      listEl.innerHTML = '';
+      const filtered = candidates.filter(ev =>
+        !filter || (ev.title || '').toLowerCase().includes(filter.toLowerCase())
+      );
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">无匹配事件</div>';
+        return;
+      }
+      filtered.forEach(ev => {
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:6px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;transition:all 0.15s;display:flex;justify-content:space-between;align-items:center;';
+        row.innerHTML = `
+          <span style="color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.title || '(无标题)'}</span>
+          <span style="color:var(--text-muted);font-size:9px;flex-shrink:0;margin-left:8px;">${ev.turn ? `${ev.turn.year}Q${ev.turn.quarter}` : '随机'} ${ev.id || ''}</span>
+        `;
+        row.onmouseenter = () => { row.style.background = 'var(--bg-panel-2)'; };
+        row.onmouseleave = () => { row.style.background = 'var(--bg-dark)'; };
+        row.onclick = () => {
+          this.pendingEvents = [ev];
+          this.currentEventIndex = 0;
+          this.showNextEvent();
+          picker.remove();
+          this.toast(`触发事件: ${ev.title}`, 'success');
+        };
+        listEl.appendChild(row);
+      });
+    };
+    render();
+    searchEl.oninput = () => render(searchEl.value);
+    setTimeout(() => searchEl.focus(), 50);
   },
 
   // ===== 保存游戏 (默认槽位1) =====

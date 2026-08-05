@@ -541,6 +541,15 @@
       devChk.addEventListener('change', () => {
         if (mapInst.setDevMode) mapInst.setDevMode(devChk.checked);
       });
+      // 开发者模式自动开启地图调试
+      try {
+        const gm = (typeof GAME_MODES !== 'undefined' && Game && Game.state)
+          ? GAME_MODES[Game.state.gameMode] : null;
+        if (gm && gm.godMode && !gm.chaosStabilityJitter) {
+          devChk.checked = true;
+          if (mapInst.setDevMode) mapInst.setDevMode(true);
+        }
+      } catch(e) {}
     }
 
     // ===================== 新增：折叠按钮 / 全局面板显隐 =====================
