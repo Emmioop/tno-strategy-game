@@ -3768,6 +3768,9 @@ const UI = {
   },
 
   toggleDebugPanel() {
+    // 关闭事件弹窗，避免遮挡调试面板
+    const evModal = document.getElementById('event-modal');
+    if (evModal) evModal.classList.remove('active');
     let panel = document.getElementById('debug-panel');
     if (panel) {
       panel.remove();
@@ -3775,7 +3778,7 @@ const UI = {
     }
     panel = document.createElement('div');
     panel.id = 'debug-panel';
-    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:9999;width:420px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;';
+    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:100025;width:420px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;';
     const s = Game.state;
     const r = s ? s.resources : {};
     const curMode = s ? GAME_MODES[s.gameMode] : null;
@@ -4152,7 +4155,7 @@ const UI = {
     if (picker) picker.remove();
     picker = document.createElement('div');
     picker.id = 'event-picker';
-    picker.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:10000;width:460px;max-height:80vh;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+    picker.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg-panel);border:1px solid var(--accent-gold);border-radius:8px;padding:16px;z-index:100030;width:460px;max-height:80vh;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
     picker.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
         <strong style="color:var(--accent-gold);">📋 选择事件触发 (${candidates.length} 个可用)</strong>
@@ -4252,7 +4255,7 @@ const UI = {
     };
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100020;display:flex;align-items:center;justify-content:center;padding:20px;';
     overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
     const panel = document.createElement('div');

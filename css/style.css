@@ -816,6 +816,8 @@ body {
   flex-direction: column;
   gap: 8px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 100015;
 }
 .btn-next-turn {
   font-family: var(--font-serif);
