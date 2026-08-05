@@ -2671,7 +2671,7 @@ const UI = {
               帝国总理府 · 物资调配司 / 外部联络人
             </div>
             <div style="margin-top:8px;">
-              <input type="password" id="shop-code-input" placeholder="授权码"
+              <input type="text" autocomplete="off" id="shop-code-input" placeholder="授权码"
                 style="background:var(--bg-dark);border:1px solid var(--border);color:var(--text-muted);padding:5px 8px;border-radius:3px;font-size:11px;width:120px;font-family:var(--font-mono);" />
               <button id="shop-code-btn"
                 style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:3px;font-size:11px;cursor:pointer;">验证</button>
