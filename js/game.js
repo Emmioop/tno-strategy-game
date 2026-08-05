@@ -1150,31 +1150,56 @@ const Game = {
     const mode = this.getMode();
     if (!f) return { ok: false, msg: '国策不存在' };
     if (this.state.completedFoci.includes(focusId)) return { ok: false, msg: '该国策已完成' };
+
+    // ===== God Mode: 立即完成，所有条件/成本/等待跳过 =====
+    if (mode.godMode) {
+      // 有正在执行的国策 → 也立即完成（叠buff）
+      if (this.state.currentFocus) {
+        const curF = NATIONAL_FOCI[this.state.currentFocus];
+        if (curF && !this.state.completedFoci.includes(this.state.currentFocus)) {
+          this.applyEffects(curF.effects);
+          if (curF.setFlags) Object.assign(this.state.flags, curF.setFlags);
+          this.state.completedFoci.push(this.state.currentFocus);
+          this.addNews(`⚡ 国策秒完: ${curF.name}`, 'tech');
+        }
+        this.state.currentFocus = null;
+        this.state.focusProgress = 0;
+      }
+      // 新国策立即应用
+      this.applyEffects(f.effects);
+      if (f.setFlags) Object.assign(this.state.flags, f.setFlags);
+      this.state.completedFoci.push(focusId);
+      this.clampResources();
+      this.addNews(`⚡ 国策秒完: ${f.name}`, 'tech');
+      return { ok: true, msg: `⚡ 国策秒完: ${f.name}`, instantDone: true };
+    }
+
+    // ===== 普通模式：前置条件检查 =====
     if (!mode.godMode && this.state.resources.money < f.cost) return { ok: false, msg: '资金不足' };
     for (const req of (f.requires || [])) {
       if (!this.state.completedFoci.includes(req)) return { ok: false, msg: '需要前置国策' };
     }
     if (f.ideology && this.state.leader.ideology !== f.ideology && !this.state.flags[f.ideology]) {
-      if (!mode.godMode) return { ok: false, msg: '路线不符' };
+      return { ok: false, msg: '路线不符' };
     }
     if (f.requiresFlag && !this.state.flags[f.requiresFlag]) {
-      if (!mode.godMode) return { ok: false, msg: '需要前置条件' };
+      return { ok: false, msg: '需要前置条件' };
     }
-    // 沙盒/混乱/开发者模式: 允许中断当前国策切换到新国策
+    // 允许中断当前国策切换到新国策
     if (this.state.currentFocus) {
-      if (!mode.allowFocusSwitch && !mode.godMode) return { ok: false, msg: '正在执行其他国策' };
+      if (!mode.allowFocusSwitch) return { ok: false, msg: '正在执行其他国策' };
       const cur = NATIONAL_FOCI[this.state.currentFocus];
-      const refund = mode.godMode ? (cur.cost || 0) : Math.round((cur.cost || 0) * 0.5);
+      const refund = Math.round((cur.cost || 0) * 0.5);
       this.state.resources.money += refund;
       this.state.currentFocus = null;
       this.state.focusProgress = 0;
-      this.addNews(`国策中断: 退款 ${refund} 资金${mode.godMode ? '（开发者模式全额退款）' : '（沙盒/混乱模式可自由切换）'}`, 'info');
+      this.addNews(`国策中断: 退款 ${refund} 资金（沙盒/混乱模式可自由切换）`, 'info');
     }
 
-    if (!mode.godMode) this.state.resources.money -= f.cost;
+    this.state.resources.money -= f.cost;
     this.state.currentFocus = focusId;
     this.state.focusProgress = 0;
-    return { ok: true, msg: `开始执行: ${f.name}${mode.godMode ? ' ⚡' : ''}` };
+    return { ok: true, msg: `开始执行: ${f.name}` };
   },
 
   abandonFocus() {

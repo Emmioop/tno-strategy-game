@@ -3895,6 +3895,19 @@ const UI = {
           const oldName = GAME_MODES[s.gameMode]?.name;
           Game.gameMode = newMode;
           const newName = GAME_MODES[newMode]?.name;
+          // 切到 God Mode: 立即完成正在执行的国策
+          if (GAME_MODES[newMode].godMode && s.currentFocus) {
+            const foci = Game._getFoci();
+            const curF = foci[s.currentFocus];
+            if (curF && !s.completedFoci.includes(s.currentFocus)) {
+              Game.applyEffects(curF.effects);
+              if (curF.setFlags) Object.assign(s.flags, curF.setFlags);
+              s.completedFoci.push(s.currentFocus);
+              s.currentFocus = null; s.focusProgress = 0;
+              Game.clampResources();
+              Game.addNews(`⚡ [模式切换] 国策秒完: ${curF.name}`, 'tech');
+            }
+          }
           this.toast(`模式切换: ${oldName} → ${newName}${GAME_MODES[newMode].godMode ? ' ⚡ God Mode' : ''}`, 'success');
           // 如果切换到 developer 模式，自动开启地图 devMode
           if (newMode === 'developer') {
