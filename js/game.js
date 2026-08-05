@@ -107,38 +107,58 @@ const GAME_MODES = {
     desc: '严格遵循TNO主线时间线，体验原汁原味的剧情',
     color: '#a83232',
     icon: '📜',
-    // 影响: 剧情事件正常触发, AI正常发展, 危机正常
-    aiSpeedMod: 1.0,        // AI发展速度倍率
-    eventWeightMod: 1.0,    // 随机事件权重倍率
-    randomLeaders: false,    // 是否随机领导人
-    randomPaths: false,      // 是否随机路线
-    crisisBoost: 0,          // 危机概率额外加成
+    aiSpeedMod: 1.0,
+    eventWeightMod: 1.0,
+    randomLeaders: false,
+    randomPaths: false,
+    crisisBoost: 0,
+    focusSpeedMod: 1.0,
+    eventTurnJitter: 0,
+    allowFocusSwitch: false,
+    chaosStabilityJitter: 0,
+    chaosRelationJitter: 0,
+    chaosRandomEventChance: 0,
+    initialResourceBonus: 0,
     unlocked: true
   },
   sandbox: {
     id: 'sandbox',
     name: '沙盒模式',
-    desc: '世界自由发展，AI加速演变，适合长期推演',
+    desc: '世界自由发展，国策加速可切换，剧情时间±8回合随机偏移——自由推演一切可能',
     color: '#3a6a9a',
     icon: '🌍',
-    aiSpeedMod: 1.5,        // AI发展加速
-    eventWeightMod: 1.3,    // 随机事件更多
+    aiSpeedMod: 1.5,
+    eventWeightMod: 1.8,
     randomLeaders: false,
     randomPaths: false,
-    crisisBoost: -0.1,       // 危机略降 (自由探索)
+    crisisBoost: -0.1,
+    focusSpeedMod: 1.6,
+    eventTurnJitter: 8,
+    allowFocusSwitch: true,
+    chaosStabilityJitter: 0,
+    chaosRelationJitter: 0,
+    chaosRandomEventChance: 0,
+    initialResourceBonus: { money: 200, research: 50, manpower: 10 },
     unlocked: true
   },
   chaos: {
     id: 'chaos',
     name: '混乱模式',
-    desc: '随机领导人、随机路线、事件权重打乱——不可预测的疯狂世界',
+    desc: '随机领导人、路线、剧情时间大幅偏移±15回合；稳定度/外交每回合随机扰动，每10回合触发一次混乱随机事件',
     color: '#8a3a8a',
     icon: '🎲',
-    aiSpeedMod: 1.8,
-    eventWeightMod: 2.0,    // 事件频发
-    randomLeaders: true,     // 随机领导人
-    randomPaths: true,       // 随机路线
-    crisisBoost: 0.15,       // 危机更频繁
+    aiSpeedMod: 2.0,
+    eventWeightMod: 2.5,
+    randomLeaders: true,
+    randomPaths: true,
+    crisisBoost: 0.2,
+    focusSpeedMod: 1.3,
+    eventTurnJitter: 15,
+    allowFocusSwitch: true,
+    chaosStabilityJitter: 6,
+    chaosRelationJitter: 12,
+    chaosRandomEventChance: 0.15,
+    initialResourceBonus: 'random_±30%',
     unlocked: true
   }
 };
@@ -539,25 +559,28 @@ const Game = {
     // ===== 游戏模式特殊初始化 =====
     const mode = this.getMode();
     if (mode.randomLeaders) {
-      // 混乱模式: 随机领导人
       const rl = this._pickRandomLeader();
       this.state.leader = { id: rl.id, name: rl.name, title: rl.title, ideology: rl.ideology };
       this.addNews(`混乱世界: ${rl.name} 就任 ${rl.title}`, 'world');
     }
     if (mode.randomPaths) {
-      // 混乱模式: 随机路线 (但暂不锁定, 仅记录倾向)
       this.state._chaosPathHint = this._pickRandomPath();
     }
-    // 沙盒/混乱模式: 初始资源微调 (更多探索空间)
-    if (this.gameMode === 'sandbox') {
-      this.state.resources.money += 100;
-      this.state.resources.research += 30;
-    } else if (this.gameMode === 'chaos') {
-      // 混乱模式: 资源随机波动 ±30%
+    // 统一的资源初始化（从 initialResourceBonus 读取）
+    const bonus = mode.initialResourceBonus;
+    if (bonus && typeof bonus === 'object') {
       const r = this.state.resources;
-      r.money = Math.round(r.money * (0.7 + Math.random() * 0.6));
-      r.manpower = Math.round(r.manpower * (0.7 + Math.random() * 0.6));
-      r.stability = Math.max(20, Math.min(90, Math.round(r.stability * (0.7 + Math.random() * 0.6))));
+      if (bonus.money) r.money += bonus.money;
+      if (bonus.research) r.research += bonus.research;
+      if (bonus.manpower) r.manpower += bonus.manpower;
+      this.addNews(`沙盒模式: 初始资源加成（资金+${bonus.money||0} 研发+${bonus.research||0}）`, 'world');
+    } else if (bonus === 'random_±30%') {
+      const r = this.state.resources;
+      const fluc = () => 0.7 + Math.random() * 0.6;
+      r.money = Math.round(r.money * fluc());
+      r.manpower = Math.round(r.manpower * fluc());
+      r.stability = Math.max(20, Math.min(90, Math.round(r.stability * fluc())));
+      this.addNews(`混乱世界: 资源随机波动，开局极不稳定`, 'crisis');
     }
 
     return this.state;
@@ -631,14 +654,38 @@ const Game = {
     return this.state.year === turnMatch.year && this.state.quarter === turnMatch.quarter;
   },
 
+  // ===== 获取事件的时间偏移后触发回合（沙盒/混乱模式专用） =====
+  _getEventJitteredTurn(ev) {
+    const jitterMax = this.getMode().eventTurnJitter || 0;
+    if (jitterMax === 0 || !ev.turn) return ev.turn;
+
+    // 缓存每个事件的jitter，确保同一事件每次检查偏移一致
+    if (!this.state._eventJitters) this.state._eventJitters = {};
+    const key = ev.id || (ev.turn.year + '_' + ev.turn.quarter + '_' + (ev.name || ev.title || ''));
+    let offset = this.state._eventJitters[key];
+    if (offset === undefined) {
+      offset = Math.floor(Math.random() * (jitterMax * 2 + 1)) - jitterMax;
+      this.state._eventJitters[key] = offset;
+    }
+
+    // offset是季度偏移量（可正可负），换算到year/quarter
+    const totalQ = (ev.turn.year - 1) * 4 + (ev.turn.quarter - 1) + offset;
+    const newYear = Math.floor(totalQ / 4) + 1;
+    const newQuarter = (totalQ % 4) + 1;
+    const result = { year: Math.max(1960, newYear), quarter: Math.max(1, Math.min(4, newQuarter)) };
+    if (ev.turn.halfMonth !== undefined) result.halfMonth = ev.turn.halfMonth;
+    return result;
+  },
+
   // ===== 检查事件触发条件 =====
   checkEventCondition(ev) {
     // 一次性事件已触发过
     if (ev.once && this.state.triggeredEvents[ev.id]) return false;
 
-    // 回合匹配
+    // 回合匹配（带沙盒/混乱模式时间偏移）
     if (ev.turn) {
-      if (!this.matchesTurn(ev.turn)) return false;
+      const jitteredTurn = this._getEventJitteredTurn(ev);
+      if (!this.matchesTurn(jitteredTurn)) return false;
     } else {
       // 随机事件：检查 minTurn/maxTurn
       if (ev.minTurn) {
@@ -1038,26 +1085,48 @@ const Game = {
     const NATIONAL_FOCI = _getFoci();
     const f = NATIONAL_FOCI[focusId];
     if (!f) return { ok: false, msg: '国策不存在' };
-    if (this.state.currentFocus) return { ok: false, msg: '正在执行其他国策' };
     if (this.state.completedFoci.includes(focusId)) return { ok: false, msg: '该国策已完成' };
     if (this.state.resources.money < f.cost) return { ok: false, msg: '资金不足' };
-    // 检查前置
     for (const req of (f.requires || [])) {
       if (!this.state.completedFoci.includes(req)) return { ok: false, msg: '需要前置国策' };
     }
-    // 检查路线
     if (f.ideology && this.state.leader.ideology !== f.ideology && !this.state.flags[f.ideology]) {
       return { ok: false, msg: '路线不符' };
     }
-    // 检查requiresFlag
     if (f.requiresFlag && !this.state.flags[f.requiresFlag]) {
       return { ok: false, msg: '需要前置条件' };
+    }
+    // 沙盒/混乱模式: 允许中断当前国策切换到新国策 (退款50%资金)
+    if (this.state.currentFocus) {
+      const mode = this.getMode();
+      if (!mode.allowFocusSwitch) return { ok: false, msg: '正在执行其他国策' };
+      const cur = NATIONAL_FOCI[this.state.currentFocus];
+      const refund = Math.round((cur.cost || 0) * 0.5);
+      this.state.resources.money += refund;
+      this.state.currentFocus = null;
+      this.state.focusProgress = 0;
+      this.addNews(`国策中断: 退款 ${refund} 资金（沙盒/混乱模式可自由切换）`, 'info');
     }
 
     this.state.resources.money -= f.cost;
     this.state.currentFocus = focusId;
     this.state.focusProgress = 0;
     return { ok: true, msg: `开始执行: ${f.name}` };
+  },
+
+  abandonFocus() {
+    if (!this.state.currentFocus) return { ok: false, msg: '没有正在执行的国策' };
+    const mode = this.getMode();
+    if (!mode.allowFocusSwitch) return { ok: false, msg: '历史模式不可中断国策' };
+    const NATIONAL_FOCI = _getFoci();
+    const cur = NATIONAL_FOCI[this.state.currentFocus];
+    const refund = Math.round((cur.cost || 0) * 0.5);
+    this.state.resources.money += refund;
+    const oldName = cur.name;
+    this.state.currentFocus = null;
+    this.state.focusProgress = 0;
+    this.addNews(`放弃国策: ${oldName}（退款 ${refund} 资金）`, 'info');
+    return { ok: true, msg: `放弃了 ${oldName}，退款 ${refund} 资金` };
   },
 
   canStartFocus(focusId) {
@@ -1252,9 +1321,10 @@ const Game = {
       this.addNews(`${name} 建造完成`, 'economy');
     });
 
-    // 2. 推进国策
+    // 2. 推进国策 (受 focusSpeedMod 影响)
     if (this.state.currentFocus) {
-      this.state.focusProgress++;
+      const modeSpeed = this.getMode().focusSpeedMod || 1.0;
+      this.state.focusProgress = Math.round(this.state.focusProgress + modeSpeed);
       const NATIONAL_FOCI = _getFoci();
       const f = NATIONAL_FOCI[this.state.currentFocus];
       if (this.state.focusProgress >= f.turns) {
@@ -1352,6 +1422,29 @@ const Game = {
       }
     }
 
+    // 4.3 混乱模式: 稳定度/外交关系随机扰动
+    const mode = this.getMode();
+    if (mode.chaosStabilityJitter > 0) {
+      const stabDelta = Math.floor(Math.random() * (mode.chaosStabilityJitter * 2 + 1)) - mode.chaosStabilityJitter;
+      if (stabDelta !== 0) {
+        this.state.resources.stability = Math.max(0, Math.min(100, this.state.resources.stability + stabDelta));
+        if (stabDelta < 0) {
+          this.addNews(`混乱世界: 国内局势动荡，稳定度 ${stabDelta}`, 'crisis');
+        } else {
+          this.addNews(`混乱世界: 意外好运降临，稳定度 +${stabDelta}`, 'info');
+        }
+      }
+    }
+    if (mode.chaosRelationJitter > 0) {
+      const factionKeys = Object.keys(this.state.relations);
+      for (const k of factionKeys) {
+        const rDelta = Math.floor(Math.random() * (mode.chaosRelationJitter * 2 + 1)) - mode.chaosRelationJitter;
+        if (rDelta !== 0) {
+          this.state.relations[k] = Math.max(-100, Math.min(100, this.state.relations[k] + rDelta));
+        }
+      }
+    }
+
     // 5. 检查事件（分类处理：风味事件自动结算，核心事件弹窗）
     const turnResult = this.getEventsForTurn();
     // 5.1 自动结算风味事件
@@ -1374,11 +1467,73 @@ const Game = {
       this.generateRandomNews();
     }
 
+    // 7.1 混乱模式: 随机触发混乱事件
+    if (mode.chaosRandomEventChance > 0 && Math.random() < mode.chaosRandomEventChance) {
+      this._triggerChaosEvent();
+    }
+
     // 标记所有需要刷新的Tab
     this.state._dirtyIndustry = true;
     this.state._dirtyNation = true;
 
     return { income, completed, turnEvents };
+  },
+
+  // ===== 混乱模式专属随机事件 =====
+  _triggerChaosEvent() {
+    const pool = [
+      () => {
+        const moneyDelta = Math.floor(Math.random() * 80) - 30;
+        this.state.resources.money = Math.max(0, this.state.resources.money + moneyDelta);
+        this.addNews(`🎲 混乱事件: ${moneyDelta >= 0 ? '意外横财' : '不明支出'}！资金 ${moneyDelta >= 0 ? '+' : ''}${moneyDelta}`, moneyDelta >= 0 ? 'info' : 'crisis');
+      },
+      () => {
+        const stabDelta = Math.floor(Math.random() * 16) - 8;
+        this.state.resources.stability = Math.max(0, Math.min(100, this.state.resources.stability + stabDelta));
+        this.addNews(`🎲 混乱事件: 突发事件冲击民心，稳定度 ${stabDelta >= 0 ? '+' : ''}${stabDelta}`, stabDelta >= 0 ? 'info' : 'crisis');
+      },
+      () => {
+        const factions = Object.keys(this.state.relations);
+        if (factions.length > 0) {
+          const k = factions[Math.floor(Math.random() * factions.length)];
+          const d = Math.floor(Math.random() * 20) - 10;
+          this.state.relations[k] = Math.max(-100, Math.min(100, this.state.relations[k] + d));
+          this.addNews(`🎲 混乱事件: 与 ${k} 的关系突变 ${d >= 0 ? '+' : ''}${d}`, d >= 0 ? 'world' : 'crisis');
+        }
+      },
+      () => {
+        const r = this.state.resources;
+        const rnd = Math.random();
+        if (rnd < 0.33) {
+          r.money = Math.max(0, Math.round(r.money * (0.7 + Math.random() * 0.6)));
+          this.addNews('🎲 混乱事件: 金融市场剧烈波动，资金大幅变化', 'crisis');
+        } else if (rnd < 0.66) {
+          r.manpower = Math.max(0, Math.round(r.manpower * (0.7 + Math.random() * 0.6)));
+          this.addNews('🎲 混乱事件: 人口流动异常，人力大幅变化', 'crisis');
+        } else {
+          r.research = Math.max(0, Math.round(r.research * (0.7 + Math.random() * 0.6)));
+          this.addNews('🎲 混乱事件: 科研进展紊乱，研发点大幅变化', 'crisis');
+        }
+      },
+      () => {
+        const d = Math.floor(Math.random() * 6) - 2;
+        this.state.resources.deterrence = Math.max(0, this.state.resources.deterrence + d);
+        this.addNews(`🎲 混乱事件: 威慑力量异动 ${d >= 0 ? '+' : ''}${d}`, d >= 0 ? 'world' : 'crisis');
+      },
+      () => {
+        const buildings = Object.keys(this.state.buildings).filter(k => this.state.buildings[k] > 0);
+        if (buildings.length > 0) {
+          const b = buildings[Math.floor(Math.random() * buildings.length)];
+          this.state.buildings[b]--;
+          this.addNews(`🎲 混乱事件: ${b} 设施损毁或失陷！`, 'crisis');
+        }
+      },
+      () => {
+        this.state.flags._chaosFlag = (this.state.flags._chaosFlag || 0) + 1;
+        this.addNews(`🎲 混乱事件: 神秘势力在暗中活动（标记#${this.state.flags._chaosFlag}）`, 'world');
+      }
+    ];
+    pool[Math.floor(Math.random() * pool.length)]();
   },
 
   // ===== 生成随机新闻 =====
