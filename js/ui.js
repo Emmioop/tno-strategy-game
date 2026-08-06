@@ -573,11 +573,14 @@ const UI = {
 
     document.getElementById('news-ticker').innerHTML = newsHtml;
 
+    const curMode = Game && Game.getMode ? Game.getMode() : null;
+    const showBattleBtn = curMode && curMode.funMode;
     document.getElementById('action-bar').innerHTML = `
       <button class="btn-next-turn" id="btn-next-turn">${this._nextTurnLabel()}</button>
       <button class="btn-secondary" id="btn-save">保存</button>
       <button class="btn-secondary" id="btn-load">读取</button>
       <button class="btn-secondary" id="btn-restart">重启</button>
+      ${showBattleBtn ? '<button class="btn-secondary" id="btn-battle" style="border-color:#d4a017;color:#d4a017;">🎮 BOSS战</button>' : ''}
       ${this.isDebugMode() ? '<button class="btn-secondary" id="btn-debug" style="border-color:var(--accent-gold);color:var(--accent-gold);">DEBUG</button>' : ''}
     `;
 
@@ -589,6 +592,8 @@ const UI = {
         location.reload();
       }
     };
+    const battleBtn = document.getElementById('btn-battle');
+    if (battleBtn) battleBtn.onclick = () => { if (window.UndertaleBattle) window.UndertaleBattle.openBossSelect(); };
     const dbgBtn = document.getElementById('btn-debug');
     if (dbgBtn) dbgBtn.onclick = () => this.toggleDebugPanel();
 

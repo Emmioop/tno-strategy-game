@@ -161,6 +161,29 @@ const GAME_MODES = {
     initialResourceBonus: 'random_±30%',
     unlocked: true
   },
+  fun: {
+    id: 'fun',
+    name: '趣味模式',
+    desc: '🎮 Undertale 风格独立 Boss 战：垂死元首/勃艮第之主/宣传机器/沙漠之狐——选一个狠狠干，打赢有大奖励',
+    color: '#d4a017',
+    icon: '🎮',
+    aiSpeedMod: 1.2,
+    eventWeightMod: 1.5,
+    randomLeaders: false,
+    randomPaths: false,
+    crisisBoost: -0.2,
+    focusSpeedMod: 1.5,
+    eventTurnJitter: 4,
+    allowFocusSwitch: true,
+    chaosStabilityJitter: 0,
+    chaosRelationJitter: 0,
+    chaosRandomEventChance: 0,
+    initialResourceBonus: { money: 300, research: 60, manpower: 20 },
+    // 趣味模式专属
+    funMode: true,
+    funBossesAvailable: true,
+    unlocked: true
+  },
   developer: {
     id: 'developer',
     name: '开发者模式',
