@@ -762,8 +762,8 @@
         bu.y += bu.vy;
         if (bu.fn) bu.fn(bu, elapsed);
       });
-      // 移除出界
-      b.bullets = b.bullets.filter(bu => bu.x > -20 && bu.x < canvas.width + 20 && bu.y > -20 && bu.y < canvas.height + 20);
+      // 移除出界（边界留够余量，speech/blitz 等从屏幕外挂进来的子弹有空间滑行）
+      b.bullets = b.bullets.filter(bu => bu.x > -120 && bu.x < canvas.width + 120 && bu.y > -120 && bu.y < canvas.height + 120);
 
       // 碰撞
       if (hitCooldown > 0) hitCooldown--;
@@ -843,16 +843,17 @@
       let i = 0;
       const intv = setInterval(() => {
         if (!_battle) { clearInterval(intv); return; }
-        b.bullets.push({ x: -40, y: 30 + Math.random() * 100, vx: 1.2, vy: 0, r: 4, shape: 'text', text: texts[i % texts.length], font: 'bold 14px Courier New', color: '#ff4444' });
-        b.bullets.push({ x: w + 40, y: 30 + Math.random() * 100, vx: -1.2, vy: 0, r: 4, shape: 'text', text: texts[(i + 2) % texts.length], font: 'bold 14px Courier New', color: '#ff4444' });
+        const y = 20 + Math.random() * Math.max(20, h - 40);
+        b.bullets.push({ x: -50, y, vx: Math.max(1.0, w / 300), vy: 0, r: 4, shape: 'text', text: texts[i % texts.length], font: 'bold 14px Courier New', color: '#ff4444' });
+        b.bullets.push({ x: w + 50, y, vx: -Math.max(1.0, w / 300), vy: 0, r: 4, shape: 'text', text: texts[(i + 2) % texts.length], font: 'bold 14px Courier New', color: '#ff4444' });
         i++;
-      }, 450);
+      }, 400);
       setTimeout(() => clearInterval(intv), 4800);
     } else if (pattern === 'sieg_heil') {
       let i = 0;
       const intv = setInterval(() => {
         if (!_battle) { clearInterval(intv); return; }
-        b.bullets.push({ x: w / 2, y: h + 10, vx: Math.sin(i * 0.7) * 1.5, vy: -2.5, r: 6, color: '#ff0000' });
+        b.bullets.push({ x: w / 2, y: h + 10, vx: Math.sin(i * 0.7) * 1.5, vy: -Math.max(2.0, h / 60), r: 6, color: '#ff0000' });
         i++;
       }, 120);
       setTimeout(() => clearInterval(intv), 4800);
@@ -860,19 +861,23 @@
       let i = 0;
       const intv = setInterval(() => {
         if (!_battle) { clearInterval(intv); return; }
-        b.bullets.push({ x: -5, y: 10 + i * 10 % h, vx: 2.5, vy: 0.8, r: 5, color: '#ffcc00' });
-        b.bullets.push({ x: w + 5, y: 10 + (i + 5) * 10 % h, vx: -2.5, vy: 0.8, r: 5, color: '#ffcc00' });
+        const y1 = 10 + (i * 10 % Math.max(20, h - 20));
+        const y2 = 10 + ((i + 5) * 10 % Math.max(20, h - 20));
+        b.bullets.push({ x: -10, y: y1, vx: Math.max(2.0, w / 150), vy: 0.8, r: 5, color: '#ffcc00' });
+        b.bullets.push({ x: w + 10, y: y2, vx: -Math.max(2.0, w / 150), vy: 0.8, r: 5, color: '#ffcc00' });
         i++;
       }, 180);
       setTimeout(() => clearInterval(intv), 4800);
     } else if (pattern === 'grid') {
-      // 下落网格
-      for (let col = 0; col < 8; col++) {
-        const delay = col * 150;
+      // 下落网格：列间距自适应 canvas 宽度，桌面 8 列，手机自动减少
+      const colCount = Math.max(4, Math.min(10, Math.floor(w / 50)));
+      const colSpacing = (w - 40) / (colCount - 1);
+      for (let col = 0; col < colCount; col++) {
+        const delay = col * 120;
         const intv = setInterval(() => {
           if (!_battle) { clearInterval(intv); return; }
-          b.bullets.push({ x: 30 + col * 70, y: -10, vx: 0, vy: 2.2, r: 5, shape: 'square', color: '#888' });
-        }, 900);
+          b.bullets.push({ x: 20 + col * colSpacing, y: -10, vx: 0, vy: Math.max(1.8, h / 80), r: 5, shape: 'square', color: '#888' });
+        }, Math.max(500, 900 - colCount * 30));
         setTimeout(() => { clearInterval(intv); }, delay + 4800);
       }
     } else if (pattern === 'blitz') {
@@ -880,8 +885,10 @@
       let i = 0;
       const intv = setInterval(() => {
         if (!_battle) { clearInterval(intv); return; }
-        b.bullets.push({ x: -10, y: 20 + Math.sin(i * 0.4) * 50 + h / 2, vx: 3.5, vy: 0, r: 4, color: '#ff8800' });
-        b.bullets.push({ x: w + 10, y: 20 + Math.cos(i * 0.4) * 50 + h / 2, vx: -3.5, vy: 0, r: 4, color: '#ff8800' });
+        const baseY = h / 2;
+        const amp = Math.min(60, h * 0.35);
+        b.bullets.push({ x: -10, y: baseY + Math.sin(i * 0.4) * amp, vx: Math.max(2.5, w / 100), vy: 0, r: 4, color: '#ff8800' });
+        b.bullets.push({ x: w + 10, y: baseY + Math.cos(i * 0.4) * amp, vx: -Math.max(2.5, w / 100), vy: 0, r: 4, color: '#ff8800' });
         i++;
       }, 130);
       setTimeout(() => clearInterval(intv), 4800);
@@ -891,20 +898,19 @@
         if (!_battle) { clearInterval(intv); return; }
         const x = Math.random() * w;
         const y = Math.random() < 0.5 ? -10 : h + 10;
-        b.bullets.push({ x, y, vx: (Math.random() - 0.5) * 3, vy: y < 0 ? 2.5 : -2.5, r: 4 + Math.random() * 3, color: ['#ff0000','#00ff00','#ffff00','#ff00ff','#00ffff'][Math.floor(Math.random()*5)] });
+        b.bullets.push({ x, y, vx: (Math.random() - 0.5) * 3, vy: y < 0 ? Math.max(2.0, h / 60) : -Math.max(2.0, h / 60), r: 4 + Math.random() * 3, color: ['#ff0000','#00ff00','#ffff00','#ff00ff','#00ffff'][Math.floor(Math.random()*5)] });
         i++;
       }, 100);
       setTimeout(() => clearInterval(intv), 4800);
     } else if (pattern === 'geometric') {
-      // 旋转菱形
       let t = 0;
       const intv = setInterval(() => {
         if (!_battle) { clearInterval(intv); return; }
-        for (let k = 0; k < 4; k++) {
-          const ang = t + k * Math.PI / 2;
-          b.bullets.push({ x: w / 2, y: h / 2, vx: Math.cos(ang) * 2, vy: Math.sin(ang) * 2, r: 5, shape: 'diamond', color: '#66ffaa' });
+        for (let k = 0; k < 6; k++) {
+          const ang = t + k * Math.PI / 3;
+          b.bullets.push({ x: w / 2, y: h / 2, vx: Math.cos(ang) * Math.max(1.2, w / 200), vy: Math.sin(ang) * Math.max(1.2, w / 200), r: 5, shape: 'diamond', color: '#66ffaa' });
         }
-        t += 0.25;
+        t += 0.2;
       }, 180);
       setTimeout(() => clearInterval(intv), 4800);
     }
