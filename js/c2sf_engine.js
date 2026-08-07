@@ -574,24 +574,27 @@ const C2SF = (() => {
   function drawSoul(ctx, canvasW, canvasH) {
     const heart = state.soul.mode === 1 ? 'playerheart-sheet0' : 'playerheart-sheet1';
     const img = sprites[heart] || sprites['playerheart-sheet0'];
-    const scale = canvasW / CANVAS_W;
-    const sx = state.soul.x * scale;
-    const sy = state.soul.y * scale;
-    const size = 16 * scale;
+    const sx = canvasW / CANVAS_W;
+    const sy = canvasH / CANVAS_H;
+    const px = state.soul.x * sx;
+    const py = state.soul.y * sy;
+    const sw = 16 * sx;
+    const sh = 20 * sy;
     ctx.save();
     if (img) {
-      ctx.drawImage(img, sx - size/2, sy - size/2, size, size);
+      ctx.drawImage(img, px - sw/2, py - sh/2, sw, sh);
     } else {
-      ctx.fillStyle = state.soul.mode === 1 ? '#ff0000' : '#0088ff';
+      ctx.fillStyle = state.soul.mode === 1 ? '#ff2222' : '#4488ff';
       ctx.beginPath();
-      ctx.arc(sx, sy, size/2, 0, Math.PI*2);
+      ctx.arc(px, py, Math.min(sw, sh)/2, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.restore();
   }
 
   function draw(ctx, canvasW, canvasH) {
-    const scale = canvasW / CANVAS_W;
+    const sx = canvasW / CANVAS_W;
+    const sy = canvasH / CANVAS_H;
     const z = state.combatZone;
     ctx.save();
 
@@ -600,14 +603,14 @@ const C2SF = (() => {
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(z.left * scale, z.top * scale, (z.right - z.left) * scale, (z.bottom - z.top) * scale);
+    ctx.rect(z.left * sx, z.top * sy, (z.right - z.left) * sx, (z.bottom - z.top) * sy);
     ctx.clip();
 
-    for (const b of state.bullets) drawBullet(ctx, { ...b, x: b.x * scale, y: b.y * scale, w: b.w * scale, h: b.h * scale });
-    for (const sb of state.sineBones) drawBullet(ctx, { type: 'bonev', x: sb.x * scale, y: sb.y * scale, w: sb.w * scale, h: sb.h * scale, color: '#ffffff' });
-    for (const p of state.platforms) drawPlatform(ctx, { ...p, x: p.x * scale, y: p.y * scale, w: p.w * scale, h: p.h * scale });
+    for (const b of state.bullets) drawBullet(ctx, { ...b, x: b.x * sx, y: b.y * sy, w: b.w * sx, h: b.h * sy });
+    for (const sb of state.sineBones) drawBullet(ctx, { type: 'bonev', x: sb.x * sx, y: sb.y * sy, w: sb.w * sx, h: sb.h * sy, color: '#ffffff' });
+    for (const p of state.platforms) drawPlatform(ctx, { ...p, x: p.x * sx, y: p.y * sy, w: p.w * sx, h: p.h * sy });
     for (const l of state.lasers) {
-      drawLaser(ctx, { ...l, sx: l.sx * scale, sy: l.sy * scale, ex: l.ex * scale, ey: l.ey * scale });
+      drawLaser(ctx, { ...l, sx: l.sx * sx, sy: l.sy * sy, ex: l.ex * sx, ey: l.ey * sy });
     }
     for (const s of state.stabWarnings) drawStabWarn(ctx, s);
 
@@ -616,9 +619,8 @@ const C2SF = (() => {
 
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
-    ctx.strokeRect(z.left * scale - 1, z.top * scale - 1, (z.right - z.left) * scale + 2, (z.bottom - z.top) * scale + 2);
+    ctx.strokeRect(z.left * sx - 1, z.top * sy - 1, (z.right - z.left) * sx + 2, (z.bottom - z.top) * sy + 2);
 
-    drawSans(ctx, canvasW, canvasH);
     ctx.restore();
   }
 
