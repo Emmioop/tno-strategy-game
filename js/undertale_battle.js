@@ -46,21 +46,27 @@
   // 10 回合弹幕 — 对齐 act2_sansturn0~act2_sansturn9
   // soul: red=自由  blue=重力/跳跃  orange=穿弹  pink=紫互克
   const BATTLE_PHASES = [
-    { id: 'sansturn0',  name: 'Phase 0 · 热身',         soul: 'red',    step2: false, duration: 4500 },
-    { id: 'sansturn1',  name: 'Phase 1 · 骨墙',         soul: 'blue',   step2: false, duration: 5000 },
-    { id: 'sansturn2',  name: 'Phase 2 · 龙骨炮登场',   soul: 'red',    step2: false, duration: 5000 },
-    { id: 'sansturn3',  name: 'Phase 3 · 白骨横扫',     soul: 'blue',   step2: false, duration: 5000 },
-    { id: 'sansturn4',  name: 'Phase 4 · 骨头夹击',     soul: 'red',    step2: false, duration: 4500 },
-    { id: 'sansturn5',  name: 'Phase 5 · 平台+激光',    soul: 'blue',   step2: false, duration: 5000 },
-    { id: 'sansturn6',  name: 'Phase 6 · 混乱弹幕',     soul: 'red',    step2: false, duration: 5500 },
-    { id: 'sansturn7',  name: 'Phase 7 · 旋转风车',     soul: 'red',    step2: false, duration: 6000, angry: true },
-    { id: 'sansturn8',  name: 'Phase 8 · 橙魂穿弹',     soul: 'orange', step2: false, duration: 5000 },
-    { id: 'sansturn9',  name: 'Phase 9 · FINAL · Step_2', soul: 'red',   step2: true,  duration: 7000, angry: true, dust: true },
+    { id: 'sansturn0',  name: 'Intro',            soul: 'red',    csv: 'sans_intro.csv',          duration: 5000 },
+    { id: 'sansturn1',  name: 'Multi Attack',     soul: 'red',    csv: 'sans_multi1.csv',         duration: 6000 },
+    { id: 'sansturn2',  name: 'Multi Attack 2',   soul: 'red',    csv: 'sans_multi2.csv',         duration: 6000 },
+    { id: 'sansturn3',  name: 'Multi Attack 3',   soul: 'red',    csv: 'sans_multi3.csv',         duration: 6500 },
+    { id: 'sansturn4',  name: 'Platform + Blaster', soul: 'red', csv: 'sans_platformblaster.csv', duration: 6000 },
+    { id: 'sansturn5',  name: 'Platforms 1',      soul: 'red',    csv: 'sans_platforms1.csv',     duration: 5500 },
+    { id: 'sansturn6',  name: 'Platforms 2',      soul: 'red',    csv: 'sans_platforms2.csv',     duration: 6000 },
+    { id: 'sansturn7',  name: 'Bone Slide V',     soul: 'red',    csv: 'sans_boneslidev.csv',     duration: 5000 },
+    { id: 'sansturn8',  name: 'Bone Gap 1',       soul: 'red',    csv: 'sans_bonegap1.csv',       duration: 5000 },
+    { id: 'sansturn9',  name: 'Blue Bone',        soul: 'red',    csv: 'sans_bluebone.csv',       duration: 5000 },
+    { id: 'sansturnA',  name: 'Random Blaster 1', soul: 'red',    csv: 'sans_randomblaster1.csv', duration: 5500 },
+    { id: 'sansturnB',  name: 'BoneStab 1',       soul: 'red',    csv: 'sans_bonestab1.csv',      duration: 5000 },
+    { id: 'sansturnC',  name: 'PlatformBlasterFast', soul: 'red', csv: 'sans_platformblasterfast.csv', duration: 5000 },
+    { id: 'sansturnD',  name: 'Final Step_2',     soul: 'red',    csv: 'sans_final.csv',         duration: 12000, step2: true },
   ];
 
   let _battle = null;
   let _introTimer = null;
   let _enemyTimers = [];
+  let _c2sfLoaded = false;
+  let _c2sfCsvCache = {};
 
   function clearEnemyTimers() {
     _enemyTimers.forEach(t => clearTimeout(t));
@@ -705,6 +711,7 @@
       let elapsed = now - b.phaseStart;
       if (elapsed > b.phaseDuration) {
         clearEnemyTimers();
+        if (typeof C2SF !== 'undefined') C2SF.endAttack();
         b.phaseIndex = (b.phaseIndex + 1) % BATTLE_PHASES.length;
         b.phaseStart = performance.now();
         const next = BATTLE_PHASES[b.phaseIndex];
@@ -713,6 +720,71 @@
         b.bullets = []; b.lasers = []; b.platforms = []; b.warnings = []; b.dust = [];
         spawnPhase(b.phaseIndex, b.canvasW, b.canvasH);
         b.modal.querySelector('#ub-soul-indicator').textContent = next.name + (b.step2 ? ' ⚡Step_2' : '');
+      }
+
+      // === C2SF CSV 模式 ===
+      if (b.useC2SF && typeof C2SF !== 'undefined') {
+        const cs = C2SF.state.soul;
+        const z = C2SF.state.combatZone;
+        const zW = z.right - z.left, zH = z.bottom - z.top;
+        const scale = b.canvasW / 640;
+
+        const speed = 4.2;
+        if (cs.mode === 1) {
+          if (b.keys['arrowleft'] || b.keys['a'])   cs.x -= speed / scale;
+          if (b.keys['arrowright'] || b.keys['d'])  cs.x += speed / scale;
+          if (b.keys['arrowup'] || b.keys['w'])     cs.y -= speed / scale;
+          if (b.keys['arrowdown'] || b.keys['s'])   cs.y += speed / scale;
+        } else {
+          if ((b.keys[' '] || b.keys['arrowup'] || b.keys['w']) && cs.onGround) {
+            cs.vy = -8; cs.onGround = false;
+          }
+          if (b.keys['arrowleft'] || b.keys['a'])   cs.x -= speed / scale;
+          if (b.keys['arrowright'] || b.keys['d'])  cs.x += speed / scale;
+          cs.vy = (cs.vy || 0) + 0.55;
+          cs.vy = Math.min(cs.vy, (cs.maxFallSpeed || 750) / 60);
+          cs.y += cs.vy;
+          cs.onGround = false;
+          for (const p of C2SF.state.platforms) {
+            if (cs.vy >= 0 && cs.x >= p.x - 4 && cs.x <= p.x + p.w + 4 &&
+                cs.y >= p.y - 4 && cs.y <= p.y + 12) {
+              cs.y = p.y; cs.vy = 0; cs.onGround = true;
+            }
+          }
+          if (cs.y >= C2SF.CANVAS_H - 6) {
+            cs.y = C2SF.CANVAS_H - 6; cs.vy = 0; cs.onGround = true;
+          }
+        }
+        cs.x = Math.max(z.left + 6, Math.min(z.right - 6, cs.x));
+        cs.y = Math.max(z.top + 6, Math.min(z.bottom - 6, cs.y));
+
+        C2SF.update();
+        C2SF.draw(ctx, b.canvasW, b.canvasH);
+
+        const hit = C2SF.collidesBullet();
+        if (hit && b.hitCooldown <= 0) {
+          b.hitCooldown = 12;
+          b.invulnTimer = 60;
+          const dmg = 5;
+          b.player.hp -= dmg;
+          flashArea('rgba(255,0,0,0.25)');
+          updateBattleUI();
+          if (b.player.hp <= 0) {
+            b.player.hp = 0;
+            b._running = false;
+            cleanup();
+            endEnemyTurn();
+            onDefeat();
+            return;
+          }
+        }
+        if (b.hitCooldown > 0) b.hitCooldown--;
+
+        b.modal.querySelector('#ub-soul-indicator').textContent =
+          (C2SF.state.phaseName || '') + (C2SF.state.soul.mode === 0 ? ' 🔵' : ' 🔴');
+
+        requestAnimationFrame(loop);
+        return;
       }
 
       // === 输入 ===
@@ -1288,6 +1360,34 @@
     const b = _battle;
     b.bullets = []; b.lasers = []; b.platforms = []; b.warnings = []; b.dust = [];
 
+    const phase = BATTLE_PHASES[idx];
+    if (phase && phase.csv && typeof C2SF !== 'undefined') {
+      C2SF.update = C2SF.update;
+      if (!_c2sfLoaded) {
+        _c2sfLoaded = true;
+        C2SF.loadSpriteSheet();
+      }
+      const startCsv = (csvData) => {
+        if (csvData) {
+          C2SF.startAttack(csvData, phase.name);
+        } else {
+          console.warn('C2SF: CSV load failed for', phase.csv);
+        }
+      };
+      if (_c2sfCsvCache[phase.csv]) {
+        startCsv(_c2sfCsvCache[phase.csv]);
+      } else {
+        C2SF.loadCSV(phase.csv).then(data => {
+          if (data) _c2sfCsvCache[phase.csv] = data;
+          startCsv(data);
+        });
+      }
+      b.useC2SF = true;
+      b.csvPhaseName = phase.name;
+      return;
+    }
+    b.useC2SF = false;
+
     function addPlatform(x, y, ww, opts) {
       b.platforms.push({ x, y, w: ww, color: opts?.color, bounce: opts?.bounce });
     }
@@ -1333,7 +1433,7 @@
       }
     }
 
-    const phase = BATTLE_PHASES[idx];
+    // phase 已在上方 C2SF 分支前声明
     b.soulColor = phase.soul;
     b.isAngry = !!phase.angry;
     b.modal.querySelector('#ub-soul-indicator').textContent = phase.name + (b.isAngry ? ' 🔥' : '');
