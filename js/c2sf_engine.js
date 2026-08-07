@@ -77,12 +77,12 @@ const C2SF = (() => {
     const labels = {};
     for (const line of lines) {
       const parts = line.split(',').map(s => s.trim());
-      if (!parts[0]) continue;
-      if (parts[0].startsWith(':')) {
-        labels[parts[0].substring(1)] = instrs.length;
+      if (parts[1] && parts[1].startsWith(':')) {
+        labels[parts[1].substring(1)] = instrs.length;
         continue;
       }
-      instrs.push({ time: parseFloat(parts[0]) || 0, cmd: parts[1], args: parts.slice(2) });
+      if (!parts[0] && !parts[1]) continue;
+      instrs.push({ time: parseFloat(parts[0]) || 0, cmd: parts[1] || '', args: parts.slice(2) });
     }
     return { instrs, labels };
   }
@@ -146,11 +146,13 @@ const C2SF = (() => {
       const color = a[7] !== undefined ? parseColor(resolve(a[7])) : '#ffffff';
       const vy = side === 2 ? spd : -spd;
       let fired = 0;
-      const startT = t;
+      const startElapsed = t;
       state.intervals.push({
         run: () => {
-          const elapsed = (performance.now() - startT) / 1000;
-          const shouldFire = Math.floor(elapsed * 60 / interval);
+          const elapsedSec = (performance.now() - state.startTime) / 1000;
+          const localElapsed = elapsedSec - startElapsed;
+          if (localElapsed < 0) return;
+          const shouldFire = Math.floor(localElapsed * 60 / interval);
           while (fired < shouldFire && fired < count) {
             state.bullets.push({ type: 'bonev', x, y: y - fired * 6, w: 14, h: h + fired * 4, vx: 0, vy, color });
             fired++;
@@ -168,11 +170,13 @@ const C2SF = (() => {
       const interval = resolve(a[6]) || 15;
       const vx = side === 0 ? spd : -spd;
       let fired = 0;
-      const startT = t;
+      const startElapsed = t;
       state.intervals.push({
         run: () => {
-          const elapsed = (performance.now() - startT) / 1000;
-          const shouldFire = Math.floor(elapsed * 60 / interval);
+          const elapsedSec = (performance.now() - state.startTime) / 1000;
+          const localElapsed = elapsedSec - startElapsed;
+          if (localElapsed < 0) return;
+          const shouldFire = Math.floor(localElapsed * 60 / interval);
           while (fired < shouldFire && fired < count) {
             state.bullets.push({ type: 'boneh', x: x - fired * 8, y, w: 32, h: 10, vx, vy: 0, color: '#ffffff' });
             fired++;
@@ -239,11 +243,13 @@ const C2SF = (() => {
       const interval = resolve(a[6]) || 120;
       const vx = side === 0 ? spd : -spd;
       let fired = 0;
-      const startT = t;
+      const startElapsed = t;
       state.intervals.push({
         run: () => {
-          const elapsed = (performance.now() - startT) / 1000;
-          const shouldFire = Math.floor(elapsed * 60 / interval);
+          const elapsedSec = (performance.now() - state.startTime) / 1000;
+          const localElapsed = elapsedSec - startElapsed;
+          if (localElapsed < 0) return;
+          const shouldFire = Math.floor(localElapsed * 60 / interval);
           while (fired < shouldFire && fired < count) {
             state.platforms.push({ x: x - fired * 60, y, w, h: 8, side, vx, color: null });
             fired++;
@@ -280,7 +286,10 @@ const C2SF = (() => {
     SansSlam: (a) => { state.sansSlam = parseInt(resolve(a[0])); state.sansSlamTimer = 300; },
     SansX: (a) => { state.sansX = resolve(a[0]); },
 
-    TLPause: () => { state.running = false; },
+    TLPause: () => { /* no-op — always run interpreter via timestamp */ },
+    TLResume: () => { /* no-op */ },
+    Sound: () => { /* no-op */ },
+    EndAttack: () => { state.running = false; return false; },
   };
 
   function parseColor(c) {

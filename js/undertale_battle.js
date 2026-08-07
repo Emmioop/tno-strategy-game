@@ -10,6 +10,7 @@
     sanshp: 1,
     sansoverturn: 11,
     color: '#e0c080',
+    mercyThreshold: 60,
     introLines: [
       '* 雪地里传来一阵低语...',
       '* "听着，小家伙..."',
@@ -18,6 +19,13 @@
       '* "...好吧。那就让我看看。"',
       '* "你到底有多疼。"',
     ],
+    dodgeText: '* 德衫 闪避了！\n* "你还早了十年呢。"',
+    checkText: '* 德衫 - ATK ??? DEF ???\n* "你不需要知道。"',
+    complainText: '* "喂，别浪费我时间。"',
+    talkText: '* "...有事吗？"',
+    flirtText: '* "..."\n* "别这样。"',
+    onSpareText: '* MERCY 成功！\n* "下次别再让我看见你了。"',
+    onKillText: '* 你被彻底消灭了。',
   };
   const PLAYER = { maxHp: 92, atk: 19, def: 9, lv: 19, name: 'CHARA' };
   const ITEMS = [
@@ -74,10 +82,14 @@
   };
 
   function close() {
+    window.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('keyup', onKeyUp);
+    window.removeEventListener('resize', onResize);
     if (state.modal) state.modal.remove();
     state.modal = null;
     state.phase = null;
     state.keys = {};
+    state.virtualKeys = { up:false,down:false,left:false,right:false,confirm:false,jump:false };
   }
 
   function startBattle() {
@@ -134,12 +146,12 @@
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     state.modal.addEventListener('click', onCanvasClick);
+    state.canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    state.canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    state.canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+    state.canvas.addEventListener('touchcancel', onTouchEnd, { passive: false });
     window.addEventListener('resize', onResize);
     onResize();
-  }
-
-  function setupVirtualKeys() {
-    // called from JS if needed - dpad & buttons drawn on canvas
   }
 
   function onResize() {
@@ -168,6 +180,88 @@
     else if (state.phase === 'player_turn') selectMenu();
     else if (state.phase === 'fight') confirmFight();
     else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
+  }
+
+  function touchToCanvasPoint(clientX, clientY) {
+    const rect = state.canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) / rect.width * CW;
+    const y = (clientY - rect.top) / rect.height * CH;
+    return { x, y };
+  }
+
+  function hitVirtualBtn(px, py) {
+    const dpx = 40, dpy = CH - 100, R = 24;
+    const bx = CW - 110, by = CH - 80;
+    if (Math.hypot(px - (dpx+30), py - (dpy+20)) < R) return 'up';
+    if (Math.hypot(px - (dpx+30), py - (dpy+80)) < R) return 'down';
+    if (Math.hypot(px - (dpx+10), py - (dpy+50)) < R) return 'left';
+    if (Math.hypot(px - (dpx+50), py - (dpy+50)) < R) return 'right';
+    if (Math.hypot(px - (bx+20), py - (by+40)) < R) return 'b';
+    if (Math.hypot(px - (bx+60), py - (by+15)) < R) return 'a';
+    return null;
+  }
+
+  function onTouchStart(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      const p = touchToCanvasPoint(t.clientX, t.clientY);
+      const btn = hitVirtualBtn(p.x, p.y);
+      if (btn === 'up') state.virtualKeys.up = true;
+      else if (btn === 'down') state.virtualKeys.down = true;
+      else if (btn === 'left') state.virtualKeys.left = true;
+      else if (btn === 'right') state.virtualKeys.right = true;
+      else if (btn === 'a') {
+        if (state.phase === 'enemy_turn') state.virtualKeys.jump = true;
+        else if (state.phase === 'player_turn') selectMenu();
+        else if (state.phase === 'fight') confirmFight();
+        else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
+        else if (state.phase === 'intro') nextIntro();
+      } else if (btn === 'b') {
+        if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) { state.phase = 'player_turn'; state.menuIdx = 0; }
+        else if (state.phase === 'player_turn') close();
+      } else {
+        if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && state.c2sfReady) {
+          // Touch inside combat zone → start dragging soul
+          const z = C2SF.state.combatZone;
+          if (p.x >= z.left && p.x <= z.right && p.y >= z.top && p.y <= z.bottom) {
+            state._dragTouchId = t.identifier;
+            C2SF.state.soul.x = Math.max(z.left + 6, Math.min(z.right - 6, p.x));
+            C2SF.state.soul.y = Math.max(z.top + 6, Math.min(z.bottom - 6, p.y));
+            C2SF.state.soul.vx = 0; C2SF.state.soul.vy = 0;
+          }
+        }
+      }
+    }
+  }
+
+  function onTouchMove(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (state._dragTouchId === t.identifier && state.phase === 'enemy_turn' && typeof C2SF !== 'undefined') {
+        const p = touchToCanvasPoint(t.clientX, t.clientY);
+        const z = C2SF.state.combatZone;
+        C2SF.state.soul.x = Math.max(z.left + 6, Math.min(z.right - 6, p.x));
+        C2SF.state.soul.y = Math.max(z.top + 6, Math.min(z.bottom - 6, p.y));
+        C2SF.state.soul.vx = 0; C2SF.state.soul.vy = 0;
+      }
+    }
+  }
+
+  function onTouchEnd(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      const p = touchToCanvasPoint(t.clientX, t.clientY);
+      const btn = hitVirtualBtn(p.x, p.y);
+      if (btn === 'up') state.virtualKeys.up = false;
+      else if (btn === 'down') state.virtualKeys.down = false;
+      else if (btn === 'left') state.virtualKeys.left = false;
+      else if (btn === 'right') state.virtualKeys.right = false;
+      else if (btn === 'a' && state.virtualKeys.jump) state.virtualKeys.jump = false;
+      if (state._dragTouchId === t.identifier) state._dragTouchId = null;
+    }
   }
 
   // =============== INTRO ===============
@@ -631,36 +725,39 @@
     if (state.phase !== 'enemy_turn') return;
     if (typeof C2SF === 'undefined' || !state.c2sfReady) { console.log("[BATTLE] checkEnemyTurn SKIP - c2sfReady=" + state.c2sfReady); return; }
 
-    // Soul movement
     const cs = C2SF.state.soul;
     const z = C2SF.state.combatZone;
     const speed = 4.2;
     const keys = state.keys;
 
-    if (cs.mode === 1) {
-      if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
-      if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
-      if (keys['arrowup'] || keys['w'] || state.virtualKeys.up) cs.y -= speed;
-      if (keys['arrowdown'] || keys['s'] || state.virtualKeys.down) cs.y += speed;
-    } else {
-      if ((keys[' '] || keys['arrowup'] || keys['w'] || state.virtualKeys.jump) && cs.onGround) {
-        cs.vy = -8; cs.onGround = false;
-      }
-      if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
-      if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
-      cs.vy = (cs.vy || 0) + 0.55;
-      cs.vy = Math.min(cs.vy, (cs.maxFallSpeed || 750) / 60);
-      cs.y += cs.vy;
-      cs.onGround = false;
-      for (const p of C2SF.state.platforms) {
-        if (cs.vy >= 0 && cs.x >= p.x - 4 && cs.x <= p.x + p.w + 4 &&
-            cs.y >= p.y - 4 && cs.y <= p.y + 12) {
-          cs.y = p.y; cs.vy = 0; cs.onGround = true;
+    if (!state._dragTouchId) {
+      if (cs.mode === 1) {
+        if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
+        if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
+        if (keys['arrowup'] || keys['w'] || state.virtualKeys.up) cs.y -= speed;
+        if (keys['arrowdown'] || keys['s'] || state.virtualKeys.down) cs.y += speed;
+      } else {
+        if ((keys[' '] || keys['arrowup'] || keys['w'] || state.virtualKeys.jump) && cs.onGround) {
+          cs.vy = -8; cs.onGround = false;
+        }
+        if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
+        if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
+        cs.vy = (cs.vy || 0) + 0.55;
+        cs.vy = Math.min(cs.vy, (cs.maxFallSpeed || 750) / 60);
+        cs.y += cs.vy;
+        cs.onGround = false;
+        for (const p of C2SF.state.platforms) {
+          if (cs.vy >= 0 && cs.x >= p.x - 4 && cs.x <= p.x + p.w + 4 &&
+              cs.y >= p.y - 4 && cs.y <= p.y + 12) {
+            cs.y = p.y; cs.vy = 0; cs.onGround = true;
+          }
+        }
+        if (cs.y >= C2SF.CANVAS_H - 6) {
+          cs.y = C2SF.CANVAS_H - 6; cs.vy = 0; cs.onGround = true;
         }
       }
-      if (cs.y >= C2SF.CANVAS_H - 6) {
-        cs.y = C2SF.CANVAS_H - 6; cs.vy = 0; cs.onGround = true;
-      }
+    } else {
+      cs.vy = 0; cs.onGround = false;
     }
     cs.x = Math.max(z.left + 6, Math.min(z.right - 6, cs.x));
     cs.y = Math.max(z.top + 6, Math.min(z.bottom - 6, cs.y));
