@@ -713,12 +713,8 @@
   }
 
   // =============== PUBLIC API ===============
-  window.UndertaleBattle = { startBattle, close };
-
-  // Open in mode menu
-  function openBossSelect() {
-    startBattle();
-  }
+  function openBossSelect() { startBattle(); }
+  window.UndertaleBattle = { startBattle, close, openBossSelect };
   window.openBossSelect = openBossSelect;
 
 })();
