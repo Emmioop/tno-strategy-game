@@ -148,7 +148,7 @@
 
     const modal = document.createElement('div');
     modal.id = 'undertale-battle';
-    modal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100060;display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace;color:#fff;';
+    modal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100060;display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace;color:#fff;overflow:auto;';
     modal.innerHTML = buildBattleHTML();
     document.body.appendChild(modal);
     _battle.modal = modal;
@@ -166,83 +166,90 @@
 
   function buildBattleHTML() {
     const b = _battle;
-    const soulColorMap = { red:'#ff2222', blue:'#4488ff', orange:'#ffaa22', pink:'#ff66aa' };
     return `
-      <div id="ub-root" style="width:min(640px, 96vw, calc(100vh * 1.78));max-width:640px;background:#000;border:3px solid #fff;padding:clamp(10px,2.5vw,16px);position:relative;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;">
-          <div style="font-size:clamp(14px,3vw,18px);color:${BOSS.color};font-weight:bold;letter-spacing:2px;">${BOSS.name}</div>
-          <div style="font-size:clamp(9px,2vw,11px);color:#888;">${BOSS.title}</div>
+      <div id="ub-root" style="
+        display:flex;flex-direction:column;
+        width:min(640px,96vw,calc(100dvh*1.5));
+        max-width:640px;max-height:min(100dvh,100vh);
+        background:#000;border:3px solid #fff;padding:10px;
+        position:relative;overflow:auto;box-sizing:border-box;">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:4px;flex-shrink:0;">
+          <div style="font-size:16px;color:${BOSS.color};font-weight:bold;letter-spacing:2px;">${BOSS.name}</div>
+          <div style="font-size:10px;color:#888;">${BOSS.title}</div>
         </div>
 
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <div style="flex:1;">
+        <div style="display:flex;gap:6px;margin-bottom:6px;flex-shrink:0;">
+          <div style="flex:1;min-width:0;">
             <div style="background:#1a1a1a;height:8px;border:1px solid #fff;border-radius:2px;overflow:hidden;">
-              <div id="ub-boss-hp" style="background:linear-gradient(90deg,#ff2222,#ff8800);height:100%;width:${b.sanshp / BOSS.sanshp * 100}%;transition:width 0.3s;"></div>
+              <div id="ub-boss-hp" style="background:linear-gradient(90deg,#ff2222,#ff8800);height:100%;width:${b.sanshp/BOSS.sanshp*100}%;transition:width 0.3s;"></div>
             </div>
-            <div style="font-size:9px;margin-top:2px;color:#aaa;">sanshp ${b.sanshp}/${BOSS.sanshp} · sansoverturn ${Math.max(0, BOSS.sansoverturn - b.turn)}</div>
+            <div style="font-size:9px;margin-top:2px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">sanshp ${b.sanshp}/${BOSS.sanshp} · sansoverturn ${Math.max(0,BOSS.sansoverturn-b.turn)}</div>
           </div>
-          <div style="font-size:clamp(9px,2vw,11px);color:#ff4444;display:flex;align-items:center;letter-spacing:2px;">
-            KILLS ${b.sanskills}
-          </div>
+          <div style="font-size:10px;color:#ff4444;display:flex;align-items:center;letter-spacing:2px;white-space:nowrap;">KILLS ${b.sanskills}</div>
         </div>
 
-        <div style="background:#0a0a0a;border:2px solid #444;height:clamp(90px,24vw,140px);display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;user-select:none;-webkit-user-select:none;overflow:hidden;">
-          <div id="ub-sans-sprite" style="font-size:clamp(42px,12vw,72px);color:${BOSS.color};text-shadow:0 0 20px ${BOSS.color},0 0 40px #4488ff80;transition:filter 0.15s, text-shadow 0.15s;">☠</div>
+        <div style="background:#0a0a0a;border:2px solid #444;height:90px;min-height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;position:relative;user-select:none;-webkit-user-select:none;overflow:hidden;flex-shrink:0;">
+          <div id="ub-sans-sprite" style="font-size:56px;color:${BOSS.color};text-shadow:0 0 20px ${BOSS.color},0 0 40px #4488ff80;transition:filter 0.15s,text-shadow 0.15s;">☠</div>
           <div id="ub-sans-effect" style="position:absolute;inset:0;pointer-events:none;"></div>
           <div id="ub-battle-hint" style="display:none;position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:11px;color:#ffcc00;letter-spacing:2px;text-shadow:0 0 6px #ffcc00;pointer-events:none;">TAP / SPACE</div>
         </div>
 
-        <div style="background:#1a1a2a;border:2px solid #444;padding:clamp(8px,2vw,12px);min-height:56px;margin-bottom:8px;">
-          <div id="ub-dialog" style="font-size:clamp(12px,2.8vw,14px);line-height:1.5;color:#ddd;white-space:pre-wrap;"></div>
+        <div style="background:#1a1a2a;border:2px solid #444;padding:10px;min-height:48px;margin-bottom:6px;flex-shrink:0;">
+          <div id="ub-dialog" style="font-size:13px;line-height:1.5;color:#ddd;white-space:pre-wrap;"></div>
         </div>
 
-        <div id="ub-bullet-area" style="background:#000;border:2px solid #0f0;height:clamp(160px,38vw,220px);margin-bottom:8px;position:relative;overflow:hidden;display:none;touch-action:none;">
+        <div id="ub-bullet-area" style="
+          background:#000;border:2px solid #0f0;
+          min-height:140px;flex:1 1 160px;
+          margin-bottom:6px;position:relative;overflow:hidden;
+          display:none;touch-action:none;">
           <canvas id="ub-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
           <div id="ub-soul-indicator" style="position:absolute;top:4px;right:6px;font-size:9px;color:#666;pointer-events:none;"></div>
           <div id="ub-soul-mode" style="position:absolute;top:14px;right:6px;font-size:8px;color:#aaa;pointer-events:none;letter-spacing:1px;"></div>
-          <div id="ub-dpad" style="position:absolute;left:4px;bottom:4px;width:clamp(88px,22vw,120px);height:clamp(88px,22vw,120px);z-index:5;pointer-events:none;">
-            <button data-dir="up"    style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▲</button>
-            <button data-dir="left"  style="position:absolute;top:50%;left:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">◀</button>
-            <button data-dir="right" style="position:absolute;top:50%;right:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▶</button>
-            <button data-dir="down"  style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▼</button>
+          <div id="ub-dpad" style="position:absolute;left:6px;bottom:6px;width:88px;height:88px;z-index:5;pointer-events:none;">
+            <button data-dir="up"    style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▲</button>
+            <button data-dir="left"  style="position:absolute;top:50%;left:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">◀</button>
+            <button data-dir="right" style="position:absolute;top:50%;right:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▶</button>
+            <button data-dir="down"  style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▼</button>
           </div>
-          <button id="ub-jump-btn" style="position:absolute;right:4px;bottom:4px;width:clamp(56px,14vw,80px);height:clamp(56px,14vw,80px);border:2px solid #ffffff90;background:#00000070;color:#ffe066;font-family:inherit;font-size:clamp(12px,3vw,16px);font-weight:bold;border-radius:50%;z-index:5;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;letter-spacing:1px;cursor:pointer;">JUMP</button>
+          <button id="ub-jump-btn" style="position:absolute;right:6px;bottom:6px;width:56px;height:56px;border:2px solid #ffffff90;background:#00000070;color:#ffe066;font-family:inherit;font-size:12px;font-weight:bold;border-radius:50%;z-index:5;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;letter-spacing:1px;cursor:pointer;">JUMP</button>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;flex-wrap:wrap;gap:4px;">
-          <div style="font-size:clamp(11px,2.6vw,13px);"><span style="color:#ffcc00;">YOU</span><span style="margin-left:10px;color:#aaa;">ATK ${b.player.atk} · DEF ${b.player.def}</span></div>
-          <div style="font-size:clamp(9px,2vw,11px);color:#666;">回合 ${b.turn} · Phase ${b.phaseIndex + 1}/${BATTLE_PHASES.length}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;gap:4px;flex-shrink:0;">
+          <div style="font-size:12px;white-space:nowrap;"><span style="color:#ffcc00;">YOU</span><span style="margin-left:8px;color:#aaa;">ATK ${b.player.atk}·DEF ${b.player.def}</span></div>
+          <div style="font-size:9px;color:#666;white-space:nowrap;">回合 ${b.turn} · Phase ${b.phaseIndex+1}/${BATTLE_PHASES.length}</div>
         </div>
 
-        <div style="display:flex;gap:4px;margin-bottom:4px;">
-          <div style="flex:2;">
-            <div style="background:#1a1a1a;height:10px;border:2px solid #ffcc00;border-radius:2px;overflow:hidden;position:relative;">
+        <div style="display:flex;gap:4px;margin-bottom:3px;flex-shrink:0;">
+          <div style="flex:2;min-width:0;">
+            <div style="background:#1a1a1a;height:10px;border:2px solid #ffcc00;border-radius:2px;overflow:hidden;">
               <div id="ub-player-hp-yellow" style="background:linear-gradient(90deg,#ffcc00,#ffee44);height:100%;width:100%;transition:width 0.2s;"></div>
             </div>
           </div>
-          <div style="flex:1;">
-            <div style="background:#1a1a1a;height:10px;border:2px solid #8800cc;border-radius:2px;overflow:hidden;position:relative;">
+          <div style="flex:1;min-width:0;">
+            <div style="background:#1a1a1a;height:10px;border:2px solid #8800cc;border-radius:2px;overflow:hidden;">
               <div id="ub-player-kr" style="background:linear-gradient(90deg,#8800cc,#cc44ff);height:100%;width:0%;transition:width 0.2s;"></div>
             </div>
           </div>
         </div>
-        <div id="ub-hp-text" style="font-size:9px;margin-bottom:4px;color:#aaa;">HP ${b.player.hp}/${b.player.maxHp} &nbsp;|&nbsp; KR ${b.player.karma}/${b.player.karmaMax}</div>
+        <div id="ub-hp-text" style="font-size:9px;margin-bottom:3px;color:#aaa;flex-shrink:0;">HP ${b.player.hp}/${b.player.maxHp} &nbsp;|&nbsp; KR ${b.player.karma}/${b.player.karmaMax}</div>
 
-        <div style="margin-bottom:8px;">
+        <div style="margin-bottom:6px;flex-shrink:0;">
           <div style="background:#1a1a1a;height:6px;border:1px solid #888;border-radius:2px;overflow:hidden;">
             <div id="ub-mercy" style="background:#00ffff;height:100%;width:0%;transition:width 0.3s;"></div>
           </div>
           <div style="font-size:9px;margin-top:2px;color:#666;text-align:right;">MERCY ${b.player.mercy}/${BOSS.mercyThreshold}</div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+        <div id="ub-menu-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;flex-shrink:0;position:sticky;bottom:0;background:#000;padding-top:4px;">
           ${['FIGHT','ACT','ITEM','MERCY'].map((l) => `
-            <button id="ub-${l.toLowerCase()}" style="background:#000;border:2px solid #fff;color:#fff;padding:clamp(8px,2vw,12px) 4px;font-family:inherit;font-size:clamp(12px,2.8vw,15px);cursor:pointer;letter-spacing:2px;min-height:44px;touch-action:manipulation;"
+            <button id="ub-${l.toLowerCase()}" style="background:#000;border:2px solid #fff;color:#fff;padding:10px 2px;font-family:inherit;font-size:13px;cursor:pointer;letter-spacing:2px;min-height:44px;touch-action:manipulation;"
               onmouseover="this.style.background='#fff';this.style.color='#000'" onmouseout="this.style.background='#000';this.style.color='#fff'">${l}</button>
           `).join('')}
         </div>
 
-        <div id="ub-close-x" style="position:absolute;top:6px;right:10px;color:#888;cursor:pointer;font-size:14px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;">✕</div>
+        <div id="ub-close-x" style="position:absolute;top:6px;right:10px;color:#888;cursor:pointer;font-size:14px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;z-index:10;">✕</div>
       </div>
     `;
   }
@@ -290,6 +297,8 @@
     ['ub-fight', 'ub-act', 'ub-item', 'ub-mercy'].forEach(id => {
       _battle.modal.querySelector('#' + id).disabled = !enabled;
     });
+    const bar = _battle.modal.querySelector('#ub-menu-bar');
+    if (bar) bar.style.display = enabled ? 'grid' : 'none';
   }
 
   function showIntroSequence() {
