@@ -593,7 +593,7 @@ const UI = {
       }
     };
     const battleBtn = document.getElementById('btn-battle');
-    if (battleBtn) battleBtn.onclick = () => { if (window.UndertaleBattle) window.UndertaleBattle.openBossSelect(); };
+    if (battleBtn) battleBtn.onclick = () => { window.location.href = 'sans/index.html'; };
     const dbgBtn = document.getElementById('btn-debug');
     if (dbgBtn) dbgBtn.onclick = () => this.toggleDebugPanel();
 
@@ -650,7 +650,7 @@ const UI = {
     document.getElementById('m-btn-save').onclick = () => this.showSavePanel('save');
     document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
     const mBattle = document.getElementById('m-btn-battle');
-    if (mBattle) mBattle.onclick = () => { if (window.UndertaleBattle) window.UndertaleBattle.openBossSelect(); };
+    if (mBattle) mBattle.onclick = () => { window.location.href = 'sans/index.html'; };
     const mDebug = document.getElementById('m-btn-debug');
     if (mDebug) mDebug.onclick = () => this.toggleDebugPanel();
 
