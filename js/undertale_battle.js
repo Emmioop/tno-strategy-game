@@ -232,11 +232,11 @@
         else if (state.phase === 'player_turn') close();
       } else {
         if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && state.c2sfReady) {
-          const z = C2SF.state.combatZone;
-          if (p.x >= z.left && p.x <= z.right && p.y >= z.top && p.y <= z.bottom) {
+          const z = C2SF.state.cz;
+          if (p.x >= z.l && p.x <= z.r && p.y >= z.t && p.y <= z.b) {
             state._dragTouchId = t.identifier;
-            C2SF.state.soul.x = Math.max(z.left + 6, Math.min(z.right - 6, p.x));
-            C2SF.state.soul.y = Math.max(z.top + 6, Math.min(z.bottom - 6, p.y));
+            C2SF.state.soul.x = Math.max(z.l + 6, Math.min(z.r - 6, p.x));
+            C2SF.state.soul.y = Math.max(z.t + 6, Math.min(z.b - 6, p.y));
             C2SF.state.soul.vx = 0; C2SF.state.soul.vy = 0;
           }
         }
@@ -249,9 +249,9 @@
       const t = e.changedTouches[i];
       if (state._dragTouchId === t.identifier && state.phase === 'enemy_turn' && typeof C2SF !== 'undefined') {
         const p = touchToCanvasPoint(t.clientX, t.clientY);
-        const z = C2SF.state.combatZone;
-        C2SF.state.soul.x = Math.max(z.left + 6, Math.min(z.right - 6, p.x));
-        C2SF.state.soul.y = Math.max(z.top + 6, Math.min(z.bottom - 6, p.y));
+        const z = C2SF.state.cz;
+        C2SF.state.soul.x = Math.max(z.l + 6, Math.min(z.r - 6, p.x));
+        C2SF.state.soul.y = Math.max(z.t + 6, Math.min(z.b - 6, p.y));
         C2SF.state.soul.vx = 0; C2SF.state.soul.vy = 0;
       }
     }
@@ -903,12 +903,12 @@
     if (typeof C2SF === 'undefined' || !state.c2sfReady) return;
 
     const cs = C2SF.state.soul;
-    const z = C2SF.state.combatZone;
+    const z = C2SF.state.cz;
     const speed = 4.2;
     const keys = state.keys;
 
     if (!state._dragTouchId) {
-      if (cs.mode === 1) {
+      if (cs.mode === 0) {
         if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
         if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
         if (keys['arrowup'] || keys['w'] || state.virtualKeys.up) cs.y -= speed;
@@ -929,19 +929,19 @@
             cs.y = p.y; cs.vy = 0; cs.onGround = true;
           }
         }
-        if (cs.y >= C2SF.CANVAS_H - 6) {
-          cs.y = C2SF.CANVAS_H - 6; cs.vy = 0; cs.onGround = true;
+        if (cs.y >= C2SF.CH - 6) {
+          cs.y = C2SF.CH - 6; cs.vy = 0; cs.onGround = true;
         }
       }
     } else {
       cs.vy = 0; cs.onGround = false;
     }
-    cs.x = Math.max(z.left + 6, Math.min(z.right - 6, cs.x));
-    cs.y = Math.max(z.top + 6, Math.min(z.bottom - 6, cs.y));
+    cs.x = Math.max(z.l + 6, Math.min(z.r - 6, cs.x));
+    cs.y = Math.max(z.t + 6, Math.min(z.b - 6, cs.y));
 
     C2SF.update();
 
-    const hit = C2SF.collidesBullet();
+    const hit = C2SF.hitTest();
     if (hit && state.soulTeleportCooldown <= 0) {
       state.soulTeleportCooldown = 12;
 
