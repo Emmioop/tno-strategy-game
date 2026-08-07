@@ -1,6 +1,6 @@
-// ===== Undertale Sans BOSS 战引擎 v92 =====
-// 渲染全面升级：震动、伤害飘字接收、BHUTE 风格 UI、HP/KR 血条、FIGHT mini-game
-// 固定 640x480 内部分辨率，CSS object-fit:contain 自动横竖屏
+// ===== Undertale Sans BOSS 战引擎 v100 =====
+// 全面抄BHUTE风格: FIGHT mini-game, Karma紫血, 异色瞳Sans, 震动/飘字, 结局画面
+// 固定 640x480 内部分辨率, CSS object-fit:contain 自动横竖屏
 
 (function () {
   'use strict';
@@ -11,7 +11,6 @@
     name: '德衫',
     sanshp: 1,
     sansoverturn: 11,
-    color: '#e0c080',
     mercyThreshold: 60,
     introLines: [
       '* 雪地里传来一阵低语...',
@@ -28,6 +27,7 @@
     flirtText: '* "..."\n* "别这样。"',
     onSpareText: '* MERCY 成功！\n* "下次别再让我看见你了。"',
     onKillText: '* 你被彻底消灭了。',
+    onHitText: '* "好痛..."',
   };
 
   const PLAYER = { maxHp: 92, atk: 19, def: 9, lv: 19, name: 'CHARA' };
@@ -60,17 +60,8 @@
     { csv: 'sans_bonestab1.csv',         name: 'BoneStab 1',      dur: 5000 },
     { csv: 'sans_bonestab2.csv',         name: 'BoneStab 2',      dur: 5000 },
     { csv: 'sans_bonestab3.csv',         name: 'BoneStab 3',      dur: 5000 },
-    { csv: 'sans_final.csv',             name: 'Final Step_2',    dur: 12000 },
+    { csv: 'sans_final.csv',             name: 'Final Step_2',    dur: 15000 },
   ];
-
-  const BHUTE_PATH = 'assets/c2sf_bhute/';
-
-  const UI_SPRITES = {
-    hpTop: null, hpBottom: null, hpName: null, krName: null,
-    fightBtn: null, actBtn: null, itemBtn: null, mercyBtn: null,
-    target条: null,
-    attackFrames: [],
-  };
 
   const state = {
     phase: 'intro',
@@ -81,52 +72,23 @@
     sansX: 320,
     player: { hp: PLAYER.maxHp, maxHp: PLAYER.maxHp, karma: 0, mercy: 0, items: [2,1,1,1], atk: PLAYER.atk, def: PLAYER.def, lv: PLAYER.lv },
     soulTeleportCooldown: 0,
-    dialog: '', dialogTimer: 0, dialogNextCb: null,
+    dialog: '', dialogTimer: 0,
     introIdx: 0,
-    menuIdx: 0, menus: [],
+    menuIdx: 0,
     fightBarPos: 0, fightDir: 1, fightActive: false,
-    hitFlash: 0,
-    sansSlamT: 0,
+    fightTargetCenter: 0.5,
+    sansHurtT: 0,
     c2sfIdx: 0, c2sfStart: 0,
     keys: {}, virtualKeys: { up:false,down:false,left:false,right:false,confirm:false,jump:false },
-    dpr: 1,
+    isMobile: false,
+    shakeT: 0,
     // Sans 动画
     sansBlinkTimer: 0,
     sansEyeGlow: 0,
-    // FIGHT mini-game target
-    fightTargetX: 0.5,
+    // FIGHT 动画帧
+    attackFrame: 0,
+    attackFrameTimer: 0,
   };
-
-  // ============= UI Sprite Loading =============
-  function loadUISprites() {
-    const defs = [
-      ['hpTop',     'spr_hp_top_0.png'],
-      ['hpBottom',  'spr_hp_bottom_0.png'],
-      ['hpName',    'spr_hpname_0.png'],
-      ['krName',    'spr_kr_0.png'],
-      ['fightBtn',  'spr_fight_0.png'],
-      ['actBtn',    'spr_act_0.png'],
-      ['itemBtn',   'spr_item_0.png'],
-      ['mercyBtn',  'spr_mercy_0.png'],
-      ['target条',  'spr_target_0.png'],
-    ];
-    const proms = defs.map(([key, file]) => new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => { UI_SPRITES[key] = img; resolve(); };
-      img.onerror = () => resolve();
-      img.src = BHUTE_PATH + file;
-    }));
-    // Attack frames
-    for (let i = 0; i < 25; i++) {
-      proms.push(new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => { UI_SPRITES.attackFrames[i] = img; resolve(); };
-        img.onerror = () => resolve();
-        img.src = BHUTE_PATH + `spr_attack_${i}.png`;
-      }));
-    }
-    return Promise.all(proms);
-  }
 
   function close() {
     window.removeEventListener('keydown', onKeyDown);
@@ -152,6 +114,9 @@
     state.player.items = [2,1,1,1];
     state.keys = {};
     state.virtualKeys = { up:false,down:false,left:false,right:false,confirm:false,jump:false };
+    state.sansX = 320;
+    state.sansHurtT = 0;
+    state.shakeT = 0;
 
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100060;display:flex;align-items:center;justify-content:center;overflow:hidden;';
@@ -165,7 +130,6 @@
     state.ctx.imageSmoothingEnabled = false;
 
     setupInput();
-    loadUISprites();
 
     if (typeof C2SF !== 'undefined') {
       C2SF.loadSpriteSheet().then(() => {
@@ -223,6 +187,7 @@
     else if (state.phase === 'player_turn') selectMenu();
     else if (state.phase === 'fight') confirmFight();
     else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
+    else if (state.phase === 'defeat' || state.phase === 'victory') close();
   }
 
   function touchToCanvasPoint(clientX, clientY) {
@@ -261,6 +226,7 @@
         else if (state.phase === 'fight') confirmFight();
         else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
         else if (state.phase === 'intro') nextIntro();
+        else if (state.phase === 'defeat' || state.phase === 'victory') close();
       } else if (btn === 'b') {
         if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) { state.phase = 'player_turn'; state.menuIdx = 0; }
         else if (state.phase === 'player_turn') close();
@@ -300,7 +266,7 @@
       else if (btn === 'down') state.virtualKeys.down = false;
       else if (btn === 'left') state.virtualKeys.left = false;
       else if (btn === 'right') state.virtualKeys.right = false;
-      else if (btn === 'a' && state.virtualKeys.jump) state.virtualKeys.jump = false;
+      else if (btn === 'a') state.virtualKeys.jump = false;
       if (state._dragTouchId === t.identifier) state._dragTouchId = null;
     }
   }
@@ -318,52 +284,49 @@
     const ctx = state.ctx;
     if (!ctx) return;
 
-    // 屏幕震动 —— 整个 canvas 偏移
     let shakeX = 0, shakeY = 0;
     if (typeof C2SF !== 'undefined' && C2SF.state) {
       const s = C2SF.state.shake;
-      if (s > 0) { shakeX = (Math.random()*2-1) * 10 * s; shakeY = (Math.random()*2-1) * 10 * s; }
+      if (s > 0) { shakeX = (Math.random()*2-1) * 12 * s; shakeY = (Math.random()*2-1) * 12 * s; }
     }
+    if (state.shakeT > 0) {
+      shakeX += (Math.random()*2-1) * 6 * state.shakeT;
+      shakeY += (Math.random()*2-1) * 6 * state.shakeT;
+      state.shakeT -= 0.05;
+    }
+
     ctx.save();
     ctx.translate(shakeX, shakeY);
 
-    // 背景（Dusttale 暗紫色调）
     ctx.fillStyle = '#0c0a1a';
     ctx.fillRect(-20, -20, CW + 40, CH + 40);
 
-    // 命中红闪
-    if (state.hitFlash > 0) {
-      ctx.fillStyle = `rgba(255,50,50,${state.hitFlash})`;
+    if (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.blackScreen > 0) {
+      ctx.fillStyle = '#000';
       ctx.fillRect(-20, -20, CW + 40, CH + 40);
     }
 
-    // Sans
     drawSans(ctx);
 
-    // Dialog box top
     drawDialog(ctx);
 
-    // Battle area (C2SF 弹幕层)
     if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && state.c2sfReady) {
       C2SF.draw(ctx);
     } else {
       drawBattleAreaFrame(ctx);
     }
 
-    // UI - HP, KR, menu buttons
     drawUI(ctx);
 
-    // Virtual keys on mobile
-    if (state.isMobile && state.phase !== 'enemy_turn') drawVirtualKeys(ctx);
-    if (state.isMobile && state.phase === 'enemy_turn') drawVirtualKeysBattle(ctx);
+    if (state.phase === 'defeat') drawDefeatScreen(ctx);
+    if (state.phase === 'victory') drawVictoryScreen(ctx);
+
+    if (state.isMobile && state.phase !== 'defeat' && state.phase !== 'victory') {
+      if (state.phase === 'enemy_turn') drawVirtualKeysBattle(ctx);
+      else drawVirtualKeys(ctx);
+    }
 
     ctx.restore();
-
-    // 黑屏过渡（clip 外）
-    if (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.blackScreen > 0) {
-      ctx.fillStyle = 'rgba(0,0,0,1)';
-      ctx.fillRect(0, 0, CW, CH);
-    }
   }
 
   function drawBattleAreaFrame(ctx) {
@@ -372,32 +335,37 @@
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(bx, by, bw, bh);
     ctx.restore();
   }
 
-  // BHUTE 风格 Sans 绘制（更精致的骷髅 + 异色瞳 + 表情）
   function drawSans(ctx) {
     const sx = state.sansX;
     const sy = 180;
 
-    // Hoodie body（完整）
     ctx.save();
-    // Hoodie 阴影
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(sx - 32, sy - 20, 64, 90);
-    // Hoodie 主体
+
+    // Hurt flash
+    if (state.sansHurtT > 0) {
+      ctx.globalAlpha = state.sansHurtT;
+      ctx.fillStyle = '#ff3333';
+      ctx.fillRect(sx - 40, sy - 60, 80, 170);
+      ctx.globalAlpha = 1;
+    }
+
+    // Hoodie body
     ctx.fillStyle = '#1a1a2a';
     ctx.fillRect(sx - 30, sy - 20, 60, 85);
-    // Hoodie 帽子（后）
     ctx.fillStyle = '#12121e';
     ctx.beginPath();
     ctx.arc(sx, sy - 38, 34, Math.PI * 0.95, Math.PI * 2.05);
     ctx.fill();
-    // Hoodie 帽子（前）
+    ctx.fillStyle = '#151522';
     ctx.beginPath();
     ctx.arc(sx, sy - 40, 30, Math.PI * 1.05, Math.PI * 1.95);
     ctx.fill();
-    // 胸前口袋
+    // 口袋
     ctx.fillStyle = '#222238';
     ctx.fillRect(sx - 16, sy + 10, 32, 20);
     // 抽绳
@@ -413,12 +381,11 @@
     ctx.fillRect(sx - 26, sy + 98, 26, 10);
     ctx.fillRect(sx + 0, sy + 98, 26, 10);
 
-    // Skull（有呼吸感，轻微上下浮动）
+    // Skull — 呼吸感浮动
     const bob = Math.sin(Date.now() / 400) * 1.5;
     ctx.save();
     ctx.translate(sx, sy - 35 + bob);
 
-    // Skull 主体（白色，有阴影）
     ctx.fillStyle = '#e8e8e8';
     ctx.beginPath();
     ctx.ellipse(0, 0, 26, 28, 0, 0, Math.PI * 2);
@@ -428,42 +395,41 @@
     ctx.ellipse(-4, 2, 22, 22, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eye sockets（深黑 + 柔化边缘）
+    // 眼窝
     ctx.fillStyle = '#05050a';
     ctx.beginPath(); ctx.ellipse(-9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(+9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
 
-    // Left eye — 蓝色 glow (Dusttale 异色瞳)
+    // 左瞳 — 蓝色 (Dusttale异色瞳)
+    const leftGlow = 0.7 + Math.sin(Date.now() / 280) * 0.3;
     ctx.save();
-    const glowIntensity = 0.6 + Math.sin(Date.now() / 300) * 0.2;
     ctx.shadowColor = '#4488ff';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 12 * leftGlow;
     ctx.fillStyle = '#4488ff';
     ctx.beginPath(); ctx.arc(-9, -1, 3, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
-    // Right eye — 红色 laser（Gaster Blaster 激光预警）
+    // 右瞳 — 红色激光 (Gaster Blaster)
+    const rightGlow = 0.8 + Math.sin(Date.now() / 220 + 1) * 0.2;
     ctx.save();
     ctx.shadowColor = '#ff3333';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 14 * rightGlow;
     ctx.fillStyle = '#ff3333';
     ctx.beginPath(); ctx.arc(+9, -1, 3, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
-    // Nose
+    // 鼻子
     ctx.fillStyle = '#0a0a0f';
     ctx.beginPath();
     ctx.moveTo(0, 5); ctx.lineTo(-3, 10); ctx.lineTo(3, 10);
     ctx.closePath(); ctx.fill();
 
-    // Teeth/mouth（Undertale 风格）
+    // 嘴/牙
     ctx.strokeStyle = '#0a0a0f';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(-7, 14);
-    ctx.lineTo(+7, 14);
+    ctx.moveTo(-7, 14); ctx.lineTo(+7, 14);
     ctx.stroke();
-    // 牙齿小竖线
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(-5, 14); ctx.lineTo(-5, 19);
@@ -474,12 +440,6 @@
 
     ctx.restore(); // skull
 
-    // Sans Slam 效果
-    if (state.sansSlamT > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.min(1, state.sansSlamT)})`;
-      ctx.fillRect(-50, -50, CW + 100, CH + 100);
-    }
-
     ctx.restore(); // sans
   }
 
@@ -487,14 +447,11 @@
     if (!state.dialog) return;
     ctx.save();
     const dx = 60, dy = 20, dw = CW - 120, dh = 72;
-    // 黑色背景
     ctx.fillStyle = '#000';
     ctx.fillRect(dx, dy, dw, dh);
-    // 白边
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.strokeRect(dx, dy, dw, dh);
-    // 文字
     ctx.fillStyle = '#ffffff';
     ctx.font = '13px "Courier New", monospace';
     ctx.textBaseline = 'top';
@@ -502,119 +459,76 @@
     for (let i = 0; i < lines.length; i++) {
       ctx.fillText(lines[i], dx + 12, dy + 8 + i * 17);
     }
-    // 闪烁 ▼
     if ((Date.now() / 300 | 0) % 2 === 0) {
       ctx.fillText('▼', dx + dw - 18, dy + dh - 16);
     }
     ctx.restore();
   }
 
-  // BHUTE 风格 HP/KR 血条
   function drawHPBar(ctx, x, y, w, h, hp, maxHp, karma) {
     ctx.save();
-
-    // Name label 背景 + 文字
-    const nImg = UI_SPRITES.hpName;
-    if (nImg) {
-      ctx.drawImage(nImg, x, y - 1);
-      ctx.fillStyle = '#000';
-      ctx.font = '10px monospace';
-      ctx.textBaseline = 'top';
-      ctx.fillText(PLAYER.name, x + 4, y + 1);
-    } else {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '11px monospace';
-      ctx.textBaseline = 'top';
-      ctx.fillText(PLAYER.name, x, y);
-    }
-
-    // LV
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '11px monospace';
-    ctx.fillText('LV ' + PLAYER.lv, x + 70, y);
-
-    // Top HP frame
-    const topImg = UI_SPRITES.hpTop;
-    const bottomImg = UI_SPRITES.hpBottom;
-    const barX = x + 110, barY = y - 2;
-    const barW = w - 150, barH = bottomImg ? 10 : h;
-
-    // Bottom (黑底+边框)
-    if (bottomImg) ctx.drawImage(bottomImg, barX, barY - 4, barW, bottomImg.height * (barW / bottomImg.width));
-    else {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(barX, barY, barW, barH);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(barX, barY, barW, barH);
-    }
-
-    // HP 黄色部分
-    const yellowW = Math.max(0, barW * (hp / maxHp));
-    // 被 karma 占据的红色部分
-    const redW = Math.min(barW - yellowW, barW * (karma / maxHp));
-
-    // 黄色（HP）
-    if (yellowW > 0) {
-      ctx.fillStyle = '#ffee44';
-      ctx.fillRect(barX, barY - 1, yellowW, barH + 2);
-    }
-    // 红色（溢出伤害 — 等 Undertale 原版是 KR 占了黄色位置）
-    if (redW > 0) {
-      ctx.fillStyle = '#ff3333';
-      ctx.fillRect(barX + yellowW, barY - 1, redW, barH + 2);
-    }
-
-    // Top frame（盖住填充顶端 → 精致上下框效果）
-    if (topImg) ctx.drawImage(topImg, barX - 2, barY - 8, barW + 4, topImg.height * ((barW + 4) / topImg.width));
-
-    // HP 数值文字
     ctx.fillStyle = '#ffffff';
     ctx.font = '11px monospace';
     ctx.textBaseline = 'top';
-    ctx.fillText(`HP ${hp}/${maxHp}`, barX + barW + 10, y);
+    ctx.fillText(PLAYER.name, x, y);
+    ctx.fillText('LV ' + PLAYER.lv, x + 70, y);
 
-    // KR (Karma — 紫血)
-    const krX = barX + barW + 85;
-    const krImg = UI_SPRITES.krName;
-    if (krImg) ctx.drawImage(krImg, krX, y - 1);
-    ctx.fillStyle = '#cc66ff';
-    const krW = 50;
-    const krFilled = Math.max(0, krW * Math.min(1, karma / maxHp));
-    ctx.fillStyle = '#1a0022';
-    ctx.fillRect(krX + 30, y, krW, barH);
-    ctx.fillStyle = '#aa44ff';
-    ctx.fillRect(krX + 30 + (krW - krFilled), y, krFilled, barH);
+    const barX = x + 110, barY = y - 2;
+    const barW = w - 150, barH = 10;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(barX, barY, barW, barH);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
-    ctx.strokeRect(krX + 30, y, krW, barH);
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    const yellowW = Math.max(0, barW * (hp / maxHp));
+    const redW = Math.min(barW - yellowW, barW * (karma / maxHp));
+
+    if (yellowW > 0) {
+      ctx.fillStyle = '#ffee44';
+      ctx.fillRect(barX, barY, yellowW, barH);
+    }
+    if (redW > 0) {
+      ctx.fillStyle = '#aa44ff';
+      ctx.fillRect(barX + yellowW, barY, redW, barH);
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '11px monospace';
+    ctx.fillText(`HP ${hp}/${maxHp}`, barX + barW + 10, y);
+
+    // KR 标签 + 进度条
+    const krX = barX + barW + 85;
+    ctx.fillStyle = '#cc66ff';
+    ctx.fillText('KR', krX, y);
+    ctx.fillStyle = '#1a0022';
+    ctx.fillRect(krX + 20, y - 1, 50, barH);
+    const krPct = Math.min(1, karma / maxHp);
+    ctx.fillStyle = '#aa44ff';
+    ctx.fillRect(krX + 20, y - 1, 50 * krPct, barH);
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeRect(krX + 20, y - 1, 50, barH);
 
     ctx.restore();
   }
 
-  // BHUTE 风格 Battle UI
   function drawUI(ctx) {
     const b = state.player;
     ctx.save();
 
-    // HP/KR 血条
     drawHPBar(ctx, 70, 322, CW - 140, 12, b.hp, b.maxHp, b.karma);
 
-    // Menu 按钮（BHUTE spr_fight/spr_act/spr_item/spr_mercy 风格）
     if (state.phase === 'player_turn') drawMenuButtons(ctx);
 
     ctx.restore();
 
-    // FIGHT mini-game
     if (state.phase === 'fight') drawFightBar(ctx);
-    if (state.phase === 'fight_target') drawFightTarget(ctx);
 
-    // Sub-menus
-    if (state.phase === 'act_menu' || state.phase === 'item_menu' || state.phase === 'mercy_menu') {
+    if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) {
       drawSubMenu(ctx);
     }
 
-    // Enemy turn indicator
     if (state.phase === 'enemy_turn') {
       ctx.save();
       ctx.fillStyle = '#888';
@@ -623,10 +537,6 @@
       const mode = (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 0) ? 'BLUE' : 'RED';
       const phase = (typeof C2SF !== 'undefined' && C2SF.state) ? C2SF.state.phaseName : '';
       ctx.fillText(`${phase}  ${mode}`, CW - 12, 105);
-      ctx.fillStyle = '#4488ff';
-      ctx.fillRect(CW - 80, 102, 3, 3);
-      ctx.fillStyle = '#ff4444';
-      ctx.fillRect(CW - 76, 102, 3, 3);
       ctx.textAlign = 'left';
       ctx.restore();
     }
@@ -634,10 +544,10 @@
 
   function drawMenuButtons(ctx) {
     const defs = [
-      { label: 'FIGHT', img: UI_SPRITES.fightBtn, col: '#ffee44', key: 'Fight' },
-      { label: 'ACT',   img: UI_SPRITES.actBtn,   col: '#ff8833', key: 'Act' },
-      { label: 'ITEM',  img: UI_SPRITES.itemBtn,  col: '#ff8833', key: 'Item' },
-      { label: 'MERCY', img: UI_SPRITES.mercyBtn, col: '#ff8833', key: 'Mercy' },
+      { label: 'FIGHT', col: '#ffee44' },
+      { label: 'ACT',   col: '#ff8833' },
+      { label: 'ITEM',  col: '#ff8833' },
+      { label: 'MERCY', col: '#88ccff' },
     ];
     const btnY = 358;
     const btnH = 46;
@@ -649,87 +559,74 @@
       const bx = 60 + i * (btnW + btnGap);
       const active = state.menuIdx === i;
 
-      // 使用 BHUTE button sprite 或 fallback
-      if (defs[i].img) {
-        const img = defs[i].img;
-        ctx.save();
-        if (active) {
-          ctx.shadowColor = defs[i].col;
-          ctx.shadowBlur = 8;
-        }
-        ctx.drawImage(img, bx, btnY, btnW, btnH);
-        if (!active) ctx.globalAlpha = 0.7;
-        ctx.fillStyle = active ? defs[i].col : '#999999';
-        ctx.font = 'bold 14px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(defs[i].label, bx + btnW/2, btnY + btnH/2 + 5);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = active ? '#1a1a2e' : '#0a0a14';
-        ctx.fillRect(bx, btnY, btnW, btnH);
-        ctx.strokeStyle = active ? defs[i].col : '#333355';
-        ctx.lineWidth = active ? 2 : 1;
-        ctx.strokeRect(bx, btnY, btnW, btnH);
-        ctx.fillStyle = active ? defs[i].col : '#888';
-        ctx.font = '14px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(defs[i].label, bx + btnW/2, btnY + btnH/2 + 5);
-      }
+      ctx.fillStyle = active ? '#1a1a2e' : '#0a0a14';
+      ctx.fillRect(bx, btnY, btnW, btnH);
+      ctx.strokeStyle = active ? defs[i].col : '#333355';
+      ctx.lineWidth = active ? 2 : 1;
+      ctx.strokeRect(bx, btnY, btnW, btnH);
 
       if (active) {
         ctx.save();
+        ctx.shadowColor = defs[i].col;
+        ctx.shadowBlur = 8;
+      }
+      ctx.fillStyle = active ? defs[i].col : '#888';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(defs[i].label, bx + btnW/2, btnY + btnH/2 + 5);
+      ctx.restore();
+      if (active) {
         ctx.fillStyle = '#ffffff';
         ctx.font = '14px monospace';
-        ctx.fillText('▶', bx + 10, btnY + btnH/2 + 5);
-        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.fillText('▶', bx + 8, btnY + btnH/2 + 5);
       }
     }
     ctx.textAlign = 'left';
   }
 
-  // BHUTE spr_target 风格 FIGHT mini-game —— 完整复刻目标条
   function drawFightBar(ctx) {
     ctx.save();
     const bx = 60, by = 260, bw = CW - 120, bh = 16;
-    // 目标条
-    const target = UI_SPRITES.target条;
-    if (target) {
-      const targetH = target.height * (bw / target.width);
-      ctx.drawImage(target, bx, by - (targetH - bh) / 2, bw, targetH);
-    } else {
-      ctx.fillStyle = '#222';
-      ctx.fillRect(bx, by, bw, bh);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(bx, by, bw, bh);
-    }
-    // 完美区域（绿色条）
-    const sweetX = bx + bw * 0.42, sweetW = bw * 0.16;
-    ctx.fillStyle = 'rgba(100,255,100,0.6)';
-    ctx.fillRect(sweetX, by - 1, sweetW, bh + 2);
 
-    // 指针（攻击帧动画）
+    ctx.fillStyle = '#222';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    // 完美区域
+    const sweetX = bx + bw * 0.42, sweetW = bw * 0.16;
+    ctx.fillStyle = 'rgba(100,255,100,0.5)';
+    ctx.fillRect(sweetX, by, sweetW, bh);
+
+    // 好区域
+    const greatX = bx + bw * 0.35, greatW = bw * 0.30;
+    ctx.fillStyle = 'rgba(255,200,50,0.3)';
+    ctx.fillRect(greatX, by, greatW, bh);
+
+    // 指针
     const px = bx + state.fightBarPos * bw;
-    const frameIdx = Math.floor(state.fightBarPos * UI_SPRITES.attackFrames.length);
-    const frameImg = UI_SPRITES.attackFrames[frameIdx];
-    if (frameImg) {
-      ctx.drawImage(frameImg, px - frameImg.width/2, by - 8, frameImg.width * 1.5, frameImg.height * 1.5);
-    } else {
-      ctx.fillStyle = '#ffee44';
-      ctx.fillRect(px - 3, by - 4, 6, bh + 8);
-    }
+    const frameIdx = Math.floor(state.fightBarPos * 25);
+    ctx.save();
+    ctx.translate(px, by + bh/2);
+    ctx.fillStyle = '#ffee44';
+    ctx.shadowColor = '#ffee44';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, -14); ctx.lineTo(-6, 0); ctx.lineTo(0, 4); ctx.lineTo(6, 0); ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, 14); ctx.lineTo(-6, 0); ctx.lineTo(0, -4); ctx.lineTo(6, 0); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     ctx.fillStyle = '#aaa';
     ctx.font = '10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('TAP / SPACE to STOP', bx + bw/2, by - 12);
+    ctx.fillText('TAP / SPACE / CLICK to STOP', bx + bw/2, by - 12);
     ctx.textAlign = 'left';
     ctx.restore();
-  }
-
-  function drawFightTarget(ctx) {
-    // 保留兼容
-    drawFightBar(ctx);
   }
 
   function drawSubMenu(ctx) {
@@ -764,10 +661,44 @@
     ctx.restore();
   }
 
+  function drawDefeatScreen(ctx) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(0, 0, CW, CH);
+    ctx.fillStyle = '#aa44ff';
+    ctx.font = 'bold 32px monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#aa44ff';
+    ctx.shadowBlur = 20;
+    ctx.fillText('GAME OVER', CW/2, CH/2 - 20);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '14px monospace';
+    ctx.fillText('* 点击 / SPACE 退出', CW/2, CH/2 + 30);
+    ctx.restore();
+  }
+
+  function drawVictoryScreen(ctx) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(0, 0, CW, CH);
+    ctx.fillStyle = '#ffee44';
+    ctx.font = 'bold 28px monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ffee44';
+    ctx.shadowBlur = 20;
+    ctx.fillText('★ 胜利 ★', CW/2, CH/2 - 20);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '14px monospace';
+    ctx.fillText('* 点击 / SPACE 退出', CW/2, CH/2 + 30);
+    ctx.restore();
+  }
+
   function drawVirtualKeys(ctx) {
     ctx.save();
     const dpx = 40, dpy = CH - 100;
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = 0.5;
     ctx.fillStyle = '#4a4a66';
     ctx.beginPath(); ctx.arc(dpx + 30, dpy + 20, 20, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(dpx + 30, dpy + 80, 20, 0, Math.PI*2); ctx.fill();
@@ -796,7 +727,7 @@
 
   function drawVirtualKeysBattle(ctx) {
     ctx.save();
-    ctx.globalAlpha = 0.4;
+    ctx.globalAlpha = 0.35;
     const dpx = 40, dpy = CH - 100;
     ctx.fillStyle = '#4a4a66';
     ctx.beginPath(); ctx.arc(dpx + 30, dpy + 20, 20, 0, Math.PI*2); ctx.fill();
@@ -811,13 +742,12 @@
     ctx.fillText('◀', dpx + 10, dpy + 50);
     ctx.fillText('▶', dpx + 50, dpy + 50);
 
-    // 只在蓝魂时显示 A=JUMP 提示
     if (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 0) {
       const bx = CW - 110, by = CH - 80;
       ctx.fillStyle = '#3a6aff';
       ctx.beginPath(); ctx.arc(bx + 60, by + 15, 22, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px sans-serif';
+      ctx.font = 'bold 14px sans-serif';
       ctx.fillText('JUMP', bx + 60, by + 15);
     }
     ctx.globalAlpha = 1;
@@ -826,8 +756,7 @@
 
   // ============= UPDATE =============
   function update() {
-    state.hitFlash = Math.max(0, state.hitFlash - 0.03);
-    if (state.sansSlamT > 0) state.sansSlamT -= 0.04;
+    if (state.sansHurtT > 0) state.sansHurtT -= 0.05;
 
     if (state.phase === 'player_turn') {
       if (justPressed('arrowleft')) state.menuIdx = Math.max(0, state.menuIdx - 1);
@@ -839,7 +768,7 @@
       if (justPressed('arrowdown')) state.menuIdx++;
     }
     if (state.phase === 'fight') {
-      state.fightBarPos += state.fightDir * 0.015;
+      state.fightBarPos += state.fightDir * 0.014;
       if (state.fightBarPos >= 1) { state.fightBarPos = 1; state.fightDir = -1; }
       if (state.fightBarPos <= 0) { state.fightBarPos = 0; state.fightDir = 1; }
     }
@@ -858,29 +787,43 @@
   function confirmFight() {
     if (state.phase !== 'fight') return;
     const pos = state.fightBarPos;
-    let mult = 0.5, label = 'BAD!';
-    if (pos >= 0.45 && pos <= 0.55) { mult = 2.0; label = 'PERFECT!'; }
-    else if (pos >= 0.38 && pos <= 0.62) { mult = 1.5; label = 'GREAT!'; }
-    else if (pos >= 0.3 && pos <= 0.7) { mult = 1.0; label = 'OK'; }
-    else { mult = 0.7; label = 'MISS'; }
-    state.phase = 'player_turn';
-    state.menuIdx = 0;
+    let mult = 0.5, label = 'MISS!', col = '#666666';
+    if (pos >= 0.44 && pos <= 0.56) { mult = 2.0; label = 'PERFECT!'; col = '#ffee44'; }
+    else if (pos >= 0.38 && pos <= 0.62) { mult = 1.5; label = 'GREAT!'; col = '#ffaa44'; }
+    else if (pos >= 0.3 && pos <= 0.7) { mult = 1.0; label = 'OK'; col = '#aaffaa'; }
+    else { mult = 0.5; label = 'MISS'; col = '#ff6666'; }
 
     const damage = Math.round(PLAYER.atk * mult);
-    state.dialog = `${label} — ${damage} damage!`;
-
-    // 震动 + 伤害飘字
-    if (typeof C2SF !== 'undefined') {
-      C2SF.shookSet(0.6);
-      C2SF.spawnDamageNum(state.sansX, 160, damage);
-      C2SF.spawnDust(state.sansX, 180, 15, '#ffdd44');
-    }
 
     if (state.turn < BOSS.sansoverturn) {
+      // BOSS 闪避
+      state.phase = 'player_turn';
+      state.menuIdx = 0;
       state.dialog = BOSS.dodgeText;
-      setTimeout(() => { state.turn++; startEnemyTurn(); }, 1500);
+      state.shakeT = 0.5;
+      if (typeof C2SF !== 'undefined') {
+        C2SF.shake(0.3);
+        C2SF.spawnDust(state.sansX + 15, 180 - 20, 12);
+        C2SF.spawnDust(state.sansX - 15, 180 - 20, 12);
+      }
+      state.turn++;
+      setTimeout(() => startEnemyTurn(), 1800);
       return;
     }
+
+    // 命中!
+    state.phase = 'player_turn';
+    state.menuIdx = 0;
+    state.dialog = `${label} — ${damage} damage!`;
+    state.sansHurtT = 1.0;
+    state.shakeT = 0.8;
+
+    if (typeof C2SF !== 'undefined') {
+      C2SF.shake(1.2);
+      C2SF.spawnDust(state.sansX, 180, 25);
+      C2SF.spawnDamageText(state.sansX, 140, String(damage), col);
+    }
+
     state.player.mercy += 5;
     state.turn++;
     setTimeout(() => startEnemyTurn(), 1500);
@@ -897,7 +840,8 @@
                    : acts[idx] === 'Talk' ? BOSS.talkText
                    : BOSS.flirtText;
       state.player.mercy += 5;
-      setTimeout(() => { state.turn++; startEnemyTurn(); }, 2000);
+      state.turn++;
+      setTimeout(() => startEnemyTurn(), 2000);
     } else if (p === 'item_menu') {
       let count = 0, idx = -1;
       for (let i = 0; i < ITEMS.length; i++) {
@@ -1000,25 +944,48 @@
     const hit = C2SF.collidesBullet();
     if (hit && state.soulTeleportCooldown <= 0) {
       state.soulTeleportCooldown = 12;
-      state.hitFlash = 1.0;
+
       const dmg = 5;
       state.player.hp -= dmg;
+
+      // Karma紫血：HP < 0 时溢出为 KR
       if (state.player.hp < 0) {
         state.player.karma += -state.player.hp;
         state.player.hp = 0;
+      } else {
+        // HP>0 但 KR 存在时，KR自然减少
+        state.player.karma = Math.max(0, state.player.karma - 2);
       }
+
+      if (typeof C2SF !== 'undefined') {
+        C2SF.shake(0.8);
+        C2SF.hitFlash();
+        C2SF.spawnDamageText(cs.x, cs.y - 20, String(dmg), '#ff4444');
+      }
+
       if (state.player.hp <= 0 && state.player.karma >= PLAYER.maxHp) {
         state.player.hp = 0;
         state.phase = 'defeat';
         state.dialog = BOSS.onKillText;
         return;
       }
+      // HP=0 但 KR < maxHp，玩家不会死，还能继续
+      if (state.player.hp <= 0) {
+        state.player.hp = 0;
+      }
     }
     if (state.soulTeleportCooldown > 0) state.soulTeleportCooldown--;
 
+    // Karma 自动缓慢减少
+    if (state.player.karma > 0 && !hit) {
+      state.player.karma = Math.max(0, state.player.karma - 0.01);
+    }
+
     if (!C2SF.isRunning()) {
       setTimeout(() => {
-        if (state.player.hp > 0) { state.phase = 'player_turn'; state.menuIdx = 0; }
+        if (state.player.hp > 0 || state.player.karma < PLAYER.maxHp) {
+          state.phase = 'player_turn'; state.menuIdx = 0;
+        }
       }, 800);
     }
   }
