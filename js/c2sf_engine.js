@@ -791,6 +791,6 @@ const C2SF = (() => {
     shake: (s) => { state.shake = Math.max(state.shake, s); },
     hitFlash: () => { state.hitFlash = 1.0; },
     spawnDust, spawnDmg,
-    state, CW, CH,
+    state, CW, CH, sp,
   };
 })();

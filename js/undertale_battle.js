@@ -1,6 +1,6 @@
-// ===== Undertale Sans BOSS 战引擎 v100 =====
-// 全面抄BHUTE风格: FIGHT mini-game, Karma紫血, 异色瞳Sans, 震动/飘字, 结局画面
-// 固定 640x480 内部分辨率, CSS object-fit:contain 自动横竖屏
+// ===== Undertale Sans BOSS 战引擎 v110 =====
+// 完整 sans-simulator 贴图版: Sans sprite sheet + speech bubble + HP bar + UI icons + touch buttons
+// 640x480 内部分辨率, CSS object-fit:contain 自动横竖屏放大
 
 (function () {
   'use strict';
@@ -70,30 +70,30 @@
     c2sfReady: false,
     c2sfCache: {},
     sansX: 320,
+    sansBodyFrame: 0, sansBodyFrameTime: 0,
+    sansHeadFrame: 0, sansHeadFrameTime: 0,
+    sansBlinkTimer: 0,
+    sansEyeGlow: 0,
     player: { hp: PLAYER.maxHp, maxHp: PLAYER.maxHp, karma: 0, mercy: 0, items: [2,1,1,1], atk: PLAYER.atk, def: PLAYER.def, lv: PLAYER.lv },
     soulTeleportCooldown: 0,
     dialog: '', dialogTimer: 0,
     introIdx: 0,
     menuIdx: 0,
     fightBarPos: 0, fightDir: 1, fightActive: false,
-    fightTargetCenter: 0.5,
     sansHurtT: 0,
     c2sfIdx: 0, c2sfStart: 0,
-    keys: {}, virtualKeys: { up:false,down:false,left:false,right:false,confirm:false,jump:false },
+    keys: {},
+    virtualKeys: { up:false,down:false,left:false,right:false,confirm:false,jump:false },
     isMobile: false,
     shakeT: 0,
-    // Sans 动画
-    sansBlinkTimer: 0,
-    sansEyeGlow: 0,
-    // FIGHT 动画帧
-    attackFrame: 0,
-    attackFrameTimer: 0,
+    touchDpadHold: 0,
   };
 
   function close() {
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
     window.removeEventListener('resize', onResize);
+    window.removeEventListener('orientationchange', onResize);
     if (state.modal) state.modal.remove();
     state.modal = null;
     state.phase = null;
@@ -121,7 +121,7 @@
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100060;display:flex;align-items:center;justify-content:center;overflow:hidden;';
     modal.innerHTML = `
-      <canvas id="ub-c" width="${CW}" height="${CH}" style="width:100vw;height:100vh;object-fit:contain;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;"></canvas>
+      <canvas id="ub-c" width="${CW}" height="${CH}" style="width:100vw;height:100vh;object-fit:contain;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;"></canvas>
     `;
     document.body.appendChild(modal);
     state.modal = modal;
@@ -153,12 +153,12 @@
   function setupInput() {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
-    state.modal.addEventListener('click', onCanvasClick);
     state.canvas.addEventListener('touchstart', onTouchStart, { passive: false });
     state.canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     state.canvas.addEventListener('touchend', onTouchEnd, { passive: false });
     state.canvas.addEventListener('touchcancel', onTouchEnd, { passive: false });
     window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
     onResize();
   }
 
@@ -182,31 +182,35 @@
   }
   function onKeyUp(e) { state.keys[e.key.toLowerCase()] = false; }
 
-  function onCanvasClick() {
-    if (state.phase === 'intro') nextIntro();
-    else if (state.phase === 'player_turn') selectMenu();
-    else if (state.phase === 'fight') confirmFight();
-    else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
-    else if (state.phase === 'defeat' || state.phase === 'victory') close();
-  }
-
   function touchToCanvasPoint(clientX, clientY) {
     const rect = state.canvas.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left) / rect.width * CW,
-      y: (clientY - rect.top) / rect.height * CH,
-    };
+    // object-fit:contain means canvas letterboxes. Need to account for that.
+    const scale = Math.min(rect.width / CW, rect.height / CH);
+    const drawW = CW * scale;
+    const drawH = CH * scale;
+    const offX = (rect.width - drawW) / 2;
+    const offY = (rect.height - drawH) / 2;
+    const nx = (clientX - rect.left - offX) / scale;
+    const ny = (clientY - rect.top - offY) / scale;
+    return { x: nx, y: ny };
   }
 
   function hitVirtualBtn(px, py) {
-    const dpx = 40, dpy = CH - 100, R = 24;
-    const bx = CW - 110, by = CH - 80;
-    if (Math.hypot(px - (dpx+30), py - (dpy+20)) < R) return 'up';
-    if (Math.hypot(px - (dpx+30), py - (dpy+80)) < R) return 'down';
-    if (Math.hypot(px - (dpx+10), py - (dpy+50)) < R) return 'left';
-    if (Math.hypot(px - (dpx+50), py - (dpy+50)) < R) return 'right';
-    if (Math.hypot(px - (bx+20), py - (by+40)) < R) return 'b';
-    if (Math.hypot(px - (bx+60), py - (by+15)) < R) return 'a';
+    // Left D-Pad cluster (for enemy_turn mode)
+    const cx = 75, cy = CH - 75;
+    if (Math.hypot(px - cx, py - cy) < 40) {
+      const dx = px - cx, dy = py - cy;
+      if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right';
+      return dy < 0 ? 'up' : 'down';
+    }
+    // Right jump/action button cluster
+    const bx = CW - 75, by = CH - 75;
+    if (Math.hypot(px - bx, py - by) < 40) return 'a';
+    // Battlefield drag zone (enemy turn, in combat zone)
+    if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && C2SF.state) {
+      const z = C2SF.state.cz;
+      if (px >= z.l && px <= z.r && py >= z.t && py <= z.b) return 'drag';
+    }
     return null;
   }
 
@@ -227,11 +231,19 @@
         else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
         else if (state.phase === 'intro') nextIntro();
         else if (state.phase === 'defeat' || state.phase === 'victory') close();
-      } else if (btn === 'b') {
-        if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) { state.phase = 'player_turn'; state.menuIdx = 0; }
-        else if (state.phase === 'player_turn') close();
+      } else if (btn === 'drag') {
+        state._dragTouchId = t.identifier;
+        const cs = C2SF.state.soul;
+        const z = C2SF.state.cz;
+        cs.x = Math.max(z.l + 6, Math.min(z.r - 6, p.x));
+        cs.y = Math.max(z.t + 6, Math.min(z.b - 6, p.y));
+        cs.vx = 0; cs.vy = 0;
       } else {
-        if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && state.c2sfReady) {
+        if (state.phase === 'intro') nextIntro();
+        else if (state.phase === 'player_turn') selectMenu();
+        else if (state.phase === 'fight') confirmFight();
+        else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
+        else if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined') {
           const z = C2SF.state.cz;
           if (p.x >= z.l && p.x <= z.r && p.y >= z.t && p.y <= z.b) {
             state._dragTouchId = t.identifier;
@@ -239,7 +251,7 @@
             C2SF.state.soul.y = Math.max(z.t + 6, Math.min(z.b - 6, p.y));
             C2SF.state.soul.vx = 0; C2SF.state.soul.vy = 0;
           }
-        }
+        } else if (state.phase === 'defeat' || state.phase === 'victory') close();
       }
     }
   }
@@ -279,6 +291,18 @@
     else state.dialog = BOSS.introLines[state.introIdx];
   }
 
+  // ============= SPRITE HELPERS =============
+  function getSprite(name) {
+    if (typeof C2SF !== 'undefined' && C2SF.sp) return C2SF.sp[name];
+    return null;
+  }
+
+  function drawSpriteFrame(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) {
+    if (!img || !img.complete || img.naturalWidth === 0) return false;
+    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    return true;
+  }
+
   // ============= DRAW =============
   function draw() {
     const ctx = state.ctx;
@@ -308,29 +332,29 @@
 
     drawSans(ctx);
 
-    drawDialog(ctx);
-
     if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && state.c2sfReady) {
       C2SF.draw(ctx);
     } else {
       drawBattleAreaFrame(ctx);
     }
 
+    drawDialog(ctx);
+
     drawUI(ctx);
 
     if (state.phase === 'defeat') drawDefeatScreen(ctx);
     if (state.phase === 'victory') drawVictoryScreen(ctx);
 
+    // Virtual keys ON TOP (mobile)
     if (state.isMobile && state.phase !== 'defeat' && state.phase !== 'victory') {
-      if (state.phase === 'enemy_turn') drawVirtualKeysBattle(ctx);
-      else drawVirtualKeys(ctx);
+      drawVirtualKeys(ctx);
     }
 
     ctx.restore();
   }
 
   function drawBattleAreaFrame(ctx) {
-    const bx = 133, by = 226, bw = 375, bh = 165;
+    const bx = 239, by = 226, bw = 166, bh = 165;
     ctx.save();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
@@ -341,147 +365,134 @@
   }
 
   function drawSans(ctx) {
+    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
     const sx = state.sansX;
-    const sy = 180;
+    const baseY = 210;
 
     ctx.save();
 
     // Hurt flash
     if (state.sansHurtT > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Sans body sprites - 32x32 frames from 256x256 sheet
+    const body = sp ? sp['sansbody0'] : null;
+    if (body && body.complete && body.naturalWidth > 0) {
+      state.sansBodyFrameTime += 0.016;
+      if (state.sansBodyFrameTime > 0.15) {
+        state.sansBodyFrameTime = 0;
+        state.sansBodyFrame = (state.sansBodyFrame + 1) % 4;
+      }
+      const fw = body.naturalWidth / 8;
+      const fh = body.naturalHeight / 8;
+      const bob = Math.sin(Date.now() / 300) * 1;
+      // body center frame
+      ctx.drawImage(body, state.sansBodyFrame * fw, 0, fw, fh,
+                    sx - 48, baseY - 24 + bob, 96, 96);
+      ctx.drawImage(body, state.sansBodyFrame * fw, fh, fw, fh,
+                    sx - 48, baseY + 48 + bob, 96, 96);
+    } else {
+      // Fallback: hoodie
+      ctx.fillStyle = '#1a1a2a';
+      ctx.fillRect(sx - 30, baseY - 20, 60, 85);
+    }
+
+    // Sans head - 32x32 frames from 128x128 sheet
+    const head = sp ? sp['sanshead'] : null;
+    if (head && head.complete && head.naturalWidth > 0) {
+      state.sansHeadFrameTime += 0.016;
+      if (state.sansHeadFrameTime > 0.03) {
+        state.sansHeadFrameTime = 0;
+        state.sansHeadFrame++;
+      }
+      const fw = head.naturalWidth / 4;
+      const fh = head.naturalHeight / 4;
+      const bob = Math.sin(Date.now() / 400) * 1.5;
+      ctx.drawImage(head, (state.sansHeadFrame % 4) * fw, 0, fw, fh,
+                    sx - 40, baseY - 60 + bob, 80, 80);
+    } else {
+      // Fallback skull
+      const bob = Math.sin(Date.now() / 400) * 1.5;
+      ctx.save();
+      ctx.translate(sx, baseY - 35 + bob);
+      ctx.fillStyle = '#e8e8e8';
+      ctx.beginPath(); ctx.ellipse(0, 0, 26, 28, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#05050a';
+      ctx.beginPath(); ctx.ellipse(-9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(+9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#4488ff'; ctx.beginPath(); ctx.arc(-9, -1, 3, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(+9, -1, 3, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(-7, 14); ctx.lineTo(+7, 14); ctx.stroke();
+      ctx.restore();
+    }
+
+    if (state.sansHurtT > 0) {
       ctx.globalAlpha = state.sansHurtT;
       ctx.fillStyle = '#ff3333';
-      ctx.fillRect(sx - 40, sy - 60, 80, 170);
+      ctx.fillRect(sx - 60, baseY - 70, 120, 150);
       ctx.globalAlpha = 1;
     }
 
-    // Hoodie body
-    ctx.fillStyle = '#1a1a2a';
-    ctx.fillRect(sx - 30, sy - 20, 60, 85);
-    ctx.fillStyle = '#12121e';
-    ctx.beginPath();
-    ctx.arc(sx, sy - 38, 34, Math.PI * 0.95, Math.PI * 2.05);
-    ctx.fill();
-    ctx.fillStyle = '#151522';
-    ctx.beginPath();
-    ctx.arc(sx, sy - 40, 30, Math.PI * 1.05, Math.PI * 1.95);
-    ctx.fill();
-    // 口袋
-    ctx.fillStyle = '#222238';
-    ctx.fillRect(sx - 16, sy + 10, 32, 20);
-    // 抽绳
-    ctx.fillStyle = '#2a2a40';
-    ctx.fillRect(sx - 8, sy + 8, 3, 18);
-    ctx.fillRect(sx + 5, sy + 8, 3, 18);
-    // 腿
-    ctx.fillStyle = '#222240';
-    ctx.fillRect(sx - 22, sy + 65, 18, 35);
-    ctx.fillRect(sx + 4, sy + 65, 18, 35);
-    // 鞋
-    ctx.fillStyle = '#0a0a14';
-    ctx.fillRect(sx - 26, sy + 98, 26, 10);
-    ctx.fillRect(sx + 0, sy + 98, 26, 10);
-
-    // Skull — 呼吸感浮动
-    const bob = Math.sin(Date.now() / 400) * 1.5;
-    ctx.save();
-    ctx.translate(sx, sy - 35 + bob);
-
-    ctx.fillStyle = '#e8e8e8';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 26, 28, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#d4d4d4';
-    ctx.beginPath();
-    ctx.ellipse(-4, 2, 22, 22, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 眼窝
-    ctx.fillStyle = '#05050a';
-    ctx.beginPath(); ctx.ellipse(-9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(+9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
-
-    // 左瞳 — 蓝色 (Dusttale异色瞳)
-    const leftGlow = 0.7 + Math.sin(Date.now() / 280) * 0.3;
-    ctx.save();
-    ctx.shadowColor = '#4488ff';
-    ctx.shadowBlur = 12 * leftGlow;
-    ctx.fillStyle = '#4488ff';
-    ctx.beginPath(); ctx.arc(-9, -1, 3, 0, Math.PI*2); ctx.fill();
     ctx.restore();
-
-    // 右瞳 — 红色激光 (Gaster Blaster)
-    const rightGlow = 0.8 + Math.sin(Date.now() / 220 + 1) * 0.2;
-    ctx.save();
-    ctx.shadowColor = '#ff3333';
-    ctx.shadowBlur = 14 * rightGlow;
-    ctx.fillStyle = '#ff3333';
-    ctx.beginPath(); ctx.arc(+9, -1, 3, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-
-    // 鼻子
-    ctx.fillStyle = '#0a0a0f';
-    ctx.beginPath();
-    ctx.moveTo(0, 5); ctx.lineTo(-3, 10); ctx.lineTo(3, 10);
-    ctx.closePath(); ctx.fill();
-
-    // 嘴/牙
-    ctx.strokeStyle = '#0a0a0f';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(-7, 14); ctx.lineTo(+7, 14);
-    ctx.stroke();
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-5, 14); ctx.lineTo(-5, 19);
-    ctx.moveTo(-2, 14); ctx.lineTo(-2, 19);
-    ctx.moveTo(+1, 14); ctx.lineTo(+1, 19);
-    ctx.moveTo(+4, 14); ctx.lineTo(+4, 19);
-    ctx.stroke();
-
-    ctx.restore(); // skull
-
-    ctx.restore(); // sans
   }
 
   function drawDialog(ctx) {
     if (!state.dialog) return;
     ctx.save();
-    const dx = 60, dy = 20, dw = CW - 120, dh = 72;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(dx, dy, dw, dh);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(dx, dy, dw, dh);
+    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
+    const bubble = sp ? sp['speech'] : null;
+    const dx = 60, dy = 20, dw = CW - 120, dh = 60;
+
+    if (bubble && bubble.complete && bubble.naturalWidth > 0) {
+      ctx.drawImage(bubble, 0, 0, bubble.naturalWidth, bubble.naturalHeight, dx - 8, dy - 4, dw + 16, dh + 16);
+    } else {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(dx, dy, dw, dh);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(dx, dy, dw, dh);
+    }
+
     ctx.fillStyle = '#ffffff';
-    ctx.font = '13px "Courier New", monospace';
+    ctx.font = 'bold 14px "Courier New", monospace';
     ctx.textBaseline = 'top';
+    ctx.fillStyle = '#ffffcc';
     const lines = state.dialog.split('\n');
     for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], dx + 12, dy + 8 + i * 17);
+      ctx.fillText(lines[i], dx + 14, dy + 12 + i * 18);
     }
-    if ((Date.now() / 300 | 0) % 2 === 0) {
-      ctx.fillText('▼', dx + dw - 18, dy + dh - 16);
+    if ((Date.now() / 350 | 0) % 2 === 0) {
+      ctx.fillText('▼', dx + dw - 22, dy + dh - 18);
     }
     ctx.restore();
   }
 
   function drawHPBar(ctx, x, y, w, h, hp, maxHp, karma) {
     ctx.save();
+    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
+
+    // Player name + LV
     ctx.fillStyle = '#ffffff';
-    ctx.font = '11px monospace';
+    ctx.font = 'bold 14px "Courier New", monospace';
     ctx.textBaseline = 'top';
     ctx.fillText(PLAYER.name, x, y);
-    ctx.fillText('LV ' + PLAYER.lv, x + 70, y);
+    ctx.fillStyle = '#cc66ff';
+    ctx.fillText('LV ' + PLAYER.lv, x + 78, y);
 
-    const barX = x + 110, barY = y - 2;
-    const barW = w - 150, barH = 10;
+    const barX = x + 140, barY = y - 2;
+    const barW = w - 220, barH = h;
 
+    // HP background
     ctx.fillStyle = '#000';
     ctx.fillRect(barX, barY, barW, barH);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.strokeRect(barX, barY, barW, barH);
 
+    // HP yellow + Karma purple
     const yellowW = Math.max(0, barW * (hp / maxHp));
     const redW = Math.min(barW - yellowW, barW * (karma / maxHp));
 
@@ -495,20 +506,22 @@
     }
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '11px monospace';
-    ctx.fillText(`HP ${hp}/${maxHp}`, barX + barW + 10, y);
+    ctx.font = '13px "Courier New", monospace';
+    ctx.fillText('HP', barX - 32, y);
+    ctx.fillText(`${hp} / ${maxHp}`, barX + barW + 8, y);
 
-    // KR 标签 + 进度条
-    const krX = barX + barW + 85;
+    // KR 小条
+    const krX = barX + barW + 100;
     ctx.fillStyle = '#cc66ff';
     ctx.fillText('KR', krX, y);
     ctx.fillStyle = '#1a0022';
-    ctx.fillRect(krX + 20, y - 1, 50, barH);
+    ctx.fillRect(krX + 22, y - 2, 55, barH);
+    ctx.strokeStyle = '#cc66ff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(krX + 22, y - 2, 55, barH);
     const krPct = Math.min(1, karma / maxHp);
     ctx.fillStyle = '#aa44ff';
-    ctx.fillRect(krX + 20, y - 1, 50 * krPct, barH);
-    ctx.strokeStyle = '#ffffff';
-    ctx.strokeRect(krX + 20, y - 1, 50, barH);
+    ctx.fillRect(krX + 22, y - 2, 55 * krPct, barH);
 
     ctx.restore();
   }
@@ -531,7 +544,7 @@
 
     if (state.phase === 'enemy_turn') {
       ctx.save();
-      ctx.fillStyle = '#888';
+      ctx.fillStyle = '#555';
       ctx.font = '10px monospace';
       ctx.textAlign = 'right';
       const mode = (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 0) ? 'BLUE' : 'RED';
@@ -543,15 +556,16 @@
   }
 
   function drawMenuButtons(ctx) {
+    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
     const defs = [
-      { label: 'FIGHT', col: '#ffee44' },
-      { label: 'ACT',   col: '#ff8833' },
-      { label: 'ITEM',  col: '#ff8833' },
-      { label: 'MERCY', col: '#88ccff' },
+      { key:'uifight', label:'FIGHT', col:'#ffee44', icon:'❤' },
+      { key:'uiact',   label:'ACT',   col:'#ff8833', icon:'⚙' },
+      { key:'uiitem',  label:'ITEM',  col:'#ffcc44', icon:'◆' },
+      { key:'uimercy', label:'MERCY', col:'#88ccff', icon:'☼' },
     ];
-    const btnY = 358;
-    const btnH = 46;
-    const btnGap = 8;
+    const btnY = 360;
+    const btnH = 50;
+    const btnGap = 6;
     const totalW = CW - 120;
     const btnW = (totalW - btnGap * 3) / 4;
 
@@ -559,19 +573,35 @@
       const bx = 60 + i * (btnW + btnGap);
       const active = state.menuIdx === i;
 
-      ctx.fillStyle = active ? '#1a1a2e' : '#0a0a14';
-      ctx.fillRect(bx, btnY, btnW, btnH);
-      ctx.strokeStyle = active ? defs[i].col : '#333355';
-      ctx.lineWidth = active ? 2 : 1;
-      ctx.strokeRect(bx, btnY, btnW, btnH);
+      // Draw UI sprite if available
+      const sprite = sp ? sp[defs[i].key] : null;
+      if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+        ctx.drawImage(sprite, 0, 0, sprite.naturalWidth, sprite.naturalHeight,
+                      bx - 4, btnY - 4, btnW + 8, btnH + 8);
+        if (active) {
+          ctx.save();
+          ctx.shadowColor = defs[i].col;
+          ctx.shadowBlur = 14;
+          ctx.strokeStyle = defs[i].col;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(bx, btnY, btnW, btnH);
+          ctx.restore();
+        }
+      } else {
+        ctx.fillStyle = active ? '#1a1a2e' : '#0a0a14';
+        ctx.fillRect(bx, btnY, btnW, btnH);
+        ctx.strokeStyle = active ? defs[i].col : '#333355';
+        ctx.lineWidth = active ? 2 : 1;
+        ctx.strokeRect(bx, btnY, btnW, btnH);
+      }
 
       if (active) {
         ctx.save();
         ctx.shadowColor = defs[i].col;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
       }
       ctx.fillStyle = active ? defs[i].col : '#888';
-      ctx.font = 'bold 14px monospace';
+      ctx.font = 'bold 15px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(defs[i].label, bx + btnW/2, btnY + btnH/2 + 5);
       ctx.restore();
@@ -579,7 +609,7 @@
         ctx.fillStyle = '#ffffff';
         ctx.font = '14px monospace';
         ctx.textAlign = 'left';
-        ctx.fillText('▶', bx + 8, btnY + btnH/2 + 5);
+        ctx.fillText('▶', bx + 6, btnY + btnH/2 + 5);
       }
     }
     ctx.textAlign = 'left';
@@ -587,42 +617,37 @@
 
   function drawFightBar(ctx) {
     ctx.save();
-    const bx = 60, by = 260, bw = CW - 120, bh = 16;
+    const bx = 60, by = 260, bw = CW - 120, bh = 18;
 
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = '#111';
     ctx.fillRect(bx, by, bw, bh);
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.strokeRect(bx, by, bw, bh);
 
-    // 完美区域
     const sweetX = bx + bw * 0.42, sweetW = bw * 0.16;
     ctx.fillStyle = 'rgba(100,255,100,0.5)';
     ctx.fillRect(sweetX, by, sweetW, bh);
-
-    // 好区域
     const greatX = bx + bw * 0.35, greatW = bw * 0.30;
     ctx.fillStyle = 'rgba(255,200,50,0.3)';
     ctx.fillRect(greatX, by, greatW, bh);
 
-    // 指针
     const px = bx + state.fightBarPos * bw;
-    const frameIdx = Math.floor(state.fightBarPos * 25);
     ctx.save();
     ctx.translate(px, by + bh/2);
     ctx.fillStyle = '#ffee44';
     ctx.shadowColor = '#ffee44';
     ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.moveTo(0, -14); ctx.lineTo(-6, 0); ctx.lineTo(0, 4); ctx.lineTo(6, 0); ctx.closePath();
+    ctx.moveTo(0, -16); ctx.lineTo(-7, 0); ctx.lineTo(0, 4); ctx.lineTo(7, 0); ctx.closePath();
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(0, 14); ctx.lineTo(-6, 0); ctx.lineTo(0, -4); ctx.lineTo(6, 0); ctx.closePath();
+    ctx.moveTo(0, 16); ctx.lineTo(-7, 0); ctx.lineTo(0, -4); ctx.lineTo(7, 0); ctx.closePath();
     ctx.fill();
     ctx.restore();
 
     ctx.fillStyle = '#aaa';
-    ctx.font = '10px monospace';
+    ctx.font = '11px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('TAP / SPACE / CLICK to STOP', bx + bw/2, by - 12);
     ctx.textAlign = 'left';
@@ -695,62 +720,73 @@
     ctx.restore();
   }
 
+  // ============= VIRTUAL KEYS =============
   function drawVirtualKeys(ctx) {
+    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
     ctx.save();
-    const dpx = 40, dpy = CH - 100;
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = '#4a4a66';
-    ctx.beginPath(); ctx.arc(dpx + 30, dpy + 20, 20, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dpx + 30, dpy + 80, 20, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dpx + 10, dpy + 50, 20, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dpx + 50, dpy + 50, 20, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('▲', dpx + 30, dpy + 20);
-    ctx.fillText('▼', dpx + 30, dpy + 80);
-    ctx.fillText('◀', dpx + 10, dpy + 50);
-    ctx.fillText('▶', dpx + 50, dpy + 50);
+    ctx.globalAlpha = state.phase === 'enemy_turn' ? 0.85 : 0.55;
 
-    const bx = CW - 110, by = CH - 80;
-    ctx.fillStyle = '#3a3a5a';
-    ctx.beginPath(); ctx.arc(bx + 20, by + 40, 22, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#5a5a7a';
-    ctx.beginPath(); ctx.arc(bx + 60, by + 15, 22, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('B', bx + 20, by + 40);
-    ctx.fillText('A', bx + 60, by + 15);
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  }
-
-  function drawVirtualKeysBattle(ctx) {
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    const dpx = 40, dpy = CH - 100;
-    ctx.fillStyle = '#4a4a66';
-    ctx.beginPath(); ctx.arc(dpx + 30, dpy + 20, 20, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dpx + 30, dpy + 80, 20, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dpx + 10, dpy + 50, 20, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dpx + 50, dpy + 50, 20, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('▲', dpx + 30, dpy + 20);
-    ctx.fillText('▼', dpx + 30, dpy + 80);
-    ctx.fillText('◀', dpx + 10, dpy + 50);
-    ctx.fillText('▶', dpx + 50, dpy + 50);
-
-    if (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 0) {
-      const bx = CW - 110, by = CH - 80;
-      ctx.fillStyle = '#3a6aff';
-      ctx.beginPath(); ctx.arc(bx + 60, by + 15, 22, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('JUMP', bx + 60, by + 15);
+    // D-Pad on LEFT
+    const cx = 75, cy = CH - 75, r = 38;
+    const dpad = sp ? sp['touchdpad'] : null;
+    if (dpad && dpad.complete && dpad.naturalWidth > 0) {
+      ctx.drawImage(dpad, cx - r, cy - r, r*2, r*2);
+      // Highlight pressed direction
+      ctx.fillStyle = 'rgba(100,150,255,0.35)';
+      const dx = (state.virtualKeys.right ? 1 : 0) - (state.virtualKeys.left ? 1 : 0);
+      const dy = (state.virtualKeys.down ? 1 : 0) - (state.virtualKeys.up ? 1 : 0);
+      if (dx !== 0 || dy !== 0) {
+        ctx.beginPath();
+        ctx.arc(cx + dx*10, cy + dy*10, 14, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = 'rgba(74,74,102,0.7)';
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#ddd';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('▲', cx, cy - 24);
+      ctx.fillText('▼', cx, cy + 24);
+      ctx.fillText('◀', cx - 24, cy);
+      ctx.fillText('▶', cx + 24, cy);
     }
-    ctx.globalAlpha = 1;
+
+    // A button on RIGHT (blue: JUMP in enemy_turn, green: CONFIRM otherwise)
+    const bx = CW - 75, by = CH - 75;
+    const aSprite = state.virtualKeys.jump ? (sp ? sp['toucha1'] : null) : (sp ? sp['toucha0'] : null);
+    const aImg = aSprite || (sp ? sp['toucha0'] : null);
+    const isBlueSoul = (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 1);
+
+    if (aImg && aImg.complete && aImg.naturalWidth > 0) {
+      ctx.drawImage(aImg, bx - r, by - r, r*2, r*2);
+    } else {
+      ctx.fillStyle = isBlueSoul ? '#3366ff' : '#4a4a66';
+      ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('JUMP', bx, by);
+    }
+
+    // Label hint
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    if (state.phase === 'enemy_turn' && isBlueSoul) {
+      ctx.fillText('▲JUMP▼', bx, by + r + 10);
+    } else if (state.phase === 'enemy_turn') {
+      ctx.fillText('MOVE', cx, cy + r + 10);
+    } else {
+      ctx.fillText('◀▶MENU', cx, cy + r + 10);
+      ctx.fillText('CONFIRM', bx, by + r + 10);
+    }
+
     ctx.restore();
   }
 
@@ -759,9 +795,10 @@
     if (state.sansHurtT > 0) state.sansHurtT -= 0.05;
 
     if (state.phase === 'player_turn') {
-      if (justPressed('arrowleft')) state.menuIdx = Math.max(0, state.menuIdx - 1);
-      if (justPressed('arrowright')) state.menuIdx = Math.min(3, state.menuIdx + 1);
-      if (justPressed('arrowup') || justPressed('arrowdown')) state.menuIdx = (state.menuIdx + 1) % 4;
+      if (justPressed('arrowleft') || state.virtualKeys.left) { state.menuIdx = Math.max(0, state.menuIdx - 1); state.virtualKeys.left = false; }
+      if (justPressed('arrowright') || state.virtualKeys.right) { state.menuIdx = Math.min(3, state.menuIdx + 1); state.virtualKeys.right = false; }
+      if (justPressed('arrowup') || state.virtualKeys.up) { state.menuIdx = (state.menuIdx + 1) % 4; state.virtualKeys.up = false; }
+      if (justPressed('arrowdown') || state.virtualKeys.down) { state.menuIdx = (state.menuIdx + 1) % 4; state.virtualKeys.down = false; }
     }
     if (state.phase === 'act_menu' || state.phase === 'item_menu' || state.phase === 'mercy_menu') {
       if (justPressed('arrowup')) state.menuIdx = Math.max(0, state.menuIdx - 1);
@@ -796,7 +833,6 @@
     const damage = Math.round(PLAYER.atk * mult);
 
     if (state.turn < BOSS.sansoverturn) {
-      // BOSS 闪避
       state.phase = 'player_turn';
       state.menuIdx = 0;
       state.dialog = BOSS.dodgeText;
@@ -811,7 +847,6 @@
       return;
     }
 
-    // 命中!
     state.phase = 'player_turn';
     state.menuIdx = 0;
     state.dialog = `${label} — ${damage} damage!`;
@@ -821,7 +856,7 @@
     if (typeof C2SF !== 'undefined') {
       C2SF.shake(1.2);
       C2SF.spawnDust(state.sansX, 180, 25);
-      C2SF.spawnDamageText(state.sansX, 140, String(damage), col);
+      C2SF.spawnDmg(state.sansX, 140, String(damage), col);
     }
 
     state.player.mercy += 5;
@@ -948,19 +983,17 @@
       const dmg = 5;
       state.player.hp -= dmg;
 
-      // Karma紫血：HP < 0 时溢出为 KR
       if (state.player.hp < 0) {
         state.player.karma += -state.player.hp;
         state.player.hp = 0;
       } else {
-        // HP>0 但 KR 存在时，KR自然减少
         state.player.karma = Math.max(0, state.player.karma - 2);
       }
 
       if (typeof C2SF !== 'undefined') {
         C2SF.shake(0.8);
         C2SF.hitFlash();
-        C2SF.spawnDamageText(cs.x, cs.y - 20, String(dmg), '#ff4444');
+        C2SF.spawnDmg(cs.x, cs.y - 20, String(dmg), '#ff4444');
       }
 
       if (state.player.hp <= 0 && state.player.karma >= PLAYER.maxHp) {
@@ -969,14 +1002,10 @@
         state.dialog = BOSS.onKillText;
         return;
       }
-      // HP=0 但 KR < maxHp，玩家不会死，还能继续
-      if (state.player.hp <= 0) {
-        state.player.hp = 0;
-      }
+      if (state.player.hp <= 0) state.player.hp = 0;
     }
     if (state.soulTeleportCooldown > 0) state.soulTeleportCooldown--;
 
-    // Karma 自动缓慢减少
     if (state.player.karma > 0 && !hit) {
       state.player.karma = Math.max(0, state.player.karma - 0.01);
     }
