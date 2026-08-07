@@ -60,7 +60,7 @@
     sansImg: null, sansHeadImg: null,
     sansSlam: 0, sansSlamT: 0,
     sansX: 320,
-    player: { hp: PLAYER.maxHp, karma: 0, mercy: 0, items: [2,1,1,1], atk: PLAYER.atk, def: PLAYER.def, lv: PLAYER.lv },
+    player: { hp: PLAYER.maxHp, maxHp: PLAYER.maxHp, karma: 0, mercy: 0, items: [2,1,1,1], atk: PLAYER.atk, def: PLAYER.def, lv: PLAYER.lv },
     soulTeleportCooldown: 0,
     dialog: '', dialogTimer: 0, dialogNextCb: null,
     introIdx: 0,
@@ -97,7 +97,7 @@
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100060;display:flex;align-items:center;justify-content:center;overflow:hidden;';
     modal.innerHTML = `
-      <canvas id="ub-c" width="${CW}" height="${CH}" style="object-fit:contain;max-width:100vw;max-height:100vh;width:auto;height:auto;background:#000;image-rendering:pixelated;cursor:pointer;"></canvas>
+      <canvas id="ub-c" width="${CW}" height="${CH}" style="width:100vw;height:100vh;object-fit:contain;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;"></canvas>
     `;
     document.body.appendChild(modal);
     state.modal = modal;
@@ -219,7 +219,7 @@
   function drawSans(ctx) {
     // Sans sprite drawn as skeleton placeholder
     const sx = state.sansX;
-    const sy = 110;
+    const sy = 166;
     ctx.save();
     // Body
     ctx.fillStyle = '#ffffff';
