@@ -35,7 +35,7 @@
     deathQuote: '* i\'ll save everyone from the human\n* their comedy is about to turn into tragedy.',
   };
 
-  const PLAYER = { maxHp: 92, atk: 19, def: 9 };
+  const PLAYER = { maxHp: 92, atk: 19, def: 9, lv: 19, name: 'CHARA' };
   const ITEMS = [
     { id: 'tea',        name: '海茶',         heal: 10,  text: '* 你喝了一口海茶，感觉温暖。' },
     { id: 'hero',       name: '传说英雄',     heal: 40,  text: '* 传说中的英雄能量涌入体内！' },
@@ -113,9 +113,11 @@
       sanskills: 0,              // Dusttale KILLS 计数器
       resets: 0,
       player: {
+        name: PLAYER.name,
+        lv: PLAYER.lv,
         hp: PLAYER.maxHp,
         maxHp: PLAYER.maxHp,
-        karma: 0,                // KR — Karmic Retribution 紫血
+        karma: 0,
         karmaMax: PLAYER.maxHp,
         mercy: 0,
         atk: PLAYER.atk,
@@ -246,7 +248,7 @@
     if (yellowEl) yellowEl.style.width = (Math.max(0, b.player.hp) / b.player.maxHp * 100) + '%';
     if (redEl)    redEl.style.width    = (b.player.karma > 0 ? Math.min(100, b.player.karma / b.player.maxHp * 100) : 0) + '%';
     if (hpTextEl) hpTextEl.textContent = `${Math.max(0, b.player.hp)}/${b.player.maxHp}`;
-    if (krTextEl) krTextEl.textContent = `${b.player.karma}/${b.player.karmaMax}`;
+    if (krTextEl) krTextEl.textContent = b.player.karma;
 
     const sprite = b.modal.querySelector('#ub-sans-sprite');
     if (!sprite) return;
@@ -316,44 +318,54 @@
 
   function doFight() {
     const b = _battle;
-    const enemyBox = b.modal.querySelector('#ub-sans-sprite').parentElement;
+    const bulletArea = b.modal.querySelector('#ub-bullet-area');
     const hint = b.modal.querySelector('#ub-battle-hint');
-    enemyBox.style.position = 'relative';
-    enemyBox.style.cursor = 'crosshair';
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:16px;z-index:10;pointer-events:none;';
+    overlay.style.cssText = 'position:absolute;left:14px;right:14px;top:6px;height:28px;z-index:4;pointer-events:none;';
+
     const trackBg = document.createElement('div');
-    trackBg.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.08);';
+    trackBg.style.cssText = 'position:absolute;inset:0;background:linear-gradient(90deg,#111,#333,#111);border:2px solid #fff;';
     overlay.appendChild(trackBg);
+
     const leftZone = document.createElement('div');
-    leftZone.style.cssText = 'position:absolute;top:0;bottom:0;left:30%;width:15%;background:rgba(100,200,255,0.25);';
+    leftZone.style.cssText = 'position:absolute;top:2px;bottom:2px;left:10%;width:20%;background:rgba(100,200,255,0.35);border-left:1px solid #44aaff;border-right:1px solid #44aaff;';
     overlay.appendChild(leftZone);
+
     const centerZone = document.createElement('div');
-    centerZone.style.cssText = 'position:absolute;top:0;bottom:0;left:42%;width:16%;background:rgba(255,220,80,0.35);';
+    centerZone.style.cssText = 'position:absolute;top:2px;bottom:2px;left:45%;width:10%;background:rgba(255,220,80,0.55);border-left:1px solid #ffcc00;border-right:1px solid #ffcc00;';
     overlay.appendChild(centerZone);
+
     const rightZone = document.createElement('div');
-    rightZone.style.cssText = 'position:absolute;top:0;bottom:0;right:30%;width:15%;background:rgba(100,200,255,0.25);';
+    rightZone.style.cssText = 'position:absolute;top:2px;bottom:2px;right:10%;width:20%;background:rgba(100,200,255,0.35);border-left:1px solid #44aaff;border-right:1px solid #44aaff;';
     overlay.appendChild(rightZone);
+
+    for (const pct of [25, 45, 55, 75]) {
+      const mark = document.createElement('div');
+      mark.style.cssText = `position:absolute;top:-4px;bottom:-4px;left:${pct}%;width:1px;background:rgba(255,255,255,0.25);`;
+      overlay.appendChild(mark);
+    }
+
     const centerMark = document.createElement('div');
-    centerMark.style.cssText = 'position:absolute;left:50%;top:-8px;width:2px;height:32px;background:#ffcc00;transform:translateX(-50%);box-shadow:0 0 4px #ffcc00;';
+    centerMark.style.cssText = 'position:absolute;left:50%;top:-6px;width:2px;height:40px;background:#ffcc00;transform:translateX(-50%);box-shadow:0 0 8px #ffcc00;';
     overlay.appendChild(centerMark);
+
     const slider = document.createElement('div');
-    slider.style.cssText = 'position:absolute;left:0;top:-4px;width:8px;height:24px;background:#fff;box-shadow:0 0 8px #fff;';
+    slider.style.cssText = 'position:absolute;left:0;top:-6px;width:6px;height:40px;background:#fff;box-shadow:0 0 10px #fff;border-radius:1px;';
     overlay.appendChild(slider);
-    enemyBox.appendChild(overlay);
+
+    bulletArea.appendChild(overlay);
 
     hint.style.display = 'block';
-    let pos = 0, dir = 1, speed = 2.8, stopped = false;
+    let pos = 0, dir = 1, speed = 3.2, stopped = false;
 
     const stop = (ev) => {
       if (stopped || !_battle) return;
       if (ev) ev.preventDefault();
       stopped = true;
       window.removeEventListener('keydown', onKey);
-      enemyBox.removeEventListener('click', stop);
-      enemyBox.removeEventListener('touchend', stop);
-      enemyBox.style.cursor = '';
+      bulletArea.removeEventListener('click', stop);
+      bulletArea.removeEventListener('touchend', stop);
       overlay.remove();
       hint.style.display = 'none';
 
@@ -364,29 +376,31 @@
       else if (dist <= 25) { mult = 1.2;  label = 'GOOD';    color = '#88ccff'; }
       else                 { mult = 0.4;  label = 'MISS';    color = '#ff4444'; }
 
-      b.modal.querySelector('#ub-sans-sprite').style.filter = 'brightness(3)';
-      setTimeout(() => updateBattleUI(), 120);
-
       const tag = document.createElement('div');
-      tag.style.cssText = `position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:clamp(16px,4vw,24px);font-weight:bold;color:${color};text-shadow:0 0 8px ${color};pointer-events:none;z-index:11;letter-spacing:2px;`;
+      tag.style.cssText = `position:absolute;top:60px;left:50%;transform:translateX(-50%);font-size:clamp(18px,5vw,28px);font-weight:bold;color:${color};text-shadow:0 0 8px ${color};pointer-events:none;z-index:11;letter-spacing:2px;`;
       tag.textContent = label;
-      enemyBox.appendChild(tag);
-      setTimeout(() => tag.remove(), 900);
+      bulletArea.appendChild(tag);
+      setTimeout(() => { tag.remove(); if (_battle) _battle.modal.querySelector('#ub-sans-sprite').style.filter = ''; }, 1200);
+
+      if (b.modal.querySelector('#ub-sans-sprite')) {
+        b.modal.querySelector('#ub-sans-sprite').style.filter = 'brightness(3)';
+      }
+      setTimeout(() => updateBattleUI(), 120);
 
       setTimeout(() => finishFight(mult, label), 500);
     };
     const onKey = e => { if (e.code === 'Space' || e.key === 'Enter') { e.preventDefault(); stop(); } };
     window.addEventListener('keydown', onKey);
-    enemyBox.addEventListener('click', stop);
-    enemyBox.addEventListener('touchend', stop, { passive: false });
+    bulletArea.addEventListener('click', stop);
+    bulletArea.addEventListener('touchend', stop, { passive: false });
 
     function tick() {
-      if (!_battle) { window.removeEventListener('keydown', onKey); overlay.remove(); return; }
+      if (!_battle) { window.removeEventListener('keydown', onKey); if (overlay.parentNode) overlay.remove(); return; }
       if (stopped) return;
       pos += dir * speed;
       if (pos >= 100) { pos = 100; dir = -1; }
       if (pos <= 0)   { pos = 0;   dir = 1; }
-      slider.style.left = `calc(${pos}% - 4px)`;
+      slider.style.left = `calc(${pos}% - 3px)`;
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
@@ -540,15 +554,22 @@
     b.soulColor = 'red';
     b.soulMode = 'free';
 
+    setDialog('');
+
     const area = b.modal.querySelector('#ub-bullet-area');
     area.style.display = 'flex';
 
     const canvas = b.modal.querySelector('#ub-canvas');
     const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.round(rect.width);
-    canvas.height = Math.round(rect.height);
+    canvas.width = Math.max(100, Math.round(rect.width));
+    canvas.height = Math.max(100, Math.round(rect.height));
     b.canvasW = canvas.width;
     b.canvasH = canvas.height;
+    if (b.canvasW < 50 || b.canvasH < 50) {
+      // Canvas 还没布局好，延迟重试
+      setTimeout(startEnemyTurn, 100);
+      return;
+    }
 
     b.soul = { x: b.canvasW / 2, y: b.canvasH - 30, vx: 0, vy: 0, onGround: false };
     b.hitCooldown = 0;
