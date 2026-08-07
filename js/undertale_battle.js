@@ -310,65 +310,66 @@
   function buildBattleHTML() {
     const b = _battle;
     return `
-      <div style="width:600px;background:#000;border:3px solid #fff;padding:16px;">
+      <div id="ub-root" style="width:min(640px, 96vw, calc(100vh * 1.78));max-width:640px;background:#000;border:3px solid #fff;padding:clamp(10px, 2.5vw, 16px);box-sizing:relative;max-height:96vh;overflow-y:auto;">
         <!-- Boss 栏 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:16px;color:${b.boss.color};">${b.boss.name}</div>
-          <div style="font-size:11px;color:#888;">${b.boss.title}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+          <div style="font-size:clamp(14px, 3vw, 16px);color:${b.boss.color};font-weight:bold;">${b.boss.name}</div>
+          <div style="font-size:clamp(10px, 2.2vw, 12px);color:#888;">${b.boss.title}</div>
         </div>
-        <div style="margin-bottom:12px;">
-          <div style="background:#1a1a1a;height:18px;border:2px solid #fff;border-radius:2px;overflow:hidden;">
+        <div style="margin-bottom:8px;">
+          <div style="background:#1a1a1a;height:16px;border:2px solid #fff;border-radius:2px;overflow:hidden;">
             <div id="ub-boss-hp" style="background:linear-gradient(90deg,#ff0000,#ff8800);height:100%;width:100%;transition:width 0.3s;"></div>
           </div>
-          <div style="font-size:10px;margin-top:3px;text-align:right;color:#aaa;">${b.bossHp} / ${b.boss.maxHp}</div>
+          <div style="font-size:10px;margin-top:2px;text-align:right;color:#aaa;">${b.bossHp} / ${b.boss.maxHp}</div>
         </div>
 
-        <!-- 敌人区 -->
-        <div style="background:#0a0a0a;border:2px solid #444;height:110px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;">
-          <div id="ub-enemy-sprite" style="font-size:64px;color:${b.boss.color};filter:drop-shadow(0 0 20px ${b.boss.color});">${b.boss.sprite}</div>
+        <!-- 敌人区（加大做攻击条目标区） -->
+        <div style="background:#0a0a0a;border:2px solid #444;height:clamp(140px, 34vw, 200px);min-height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;user-select:none;-webkit-user-select:none;touch-action:manipulation;">
+          <div id="ub-enemy-sprite" style="font-size:clamp(48px, 14vw, 80px);color:${b.boss.color};filter:drop-shadow(0 0 20px ${b.boss.color});transition:filter 0.1s;">${b.boss.sprite}</div>
           <div id="ub-enemy-name" style="position:absolute;bottom:4px;right:8px;font-size:10px;color:#666;">${b.boss.difficulty}</div>
+          <div id="ub-fight-hint" style="display:none;position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:12px;color:#ffcc00;letter-spacing:2px;text-shadow:0 0 6px #ffcc00;pointer-events:none;">TAP THE ENEMY! / SPACE</div>
         </div>
 
         <!-- 对话框 -->
-        <div style="background:#1a1a2a;border:2px solid #444;padding:12px;min-height:72px;margin-bottom:12px;">
-          <div id="ub-dialog" style="font-size:13px;line-height:1.5;color:#ddd;white-space:pre-wrap;"></div>
+        <div style="background:#1a1a2a;border:2px solid #444;padding:clamp(8px, 2vw, 12px);min-height:60px;margin-bottom:8px;">
+          <div id="ub-dialog" style="font-size:clamp(12px, 2.8vw, 14px);line-height:1.5;color:#ddd;white-space:pre-wrap;"></div>
         </div>
 
         <!-- 战斗区域(弹幕) -->
-        <div id="ub-bullet-area" style="background:#000;border:2px solid #0f0;height:160px;margin-bottom:12px;position:relative;overflow:hidden;display:none;">
-          <canvas id="ub-canvas" width="592" height="156" style="position:absolute;inset:0;"></canvas>
+        <div id="ub-bullet-area" style="background:#000;border:2px solid #0f0;height:clamp(140px, 30vw, 180px);margin-bottom:8px;position:relative;overflow:hidden;display:none;touch-action:none;">
+          <canvas id="ub-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
         </div>
 
         <!-- 玩家栏 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;">
+          <div style="font-size:clamp(11px, 2.6vw, 13px);">
             <span style="color:#ffcc00;">YOU</span>
-            <span style="margin-left:12px;color:#aaa;">Lv.${b.player.lv}</span>
+            <span style="margin-left:10px;color:#aaa;">Lv.${b.player.lv}</span>
           </div>
-          <div style="font-size:11px;color:#aaa;">ATK ${b.player.atk} · DEF ${b.player.def}</div>
+          <div style="font-size:clamp(10px, 2.2vw, 12px);color:#aaa;">ATK ${b.player.atk} · DEF ${b.player.def}</div>
         </div>
-        <div style="background:#1a1a1a;height:18px;border:2px solid #fff;border-radius:2px;overflow:hidden;margin-bottom:8px;">
+        <div style="background:#1a1a1a;height:14px;border:2px solid #fff;border-radius:2px;overflow:hidden;margin-bottom:4px;">
           <div id="ub-player-hp" style="background:linear-gradient(90deg,#00ff00,#88ff00);height:100%;width:100%;transition:width 0.3s;"></div>
         </div>
-        <div style="font-size:10px;margin-bottom:12px;color:#aaa;">HP ${b.player.hp} / ${b.player.maxHp}</div>
+        <div style="font-size:9px;margin-bottom:8px;color:#aaa;">HP ${b.player.hp} / ${b.player.maxHp}</div>
 
         <!-- MERCY 条 -->
-        <div style="margin-bottom:12px;">
-          <div style="background:#1a1a1a;height:10px;border:1px solid #888;border-radius:2px;overflow:hidden;">
+        <div style="margin-bottom:8px;">
+          <div style="background:#1a1a1a;height:8px;border:1px solid #888;border-radius:2px;overflow:hidden;">
             <div id="ub-mercy" style="background:#00ffff;height:100%;width:0%;transition:width 0.3s;"></div>
           </div>
           <div style="font-size:9px;margin-top:2px;color:#666;text-align:right;">MERCY ${b.player.mercy}/${b.boss.mercyThreshold}</div>
         </div>
 
         <!-- 按钮区 -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
           ${['FIGHT','ACT','ITEM','MERCY'].map((l, i) => `
-            <button id="ub-${l.toLowerCase()}" style="background:#000;border:2px solid #fff;color:#fff;padding:12px 8px;font-family:inherit;font-size:14px;cursor:pointer;letter-spacing:2px;" onmouseover="this.style.background='#fff';this.style.color='#000'" onmouseout="this.style.background='#000';this.style.color='#fff'">${l}</button>
+            <button id="ub-${l.toLowerCase()}" style="background:#000;border:2px solid #fff;color:#fff;padding:clamp(8px, 2vw, 12px) 4px;font-family:inherit;font-size:clamp(12px, 2.8vw, 15px);cursor:pointer;letter-spacing:2px;min-height:44px;" onmouseover="this.style.background='#fff';this.style.color='#000'" onmouseout="this.style.background='#000';this.style.color='#fff'">${l}</button>
           `).join('')}
         </div>
 
         <!-- 右上角关闭 -->
-        <div id="ub-close-x" style="position:absolute;top:8px;right:12px;color:#444;cursor:pointer;font-size:14px;">✕</div>
+        <div id="ub-close-x" style="position:absolute;top:8px;right:12px;color:#888;cursor:pointer;font-size:16px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;">✕</div>
       </div>
     `;
   }
@@ -429,33 +430,49 @@
     const b = _battle;
     const enemyArea = b.modal.querySelector('#ub-enemy-sprite');
     if (!enemyArea) { finishFight(1.0); return; }
+    const enemyBox = enemyArea.parentElement;
+    const hint = b.modal.querySelector('#ub-fight-hint');
 
-    // 创建攻击条 overlay
+    // 让整个敌人区域都可以点击/触摸停止（覆盖层不拦截事件）
+    enemyBox.style.position = 'relative';
+    enemyBox.style.cursor = 'crosshair';
+
+    // 创建攻击条 overlay（透明条 + 黄色中心标记 + 滑动白条）
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:8px;background:rgba(255,255,255,0.1);pointer-events:none;z-index:10;';
-    // 中心标记
+    overlay.style.cssText = 'position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:16px;z-index:10;pointer-events:none;';
+    const trackBg = document.createElement('div');
+    trackBg.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.08);';
+    overlay.appendChild(trackBg);
     const centerMark = document.createElement('div');
-    centerMark.style.cssText = 'position:absolute;left:50%;top:-4px;width:2px;height:16px;background:#ffcc00;transform:translateX(-50%);';
+    centerMark.style.cssText = 'position:absolute;left:50%;top:-8px;width:2px;height:32px;background:#ffcc00;transform:translateX(-50%);box-shadow:0 0 4px #ffcc00;';
     overlay.appendChild(centerMark);
-    // 滑动白条
     const slider = document.createElement('div');
-    slider.style.cssText = 'position:absolute;left:0;top:-2px;width:4px;height:12px;background:#fff;box-shadow:0 0 6px #fff;';
+    slider.style.cssText = 'position:absolute;left:0;top:-4px;width:8px;height:24px;background:#fff;box-shadow:0 0 8px #fff;';
     overlay.appendChild(slider);
-    enemyArea.parentElement.style.position = 'relative';
-    enemyArea.parentElement.appendChild(overlay);
+    enemyBox.appendChild(overlay);
 
-    let pos = 0;       // 0~100 百分比位置
-    let dir = 1;       // 方向 1=右, -1=左
-    let speed = 2.5;   // 每帧移动百分比
+    // 显示提示
+    if (hint) hint.style.display = 'block';
+
+    let pos = 0;
+    let dir = 1;
+    let speed = 2.5;
     let stopped = false;
 
-    const stop = () => {
+    const stop = (ev) => {
       if (stopped || !_battle) return;
+      if (ev) ev.preventDefault();
       stopped = true;
-      window.removeEventListener('keydown', onKey);
-      overlay.remove();
 
-      const distance = Math.abs(pos - 50);   // 离中心的距离 0~50
+      // 解绑所有监听器
+      window.removeEventListener('keydown', onKey);
+      enemyBox.removeEventListener('click', stop);
+      enemyBox.removeEventListener('touchend', stop);
+      enemyBox.style.cursor = '';
+      overlay.remove();
+      if (hint) hint.style.display = 'none';
+
+      const distance = Math.abs(pos - 50);
       let multiplier, label, color;
       if (distance <= 3) { multiplier = 1.8; label = 'PERFECT!!'; color = '#ffcc00'; }
       else if (distance <= 8) { multiplier = 1.4; label = 'GREAT!'; color = '#44ff44'; }
@@ -463,22 +480,25 @@
       else if (distance <= 30) { multiplier = 0.6; label = 'BAD'; color = '#ff8844'; }
       else { multiplier = 0.3; label = 'MISS'; color = '#ff4444'; }
 
-      // 闪白效果
       enemyArea.style.filter = 'brightness(3)';
       setTimeout(() => { enemyArea.style.filter = `drop-shadow(0 0 20px ${b.boss.color})`; }, 120);
 
-      // 显示评价
       const tag = document.createElement('div');
-      tag.style.cssText = `position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:bold;color:${color};text-shadow:0 0 8px ${color};pointer-events:none;z-index:11;`;
+      tag.style.cssText = `position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:clamp(16px,4vw,24px);font-weight:bold;color:${color};text-shadow:0 0 8px ${color};pointer-events:none;z-index:11;letter-spacing:2px;`;
       tag.textContent = label;
-      enemyArea.parentElement.appendChild(tag);
+      enemyBox.appendChild(tag);
       setTimeout(() => tag.remove(), 900);
 
       setTimeout(() => finishFight(multiplier, label), 500);
     };
-    const onKey = e => { if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stop(); } };
+    const onKey = e => {
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stop(); }
+    };
+
+    // 绑定三类触发：键盘 / 鼠标点击 / 触摸
     window.addEventListener('keydown', onKey);
-    overlay.addEventListener('click', stop);
+    enemyBox.addEventListener('click', stop);
+    enemyBox.addEventListener('touchend', stop, { passive: false });
 
     function tick() {
       if (!_battle) { window.removeEventListener('keydown', onKey); overlay.remove(); return; }
@@ -486,7 +506,7 @@
       pos += dir * speed;
       if (pos >= 100) { pos = 100; dir = -1; }
       if (pos <= 0) { pos = 0; dir = 1; }
-      slider.style.left = pos + '%';
+      slider.style.left = `calc(${pos}% - 4px)`;
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
