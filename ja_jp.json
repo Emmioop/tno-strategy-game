@@ -1,0 +1,71 @@
+{
+    "battle.sans.dialog.box.turn0" : "＊ <anim 1>サイアクな　めに　あわされそうな&　 よかんがする。",
+    "battle.sans.dialog.box.turn1" : "＊ 二ターン目、テキスト変更",
+    "battle.sans.dialog.box.turn2" : "＊ <subanim 1><subanimval 20 40>三ターン目、テキスト変更",
+    "battle.sans.dialog.box.turn3" : "＊ テスト",
+
+
+    "battle.sans.enemyspeech.intro1" : "サンズ　サンズ　&サンズ　サンズ<pause><clear><font 2><voice PapyrusSpeak>パピルス　パピルス&パピルス　パピルス<pause><clear><font 3><voice BattleText2>ふつうのてき　ふつうのてき&ふつうのてき　ふつうのてき",
+    "battle.sans.enemyspeech.intro2" : "じごくの&ごうか",
+    "battle.sans.enemyspeech.introend" : "攻撃終了後テキスト。",
+    "battle.sans.enemyspeech.turn.1" : "1ターン目<pause><clear>1ターン目その2",
+    "battle.sans.enemyspeech.turn.2" : "2ターン目",
+    "battle.sans.enemyspeech.turn.3" : "3ターン目",
+    "battle.sans.enemyspeech.turn.4" : "4ターン目",
+    "battle.sans.enemyspeech.turn.5" : "5ターン目",
+    "battle.sans.enemyspeech.turn.6" : "6ターン目",
+    "battle.sans.enemyspeech.turn.7" : "7ターン目",
+    "battle.sans.enemyspeech.turn.8" : "8ターン目",
+    "battle.sans.enemyspeech.turn.9" : "9ターン目",
+    "battle.sans.enemyspeech.turn.10" : "10ターン目",
+    "battle.sans.enemyspeech.turn.11" : "11ターン目",
+    "battle.sans.enemyspeech.turn.12" : "12ターン目",
+    "battle.sans.enemyspeech.turn.13" : "13ターン目",
+    "battle.sans.enemyspeech.turn.14" : "14ターン目",
+    "battle.sans.enemyspeech.turn.15" : "15ターン目",
+    "battle.sans.enemyspeech.turn.16" : "16ターン目",
+    
+
+    "text.asterisk" : "＊",
+
+
+    "battle.dialog.act.check" : "＊ ぶんせき",
+    "battle.dialog.act.acttest" : "＊ 行動テスト",
+    "battle.dialog.mercy.spare" : "＊ みのがす",
+    "battle.dialog.mercy.flee" : "＊ にげる",
+
+    "battle.dialog.act.check.template" : "＊ % - ATK % DEF %&",
+
+    "battle.sans.dialog.act.check.phase1" : "＊ もっとも　ラクな　てき。^1&＊ 1ダメージしか　あたえられない。",
+    "battle.sans.dialog.act.check.phase2" : "{battle.sans.dialog.check.phase1}＊ いずれは　あたるはずだ。^1&＊ こうげきを　つづけろ。",
+
+    "battle.sans.dialog.act.acttest" : "＊ カスタム行動のテスト。^1&＊ <anim 3>あいうえお",
+    
+
+    "item.default.use.ateheal" : "＊ %を食べた。",
+    "item.default.use.hpheal" : "＊ %HP回復した！",
+    "item.default.use.hpmax" : "＊ HPが全回復した！",
+
+    "item.pie.lname" : "パイ",
+    "item.pie.sname" : "パイ",
+    "item.pie.use" : "{item.default.use.ateheal %}",
+
+    "item.noodles.lname" : "インスタントめん",
+    "item.noodles.sname" : "インスタントめん",
+    "item.noodles.use" : "＊ そのまま食べたほうが美味しい。",
+
+    "item.steak.lname" : "ステーキ",
+    "item.steak.sname" : "ステーキ",
+    "item.steak.use" : "{item.default.use.ateheal %}",
+
+    "item.lhero.lname" : "ヒーロー",
+    "item.lhero.sname" : "ヒーロー",
+    "item.lhero.use" : "{item.default.use.ateheal %}^1&＊ 攻撃力が4上昇した！",
+
+    "item.snowpiece.lname" : "雪だるまの欠片",
+    "item.snowpiece.sname" : "雪だるまの欠片",
+    "item.snowpiece.use" : "{item.default.use.ateheal %}",
+
+
+    "gameover.text" : "<spd 0.075><textspacing 3>ゲームオーバーテキスト<pause><clear>ゲームオーバーテキスト2"
+}
