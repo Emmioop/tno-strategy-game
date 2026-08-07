@@ -10,7 +10,7 @@ let button_extra_2   = 0;
 let button_extra_3   = 0;
 let button_extra_4   = 0;
 let scr_button       = 0;          // 隐藏 Scratch 原生按钮 (1=隐藏, 0=显示)
-let GreenFlag_Start  = 0;          // 是否自动点击绿旗（1=自动, 0=不自动）
+let GreenFlag_Start  = 1;          // 是否自动点击绿旗（1=自动, 0=不自动）
 let Android_System_Keyboard = 1;   // 系统键盘按钮开关（1=显示, 0=隐藏）
 
 // ── 键值配置 ──
@@ -57,7 +57,7 @@ const dpr = devicePixelRatio || 1;
 const lang = mobile_cn;
 const AKB_W = 38, AKB_H = 48;      // 系统键盘按钮尺寸 (19*2, 24*2)
 
-let ui_state = parseInt(localStorage.getItem('ui_state')) || 1;
+let ui_state = parseInt(localStorage.getItem('ui_state')) || 4;
 let settings_layout = parseInt(localStorage.getItem('settings_layout_mode')) || 0;
 function saveSettingsLayout() { localStorage.setItem('settings_layout_mode', settings_layout); }
 
