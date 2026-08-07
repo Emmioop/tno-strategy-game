@@ -187,7 +187,7 @@
   <script src="js/save_system.js?v=7"></script>
   <script src="js/nation_sim.js?v=41"></script>
   <script src="js/undertale_battle.js?v=43"></script>
-  <script src="js/game.js?v=61"></script>
+  <script src="js/game.js?v=62"></script>
   <script src="js/ui.js?v=99"></script>
   <!-- ui_map_extension.js 已完全移除，不再加载 -->
   <script>
@@ -353,11 +353,15 @@
           btn.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent-gold,#d4a017);color:#000;padding:10px 24px;border-radius:6px;z-index:99999;font-weight:bold;box-shadow:0 4px 16px rgba(0,0,0,0.6);';
           document.body.appendChild(btn);
           setTimeout(() => btn.remove(), 2500);
-          // 刷新模式列表显示开发者模式
           initModeSelect();
         }
       });
     })();
+
+    // 启动逻辑
+    document.getElementById('btn-start').addEventListener('click', () => {
+      UI.start(Game.gameMode);
+    });
 
     // 快速开始：普通难度 + 历史模式 + 季度模式
     document.getElementById('btn-quick-start-splash').addEventListener('click', () => {
