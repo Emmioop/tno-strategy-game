@@ -602,7 +602,7 @@
   }
 
   // =============== ENEMY TURN (C2SF) ===============
-  function startEnemyTurn() {
+  function startEnemyTurn() { console.log("[BATTLE] startEnemyTurn c2sfReady=" + state.c2sfReady + " idx=" + state.c2sfIdx);
     state.phase = 'enemy_turn';
     state.dialog = '';
     if (typeof C2SF === 'undefined' || !state.c2sfReady) {
@@ -615,7 +615,7 @@
     state.c2sfIdx++;
     const csvData = state.c2sfCache[phase.csv];
     if (csvData) {
-      C2SF.startAttack(csvData, phase.name);
+      console.log("[BATTLE] C2SF.startAttack csvData=" + !!csvData + " name=" + phase.name); C2SF.startAttack(csvData, phase.name);
     } else {
       C2SF.loadCSV(phase.csv).then(d => {
         if (d) {
@@ -629,7 +629,7 @@
 
   function checkEnemyTurn() {
     if (state.phase !== 'enemy_turn') return;
-    if (typeof C2SF === 'undefined' || !state.c2sfReady) return;
+    if (typeof C2SF === .undefined. || !state.c2sfReady) { console.log("[BATTLE] checkEnemyTurn SKIP - c2sfReady=" + state.c2sfReady); return; }
 
     // Soul movement
     const cs = C2SF.state.soul;
