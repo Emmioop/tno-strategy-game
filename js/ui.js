@@ -612,10 +612,19 @@ const UI = {
       : '';
     const curMode = Game && Game.getMode ? Game.getMode() : null;
     const showBattleBtn = curMode && curMode.funMode;
+    const isGod = curMode && curMode.godMode;
+    const isDevUnlocked = (typeof GAME_MODES !== 'undefined') && GAME_MODES.developer && GAME_MODES.developer.unlocked;
+    const showDebugBtn = this.isDebugMode() || isGod || isDevUnlocked;
     const battleBtnHtml = showBattleBtn
       ? `<button class="mobile-nav-btn" id="m-btn-battle" aria-label="BOSS战" style="color:#d4a017;border-color:#d4a017;">
           <span class="nav-icon">🎮</span>
           <span>BOSS</span>
+        </button>`
+      : '';
+    const debugBtnHtml = showDebugBtn
+      ? `<button class="mobile-nav-btn" id="m-btn-debug" aria-label="DEBUG" style="color:var(--accent-gold);border-color:var(--accent-gold);">
+          <span class="nav-icon">⚡</span>
+          <span>DEBUG</span>
         </button>`
       : '';
     bar.innerHTML = `
@@ -625,6 +634,7 @@ const UI = {
         ${crisisBadge}
       </button>
       ${battleBtnHtml}
+      ${debugBtnHtml}
       <button class="btn-next-turn" id="m-btn-next">${this._nextTurnLabelShort()}</button>
       <button class="mobile-nav-btn" id="m-btn-save" aria-label="存档">
         <span class="nav-icon">💾</span>
@@ -641,6 +651,8 @@ const UI = {
     document.getElementById('m-btn-news').onclick = () => this.toggleDrawer('right-panel');
     const mBattle = document.getElementById('m-btn-battle');
     if (mBattle) mBattle.onclick = () => { if (window.UndertaleBattle) window.UndertaleBattle.openBossSelect(); };
+    const mDebug = document.getElementById('m-btn-debug');
+    if (mDebug) mDebug.onclick = () => this.toggleDebugPanel();
 
     // 给左右面板各加一个关闭按钮（手机端可见）
     // 注意：left-panel 在 renderLeftPanel 模板中已经自带了，这里只处理 right-panel，

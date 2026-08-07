@@ -206,7 +206,7 @@ const GAME_MODES = {
     godMode: true,
     noEndingFail: true,
     devMode: true,
-    unlocked: false
+    unlocked: true
   }
 };
 
@@ -1057,13 +1057,21 @@ const Game = {
   clampResources() {
     const r = this.state.resources;
     const diff = this.getDiff();
-    r.stability = Math.max(0, Math.min(100, r.stability));
-    r.deterrence = Math.max(0, Math.min(150, r.deterrence));
-    r.nukeDeter = Math.max(0, Math.min(150, r.nukeDeter));
+    const god = this.getMode().godMode;
+    r.stability = Math.max(0, god ? Math.min(9999, r.stability) : Math.min(100, r.stability));
+    r.deterrence = Math.max(0, god ? Math.min(9999, r.deterrence) : Math.min(150, r.deterrence));
+    r.nukeDeter = Math.max(0, god ? Math.min(9999, r.nukeDeter) : Math.min(150, r.nukeDeter));
     r.efficiency = Math.max(0.3, Math.min(2.0, r.efficiency));
-    r.money = Math.max(-200, r.money);
+    r.money = god ? r.money : Math.max(-200, r.money);
     r.manpower = Math.max(0, r.manpower);
     r.nukes = Math.max(0, r.nukes);
+    if (god) {
+      r.money = Math.max(r.money, 9999);
+      r.manpower = Math.max(r.manpower, 999);
+      r.research = Math.max(r.research, 999);
+      r.militaryPower = Math.max(r.militaryPower, 999);
+      r.nukes = Math.max(r.nukes, 99);
+    }
   },
 
   // ===== 添加新闻 =====
@@ -1381,16 +1389,16 @@ const Game = {
       income.deterrence -= 0.5;  // 威慑持续衰减
     }
 
-    // God模式: 每回合大量基础收入，抵消所有衰减
+    // God模式: 每回合无限级资源注入，抵消所有衰减
     if (this.getMode().godMode) {
-      income.money = (income.money || 0) + 500;
-      income.manpower = (income.manpower || 0) + 50;
-      income.stability = (income.stability || 0) + 5;
-      income.deterrence = (income.deterrence || 0) + 10;
-      income.militaryPower = (income.militaryPower || 0) + 10;
-      income.nukeDeter = (income.nukeDeter || 0) + 10;
-      income.research = (income.research || 0) + 10;
-      income.nukes = (income.nukes || 0) + 1;
+      income.money = (income.money || 0) + 9999;
+      income.manpower = (income.manpower || 0) + 999;
+      income.stability = (income.stability || 0) + 50;
+      income.deterrence = (income.deterrence || 0) + 100;
+      income.militaryPower = (income.militaryPower || 0) + 100;
+      income.nukeDeter = (income.nukeDeter || 0) + 100;
+      income.research = (income.research || 0) + 999;
+      income.nukes = (income.nukes || 0) + 50;
     }
 
     return income;
