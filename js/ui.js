@@ -2875,14 +2875,16 @@ const UI = {
     const input = document.getElementById('shop-code-input');
     if (!input) return;
     const val = (input.value || '').trim().toUpperCase();
-    if (val === 'WOLFSCHANZE' || val === 'DEVELOPER') {
+    const codes = (typeof DEV_CODES !== 'undefined') ? DEV_CODES : ['WOLFSCHANZE', 'DEVELOPER'];
+    if (codes.indexOf(val) >= 0) {
       if (typeof unlockDeveloperMode === 'function') {
         unlockDeveloperMode();
       } else {
         sessionStorage.setItem('tno_debug', '1');
+        sessionStorage.setItem('tno_dev_unlocked', '1');
       }
-      this.toast('⚡ 开发者模式已解锁（当前会话）', 'success');
-      this.renderTab('shop');
+      this.toast('⚡ 开发者模式已解锁（请重启游戏生效）', 'success');
+      setTimeout(() => { if (confirm('开发者模式已解锁，需要重启游戏才能在模式选择界面看到。现在重启？')) location.reload(); }, 600);
     } else {
       this.toast('授权码无效', 'error');
       input.value = '';

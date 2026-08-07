@@ -206,24 +206,32 @@ const GAME_MODES = {
     godMode: true,
     noEndingFail: true,
     devMode: true,
-    unlocked: true
+    unlocked: false
   }
 };
 
-// ===== 开发者模式解锁（sessionStorage 持久化当前会话） =====
+// ===== 开发者模式解锁（三层保险：localStorage 持久化 + sessionStorage 回退 + URL 参数即时） =====
 (function _tryUnlockDevMode() {
   try {
-    if (sessionStorage.getItem('tno_debug') === '1' ||
-        sessionStorage.getItem('tno_dev_unlocked') === '1') {
+    const hasLocal = localStorage.getItem('tno_dev_unlocked') === '1';
+    const hasSession = sessionStorage.getItem('tno_dev_unlocked') === '1';
+    const hasUrlParam = /[?&]dev=1/i.test(location.search);
+    if (hasLocal || hasSession || hasUrlParam) {
       GAME_MODES.developer.unlocked = true;
+      try { localStorage.setItem('tno_dev_unlocked', '1'); } catch(e) {}
+      try { sessionStorage.setItem('tno_dev_unlocked', '1'); sessionStorage.setItem('tno_debug', '1'); } catch(e) {}
     }
   } catch(e) {}
 })();
 
+// 有效授权码列表
+const DEV_CODES = ['WOLFSCHANZE', 'DEVELOPER', 'GITTER', 'DEV', '1962'];
+
 function unlockDeveloperMode() {
   try {
-    sessionStorage.setItem('tno_debug', '1');
+    localStorage.setItem('tno_dev_unlocked', '1');
     sessionStorage.setItem('tno_dev_unlocked', '1');
+    sessionStorage.setItem('tno_debug', '1');
     GAME_MODES.developer.unlocked = true;
     return true;
   } catch(e) { return false; }
