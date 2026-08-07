@@ -1,4 +1,5 @@
 // ===== Undertale Sans Genocide 风格 BOSS 战引擎 =====
+// v46 Dusttale 弹幕素材完整实现
 // 单一 BOSS：德衫 (Deutschland Sans · Determination Sans)
 // 逆向自 Dusttale "杀人喜剧" APK — act2_sansturn0~9 + spr_battle_ui_kr + bone_stab_alert
 (function () {
@@ -792,7 +793,6 @@
         w.t = (w.t || 0) + tickMs;
         if (w.t >= w.duration) {
           w.fired = true;
-          // 预警结束后发射
           if (w.type === 'bone_stab') {
             b.bullets.push({
               shape: w.shape || 'bone_v',
@@ -802,15 +802,28 @@
               w: w.bw || 14, h: w.bh || 24,
               r: 5,
               piercing: false,
+              color: w.color || 'white',
+            });
+          } else if (w.type === 'bone_h_stab') {
+            b.bullets.push({
+              shape: w.shape || 'bone_h',
+              x: w.left ? -30 : b.canvasW + 30, y: w.y,
+              vx: w.left ? (w.vx || 4) : -(w.vx || 4),
+              vy: 0,
+              w: w.w || 60, h: w.h || 10,
+              r: 4,
+              piercing: false,
+              color: w.color || 'white',
             });
           } else if (w.type === 'bullet_gb') {
             b.bullets.push({
               shape: 'circle',
               x: w.x, y: w.y,
               vx: w.vx || 0, vy: w.vy || 4,
-              r: 8, color: '#66aaff',
-              piercing: true,  // Gaster Blaster 子弹穿一切
+              r: 8, color: w.ap ? '#9933ff' : '#66aaff',
+              piercing: true,
               gb: true,
+              ap: !!w.ap,
             });
           }
         }
@@ -829,29 +842,37 @@
       }
       b.lasers = b.lasers.filter(l => !l.done);
 
-      // === 尘埃粒子 (Step_2 最终战) ===
-      if (b.step2 && b.dust.length < 30 && Math.random() < 0.3) {
+      // === 尘埃粒子 (Dusttale 每个阶段都有 dustcloud + pixeldust) ===
+      if (b.dust.length < (b.step2 ? 80 : 25) && Math.random() < (b.step2 ? 0.15 : 0.06)) {
         b.dust.push({
           x: Math.random() * b.canvasW,
-          y: -5,
+          y: b.canvasH + 5,
           vx: (Math.random() - 0.5) * 1.5,
-          vy: 0.8 + Math.random() * 1.2,
+          vy: -(0.5 + Math.random() * 1.5),
           size: 1 + Math.random() * 3,
-          alpha: 0.3 + Math.random() * 0.5,
+          alpha: 0.25 + Math.random() * 0.4,
+          rot: Math.random() * Math.PI * 2,
+          vr: (Math.random() - 0.5) * 0.15,
         });
       }
       for (const d of b.dust) {
         d.x += d.vx; d.y += d.vy;
       }
-      b.dust = b.dust.filter(d => d.y < b.canvasH + 10);
+      b.dust = b.dust.filter(d => d.y > -10 && d.y < b.canvasH + 10 && d.x > -20 && d.x < b.canvasW + 20);
 
       if (b.hitCooldown > 0) b.hitCooldown -= tickMs;
       if (b.invulnTimer > 0) b.invulnTimer -= tickMs;
 
       // === 碰撞检测 ===
       for (const bu of b.bullets) {
-        // 橙魂可穿普通弹幕（但穿不过骨头和穿甲弹）
-        if (b.soulColor === 'orange' && !bu.piercing && bu.shape !== 'bone_v' && bu.shape !== 'bone_h') continue;
+        // 橙魂可穿普通弹幕（但穿不过骨头/环形/弯形/U形/穿甲弹）
+        const isBoneShape = bu.shape && (
+          bu.shape === 'bone_v' || bu.shape === 'bone_h' ||
+          bu.shape === 'bone_c' || bu.shape === 'bone_o' ||
+          bu.shape === 'bone_u' || bu.shape === 'bone_skate' ||
+          bu.shape === 'bone_super'
+        );
+        if (b.soulColor === 'orange' && !bu.piercing && !isBoneShape) continue;
 
         const dx = bu.x - b.soul.x, dy = bu.y - b.soul.y;
         const hitR = (bu.r || 5) + 6;
@@ -883,148 +904,378 @@
       }
 
       // === 绘制 ===
+      // Dusttale 暗紫色背景
+      const bgTint = b.step2 ? 'rgba(80, 0, 20, 0.35)' :
+                     b.isAngry ? 'rgba(40, 0, 50, 0.25)' :
+                     'rgba(10, 0, 20, 0.15)';
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = bgTint;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 蓝魂背景
+      // 灵魂颜色背景光晕
       if (b.soulColor === 'blue') {
-        ctx.fillStyle = 'rgba(30, 60, 140, 0.25)';
+        ctx.fillStyle = 'rgba(60, 100, 200, 0.12)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (b.soulColor === 'orange') {
+        ctx.fillStyle = 'rgba(255, 140, 40, 0.10)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (b.soulColor === 'pink') {
+        ctx.fillStyle = 'rgba(255, 100, 180, 0.10)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      // 橙魂背景
-      if (b.soulColor === 'orange') {
-        ctx.fillStyle = 'rgba(255, 140, 40, 0.15)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      // Step_2 红色背景闪烁
+
+      // Step_2 血红脉动 + 尘埃
       if (b.step2) {
-        const intensity = 0.05 + Math.sin(now / 100) * 0.04;
-        ctx.fillStyle = `rgba(255, 0, 0, ${intensity})`;
+        const intensity = 0.06 + Math.sin(now / 120) * 0.04;
+        ctx.fillStyle = `rgba(200, 0, 0, ${intensity})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (Math.random() < 0.08 && b.dust.length < 80) {
+          b.dust.push({
+            x: Math.random() * b.canvasW,
+            y: Math.random() * b.canvasH,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            size: 1 + Math.random() * 4,
+            alpha: 0.4 + Math.random() * 0.5,
+            rot: Math.random() * Math.PI * 2,
+            vr: (Math.random() - 0.5) * 0.2,
+          });
+        }
       }
 
-      // 尘埃粒子
+      // Dusttale 常驻尘埃粒子 (dustcloud / pixeldust)
       for (const d of b.dust) {
-        ctx.fillStyle = `rgba(180, 160, 140, ${d.alpha})`;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
-        ctx.fill();
+        d.rot = (d.rot || 0) + (d.vr || 0);
+        ctx.save();
+        ctx.globalAlpha = d.alpha * (b.step2 ? 1 : 0.55);
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.rot || 0);
+        ctx.fillStyle = `rgba(180, 150, 130, 1)`;
+        ctx.fillRect(-d.size, -d.size, d.size * 2, d.size * 2);
+        ctx.fillStyle = `rgba(120, 100, 80, 0.6)`;
+        ctx.fillRect(-d.size * 0.5, -d.size * 0.5, d.size, d.size);
+        ctx.restore();
       }
 
-      // 平台
-      ctx.fillStyle = '#88aadd';
-      b.platforms.forEach(p => { ctx.fillRect(p.x, p.y, p.w, 4); });
-      ctx.strokeStyle = '#c0d8ff';
-      b.platforms.forEach(p => { ctx.strokeRect(p.x, p.y, p.w, 4); });
+      // 平台 (spr_superbone 超级骨头平台)
+      b.platforms.forEach(p => {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(p.x, p.y + 5, p.w, 3);
+        ctx.fillStyle = p.color || '#e8e0d0';
+        ctx.fillRect(p.x, p.y, p.w, 4);
+        ctx.strokeStyle = p.color ? 'rgba(255,255,255,0.3)' : '#fff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y + 2);
+        ctx.lineTo(p.x + p.w, p.y + 2);
+        ctx.stroke();
+        if (p.bounce) {
+          ctx.fillStyle = '#ffcc44';
+          ctx.beginPath(); ctx.arc(p.x + p.w/2, p.y, 3, 0, Math.PI*2); ctx.fill();
+        }
+      });
 
-      // 预警线 (bone_stab_alert) — 红色闪烁
+      // 预警线 (bone_stab_alert) — Dusttale 红色脉动闪烁
       for (const w of b.warnings) {
-        const alpha = 0.5 + Math.sin(now / 50) * 0.3;
-        ctx.strokeStyle = `rgba(255, 40, 40, ${alpha})`;
+        const pulse = 0.5 + Math.sin(now / 40) * 0.4;
+        ctx.save();
+        ctx.strokeStyle = w.color || `rgba(255, 40, 40, ${pulse})`;
         ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
+        ctx.setLineDash([8, 4]);
+        ctx.lineDashOffset = -now / 30;
         ctx.beginPath();
         if (w.type === 'bone_stab') {
-          // 垂直预警
           ctx.moveTo(w.x, 0);
           ctx.lineTo(w.x, b.canvasH);
+        } else if (w.type === 'bone_h_stab') {
+          ctx.moveTo(0, w.y);
+          ctx.lineTo(b.canvasW, w.y);
         } else if (w.type === 'bullet_gb') {
-          // 范围预警
-          ctx.strokeRect(w.x - 20, w.y - 20, 40, 40);
+          ctx.strokeRect(w.x - 22, w.y - 22, 44, 44);
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(w.x - 16, w.y); ctx.lineTo(w.x + 16, w.y);
+          ctx.moveTo(w.x, w.y - 16); ctx.lineTo(w.x, w.y + 16);
+          ctx.stroke();
+        } else if (w.type === 'laser_v') {
+          ctx.moveTo(w.x, 0);
+          ctx.lineTo(w.x, b.canvasH);
+        } else if (w.type === 'laser_h') {
+          ctx.moveTo(0, w.y);
+          ctx.lineTo(b.canvasW, w.y);
         }
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.restore();
       }
 
-      // 激光
+      // 激光 (spr_battlelaser / spr_laser1 / spr_laser2)
       for (const laser of b.lasers) {
         const warn = !laser.warned;
+        const col = laser.color || (warn ? '#ff2222' : '#5599ff');
+        const coreCol = warn ? '#ff8888' : '#cceeff';
         if (laser.type === 'rotating') {
           for (const beam of laser.beams) {
             const ang = beam.ang;
             const ex = laser.cx + Math.cos(ang) * b.canvasW * 2;
             const ey = laser.cy + Math.sin(ang) * b.canvasW * 2;
-            ctx.strokeStyle = warn ? '#ff2222' : (laser.beamColor || '#4488ff');
-            ctx.lineWidth = warn ? 2 : 5;
-            ctx.globalAlpha = warn ? 0.6 : 1;
-            ctx.beginPath(); ctx.moveTo(laser.cx, laser.cy); ctx.lineTo(ex, ey); ctx.stroke();
-            ctx.globalAlpha = 1;
             if (!warn) {
-              ctx.strokeStyle = '#aaccff';
-              ctx.lineWidth = 1;
+              ctx.strokeStyle = col;
+              ctx.lineWidth = 10;
+              ctx.globalAlpha = 0.25;
+              ctx.beginPath(); ctx.moveTo(laser.cx, laser.cy); ctx.lineTo(ex, ey); ctx.stroke();
+            }
+            ctx.globalAlpha = warn ? 0.5 : 1;
+            ctx.strokeStyle = warn ? '#ff2222' : col;
+            ctx.lineWidth = warn ? 2 : 5;
+            ctx.beginPath(); ctx.moveTo(laser.cx, laser.cy); ctx.lineTo(ex, ey); ctx.stroke();
+            if (!warn) {
+              ctx.strokeStyle = coreCol;
+              ctx.lineWidth = 1.5;
               ctx.beginPath(); ctx.moveTo(laser.cx, laser.cy); ctx.lineTo(ex, ey); ctx.stroke();
             }
           }
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = '#88ccff';
+          ctx.beginPath(); ctx.arc(laser.cx, laser.cy, 5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(laser.cx, laser.cy, 2, 0, Math.PI*2); ctx.fill();
         } else if (laser.type === 'horizontal') {
-          ctx.strokeStyle = warn ? '#ff2222' : '#4488ff';
-          ctx.lineWidth = warn ? 2 : 5;
-          ctx.globalAlpha = warn ? 0.6 + Math.sin(now / 40) * 0.3 : 1;
+          if (!warn) {
+            ctx.fillStyle = col;
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(0, laser.y - 12, b.canvasW, 24);
+          }
+          ctx.globalAlpha = warn ? 0.6 + Math.sin(now / 35) * 0.3 : 1;
+          ctx.strokeStyle = warn ? '#ff2222' : col;
+          ctx.lineWidth = warn ? 2 : 6;
           ctx.beginPath(); ctx.moveTo(0, laser.y); ctx.lineTo(b.canvasW, laser.y); ctx.stroke();
+          if (!warn) {
+            ctx.strokeStyle = coreCol;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, laser.y); ctx.lineTo(b.canvasW, laser.y); ctx.stroke();
+          }
           ctx.globalAlpha = 1;
         } else if (laser.type === 'vertical') {
-          ctx.strokeStyle = warn ? '#ff2222' : '#4488ff';
-          ctx.lineWidth = warn ? 2 : 5;
-          ctx.globalAlpha = warn ? 0.6 + Math.sin(now / 40) * 0.3 : 1;
+          if (!warn) {
+            ctx.fillStyle = col;
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(laser.x - 12, 0, 24, b.canvasH);
+          }
+          ctx.globalAlpha = warn ? 0.6 + Math.sin(now / 35) * 0.3 : 1;
+          ctx.strokeStyle = warn ? '#ff2222' : col;
+          ctx.lineWidth = warn ? 2 : 6;
           ctx.beginPath(); ctx.moveTo(laser.x, 0); ctx.lineTo(laser.x, b.canvasH); ctx.stroke();
+          if (!warn) {
+            ctx.strokeStyle = coreCol;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(laser.x, 0); ctx.lineTo(laser.x, b.canvasH); ctx.stroke();
+          }
           ctx.globalAlpha = 1;
         }
       }
 
-      // 子弹
+      // 子弹 / 骨头 (Dusttale 全部骨头形状)
       for (const bu of b.bullets) {
-        if (bu.shape === 'bone_h') {
-          ctx.fillStyle = '#ffffff';
-          const bw = bu.w, bh = bu.h;
-          ctx.fillRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+        const boneColor = bu.color === 'lightblue' ? '#aaddff' :
+                          bu.color === 'orange'   ? '#ffaa44' :
+                          bu.color === 'purple'  ? '#cc44ff' :
+                          bu.color === 'red'     ? '#ff4444' :
+                                                   '#ffffff';
+        const boneOutline = bu.color === 'purple' ? '#660099' : 'rgba(0,0,0,0.6)';
+
+        if (bu.shape === 'bone_h' || bu.shape === 'bone_v' || !bu.shape) {
+          const bw = bu.w || (bu.shape === 'bone_v' ? 14 : 14);
+          const bh = bu.h || (bu.shape === 'bone_v' ? 20 : 14);
+          ctx.fillStyle = boneColor;
+          ctx.strokeStyle = boneOutline;
+          ctx.lineWidth = 1;
+          if (bu.shape === 'bone_h') {
+            ctx.fillRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+            ctx.strokeRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+            ctx.beginPath();
+            ctx.arc(bu.x - bw/2, bu.y - bh/2, bh/2, 0, Math.PI*2);
+            ctx.arc(bu.x - bw/2, bu.y + bh/2, bh/2, 0, Math.PI*2);
+            ctx.arc(bu.x + bw/2, bu.y - bh/2, bh/2, 0, Math.PI*2);
+            ctx.arc(bu.x + bw/2, bu.y + bh/2, bh/2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            ctx.fillRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+            ctx.strokeRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+            ctx.beginPath();
+            ctx.arc(bu.x - bw/2, bu.y - bh/2, bw/2, 0, Math.PI*2);
+            ctx.arc(bu.x + bw/2, bu.y - bh/2, bw/2, 0, Math.PI*2);
+            ctx.arc(bu.x - bw/2, bu.y + bh/2, bw/2, 0, Math.PI*2);
+            ctx.arc(bu.x + bw/2, bu.y + bh/2, bw/2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        } else if (bu.shape === 'bone_c') {
+          const rad = bu.w || 18;
+          const thick = bu.h || 6;
+          ctx.strokeStyle = boneColor;
+          ctx.lineWidth = thick;
           ctx.beginPath();
-          ctx.arc(bu.x - bw/2, bu.y - bh/2, bh/2, 0, Math.PI*2);
-          ctx.arc(bu.x - bw/2, bu.y + bh/2, bh/2, 0, Math.PI*2);
-          ctx.arc(bu.x + bw/2, bu.y - bh/2, bh/2, 0, Math.PI*2);
-          ctx.arc(bu.x + bw/2, bu.y + bh/2, bh/2, 0, Math.PI*2);
-          ctx.fill();
-        } else if (bu.shape === 'bone_v') {
-          ctx.fillStyle = '#ffffff';
-          const bw = bu.w, bh = bu.h;
-          ctx.fillRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+          ctx.arc(bu.x, bu.y, rad, bu.startA || 0, bu.endA || Math.PI, bu.ccw || false);
+          ctx.stroke();
+          ctx.strokeStyle = boneOutline;
+          ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.arc(bu.x - bw/2, bu.y - bh/2, bw/2, 0, Math.PI*2);
-          ctx.arc(bu.x + bw/2, bu.y - bh/2, bw/2, 0, Math.PI*2);
-          ctx.arc(bu.x - bw/2, bu.y + bh/2, bw/2, 0, Math.PI*2);
-          ctx.arc(bu.x + bw/2, bu.y + bh/2, bw/2, 0, Math.PI*2);
+          ctx.arc(bu.x, bu.y, rad - thick/2, bu.startA || 0, bu.endA || Math.PI, bu.ccw || false);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(bu.x, bu.y, rad + thick/2, bu.startA || 0, bu.endA || Math.PI, bu.ccw || false);
+          ctx.stroke();
+        } else if (bu.shape === 'bone_o') {
+          const rad = bu.w || 16;
+          const thick = bu.h || 5;
+          ctx.strokeStyle = boneColor;
+          ctx.lineWidth = thick;
+          ctx.beginPath();
+          ctx.arc(bu.x, bu.y, rad, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.strokeStyle = boneOutline;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(bu.x, bu.y, rad - thick/2, 0, Math.PI*2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(bu.x, bu.y, rad + thick/2, 0, Math.PI*2); ctx.stroke();
+        } else if (bu.shape === 'bone_u') {
+          const w = bu.w || 30;
+          const h = bu.h || 20;
+          const thick = bu.bw || 8;
+          ctx.strokeStyle = boneColor;
+          ctx.lineWidth = thick;
+          ctx.beginPath();
+          ctx.moveTo(bu.x - w/2, bu.y - h/2);
+          ctx.lineTo(bu.x - w/2, bu.y + h/4);
+          ctx.quadraticCurveTo(bu.x, bu.y + h/2 + thick, bu.x + w/2, bu.y + h/4);
+          ctx.lineTo(bu.x + w/2, bu.y - h/2);
+          ctx.stroke();
+        } else if (bu.shape === 'bone_skate') {
+          const w = bu.w || 32;
+          const h = bu.h || 5;
+          if (bu.vx !== 0) {
+            ctx.fillStyle = boneColor + '40';
+            ctx.fillRect(bu.x - bu.vx * 4 - w/2, bu.y - h/2, bu.vx * 4, h);
+          }
+          ctx.fillStyle = boneColor;
+          ctx.strokeStyle = boneOutline;
+          ctx.lineWidth = 0.5;
+          ctx.fillRect(bu.x - w/2, bu.y - h/2, w, h);
+          ctx.strokeRect(bu.x - w/2, bu.y - h/2, w, h);
+        } else if (bu.shape === 'bone_super') {
+          const w = bu.w || 60;
+          const h = bu.h || 18;
+          ctx.fillStyle = boneColor;
+          ctx.strokeStyle = boneOutline;
+          ctx.lineWidth = 1.5;
+          ctx.fillRect(bu.x - w/2, bu.y - h/2, w, h);
+          ctx.strokeRect(bu.x - w/2, bu.y - h/2, w, h);
+          ctx.beginPath();
+          ctx.arc(bu.x - w/2, bu.y - h/2, h/2, 0, Math.PI*2);
+          ctx.arc(bu.x + w/2, bu.y - h/2, h/2, 0, Math.PI*2);
+          ctx.arc(bu.x - w/2, bu.y + h/2, h/2, 0, Math.PI*2);
+          ctx.arc(bu.x + w/2, bu.y + h/2, h/2, 0, Math.PI*2);
           ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = boneOutline;
+          ctx.lineWidth = 0.75;
+          for (let i = 1; i < 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(bu.x - w/2 + i * w/3, bu.y - h/2 + 2);
+            ctx.lineTo(bu.x - w/2 + i * w/3, bu.y + h/2 - 2);
+            ctx.stroke();
+          }
         } else if (bu.gb) {
-          // bullet_gb — Gaster Blaster 专属子弹
-          const pulse = 1 + Math.sin(now / 80) * 0.3;
-          ctx.fillStyle = '#66aaff';
+          const pulse = 1 + Math.sin(now / 70) * 0.25;
+          const isAP = bu.ap;
+          const outerCol = isAP ? '#9933ff' : (b.isAngry || b.step2 ? '#dd4466' : '#66aaff');
+          const innerCol = isAP ? '#eebbff' : '#ffffff';
+          const r = (bu.r || 8) * pulse;
+          ctx.fillStyle = outerCol;
+          ctx.globalAlpha = 0.35;
           ctx.beginPath();
-          ctx.arc(bu.x, bu.y, bu.r * pulse, 0, Math.PI * 2);
+          ctx.arc(bu.x, bu.y, r * 2.2, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = '#aaddff';
+          ctx.globalAlpha = 0.7;
           ctx.beginPath();
-          ctx.arc(bu.x, bu.y, bu.r * 0.5, 0, Math.PI * 2);
+          ctx.arc(bu.x, bu.y, r * 1.5, 0, Math.PI * 2);
           ctx.fill();
-          // 尾迹
-          ctx.fillStyle = 'rgba(102,170,255,0.35)';
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = outerCol;
           ctx.beginPath();
-          ctx.arc(bu.x - bu.vx, bu.y - bu.vy, bu.r * 0.7, 0, Math.PI * 2);
+          ctx.arc(bu.x, bu.y, r, 0, Math.PI * 2);
           ctx.fill();
+          ctx.fillStyle = innerCol;
+          ctx.beginPath();
+          ctx.arc(bu.x, bu.y, r * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+          if (bu.eyeDots !== false) {
+            ctx.fillStyle = '#cc44ff';
+            ctx.beginPath(); ctx.arc(bu.x - 2, bu.y - 1, 1, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ff3333';
+            ctx.beginPath(); ctx.arc(bu.x + 2, bu.y - 1, 1, 0, Math.PI*2); ctx.fill();
+          }
+          if (bu.vx || bu.vy) {
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = outerCol;
+            ctx.beginPath();
+            ctx.arc(bu.x - bu.vx * 2, bu.y - bu.vy * 2, r * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.2;
+            ctx.beginPath();
+            ctx.arc(bu.x - bu.vx * 4, bu.y - bu.vy * 4, r * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          }
+        } else if (bu.shape === 'spear') {
+          ctx.save();
+          ctx.translate(bu.x, bu.y);
+          ctx.rotate(bu.angle || 0);
+          ctx.fillStyle = '#e0d080';
+          ctx.beginPath();
+          ctx.moveTo(0, -8);
+          ctx.lineTo(3, 0);
+          ctx.lineTo(0, 4);
+          ctx.lineTo(-3, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#807020';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+          ctx.restore();
         } else {
+          const pulse = 1 + Math.sin(now / 100 + bu.x) * 0.15;
           ctx.fillStyle = bu.color || '#ffff00';
-          ctx.beginPath();
-          ctx.arc(bu.x, bu.y, bu.r, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.globalAlpha = 0.4;
+          ctx.beginPath(); ctx.arc(bu.x, bu.y, (bu.r || 4) * 1.8 * pulse, 0, Math.PI*2); ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(bu.x, bu.y, (bu.r || 4) * pulse, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(bu.x, bu.y, (bu.r || 4) * pulse * 0.5, 0, Math.PI*2); ctx.fill();
         }
       }
 
-      // 灵魂
+      // 灵魂 (Dusttale 异色瞳/受伤闪烁)
       const flash = (b.hitCooldown > 0 && b.hitCooldown % 6 < 3);
-      const soulColor = b.soulColor === 'blue' ? '#4488ff' :
-                        b.soulColor === 'orange' ? '#ff8822' :
-                        b.soulColor === 'pink' ? '#ff66aa' : '#ff2222';
-      ctx.fillStyle = flash ? '#ffffff' : soulColor;
+      let soulColor = b.soulColor === 'blue' ? '#4488ff' :
+                      b.soulColor === 'orange' ? '#ff8822' :
+                      b.soulColor === 'pink' ? '#ff66aa' :
+                      b.soulColor === 'purple' ? '#aa44ff' : '#ff2222';
+      if (flash) soulColor = '#ffffff';
+      if (!flash) {
+        ctx.fillStyle = soulColor;
+        ctx.globalAlpha = 0.3;
+        drawHeart(ctx, b.soul.x, b.soul.y, 10);
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = soulColor;
       drawHeart(ctx, b.soul.x, b.soul.y, 6);
       if (b.soulColor === 'blue') {
-        ctx.fillStyle = '#ff66ff'; // 蓝魂内标
+        ctx.fillStyle = '#ff66ff';
+        ctx.beginPath(); ctx.arc(b.soul.x, b.soul.y, 2, 0, Math.PI*2); ctx.fill();
+      } else if (b.soulColor === 'purple') {
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(b.soul.x, b.soul.y, 2, 0, Math.PI*2); ctx.fill();
       }
 
@@ -1070,135 +1321,236 @@
     const b = _battle;
     b.bullets = []; b.lasers = []; b.platforms = []; b.warnings = []; b.dust = [];
 
-    function addPlatform(x, y, ww) { b.platforms.push({ x, y, w: ww }); }
-    function warnBone(x, duration=300) {
-      b.warnings.push({ type: 'bone_stab', x, bottom: true, duration, t: 0, fired: false, shape: 'bone_v', vy: 3.5, bw: 14, bh: 22 });
+    function addPlatform(x, y, ww, opts) {
+      b.platforms.push({ x, y, w: ww, color: opts?.color, bounce: opts?.bounce });
     }
-    function warnGb(x, y, duration=350) {
-      b.warnings.push({ type: 'bullet_gb', x, y, duration, t: 0, fired: false, vx: 0, vy: 4 });
+    function warnBone(x, duration=300, opts={}) {
+      b.warnings.push({
+        type: 'bone_stab', x, bottom: opts.bottom !== false,
+        duration, t: 0, fired: false,
+        shape: opts.shape || 'bone_v',
+        vy: opts.vy || 3.5, vx: opts.vx || 0,
+        bw: opts.bw || 14, bh: opts.bh || 22,
+        color: opts.color,
+      });
+    }
+    function warnBoneH(y, duration=300, opts={}) {
+      b.warnings.push({
+        type: 'bone_h_stab', y, left: opts.left !== false,
+        duration, t: 0, fired: false,
+        shape: opts.shape || 'bone_h',
+        vx: opts.vx || 4,
+        w: opts.w || 60, h: opts.h || 10,
+        color: opts.color,
+      });
+    }
+    function warnGb(x, y, duration=350, opts={}) {
+      b.warnings.push({
+        type: 'bullet_gb', x, y, duration, t: 0, fired: false,
+        vx: opts.vx || 0, vy: opts.vy || 4,
+        ap: opts.ap,
+      });
+    }
+    function spawnDust(count=5) {
+      for (let i = 0; i < count; i++) {
+        b.dust.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: (Math.random() - 0.5) * 1.5,
+          size: 1 + Math.random() * 3,
+          alpha: 0.3 + Math.random() * 0.5,
+          rot: Math.random() * Math.PI * 2,
+          vr: (Math.random() - 0.5) * 0.15,
+        });
+      }
     }
 
     const phase = BATTLE_PHASES[idx];
     b.soulColor = phase.soul;
-    b.modal.querySelector('#ub-soul-indicator').textContent = phase.name;
+    b.isAngry = !!phase.angry;
+    b.modal.querySelector('#ub-soul-indicator').textContent = phase.name + (b.isAngry ? ' 🔥' : '');
+
+    spawnDust(3);
 
     if (idx === 0) {
-      // sansturn0 · 热身 — 简单骨头
-      addPlatform(w * 0.1, h * 0.65, w * 0.2);
+      addPlatform(w * 0.15, h * 0.65, w * 0.2, { color: '#e8e0d0' });
+      addPlatform(w * 0.65, h * 0.5, w * 0.18, { color: '#e8e0d0' });
       mkInterval(() => {
         if (!_battle) return;
-        warnBone(w * 0.3);
-        warnBone(w * 0.7);
-      }, 1800);
+        b.bullets.push({ shape: 'bone_skate', x: Math.random() * w, y: -10, vx: (Math.random()-0.5)*2, vy: 3, w: 30, h: 5, r: 4, color: 'white' });
+      }, 500);
       mkInterval(() => {
         if (!_battle) return;
-        b.bullets.push({ x: Math.random() * w, y: -10, vx: 0, vy: 3.2, r: 4, color: '#ffffff' });
-      }, 400);
+        warnBone(w * (0.2 + Math.random() * 0.6), 350, { bw: 14, bh: 24 });
+      }, 1200);
     }
 
     else if (idx === 1) {
-      // sansturn1 · 骨墙
-      addPlatform(w * 0.1, h * 0.6, w * 0.18);
-      addPlatform(w * 0.45, h * 0.45, w * 0.18);
-      addPlatform(w * 0.78, h * 0.6, w * 0.18);
+      addPlatform(w * 0.2, h * 0.7, w * 0.15);
+      addPlatform(w * 0.5, h * 0.55, w * 0.15);
+      addPlatform(w * 0.78, h * 0.4, w * 0.15);
       mkInterval(() => {
         if (!_battle) return;
-        const cols = 4;
+        const cols = 3;
         const sp = w / (cols + 1);
         for (let c = 0; c < cols; c++) {
-          warnBone(sp * (c + 1), 350);
+          warnBone(sp * (c + 1), 380, { bw: 16, bh: 26 });
         }
-      }, 1500);
-    }
-
-    else if (idx === 2) {
-      // sansturn2 · 龙骨炮登场 — bullet_gb
-      mkInterval(() => {
-        if (!_battle) return;
-        warnGb(30 + Math.random() * (w - 60), 35 + Math.random() * (h - 70), 400);
-      }, 900);
-      mkInterval(() => {
-        if (!_battle) return;
-        b.lasers.push({ type: 'horizontal', y: 30 + Math.random() * (h - 60), warnDuration: 250, warned: false, warnTime: 0, fireTime: 0, duration: 400 });
       }, 1400);
-      mkInterval(() => {
-        if (!_battle) return;
-        b.bullets.push({ x: -20, y: 30 + Math.random() * (h - 60), vx: 4 + Math.random(), vy: 0, r: 4, color: '#88ccff' });
-      }, 200);
-    }
-
-    else if (idx === 3) {
-      // sansturn3 · 白骨横扫
-      addPlatform(10, h * 0.75, w - 20);
       mkInterval(() => {
         if (!_battle) return;
         const fromLeft = Math.random() < 0.5;
         b.bullets.push({
-          shape: 'bone_h', x: fromLeft ? -w : w * 2, y: 30 + Math.random() * (h - 80),
-          vx: fromLeft ? 5 : -5, vy: 0, w: w * 1.2, h: 14, r: 4,
+          shape: 'bone_skate',
+          x: fromLeft ? -30 : w + 30,
+          y: 20 + Math.random() * (h - 40),
+          vx: fromLeft ? 5.5 : -5.5, vy: 0,
+          w: 40, h: 5, r: 4, color: 'white',
         });
-      }, 1400);
-      let i = 0;
+      }, 700);
+    }
+
+    else if (idx === 2) {
+      mkInterval(() => {
+        if (!_battle) return;
+        warnGb(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 400);
+      }, 800);
+      mkInterval(() => {
+        if (!_battle) return;
+        const cx = w/2, cy = h/2;
+        const count = 6;
+        for (let i = 0; i < count; i++) {
+          const ang = (i / count) * Math.PI * 2 + performance.now() / 1000;
+          b.bullets.push({
+            shape: 'circle',
+            x: cx + Math.cos(ang) * 25,
+            y: cy + Math.sin(ang) * 25,
+            vx: Math.cos(ang) * 3,
+            vy: Math.sin(ang) * 3,
+            r: 7, gb: true, piercing: true,
+            color: '#66aaff',
+          });
+        }
+      }, 2500);
+      mkInterval(() => {
+        if (!_battle) return;
+        b.lasers.push({ type: 'horizontal', y: 30 + Math.random() * (h - 60), warnDuration: 300, warned: false, warnTime: 0, fireTime: 0, duration: 350, color: '#5599ff' });
+      }, 1800);
+    }
+
+    else if (idx === 3) {
+      addPlatform(10, h * 0.8, w - 20);
+      mkInterval(() => {
+        if (!_battle) return;
+        const cx = Math.random() * w;
+        const cy = h + 20;
+        const rot = performance.now() / 500;
+        for (let i = 0; i < 3; i++) {
+          const ang = rot + (i - 1) * 0.3;
+          b.bullets.push({
+            shape: 'bone_c',
+            x: cx + Math.cos(ang) * 30,
+            y: cy - 30 + Math.sin(ang) * 15,
+            vx: Math.cos(ang) * 2.5,
+            vy: -3.5,
+            r: 10, w: 22, h: 6,
+            startA: 0, endA: Math.PI * 1.4,
+            color: 'white',
+          });
+        }
+      }, 900);
       mkInterval(() => {
         if (!_battle) return;
         b.bullets.push({
-          shape: 'bone_h',
-          x: -w * 1.2 + i * 5, y: h * 0.3 + Math.sin(i * 0.3) * 20,
-          vx: 3.5, vy: 0, w: w * 0.7, h: 12, r: 4,
+          shape: 'bone_o',
+          x: Math.random() * w,
+          y: -20,
+          vx: 0, vy: 2.5,
+          r: 12, w: 18, h: 5,
+          color: 'white',
         });
-        i++;
-      }, 120);
+      }, 1200);
     }
 
     else if (idx === 4) {
-      // sansturn4 · 骨头夹击
       let squeeze = 0;
       mkInterval(() => {
         if (!_battle) return;
-        squeeze += 1.5;
-        if (squeeze > 55) squeeze = 55;
-        for (let x = 10; x < w; x += 24) {
-          b.bullets.push({ shape: 'bone_v', x, y: -20 + squeeze, vx: 0, vy: 0, w: 12, h: 18 + squeeze * 0.5, r: 4 });
-          b.bullets.push({ shape: 'bone_v', x, y: h + 20 - squeeze, vx: 0, vy: 0, w: 12, h: 18 + squeeze * 0.5, r: 4 });
+        squeeze += 1.8;
+        if (squeeze > 60) squeeze = 60;
+        for (let x = 10; x < w; x += 28) {
+          b.bullets.push({ shape: 'bone_super', x, y: -25 + squeeze, vx: 0, vy: 0, w: 24, h: 14, r: 5, color: 'white' });
+          b.bullets.push({ shape: 'bone_super', x, y: h + 25 - squeeze, vx: 0, vy: 0, w: 24, h: 14, r: 5, color: 'white' });
         }
-      }, 220);
+      }, 200);
+      mkInterval(() => {
+        if (!_battle) return;
+        const fromLeft = Math.random() < 0.5;
+        b.bullets.push({
+          shape: 'bone_u',
+          x: fromLeft ? -40 : w + 40,
+          y: 30 + Math.random() * (h - 60),
+          vx: fromLeft ? 5 : -5, vy: 0,
+          r: 8, w: 35, h: 22, bw: 8,
+          color: 'white',
+        });
+      }, 1500);
     }
 
     else if (idx === 5) {
-      // sansturn5 · 平台+激光
-      addPlatform(w * 0.15, h * 0.55, w * 0.2);
-      addPlatform(w * 0.5, h * 0.4, w * 0.2);
-      addPlatform(w * 0.8, h * 0.55, w * 0.15);
+      addPlatform(w * 0.1, h * 0.55, w * 0.18, { color: '#88ccff' });
+      addPlatform(w * 0.4, h * 0.4, w * 0.15, { color: '#88ccff' });
+      addPlatform(w * 0.65, h * 0.55, w * 0.15, { color: '#88ccff' });
+      addPlatform(w * 0.85, h * 0.35, w * 0.12, { color: '#88ccff' });
       mkInterval(() => {
         if (!_battle) return;
-        b.lasers.push({ type: 'vertical', x: 40 + Math.random() * (w - 80), warnDuration: 300, warned: false, warnTime: 0, fireTime: 0, duration: 350 });
+        b.lasers.push({ type: 'vertical', x: 40 + Math.random() * (w - 80), warnDuration: 320, warned: false, warnTime: 0, fireTime: 0, duration: 350, color: '#6688ff' });
       }, 1100);
       mkInterval(() => {
         if (!_battle) return;
-        b.lasers.push({ type: 'horizontal', y: 30 + Math.random() * (h - 60), warnDuration: 250, warned: false, warnTime: 0, fireTime: 0, duration: 300 });
-      }, 1500);
+        b.lasers.push({ type: 'horizontal', y: 30 + Math.random() * (h - 60), warnDuration: 320, warned: false, warnTime: 0, fireTime: 0, duration: 350, color: '#6688ff' });
+      }, 1600);
       mkInterval(() => {
         if (!_battle) return;
-        warnBone(30 + Math.random() * (w - 60), 300);
-      }, 1600);
+        warnBone(30 + Math.random() * (w - 60), 320, { bw: 16, bh: 28 });
+      }, 1400);
     }
 
     else if (idx === 6) {
-      // sansturn6 · 混乱弹幕
       mkInterval(() => {
         if (!_battle) return;
         const rx = Math.random() * w;
         const ry = Math.random() < 0.5 ? -10 : h + 10;
-        b.bullets.push({ x: rx, y: ry, vx: (Math.random() - 0.5) * 3, vy: ry < 0 ? 3 + Math.random() * 2 : -3 - Math.random() * 2, r: 4 + Math.random() * 2, color: ['#ff0066','#00ffcc','#ffcc00','#aa44ff','#44aaff'][Math.floor(Math.random()*5)] });
-      }, 100);
+        const colors = ['#ff4466','#00ffcc','#ffcc00','#cc66ff','#44aaff','#ff8844'];
+        b.bullets.push({
+          x: rx, y: ry,
+          vx: (Math.random() - 0.5) * 4,
+          vy: ry < 0 ? 3 + Math.random() * 3 : -3 - Math.random() * 3,
+          r: 4 + Math.random() * 3,
+          color: colors[Math.floor(Math.random()*colors.length)],
+        });
+      }, 80);
       mkInterval(() => {
         if (!_battle) return;
-        warnGb(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 380);
+        warnGb(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 400, { ap: true, vy: (Math.random()-0.5)*2 });
+      }, 1500);
+      mkInterval(() => {
+        if (!_battle) return;
+        const tx = _battle.soul.x, ty = _battle.soul.y;
+        const ang = Math.atan2(ty - (-20), tx - (Math.random()*w));
+        b.bullets.push({
+          shape: 'bone_h',
+          x: Math.random() * w, y: -20,
+          vx: Math.cos(ang) * 4, vy: Math.sin(ang) * 4,
+          w: 36, h: 10, r: 5, color: 'purple',
+        });
       }, 1800);
     }
 
     else if (idx === 7) {
-      // sansturn7 · 旋转风车 (愤怒!)
+      addPlatform(w * 0.08, h * 0.7, w * 0.15);
+      addPlatform(w * 0.77, h * 0.7, w * 0.15);
       const laser = {
         type: 'rotating',
         cx: w / 2, cy: h / 2,
@@ -1207,10 +1559,10 @@
           { ang: Math.PI * 2 / 3 },
           { ang: Math.PI * 4 / 3 },
         ],
-        beamColor: '#ff4444',
+        color: '#ff3344',
         warnDuration: 300,
-        warned: false, warnTime: 0, fireTime: 0, duration: 9000,
-        rotSpeed: 0.045,
+        warned: false, warnTime: 0, fireTime: 0, duration: 9999,
+        rotSpeed: 0.055,
       };
       b.lasers.push(laser);
       const rot = setInterval(() => {
@@ -1220,81 +1572,102 @@
       _enemyTimers.push(rot);
       mkInterval(() => {
         if (!_battle) return;
-        const fromLeft = Math.random() < 0.5;
-        const y = 20 + Math.random() * (h - 40);
-        b.bullets.push({ shape: 'bone_h', x: fromLeft ? -w : w * 2, y, vx: fromLeft ? 4.5 : -4.5, vy: 0, w: w, h: 10, r: 4 });
-      }, 1400);
+        warnGb(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 280);
+      }, 900);
       mkInterval(() => {
         if (!_battle) return;
-        warnGb(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 300);
-      }, 2000);
+        const fromLeft = Math.random() < 0.5;
+        b.bullets.push({
+          shape: 'bone_h',
+          x: fromLeft ? -w : w * 2,
+          y: 20 + Math.random() * (h - 40),
+          vx: fromLeft ? 5 : -5, vy: 0,
+          w: w, h: 10, r: 4, color: 'red',
+        });
+      }, 1200);
     }
 
     else if (idx === 8) {
-      // sansturn8 · 橙魂穿弹
       addPlatform(w * 0.05, h * 0.55, w * 0.15);
       addPlatform(w * 0.3, h * 0.45, w * 0.15);
       addPlatform(w * 0.55, h * 0.55, w * 0.15);
-      // 密集普通弹幕 (橙魂可穿)
+      addPlatform(w * 0.8, h * 0.45, w * 0.15);
       mkInterval(() => {
         if (!_battle) return;
         for (let i = 0; i < 3; i++) {
           const y = 20 + Math.random() * (h - 40);
-          b.bullets.push({ shape: 'bone_h', x: -w, y, vx: 6, vy: 0, w: w * 0.4, h: 12, r: 4 });
+          b.bullets.push({
+            shape: 'bone_skate',
+            x: -30, y,
+            vx: 6, vy: 0, w: 38, h: 6, r: 4,
+            color: 'orange',
+          });
         }
-      }, 700);
-      // 但骨头柱还是要躲 (穿不过)
+      }, 600);
       mkInterval(() => {
         if (!_battle) return;
         const cols = 3;
         const sp = w / (cols + 1);
         for (let c = 0; c < cols; c++) {
-          warnBone(sp * (c + 1), 350);
+          warnBone(sp * (c + 1), 350, { bw: 18, bh: 30, color: 'white' });
         }
+      }, 1000);
+      mkInterval(() => {
+        if (!_battle) return;
+        warnGb(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 300);
       }, 1200);
     }
 
     else if (idx === 9) {
-      // sansturn9 · FINAL · Step_2 疯狂弹幕
-      addPlatform(w * 0.08, h * 0.5, w * 0.12);
-      addPlatform(w * 0.3, h * 0.4, w * 0.12);
-      addPlatform(w * 0.52, h * 0.5, w * 0.12);
-      addPlatform(w * 0.74, h * 0.4, w * 0.12);
+      addPlatform(w * 0.06, h * 0.55, w * 0.1);
+      addPlatform(w * 0.22, h * 0.42, w * 0.1);
+      addPlatform(w * 0.38, h * 0.55, w * 0.1);
+      addPlatform(w * 0.54, h * 0.42, w * 0.1);
+      addPlatform(w * 0.7, h * 0.55, w * 0.1);
+      addPlatform(w * 0.86, h * 0.42, w * 0.1);
 
-      // 龙骨炮 Gaster Blaster 风暴 (bullet_gb)
       mkInterval(() => {
         if (!_battle) return;
-        warnGb(20 + Math.random() * (w - 40), 20 + Math.random() * (h - 40), 300);
-      }, 600);
+        warnGb(20 + Math.random() * (w - 40), 20 + Math.random() * (h - 40), 250);
+        if (Math.random() < 0.4) {
+          warnGb(20 + Math.random() * (w - 40), 20 + Math.random() * (h - 40), 250, { ap: true });
+        }
+      }, 500);
 
-      // 骨头预警线连续触发
       mkInterval(() => {
         if (!_battle) return;
-        warnBone(w * 0.25, 250);
-        warnBone(w * 0.5, 250);
-        warnBone(w * 0.75, 250);
-      }, 700);
+        warnBone(w * 0.2, 220, { bw: 18, bh: 32 });
+        warnBone(w * 0.5, 220, { bw: 18, bh: 32 });
+        warnBone(w * 0.8, 220, { bw: 18, bh: 32 });
+      }, 650);
 
-      // 激光风暴
       mkInterval(() => {
         if (!_battle) return;
         if (Math.random() < 0.5) {
-          b.lasers.push({ type: 'horizontal', y: 20 + Math.random() * (h - 40), warnDuration: 180, warned: false, warnTime: 0, fireTime: 0, duration: 300 });
+          b.lasers.push({ type: 'horizontal', y: 20 + Math.random() * (h - 40), warnDuration: 180, warned: false, warnTime: 0, fireTime: 0, duration: 280, color: '#dd3355' });
         } else {
-          b.lasers.push({ type: 'vertical', x: 20 + Math.random() * (w - 40), warnDuration: 180, warned: false, warnTime: 0, fireTime: 0, duration: 300 });
+          b.lasers.push({ type: 'vertical', x: 20 + Math.random() * (w - 40), warnDuration: 180, warned: false, warnTime: 0, fireTime: 0, duration: 280, color: '#dd3355' });
         }
-      }, 1000);
+      }, 900);
 
-      // 旋转风车
       if (!b.lasers.some(l => l.type === 'rotating')) {
         const laser = {
           type: 'rotating',
           cx: w / 2, cy: h / 2,
-          beams: [{ ang: 0 }, { ang: Math.PI / 2 }, { ang: Math.PI }, { ang: Math.PI * 1.5 }],
-          beamColor: '#ff2222',
+          beams: [
+            { ang: 0 },
+            { ang: Math.PI / 4 },
+            { ang: Math.PI / 2 },
+            { ang: Math.PI * 3 / 4 },
+            { ang: Math.PI },
+            { ang: Math.PI * 5 / 4 },
+            { ang: Math.PI * 3 / 2 },
+            { ang: Math.PI * 7 / 4 },
+          ],
+          color: '#ff2233',
           warnDuration: 200,
           warned: false, warnTime: 0, fireTime: 0, duration: 10000,
-          rotSpeed: 0.06,
+          rotSpeed: 0.075,
         };
         b.lasers.push(laser);
         const rot = setInterval(() => {
@@ -1303,6 +1676,22 @@
         }, 16);
         _enemyTimers.push(rot);
       }
+
+      mkInterval(() => {
+        if (!_battle) return;
+        const tx = _battle.soul.x, ty = _battle.soul.y;
+        for (let i = 0; i < 3; i++) {
+          const startX = Math.random() * w;
+          const ang = Math.atan2(ty - (-30), tx - startX);
+          b.bullets.push({
+            shape: 'bone_h',
+            x: startX, y: -25 - i * 15,
+            vx: Math.cos(ang) * 4,
+            vy: Math.sin(ang) * 4 + 1,
+            w: 32, h: 10, r: 5, color: 'purple',
+          });
+        }
+      }, 1400);
     }
   }
 
