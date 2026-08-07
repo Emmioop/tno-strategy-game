@@ -2249,6 +2249,7 @@ const UI = {
   // ===== 国策树页（沿用 policy 标签） =====
   renderPolicy() {
     const s = Game.state;
+    const NATIONAL_FOCI = (typeof _uiGetFoci === 'function' ? _uiGetFoci() : (typeof DataStore !== 'undefined' && DataStore.getNationalFoci ? DataStore.getNationalFoci() : {})) || {};
     const branches = { '经济': [], '军事': [], '政治': [], '外交': [], '科技': [] };
     for (const f of Object.values(NATIONAL_FOCI)) {
       if (branches[f.branch]) branches[f.branch].push(f);
@@ -2258,8 +2259,11 @@ const UI = {
     let currentFocusHtml = '';
     if (s.currentFocus) {
       const f = NATIONAL_FOCI[s.currentFocus];
-      const pct = (s.focusProgress / f.turns) * 100;
-      currentFocusHtml = `
+      if (!f) {
+        currentFocusHtml = `<div class="focus-current" style="opacity:0.6"><div class="fc-name">[数据缺失] ${s.currentFocus}</div></div>`;
+      } else {
+        const pct = (s.focusProgress / f.turns) * 100;
+        currentFocusHtml = `
         <div class="focus-current">
           <div class="fc-name">${f.name}</div>
           <div class="fc-progress-bar">
@@ -2267,6 +2271,7 @@ const UI = {
           </div>
           <div class="fc-turns">${s.focusProgress}/${f.turns} 回合</div>
         </div>`;
+      }
     }
 
     // 渲染每个分支
