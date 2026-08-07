@@ -515,11 +515,23 @@
   function finishFight(multiplier, label) {
     const b = _battle;
     if (!b) return;
+    let dmg = 0;
+    let critText = '';
+
+    if (label === 'MISS') {
+      dmg = 0;
+      b.player.mercy = Math.max(0, b.player.mercy - 12);
+      setDialog(`* 你攻击了 ${b.boss.name}！\n* MISS... 完全没打中。`, () => {
+        updateBattleUI();
+        setTimeout(startEnemyTurn, 800);
+      });
+      return;
+    }
+
     // UT原版: Damage = max(1, ATK - DEF + random(-2, +2))
     const baseDmg = b.player.atk - b.boss.def + Math.floor(Math.random() * 5) - 2;
-    let dmg = Math.max(1, Math.round(baseDmg * multiplier));
+    dmg = Math.max(1, Math.round(baseDmg * multiplier));
 
-    let critText = '';
     if (label === 'PERFECT!!' && Math.random() < 0.25) {
       critText = '\n* ⚡ 暴击！';
       dmg = Math.round(dmg * 1.5);
@@ -635,12 +647,75 @@
     const canvas = b.modal.querySelector('#ub-canvas');
     const ctx = canvas.getContext('2d');
     b.bullets = [];
-    b.soul = { x: 300, y: 78, vx: 0, vy: 0 };
+    // 让 canvas 的像素尺寸匹配 CSS 显示尺寸（响应式适配）
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width);
+    canvas.height = Math.round(rect.height);
+    b.soul = { x: canvas.width / 2, y: canvas.height / 2, vx: 0, vy: 0 };
     const keys = {};
     const onKeyDown = e => { keys[e.key.toLowerCase()] = true; if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault(); };
     const onKeyUp = e => { keys[e.key.toLowerCase()] = false; };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+
+    // ===== 触摸拖拽：手机端直接用手指拖红心（无方向键，隐藏控制）=====
+    let isTouching = false;
+    let touchPointerId = null;
+    function canvasPosFromEvent(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      const sx = canvas.width / r.width;
+      const sy = canvas.height / r.height;
+      return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy };
+    }
+    const onTouchStart = e => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      isTouching = true;
+      touchPointerId = t.identifier;
+      const p = canvasPosFromEvent(t.clientX, t.clientY);
+      b.soul.x = Math.max(6, Math.min(canvas.width - 6, p.x));
+      b.soul.y = Math.max(6, Math.min(canvas.height - 6, p.y));
+    };
+    const onTouchMove = e => {
+      if (!isTouching) return;
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === touchPointerId) {
+          const p = canvasPosFromEvent(t.clientX, t.clientY);
+          b.soul.x = Math.max(6, Math.min(canvas.width - 6, p.x));
+          b.soul.y = Math.max(6, Math.min(canvas.height - 6, p.y));
+          break;
+        }
+      }
+    };
+    const onTouchEnd = e => {
+      if (!isTouching) return;
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === touchPointerId) {
+          isTouching = false;
+          touchPointerId = null;
+          break;
+        }
+      }
+    };
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', onTouchEnd, { passive: false });
+    // 鼠标端也允许直接拖动
+    let isMouseDown = false;
+    const onMouseDown = e => { isMouseDown = true; updateFromMouse(e); };
+    const onMouseMove = e => { if (isMouseDown) updateFromMouse(e); };
+    const onMouseUp = () => { isMouseDown = false; };
+    function updateFromMouse(e) {
+      const p = canvasPosFromEvent(e.clientX, e.clientY);
+      b.soul.x = Math.max(6, Math.min(canvas.width - 6, p.x));
+      b.soul.y = Math.max(6, Math.min(canvas.height - 6, p.y));
+    }
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
 
     // 随机选 pattern
     const pattern = b.boss.patterns[Math.floor(Math.random() * b.boss.patterns.length)];
@@ -651,15 +726,28 @@
     const attackDuration = 5000;
     let running = true;
 
+    function cleanup() {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
+      canvas.removeEventListener('touchcancel', onTouchEnd);
+      canvas.removeEventListener('mousedown', onMouseDown);
+      canvas.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
     function loop() {
-      if (!running || !_battle) { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); return; }
+      if (!running || !_battle) { cleanup(); return; }
       const elapsed = Date.now() - startTime;
       if (elapsed > attackDuration) {
         running = false;
+        cleanup();
         endEnemyTurn();
         return;
       }
-      // 更新魂
+      // 键盘控制（桌面端兜底）
       const speed = 3;
       if (keys['arrowleft'] || keys['a']) b.soul.x -= speed;
       if (keys['arrowright'] || keys['d']) b.soul.x += speed;
