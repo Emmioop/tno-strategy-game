@@ -208,13 +208,10 @@
           <canvas id="ub-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
           <div id="ub-soul-indicator" style="position:absolute;top:4px;right:6px;font-size:9px;color:#666;pointer-events:none;"></div>
           <div id="ub-soul-mode" style="position:absolute;top:14px;right:6px;font-size:8px;color:#aaa;pointer-events:none;letter-spacing:1px;"></div>
-          <div id="ub-dpad" style="position:absolute;left:6px;bottom:6px;width:88px;height:88px;z-index:5;pointer-events:none;">
-            <button data-dir="up"    style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▲</button>
-            <button data-dir="left"  style="position:absolute;top:50%;left:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">◀</button>
-            <button data-dir="right" style="position:absolute;top:50%;right:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▶</button>
-            <button data-dir="down"  style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:18px;border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▼</button>
+          <div id="ub-vcontrols" style="position:absolute;inset:0;pointer-events:none;z-index:5;">
+            <canvas id="ub-dpad-circle" style="position:absolute;left:8px;bottom:8px;width:148px;height:148px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;"></canvas>
+            <canvas id="ub-buttons-canvas" style="position:absolute;right:8px;bottom:8px;width:180px;height:130px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;"></canvas>
           </div>
-          <button id="ub-jump-btn" style="position:absolute;right:6px;bottom:6px;width:56px;height:56px;border:2px solid #ffffff90;background:#00000070;color:#ffe066;font-family:inherit;font-size:12px;font-weight:bold;border-radius:50%;z-index:5;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;letter-spacing:1px;cursor:pointer;">JUMP</button>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;gap:4px;flex-shrink:0;">
@@ -594,46 +591,8 @@
     window.addEventListener('keyup', onKeyUp);
 
     const dirMap = { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright' };
-    const dpad = b.modal.querySelector('#ub-dpad');
-    const jumpBtn = b.modal.querySelector('#ub-jump-btn');
-    const dpadBtnDown = e => {
-      e.preventDefault(); e.stopPropagation();
-      const dir = e.currentTarget.dataset.dir;
-      if (dir) { b.keys[dirMap[dir]] = true; e.currentTarget.style.background = '#ffffff40'; }
-    };
-    const dpadBtnUp = e => {
-      e.preventDefault(); e.stopPropagation();
-      const dir = e.currentTarget.dataset.dir;
-      if (dir) { b.keys[dirMap[dir]] = false; e.currentTarget.style.background = '#00000060'; }
-    };
-    const dpadBtns = dpad ? dpad.querySelectorAll('button[data-dir]') : [];
-    dpadBtns.forEach(btn => {
-      btn.addEventListener('touchstart', dpadBtnDown, { passive: false });
-      btn.addEventListener('touchend', dpadBtnUp, { passive: false });
-      btn.addEventListener('touchcancel', dpadBtnUp, { passive: false });
-      btn.addEventListener('mousedown', dpadBtnDown);
-      btn.addEventListener('mouseup', dpadBtnUp);
-      btn.addEventListener('mouseleave', dpadBtnUp);
-    });
-    const jumpDown = e => {
-      e.preventDefault(); e.stopPropagation();
-      b.keys[' '] = true;
-      if (b.soulColor === 'blue' && b.soul.onGround) { b.soul.vy = -8; b.soul.onGround = false; }
-      if (jumpBtn) jumpBtn.style.background = '#ffe06650';
-    };
-    const jumpUp = e => {
-      e.preventDefault(); e.stopPropagation();
-      b.keys[' '] = false;
-      if (jumpBtn) jumpBtn.style.background = '#00000070';
-    };
-    if (jumpBtn) {
-      jumpBtn.addEventListener('touchstart', jumpDown, { passive: false });
-      jumpBtn.addEventListener('touchend', jumpUp, { passive: false });
-      jumpBtn.addEventListener('touchcancel', jumpUp, { passive: false });
-      jumpBtn.addEventListener('mousedown', jumpDown);
-      jumpBtn.addEventListener('mouseup', jumpUp);
-      jumpBtn.addEventListener('mouseleave', jumpUp);
-    }
+    let vc = null;
+    setTimeout(() => { vc = initVirtualControls(b); }, 0);
 
     let isTouching = false, touchPointerId = null;
     function canvasPos(clientX, clientY) {
@@ -1776,6 +1735,290 @@
 
   function getPlayerStats() {
     return { maxHp: PLAYER.maxHp, atk: PLAYER.atk, def: PLAYER.def };
+  }
+
+  function initVirtualControls(b) {
+    const dpadCvs = b.modal.querySelector('#ub-dpad-circle');
+    const btnCvs  = b.modal.querySelector('#ub-buttons-canvas');
+    if (!dpadCvs || !btnCvs) return null;
+
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const dpadSize = 148;
+    dpadCvs.width = dpadSize * dpr; dpadCvs.height = dpadSize * dpr;
+    const dc = dpadCvs.getContext('2d');
+    dc.scale(dpr, dpr); dc.imageSmoothingEnabled = false;
+
+    const btnSize = 56;
+    btnCvs.width = 180 * dpr; btnCvs.height = 130 * dpr;
+    const bc = btnCvs.getContext('2d');
+    bc.scale(dpr, dpr); bc.imageSmoothingEnabled = false;
+
+    const dirMap = { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright' };
+    const state = {
+      up:false, down:false, left:false, right:false,
+      z:false, x:false, c:false,
+    };
+
+    function drawDpad() {
+      dc.clearRect(0, 0, dpadSize, dpadSize);
+      const cx = dpadSize / 2, cy = dpadSize / 2;
+      const outerR = dpadSize / 2 - 4;
+      const innerR = outerR - 10;
+
+      // 外圈底座
+      dc.fillStyle = 'rgba(40,40,40,0.55)';
+      dc.beginPath(); dc.arc(cx, cy, outerR, 0, Math.PI * 2); dc.fill();
+
+      // 外圈描边
+      dc.strokeStyle = 'rgba(140,140,140,0.7)';
+      dc.lineWidth = 2;
+      dc.beginPath(); dc.arc(cx, cy, outerR, 0, Math.PI * 2); dc.stroke();
+
+      // 内圈
+      dc.fillStyle = 'rgba(20,20,20,0.65)';
+      dc.beginPath(); dc.arc(cx, cy, innerR, 0, Math.PI * 2); dc.fill();
+
+      dc.strokeStyle = 'rgba(100,100,100,0.5)';
+      dc.lineWidth = 1;
+      dc.setLineDash([3, 3]);
+      dc.beginPath(); dc.arc(cx, cy, innerR, 0, Math.PI * 2); dc.stroke();
+      dc.setLineDash([]);
+
+      // 十字方向指示（四个扇形区域）
+      const sectR = outerR - 6;
+      const arrowCol = d => state[d] ? '#ffe066' : '#bbbbbb';
+
+      // 上
+      drawArrow('up',   cx, cy - (innerR + outerR)/2 + 2, sectR - innerR, 0);
+      drawArrow('down', cx, cy + (innerR + outerR)/2 - 2, sectR - innerR, Math.PI);
+      drawArrow('left',  cx - (innerR + outerR)/2 + 2, cy, sectR - innerR, -Math.PI/2);
+      drawArrow('right', cx + (innerR + outerR)/2 - 2, cy, sectR - innerR, Math.PI/2);
+
+      // 中心小圆点
+      dc.fillStyle = '#888';
+      dc.beginPath(); dc.arc(cx, cy, 3, 0, Math.PI * 2); dc.fill();
+      dc.fillStyle = state.up||state.down||state.left||state.right ? '#ffe066' : '#aaa';
+      dc.beginPath(); dc.arc(cx, cy, 2, 0, Math.PI * 2); dc.fill();
+    }
+
+    function drawArrow(dir, x, y, size, angle) {
+      dc.save();
+      dc.translate(x, y);
+      dc.rotate(angle);
+      dc.fillStyle = dir === 'up' ? '#ffffff' : '#aaa';
+      if (state[dir]) { dc.fillStyle = '#ffe066'; }
+      dc.strokeStyle = dir === 'up' ? '#ffffff' : '#888';
+      if (state[dir]) { dc.strokeStyle = '#ffcc33'; }
+      dc.lineWidth = 1.5;
+      dc.beginPath();
+      dc.moveTo(0, -size);
+      dc.lineTo(-size * 0.6, size * 0.4);
+      dc.lineTo(-size * 0.2, size * 0.4);
+      dc.lineTo(-size * 0.2, size);
+      dc.lineTo(size * 0.2, size);
+      dc.lineTo(size * 0.2, size * 0.4);
+      dc.lineTo(size * 0.6, size * 0.4);
+      dc.closePath();
+      dc.fill();
+      dc.stroke();
+      dc.restore();
+    }
+
+    function drawButtons() {
+      bc.clearRect(0, 0, 180, 130);
+
+      // Z、X、C 按钮 — 右下三圆，弧形排列（左下→右上 斜线）
+      const buttons = [
+        { key:'z', x: 55,  y: 95, label:'Z', label2:'跳' },
+        { key:'x', x: 110, y: 58, label:'X', label2:'攻' },
+        { key:'c', x: 155, y: 22, label:'C', label2:'确' },
+      ];
+
+      buttons.forEach(btn => {
+        const r = btnSize / 2;
+        const cx = btn.x, cy = btn.y;
+        const pressed = state[btn.key];
+
+        // 外圈阴影
+        bc.fillStyle = 'rgba(0,0,0,0.5)';
+        bc.beginPath(); bc.arc(cx + 2, cy + 2, r + 3, 0, Math.PI*2); bc.fill();
+
+        // 外圈
+        bc.strokeStyle = pressed ? '#ffcc33' : '#555';
+        bc.lineWidth = 2;
+        bc.fillStyle = pressed ? '#ff440055' : 'rgba(60,60,60,0.7)';
+        bc.beginPath(); bc.arc(cx, cy, r, 0, Math.PI*2); bc.fill(); bc.stroke();
+
+        // 内高光
+        bc.fillStyle = pressed ? '#ff662266' : 'rgba(255,255,255,0.06)';
+        bc.beginPath(); bc.arc(cx, cy - 4, r - 8, 0, Math.PI*2); bc.fill();
+
+        // 字母
+        bc.fillStyle = pressed ? '#ffcc33' : '#ccc';
+        bc.font = 'bold 22px "Courier New", monospace';
+        bc.textAlign = 'center'; bc.textBaseline = 'middle';
+        bc.fillText(btn.label, cx, cy - 3);
+        // 副标签
+        bc.font = '10px sans-serif';
+        bc.fillStyle = pressed ? '#ffee99' : '#999';
+        bc.fillText(btn.label2, cx, cy + 14);
+      });
+    }
+
+    function redraw() { drawDpad(); drawButtons(); }
+
+    // ========= 事件处理 =========
+    function getDpadDir(x, y) {
+      const cx = dpadSize/2, cy = dpadSize/2;
+      const dx = x - cx, dy = y - cy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 14) return null;
+      const ang = Math.atan2(dy, dx);
+      // 右半圆: ang ∈ (-π/2, π/2) → right
+      // 上半圆: ang ∈ (0, π) → up
+      // 左半圆: ang ∈ (π/2, 3π/2) → left
+      // 下半圆: ang ∈ (-π, 0) → down
+      // 用45度扇形判定
+      if (ang > -Math.PI/4 && ang <= Math.PI/4) return 'right';
+      if (ang > Math.PI/4 && ang <= 3*Math.PI/4) return 'down';
+      if (ang > 3*Math.PI/4 || ang <= -3*Math.PI/4) return 'left';
+      if (ang > -3*Math.PI/4 && ang <= -Math.PI/4) return 'up';
+      return null;
+    }
+
+    function getButtonAt(x, y) {
+      const btns = [
+        { key:'z', x: 55,  y: 95 },
+        { key:'x', x: 110, y: 58 },
+        { key:'c', x: 155, y: 22 },
+      ];
+      for (const btn of btns) {
+        const dx = x - btn.x, dy = y - btn.y;
+        if (dx*dx + dy*dy <= (btnSize/2 + 4)**2) return btn.key;
+      }
+      return null;
+    }
+
+    function applyDirs() {
+      for (const k of ['up','down','left','right']) {
+        b.keys[dirMap[k]] = state[k];
+      }
+    }
+
+    function applyButtons() {
+      // Z = jump (space), X = action (enter), C = confirm (z key)
+      b.keys[' '] = state.z;
+      b.keys['enter'] = state.x;
+      b.keys['z'] = state.c;
+    }
+
+    // 按键按下回调
+    function onBtnDown(key) {
+      state[key] = true;
+      if (key === 'z' && b.soulColor === 'blue' && b.soul.onGround) {
+        b.soul.vy = -8; b.soul.onGround = false;
+      }
+      applyButtons();
+      redraw();
+    }
+    function onBtnUp(key) {
+      state[key] = false;
+      applyButtons();
+      redraw();
+    }
+
+    // Pointer events — 用 pointerdown/move/up 统一处理触摸和鼠标
+    const activeDirPointers = new Map(); // pointerId -> dir
+    const activeBtnPointers = new Map(); // pointerId -> key
+
+    function dpadOnDown(e) {
+      e.preventDefault(); e.stopPropagation();
+      dpadCvs.setPointerCapture(e.pointerId);
+      const rect = dpadCvs.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const dir = getDpadDir(x, y);
+      if (dir) {
+        activeDirPointers.set(e.pointerId, dir);
+        state[dir] = true;
+        applyDirs();
+        redraw();
+      }
+    }
+    function dpadOnMove(e) {
+      if (!activeDirPointers.has(e.pointerId)) return;
+      const rect = dpadCvs.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const newDir = getDpadDir(x, y);
+      const oldDir = activeDirPointers.get(e.pointerId);
+      if (newDir !== oldDir) {
+        if (oldDir) state[oldDir] = false;
+        if (newDir) { state[newDir] = true; activeDirPointers.set(e.pointerId, newDir); }
+        else activeDirPointers.delete(e.pointerId);
+        applyDirs();
+        redraw();
+      }
+    }
+    function dpadOnUp(e) {
+      e.preventDefault(); e.stopPropagation();
+      const dir = activeDirPointers.get(e.pointerId);
+      if (dir) { state[dir] = false; activeDirPointers.delete(e.pointerId); applyDirs(); redraw(); }
+    }
+
+    function btnOnDown(e) {
+      e.preventDefault(); e.stopPropagation();
+      btnCvs.setPointerCapture(e.pointerId);
+      const rect = btnCvs.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const key = getButtonAt(x, y);
+      if (key) { activeBtnPointers.set(e.pointerId, key); onBtnDown(key); }
+    }
+    function btnOnMove(e) {
+      if (!activeBtnPointers.has(e.pointerId)) return;
+      const rect = btnCvs.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const newKey = getButtonAt(x, y);
+      const oldKey = activeBtnPointers.get(e.pointerId);
+      if (newKey !== oldKey) {
+        if (oldKey) onBtnUp(oldKey);
+        if (newKey) { onBtnDown(newKey); activeBtnPointers.set(e.pointerId, newKey); }
+        else activeBtnPointers.delete(e.pointerId);
+      }
+    }
+    function btnOnUp(e) {
+      e.preventDefault(); e.stopPropagation();
+      const key = activeBtnPointers.get(e.pointerId);
+      if (key) { onBtnUp(key); activeBtnPointers.delete(e.pointerId); }
+    }
+
+    dpadCvs.addEventListener('pointerdown', dpadOnDown);
+    dpadCvs.addEventListener('pointermove', dpadOnMove);
+    dpadCvs.addEventListener('pointerup', dpadOnUp);
+    dpadCvs.addEventListener('pointercancel', dpadOnUp);
+    dpadCvs.addEventListener('pointerleave', dpadOnUp);
+
+    btnCvs.addEventListener('pointerdown', btnOnDown);
+    btnCvs.addEventListener('pointermove', btnOnMove);
+    btnCvs.addEventListener('pointerup', btnOnUp);
+    btnCvs.addEventListener('pointercancel', btnOnUp);
+    btnCvs.addEventListener('pointerleave', btnOnUp);
+
+    redraw();
+
+    return {
+      destroy() {
+        dpadCvs.removeEventListener('pointerdown', dpadOnDown);
+        dpadCvs.removeEventListener('pointermove', dpadOnMove);
+        dpadCvs.removeEventListener('pointerup', dpadOnUp);
+        dpadCvs.removeEventListener('pointercancel', dpadOnUp);
+        dpadCvs.removeEventListener('pointerleave', dpadOnUp);
+        btnCvs.removeEventListener('pointerdown', btnOnDown);
+        btnCvs.removeEventListener('pointermove', btnOnMove);
+        btnCvs.removeEventListener('pointerup', btnOnUp);
+        btnCvs.removeEventListener('pointercancel', btnOnUp);
+        btnCvs.removeEventListener('pointerleave', btnOnUp);
+      },
+      redraw,
+    };
   }
 
   window.UndertaleBattle = {

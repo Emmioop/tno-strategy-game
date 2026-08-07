@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "netlify-cli": "^27.1.0",
+    "surge": "^0.41.2"
+  }
+}
