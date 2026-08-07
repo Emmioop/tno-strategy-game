@@ -629,7 +629,7 @@
 
   function checkEnemyTurn() {
     if (state.phase !== 'enemy_turn') return;
-    if (typeof C2SF === .undefined. || !state.c2sfReady) { console.log("[BATTLE] checkEnemyTurn SKIP - c2sfReady=" + state.c2sfReady); return; }
+    if (typeof C2SF === 'undefined' || !state.c2sfReady) { console.log("[BATTLE] checkEnemyTurn SKIP - c2sfReady=" + state.c2sfReady); return; }
 
     // Soul movement
     const cs = C2SF.state.soul;
