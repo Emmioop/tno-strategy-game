@@ -1,285 +1,120 @@
-// ===== Undertale 风格 Boss 战引擎 =====
-// 独立 mini-boss 系统，用于趣味模式
-(function() {
+// ===== Undertale Sans Genocide 风格 BOSS 战引擎 =====
+// 单一 BOSS：德衫 (Deutschland Sans)
+(function () {
   'use strict';
 
-  const BOSSES = {
-    hitler: {
-      id: 'hitler',
-      name: '垂死的元首',
-      title: '帝国守护者 (垂死)',
-      maxHp: 80,
-      atk: 8,
-      def: 2,
-      mercyThreshold: 30,
-      color: '#a83232',
-      difficulty: '★☆☆☆☆',
-      sprite: '💀',
-      introText: '* 空气变得沉重...\n* 一个颤抖的声音说: "你...你为什么要这样做..."',
-      actCheck: '* 他看起来病得很重。手臂无力地颤抖着。',
-      actEncourage: '* "我的...我的梦想...破灭了..." 他开始哭泣。\n* (MERCY 上升了)',
-      actFlirt: '* 他看起来很困惑。\n* "你...是奥伯萨鲁？"',
-      onKillText: '* 垂死的元首倒下了。\n* 千年的噩梦终于结束。',
-      onSpareText: '* 你放过了他。\n* 他看起来很惊讶...然后轻声说: "谢谢..."',
-      patterns: ['speech', 'hand_raise'],
-      rewardKill: { militaryPower: 30, stability: 10, deterrence: 10 },
-      rewardSpare: { stability: 20, ofn: 8, manpower: 5 },
-      rewardFlee: { stability: -5 },
-      pacifistLabel: '忏悔',
-      anim: { breatheFreq: 2.2, breatheAmp: 0.04, swayFreq: 3.5, swayAmp: 2.5, rotAmp: 0 },
-    },
-    himmler: {
-      id: 'himmler',
-      name: '勃艮第之主',
-      title: '黑骑士团团长',
-      maxHp: 140,
-      atk: 12,
-      def: 4,
-      mercyThreshold: 80,
-      color: '#2a2a2a',
-      difficulty: '★★★☆☆',
-      sprite: '🖤',
-      introText: '* 一只冷酷的眼睛从阴影中审视着你。\n* "你知道得太多了..."',
-      actCheck: '* 他穿着黑色皮夹克，胸前别着骷髅徽章。',
-      actThreaten: '* "勃艮第的眼睛无处不在..." 他压低了声音。\n* (MERCY 上升了)',
-      actJoke: '* "哈哈哈哈..." 他的笑容让你脊背发凉。',
-      onKillText: '* 勃艮第之主倒下了。\n* 但黑夜的阴影还会徘徊很久。',
-      onSpareText: '* 你放过了他。\n* 他消失在阴影中。你有一种不祥的预感...',
-      patterns: ['grid', 'sieg_heil', 'grid'],
-      rewardKill: { militaryPower: 40, stability: 5, deterrence: 25 },
-      rewardSpare: { stability: 15, burgundy_relation: 15 },
-      rewardFlee: { stability: -10 },
-      pacifistLabel: '饶过',
-      anim: { breatheFreq: 0.9, breatheAmp: 0.05, swayFreq: 1.8, swayAmp: 1.5, rotAmp: 3 },
-    },
-    goebbels: {
-      id: 'goebbels',
-      name: '帝国喇叭',
-      title: '宣传机器',
-      maxHp: 100,
-      atk: 15,
-      def: 1,
-      mercyThreshold: 15,
-      color: '#b8860b',
-      difficulty: '★★★★☆',
-      sprite: '🎤',
-      introText: '* 一个尖锐的声音响彻大厅。\n* "谎言！一切都是谎言！"',
-      actCheck: '* 他的眼睛里充满疯狂。右手不停地颤抖。',
-      actDebunk: '* "你说的...都是真的吗?" 他愣住了。\n* (MERCY 大幅上升！)',
-      actYellBack: '* "你敢！" 他被激怒了，攻击力上升！',
-      onKillText: '* 宣传机器停止了它的叫喊。\n* 世界安静了下来。',
-      onSpareText: '* "也许...你是对的..." 他低下了头。',
-      patterns: ['random', 'speech', 'random'],
-      rewardKill: { militaryPower: 25, stability: 15, research: 20 },
-      rewardSpare: { stability: 25, research: 10 },
-      rewardFlee: { stability: -5 },
-      pacifistLabel: '闭嘴',
-      anim: { breatheFreq: 3.0, breatheAmp: 0.07, swayFreq: 4.2, swayAmp: 4, rotAmp: 5 },
-    },
-    rommel: {
-      id: 'rommel',
-      name: '沙漠之狐',
-      title: '北非传奇',
-      maxHp: 160,
-      atk: 10,
-      def: 6,
-      mercyThreshold: 100,
-      color: '#8b7355',
-      difficulty: '★★★☆☆',
-      sprite: '🦊',
-      introText: '* 一位儒雅的军官轻轻拔出了手枪。\n* "我本不想走到这一步..."',
-      actCheck: '* 他看起来很疲惫。沙漠的风沙雕刻了他的脸。',
-      actRespect: '* "你是个可敬的对手..." 他点头示意。\n* (MERCY 上升了)',
-      actMock: '* "沙漠里没有懦夫的位置！" 他被激怒了。',
-      onKillText: '* 沙漠之狐倒下了。\n* 狐狸回到了沙漠。',
-      onSpareText: '* "我们...打个平手吧。" 他收起手枪。',
-      patterns: ['blitz', 'blitz', 'grid'],
-      rewardKill: { militaryPower: 50, deterrence: 15 },
-      rewardSpare: { stability: 20, manpower: 15, italy_relation: 10 },
-      rewardFlee: { stability: -8 },
-      pacifistLabel: '撤退',
-      anim: { breatheFreq: 1.0, breatheAmp: 0.04, swayFreq: 1.5, swayAmp: 1, rotAmp: 1 },
-    },
-    speer: {
-      id: 'speer',
-      name: '帝国建筑师',
-      title: '蓝图大师',
-      maxHp: 120,
-      atk: 6,
-      def: 8,
-      mercyThreshold: 90,
-      color: '#556b2f',
-      difficulty: '★★☆☆☆',
-      sprite: '🏛️',
-      introText: '* 他正在画图纸。\n* "等等我...画完这一笔..."',
-      actCheck: '* 他的手很稳，眼神专注得可怕。',
-      actAppreciate: '* "你能欣赏美...?" 他微笑。\n* (MERCY 上升了)',
-      actDemand: '* "你毁了我一辈子的作品！" 他突然发怒！',
-      onKillText: '* 图纸散落在地。\n* 一座永远不会建成的城市，就这样消失了。',
-      onSpareText: '* "也许...艺术不应该服务于疯狂。"',
-      patterns: ['geometric', 'grid'],
-      rewardKill: { research: 30, militaryPower: 15 },
-      rewardSpare: { research: 40, stability: 10 },
-      rewardFlee: { stability: -3 },
-      pacifistLabel: '和解',
-      anim: { breatheFreq: 1.2, breatheAmp: 0.03, swayFreq: 2.0, swayAmp: 0.8, rotAmp: 0 },
-    },
-    himmler_sp: {
-      id: 'himmler_sp',
-      name: '真结局·黑领主',
-      title: '★ 真实结局 ★',
-      maxHp: 200,
-      atk: 20,
-      def: 5,
-      mercyThreshold: 150,
-      color: '#4a0080',
-      difficulty: '★★★★★',
-      sprite: '👁️',
-      introText: '* 时间似乎静止了...\n* "你知道吗...我也可以做个好人..."',
-      actCheck: '* 他在颤抖。不是因为冷。',
-      actForgive: '* "真的...真的可以吗?" 他哭了。\n* (MERCY 满了！)',
-      actReject: '* "那就...一起下地狱吧！"',
-      onKillText: '* 黑领主倒在地上。\n* "也许...这样也好..."',
-      onSpareText: '* 他站在你面前...带着一丝微笑。\n* "谢谢。这是我第一次选择活下去。"',
-      patterns: ['random', 'sieg_heil', 'grid', 'speech'],
-      rewardKill: { militaryPower: 60, stability: 30, deterrence: 40 },
-      rewardSpare: { stability: 60, deterrence: 30, manpower: 30 },
-      rewardFlee: { stability: -20 },
-      pacifistLabel: '救赎',
-      secret: true,
-      anim: { breatheFreq: 0.5, breatheAmp: 0.06, swayFreq: 0.8, swayAmp: 3, rotAmp: 8 },
-    },
+  const BOSS = {
+    name: '德衫',
+    title: 'Deutschland Sans · 千年梦魇',
+    hp: 1,
+    dodgeTurns: 11,
+    mercyThreshold: 80,
+    color: '#e0c080',
+    introLines: [
+      '* 雪地里传来一阵低语...',
+      '* "听着，小家伙..."',
+      '* "我已经死过一次了。"',
+      '* "你以为你能杀死我两次？"',
+      '* "...好吧。那就让我看看。"',
+      '* "你到底有多疼。"',
+    ],
+    checkText: '* 德衫。身高 183cm。喜欢黑白条纹。\n* 他的左眼闪烁着诡异的蓝光。',
+    complainText: '* "嘿...你有没有觉得我们应该谈谈？"\n* "关于...这个世界的真相？"\n* (MERCY 上升了)',
+    talkText: '* "兄弟，我见过无数条时间线..."\n* "没有一条...是你能接受的。"\n* (MERCY 上升了)',
+    flirtText: '* "...你认真的？"\n* "你知道我是骷髅对吧？"\n* "...好吧，MERCY 上升了。"',
+    onKillText: '* 德衫倒下了。\n* "最后...一条时间线..."\n* "也...终于...结束了..."',
+    onSpareText: '* 你放下了武器。\n* 德衫看着你，沉默了很久。\n* "...也许...你是对的。"\n* "也许...还有希望。"',
+    dodgeText: '* 德衫闪开了！',
   };
 
-  // 玩家属性来源
-  function getPlayerStats() {
-    const r = (typeof Game !== 'undefined' && Game.state) ? Game.state.resources : {};
-    const military = r.militaryPower || 10;
-    const deterrence = r.deterrence || 10;
-    const research = r.research || 10;
-    return {
-      maxHp: 100 + (Game ? (r.manpower || 20) : 0),
-      atk: 8 + Math.floor(military / 20),
-      def: 2 + Math.floor(deterrence / 25),
-      lv: 1 + Math.floor(research / 20),
-      gold: r.money || 100,
-    };
-  }
+  const PLAYER = { maxHp: 92, atk: 19, def: 9 };
+  const ITEMS = [
+    { id: 'tea',        name: '海茶',         heal: 10,  text: '* 你喝了一口海茶，感觉温暖。' },
+    { id: 'hero',       name: '传说英雄',     heal: 40,  text: '* 传说中的英雄能量涌入体内！' },
+    { id: 'steak',      name: '牛排脸',       heal: 60,  text: '* 一块带脸的牛排。你吃了它。' },
+    { id: 'pie',        name: '奶油肉桂派',   heal: 92,  text: '* 妈妈做的派。你满血复活了。' },
+  ];
 
-  // ===== 战斗状态 =====
   let _battle = null;
+  let _introTimer = null;
+  let _enemyTimers = [];
 
-  // ===== 主入口：打开战斗 =====
+  function clearEnemyTimers() {
+    _enemyTimers.forEach(t => clearTimeout(t));
+    _enemyTimers.forEach(t => clearInterval(t));
+    _enemyTimers = [];
+  }
+  function mkInterval(fn, ms) { const id = setInterval(fn, ms); _enemyTimers.push(id); return id; }
+  function mkTimeout(fn, ms) { const id = setTimeout(fn, ms); _enemyTimers.push(id); return id; }
+
   function openBossSelect() {
-    closeBattle();
+    close();
     const panel = document.createElement('div');
     panel.id = 'undertale-boss-select';
-    panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:100050;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:"Courier New",monospace;';
-    const regular = Object.values(BOSSES).filter(b => !b.secret);
-    const secret = Object.values(BOSSES).filter(b => b.secret);
-    let html = `
+    panel.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100050;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:"Courier New",monospace;';
+    panel.innerHTML = `
       <div style="text-align:center;margin-bottom:30px;">
-        <div style="font-size:42px;margin-bottom:8px;">⚔️</div>
-        <div style="font-size:28px;color:#ffcc00;letter-spacing:4px;">★ BOSS 选择 ★</div>
-        <div style="font-size:12px;color:#888;margin-top:6px;">选一个对手狠狠干 — 打赢有大奖励</div>
+        <div style="font-size:48px;margin-bottom:12px;color:#e0c080;">⚔ SSEM</div>
+        <div style="font-size:28px;color:#e0c080;letter-spacing:6px;">德衫 BOSS 战</div>
+        <div style="font-size:12px;color:#888;margin-top:8px;">Undertale Sans Genocide 风格</div>
+        <div style="font-size:11px;color:#666;margin-top:14px;">HP 1 但前 11 回合会闪避 · 龙骨炮 · 蓝魂重力 · Karma 紫血</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:640px;width:100%;padding:0 20px;">
+      <button id="ub-start" style="background:#000;border:2px solid #e0c080;color:#e0c080;padding:16px 48px;font-family:inherit;font-size:18px;cursor:pointer;letter-spacing:4px;min-height:56px;">开始战斗</button>
+      <button id="ub-close" style="margin-top:16px;background:#222;color:#888;border:1px solid #555;padding:10px 32px;font-family:inherit;cursor:pointer;">← 返回</button>
+      <div style="margin-top:24px;font-size:10px;color:#555;max-width:320px;text-align:center;line-height:1.6;">
+        操作：方向键/WASD 移动 · 蓝魂下空格/点击跳跃 · 屏幕触摸拖拽 · 点击按钮操作
+      </div>
     `;
-    regular.forEach(b => {
-      html += `
-        <div class="ub-boss-card" data-boss="${b.id}" style="background:#1a1a1a;border:2px solid ${b.color};border-radius:6px;padding:14px;cursor:pointer;transition:all 0.15s;text-align:center;">
-          <div style="font-size:32px;margin-bottom:6px;">${b.sprite}</div>
-          <div style="font-size:13px;color:${b.color};font-weight:bold;">${b.name}</div>
-          <div style="font-size:10px;color:#888;margin-top:2px;">${b.title}</div>
-          <div style="font-size:10px;color:#666;margin-top:6px;">${b.difficulty}</div>
-          <div style="font-size:10px;color:#aaa;margin-top:4px;">HP ${b.maxHp} · ATK ${b.atk} · DEF ${b.def}</div>
-        </div>
-      `;
-    });
-    html += `</div>`;
-    if (secret.length) {
-      html += `<div style="margin-top:18px;font-size:11px;color:#555;">—— 隐藏 BOSS ——</div><div style="display:flex;gap:12px;margin-top:8px;">`;
-      secret.forEach(b => {
-        html += `
-          <div class="ub-boss-card" data-boss="${b.id}" style="background:#2a0040;border:2px solid ${b.color};border-radius:6px;padding:10px;cursor:pointer;text-align:center;opacity:0.8;">
-            <div style="font-size:24px;">${b.sprite}</div>
-            <div style="font-size:11px;color:${b.color};font-weight:bold;">${b.name}</div>
-            <div style="font-size:9px;color:#888;margin-top:2px;">${b.difficulty}</div>
-          </div>
-        `;
-      });
-      html += `</div>`;
-    }
-    html += `<div style="margin-top:24px;"><button id="ub-close" style="background:#333;color:#aaa;border:1px solid #555;padding:8px 24px;border-radius:4px;cursor:pointer;font-family:inherit;">← 返回</button></div>`;
-    panel.innerHTML = html;
     document.body.appendChild(panel);
-
-    panel.querySelectorAll('.ub-boss-card').forEach(card => {
-      card.onmouseenter = () => card.style.transform = 'scale(1.05)';
-      card.onmouseleave = () => card.style.transform = 'scale(1)';
-      card.onclick = () => {
-        const bid = card.dataset.boss;
-        panel.remove();
-        startBattle(bid);
-      };
-    });
-    document.getElementById('ub-close').onclick = () => panel.remove();
+    panel.querySelector('#ub-start').onclick = () => { panel.remove(); startBattle(); };
+    panel.querySelector('#ub-close').onclick = () => panel.remove();
   }
 
-  function closeBattle() {
-    if (_battle) { _battle._animStop = true; }
+  function close() {
+    if (_battle) { _battle._animStop = true; _battle._running = false; }
+    clearEnemyTimers();
+    if (_introTimer) { clearTimeout(_introTimer); _introTimer = null; }
     if (_battle && _battle.modal) _battle.modal.remove();
+    const panel = document.getElementById('undertale-boss-select');
+    if (panel) panel.remove();
     _battle = null;
   }
 
-  // ===== BOSS 呼吸/摆动动画 =====
-  // 参考UT底层: image_angle = sin(time/1000*freq) * amp
-  function startBossAnimation() {
-    const b = _battle;
-    if (!b) return;
-    const sprite = b.modal.querySelector('#ub-enemy-sprite');
-    if (!sprite) return;
-    const anim = b.boss.anim || { breatheFreq: 1.5, breatheAmp: 0.04, swayFreq: 2.0, swayAmp: 2, rotAmp: 0 };
-    const t0 = performance.now();
-    function loop() {
-      if (!_battle || _battle._animStop) return;
-      const t = (performance.now() - t0) / 1000;
-      const breathe = 1 + Math.sin(t * anim.breatheFreq * Math.PI * 2) * anim.breatheAmp;
-      const swayY = Math.sin(t * anim.swayFreq * Math.PI * 2) * anim.swayAmp;
-      const rot = Math.sin(t * anim.swayFreq * 0.7 * Math.PI * 2) * anim.rotAmp;
-      sprite.style.transform = `translateY(${swayY}px) scale(${breathe}) rotate(${rot}deg)`;
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-  }
-
-  // ===== 开始战斗 =====
-  function startBattle(bossId) {
-    const boss = BOSSES[bossId];
-    if (!boss) return;
-    const stats = getPlayerStats();
-
+  function startBattle() {
     _battle = {
-      boss: boss,
-      bossHp: boss.maxHp,
-      player: {
-        hp: stats.maxHp,
-        maxHp: stats.maxHp,
-        atk: stats.atk,
-        def: stats.def,
-        lv: stats.lv,
-        gold: stats.gold,
-        actLv: 0,
-        mercy: 0,
-      },
-      phase: 'intro', // intro | player_turn | acting | enemy_turn | dialog | result
-      bullets: [],
-      soul: { x: 50, y: 145 },
-      selectedBtn: 0,
-      btnLabels: ['FIGHT', 'ACT', 'ITEM', 'MERCY'],
+      phase: 'intro',
+      turn: 0,
       ended: false,
-      result: null,
+      running: false,
+      bossHp: BOSS.hp,
+      player: {
+        hp: PLAYER.maxHp,
+        maxHp: PLAYER.maxHp,
+        karma: 0,
+        mercy: 0,
+        atk: PLAYER.atk,
+        def: PLAYER.def,
+        items: [0, 0, 0, 0],
+      },
+      bullets: [],
+      lasers: [],
+      platforms: [],
+      soulColor: 'red',
+      gravity: 0,
+      soul: { x: 0, y: 0, vx: 0, vy: 0, onGround: false },
+      canvasW: 0,
+      canvasH: 0,
+      hitCooldown: 0,
+      phaseIndex: 0,
+      phaseStart: 0,
+      phaseDuration: 5000,
+      keys: {},
+      _animStop: false,
     };
+    _battle.player.items[0] = 2;
+    _battle.player.items[1] = 1;
+    _battle.player.items[2] = 1;
+    _battle.player.items[3] = 1;
 
     const modal = document.createElement('div');
     modal.id = 'undertale-battle';
@@ -287,89 +122,70 @@
     modal.innerHTML = buildBattleHTML();
     document.body.appendChild(modal);
     _battle.modal = modal;
-    _battle._animStop = false;
-    startBossAnimation();
 
-    // 绑定按钮
     ['ub-fight', 'ub-act', 'ub-item', 'ub-mercy'].forEach((id, i) => {
       modal.querySelector('#' + id).onclick = () => onBtnPress(i);
     });
+
     modal.querySelector('#ub-close-x').onclick = () => {
-      if (confirm('确定要逃跑吗？（稳定会有损失）')) {
-        const bossRef = boss;
-        _battle.ended = true;
-        _battle.phase = 'result';
-        applyReward(bossRef.rewardFlee || {}, 'flee');
-        showResultModal('flee');
-      }
+      if (confirm('要放弃吗？德衫会嘲笑你的。')) close();
     };
 
-    showIntro();
+    showIntroSequence();
   }
 
   function buildBattleHTML() {
     const b = _battle;
     return `
-      <div id="ub-root" style="width:min(640px, 96vw, calc(100vh * 1.78));max-width:640px;background:#000;border:3px solid #fff;padding:clamp(10px, 2.5vw, 16px);box-sizing:relative;max-height:96vh;overflow-y:auto;">
-        <!-- Boss 栏 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
-          <div style="font-size:clamp(14px, 3vw, 16px);color:${b.boss.color};font-weight:bold;">${b.boss.name}</div>
-          <div style="font-size:clamp(10px, 2.2vw, 12px);color:#888;">${b.boss.title}</div>
-        </div>
-        <div style="margin-bottom:8px;">
-          <div style="background:#1a1a1a;height:16px;border:2px solid #fff;border-radius:2px;overflow:hidden;">
-            <div id="ub-boss-hp" style="background:linear-gradient(90deg,#ff0000,#ff8800);height:100%;width:100%;transition:width 0.3s;"></div>
-          </div>
-          <div style="font-size:10px;margin-top:2px;text-align:right;color:#aaa;">${b.bossHp} / ${b.boss.maxHp}</div>
-        </div>
-
-        <!-- 敌人区（加大做攻击条目标区） -->
-        <div style="background:#0a0a0a;border:2px solid #444;height:clamp(140px, 34vw, 200px);min-height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;user-select:none;-webkit-user-select:none;touch-action:manipulation;">
-          <div id="ub-enemy-sprite" style="font-size:clamp(48px, 14vw, 80px);color:${b.boss.color};filter:drop-shadow(0 0 20px ${b.boss.color});transition:filter 0.1s;">${b.boss.sprite}</div>
-          <div id="ub-enemy-name" style="position:absolute;bottom:4px;right:8px;font-size:10px;color:#666;">${b.boss.difficulty}</div>
-          <div id="ub-fight-hint" style="display:none;position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:12px;color:#ffcc00;letter-spacing:2px;text-shadow:0 0 6px #ffcc00;pointer-events:none;">TAP THE ENEMY! / SPACE</div>
-        </div>
-
-        <!-- 对话框 -->
-        <div style="background:#1a1a2a;border:2px solid #444;padding:clamp(8px, 2vw, 12px);min-height:60px;margin-bottom:8px;">
-          <div id="ub-dialog" style="font-size:clamp(12px, 2.8vw, 14px);line-height:1.5;color:#ddd;white-space:pre-wrap;"></div>
-        </div>
-
-        <!-- 战斗区域(弹幕) -->
-        <div id="ub-bullet-area" style="background:#000;border:2px solid #0f0;height:clamp(140px, 30vw, 180px);margin-bottom:8px;position:relative;overflow:hidden;display:none;touch-action:none;">
-          <canvas id="ub-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-        </div>
-
-        <!-- 玩家栏 -->
+      <div id="ub-root" style="width:min(640px, 96vw, calc(100vh * 1.78));max-width:640px;background:#000;border:3px solid #fff;padding:clamp(10px,2.5vw,16px);position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;">
-          <div style="font-size:clamp(11px, 2.6vw, 13px);">
-            <span style="color:#ffcc00;">YOU</span>
-            <span style="margin-left:10px;color:#aaa;">Lv.${b.player.lv}</span>
-          </div>
-          <div style="font-size:clamp(10px, 2.2vw, 12px);color:#aaa;">ATK ${b.player.atk} · DEF ${b.player.def}</div>
+          <div style="font-size:clamp(14px,3vw,18px);color:${BOSS.color};font-weight:bold;letter-spacing:2px;">${BOSS.name}</div>
+          <div style="font-size:clamp(9px,2vw,11px);color:#888;">${BOSS.title}</div>
         </div>
-        <div style="background:#1a1a1a;height:14px;border:2px solid #fff;border-radius:2px;overflow:hidden;margin-bottom:4px;">
-          <div id="ub-player-hp" style="background:linear-gradient(90deg,#00ff00,#88ff00);height:100%;width:100%;transition:width 0.3s;"></div>
+        <div style="background:#1a1a1a;height:10px;border:1px solid #fff;border-radius:2px;overflow:hidden;margin-bottom:8px;">
+          <div id="ub-boss-hp" style="background:linear-gradient(90deg,#ff2222,#ff8800);height:100%;width:${b.bossHp / BOSS.hp * 100}%;transition:width 0.3s;"></div>
         </div>
-        <div style="font-size:9px;margin-bottom:8px;color:#aaa;">HP ${b.player.hp} / ${b.player.maxHp}</div>
+        <div style="font-size:9px;margin-bottom:6px;color:#aaa;text-align:right;">HP ${b.bossHp} / ${BOSS.hp} · 剩余闪避 ${Math.max(0, BOSS.dodgeTurns - b.turn)}</div>
 
-        <!-- MERCY 条 -->
+        <div style="background:#0a0a0a;border:2px solid #444;height:clamp(90px,24vw,140px);display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;user-select:none;-webkit-user-select:none;overflow:hidden;">
+          <div id="ub-sans-sprite" style="font-size:clamp(42px,12vw,72px);color:${BOSS.color};text-shadow:0 0 20px ${BOSS.color},0 0 40px #4488ff80;transition:filter 0.1s;">☠</div>
+          <div id="ub-battle-hint" style="display:none;position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:11px;color:#ffcc00;letter-spacing:2px;text-shadow:0 0 6px #ffcc00;pointer-events:none;">TAP / SPACE</div>
+        </div>
+
+        <div style="background:#1a1a2a;border:2px solid #444;padding:clamp(8px,2vw,12px);min-height:56px;margin-bottom:8px;">
+          <div id="ub-dialog" style="font-size:clamp(12px,2.8vw,14px);line-height:1.5;color:#ddd;white-space:pre-wrap;"></div>
+        </div>
+
+        <div id="ub-bullet-area" style="background:#000;border:2px solid #0f0;height:clamp(160px,38vw,220px);margin-bottom:8px;position:relative;overflow:hidden;display:none;touch-action:none;">
+          <canvas id="ub-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+          <div id="ub-soul-indicator" style="position:absolute;top:4px;right:6px;font-size:9px;color:#666;pointer-events:none;"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;flex-wrap:wrap;gap:4px;">
+          <div style="font-size:clamp(11px,2.6vw,13px);"><span style="color:#ffcc00;">YOU</span><span style="margin-left:10px;color:#aaa;">ATK ${b.player.atk} · DEF ${b.player.def}</span></div>
+          <div style="font-size:clamp(9px,2vw,11px);color:#666;">回合 ${b.turn}</div>
+        </div>
+        <div style="background:#1a1a1a;height:12px;border:2px solid #fff;border-radius:2px;overflow:hidden;margin-bottom:4px;position:relative;">
+          <div id="ub-player-hp-yellow" style="background:linear-gradient(90deg,#ffcc00,#ffee44);height:100%;width:100%;transition:width 0.2s;"></div>
+          <div id="ub-player-hp-karma" style="position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#8800cc,#cc44ff);transition:width 0.2s;opacity:0.85;"></div>
+        </div>
+        <div id="ub-hp-text" style="font-size:9px;margin-bottom:4px;color:#aaa;">HP ${b.player.hp} / ${b.player.maxHp} · Karma ${b.player.karma}</div>
+
         <div style="margin-bottom:8px;">
-          <div style="background:#1a1a1a;height:8px;border:1px solid #888;border-radius:2px;overflow:hidden;">
+          <div style="background:#1a1a1a;height:6px;border:1px solid #888;border-radius:2px;overflow:hidden;">
             <div id="ub-mercy" style="background:#00ffff;height:100%;width:0%;transition:width 0.3s;"></div>
           </div>
-          <div style="font-size:9px;margin-top:2px;color:#666;text-align:right;">MERCY ${b.player.mercy}/${b.boss.mercyThreshold}</div>
+          <div style="font-size:9px;margin-top:2px;color:#666;text-align:right;">MERCY ${b.player.mercy}/${BOSS.mercyThreshold}</div>
         </div>
 
-        <!-- 按钮区 -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
-          ${['FIGHT','ACT','ITEM','MERCY'].map((l, i) => `
-            <button id="ub-${l.toLowerCase()}" style="background:#000;border:2px solid #fff;color:#fff;padding:clamp(8px, 2vw, 12px) 4px;font-family:inherit;font-size:clamp(12px, 2.8vw, 15px);cursor:pointer;letter-spacing:2px;min-height:44px;" onmouseover="this.style.background='#fff';this.style.color='#000'" onmouseout="this.style.background='#000';this.style.color='#fff'">${l}</button>
+          ${['FIGHT','ACT','ITEM','MERCY'].map((l) => `
+            <button id="ub-${l.toLowerCase()}" style="background:#000;border:2px solid #fff;color:#fff;padding:clamp(8px,2vw,12px) 4px;font-family:inherit;font-size:clamp(12px,2.8vw,15px);cursor:pointer;letter-spacing:2px;min-height:44px;touch-action:manipulation;"
+              onmouseover="this.style.background='#fff';this.style.color='#000'" onmouseout="this.style.background='#000';this.style.color='#fff'">${l}</button>
           `).join('')}
         </div>
 
-        <!-- 右上角关闭 -->
-        <div id="ub-close-x" style="position:absolute;top:8px;right:12px;color:#888;cursor:pointer;font-size:16px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;">✕</div>
+        <div id="ub-close-x" style="position:absolute;top:6px;right:10px;color:#888;cursor:pointer;font-size:14px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;">✕</div>
       </div>
     `;
   }
@@ -377,43 +193,60 @@
   function updateBattleUI() {
     if (!_battle) return;
     const b = _battle;
-    b.modal.querySelector('#ub-boss-hp').style.width = (b.bossHp / b.boss.maxHp * 100) + '%';
-    b.modal.querySelector('#ub-player-hp').style.width = (b.player.hp / b.player.maxHp * 100) + '%';
-    b.modal.querySelector('#ub-mercy').style.width = Math.min(100, b.player.mercy / b.boss.mercyThreshold * 100) + '%';
+    b.modal.querySelector('#ub-boss-hp').style.width = (b.bossHp / BOSS.hp * 100) + '%';
+    const yellow = b.player.hp / b.player.maxHp * 100;
+    b.modal.querySelector('#ub-player-hp-yellow').style.width = yellow + '%';
+    const karmaPct = b.player.karma / b.player.maxHp * 100;
+    b.modal.querySelector('#ub-player-hp-karma').style.width = karmaPct + '%';
+    b.modal.querySelector('#ub-mercy').style.width = Math.min(100, b.player.mercy / BOSS.mercyThreshold * 100) + '%';
+    b.modal.querySelector('#ub-hp-text').textContent = `HP ${b.player.hp} / ${b.player.maxHp} · Karma ${b.player.karma}`;
   }
 
   function setDialog(text, cb) {
+    if (!_battle) return;
     const el = _battle.modal.querySelector('#ub-dialog');
     el.textContent = '';
     let i = 0;
-    const speed = 30;
+    const speed = 22;
     function type() {
       if (!_battle) return;
       if (i < text.length) {
         el.textContent += text[i++];
-        setTimeout(type, speed);
+        _introTimer = setTimeout(type, speed);
       } else if (cb) {
-        setTimeout(cb, 100);
+        _introTimer = setTimeout(cb, 250);
       }
     }
     type();
   }
 
-  function showIntro() {
-    const b = _battle;
-    b.modal.querySelectorAll('[id^="ub-fight"],[id^="ub-act"],[id^="ub-item"],[id^="ub-mercy"]').forEach(x => x.disabled = true);
-    setDialog(b.boss.introText, () => {
-      b.phase = 'player_turn';
-      b.modal.querySelectorAll('[id^="ub-fight"],[id^="ub-act"],[id^="ub-item"],[id^="ub-mercy"]').forEach(x => x.disabled = false);
+  function setButtonsEnabled(enabled) {
+    if (!_battle) return;
+    ['ub-fight', 'ub-act', 'ub-item', 'ub-mercy'].forEach(id => {
+      _battle.modal.querySelector('#' + id).disabled = !enabled;
     });
+  }
+
+  function showIntroSequence() {
+    const b = _battle;
+    setButtonsEnabled(false);
+    let idx = 0;
+    function next() {
+      if (idx >= BOSS.introLines.length) {
+        b.phase = 'player_turn';
+        setButtonsEnabled(true);
+        return;
+      }
+      setDialog(BOSS.introLines[idx], () => { idx++; next(); });
+    }
+    next();
   }
 
   function onBtnPress(idx) {
     const b = _battle;
     if (!b || b.ended || b.phase !== 'player_turn') return;
     b.phase = 'acting';
-    b.modal.querySelectorAll('[id^="ub-fight"],[id^="ub-act"],[id^="ub-item"],[id^="ub-mercy"]').forEach(x => x.disabled = true);
-
+    setButtonsEnabled(false);
     switch (idx) {
       case 0: doFight(); break;
       case 1: doAct(); break;
@@ -422,27 +255,27 @@
     }
   }
 
-  // ===== FIGHT =====
-  // UT原版攻击条 mini-game：白条在BOSS身上横向滑动，玩家按空格/点击停止
-  // 停止位置决定伤害倍率 — 正中=PERFECT 1.5x, 两侧=GOOD 1.0x, 极端=MISS/0.5x
-  // 基础伤害公式: Damage = max(1, ATK - DEF + random(-2, +2))
   function doFight() {
     const b = _battle;
-    const enemyArea = b.modal.querySelector('#ub-enemy-sprite');
-    if (!enemyArea) { finishFight(1.0); return; }
-    const enemyBox = enemyArea.parentElement;
-    const hint = b.modal.querySelector('#ub-fight-hint');
-
-    // 让整个敌人区域都可以点击/触摸停止（覆盖层不拦截事件）
+    const enemyBox = b.modal.querySelector('#ub-sans-sprite').parentElement;
+    const hint = b.modal.querySelector('#ub-battle-hint');
     enemyBox.style.position = 'relative';
     enemyBox.style.cursor = 'crosshair';
 
-    // 创建攻击条 overlay（透明条 + 黄色中心标记 + 滑动白条）
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:16px;z-index:10;pointer-events:none;';
     const trackBg = document.createElement('div');
     trackBg.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.08);';
     overlay.appendChild(trackBg);
+    const leftZone = document.createElement('div');
+    leftZone.style.cssText = 'position:absolute;top:0;bottom:0;left:30%;width:15%;background:rgba(100,200,255,0.25);';
+    overlay.appendChild(leftZone);
+    const centerZone = document.createElement('div');
+    centerZone.style.cssText = 'position:absolute;top:0;bottom:0;left:42%;width:16%;background:rgba(255,220,80,0.35);';
+    overlay.appendChild(centerZone);
+    const rightZone = document.createElement('div');
+    rightZone.style.cssText = 'position:absolute;top:0;bottom:0;right:30%;width:15%;background:rgba(100,200,255,0.25);';
+    overlay.appendChild(rightZone);
     const centerMark = document.createElement('div');
     centerMark.style.cssText = 'position:absolute;left:50%;top:-8px;width:2px;height:32px;background:#ffcc00;transform:translateX(-50%);box-shadow:0 0 4px #ffcc00;';
     overlay.appendChild(centerMark);
@@ -451,51 +284,39 @@
     overlay.appendChild(slider);
     enemyBox.appendChild(overlay);
 
-    // 显示提示
-    if (hint) hint.style.display = 'block';
-
-    let pos = 0;
-    let dir = 1;
-    let speed = 2.5;
-    let stopped = false;
+    hint.style.display = 'block';
+    let pos = 0, dir = 1, speed = 2.8, stopped = false;
 
     const stop = (ev) => {
       if (stopped || !_battle) return;
       if (ev) ev.preventDefault();
       stopped = true;
-
-      // 解绑所有监听器
       window.removeEventListener('keydown', onKey);
       enemyBox.removeEventListener('click', stop);
       enemyBox.removeEventListener('touchend', stop);
       enemyBox.style.cursor = '';
       overlay.remove();
-      if (hint) hint.style.display = 'none';
+      hint.style.display = 'none';
 
-      const distance = Math.abs(pos - 50);
-      let multiplier, label, color;
-      if (distance <= 3) { multiplier = 1.8; label = 'PERFECT!!'; color = '#ffcc00'; }
-      else if (distance <= 8) { multiplier = 1.4; label = 'GREAT!'; color = '#44ff44'; }
-      else if (distance <= 18) { multiplier = 1.0; label = 'GOOD'; color = '#88ccff'; }
-      else if (distance <= 30) { multiplier = 0.6; label = 'BAD'; color = '#ff8844'; }
-      else { multiplier = 0.3; label = 'MISS'; color = '#ff4444'; }
+      const dist = Math.abs(pos - 50);
+      let mult, label, color;
+      if (dist <= 8)       { mult = 4.0;  label = 'PERFECT!'; color = '#ffcc00'; }
+      else if (dist <= 15) { mult = 2.5;  label = 'GREAT!';  color = '#44ff44'; }
+      else if (dist <= 25) { mult = 1.2;  label = 'GOOD';    color = '#88ccff'; }
+      else                 { mult = 0.4;  label = 'MISS';    color = '#ff4444'; }
 
-      enemyArea.style.filter = 'brightness(3)';
-      setTimeout(() => { enemyArea.style.filter = `drop-shadow(0 0 20px ${b.boss.color})`; }, 120);
+      b.modal.querySelector('#ub-sans-sprite').style.filter = 'brightness(3)';
+      setTimeout(() => { b.modal.querySelector('#ub-sans-sprite').style.filter = ''; }, 120);
 
       const tag = document.createElement('div');
-      tag.style.cssText = `position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:clamp(16px,4vw,24px);font-weight:bold;color:${color};text-shadow:0 0 8px ${color};pointer-events:none;z-index:11;letter-spacing:2px;`;
+      tag.style.cssText = `position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:clamp(16px,4vw,24px);font-weight:bold;color:${color};text-shadow:0 0 8px ${color};pointer-events:none;z-index:11;letter-spacing:2px;`;
       tag.textContent = label;
       enemyBox.appendChild(tag);
       setTimeout(() => tag.remove(), 900);
 
-      setTimeout(() => finishFight(multiplier, label), 500);
+      setTimeout(() => finishFight(mult, label), 500);
     };
-    const onKey = e => {
-      if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stop(); }
-    };
-
-    // 绑定三类触发：键盘 / 鼠标点击 / 触摸
+    const onKey = e => { if (e.code === 'Space' || e.key === 'Enter') { e.preventDefault(); stop(); } };
     window.addEventListener('keydown', onKey);
     enemyBox.addEventListener('click', stop);
     enemyBox.addEventListener('touchend', stop, { passive: false });
@@ -505,226 +326,236 @@
       if (stopped) return;
       pos += dir * speed;
       if (pos >= 100) { pos = 100; dir = -1; }
-      if (pos <= 0) { pos = 0; dir = 1; }
+      if (pos <= 0)   { pos = 0;   dir = 1; }
       slider.style.left = `calc(${pos}% - 4px)`;
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
   }
 
-  function finishFight(multiplier, label) {
+  function finishFight(mult, label) {
     const b = _battle;
     if (!b) return;
-    let dmg = 0;
-    let critText = '';
+    b.turn++;
+    const rawDmg = Math.max(1, b.player.atk - 0 + Math.floor(Math.random() * 5) - 2);
+    const dmg = Math.max(0, Math.round(rawDmg * mult));
 
-    if (label === 'MISS') {
-      dmg = 0;
-      b.player.mercy = Math.max(0, b.player.mercy - 12);
-      setDialog(`* 你攻击了 ${b.boss.name}！\n* MISS... 完全没打中。`, () => {
-        updateBattleUI();
-        setTimeout(startEnemyTurn, 800);
+    if (b.turn <= BOSS.dodgeTurns) {
+      setDialog(`* 你攻击了 ${BOSS.name}！\n* ${label} 造成 ${dmg} 点伤害。\n* ${BOSS.dodgeText}`, () => {
+        if (b.bossHp > 0) {
+          setTimeout(startEnemyTurn, 600);
+        } else {
+          onVictory('kill');
+        }
       });
       return;
     }
 
-    // UT原版: Damage = max(1, ATK - DEF + random(-2, +2))
-    const baseDmg = b.player.atk - b.boss.def + Math.floor(Math.random() * 5) - 2;
-    dmg = Math.max(1, Math.round(baseDmg * multiplier));
-
-    if (label === 'PERFECT!!' && Math.random() < 0.25) {
-      critText = '\n* ⚡ 暴击！';
-      dmg = Math.round(dmg * 1.5);
+    if (label === 'MISS') {
+      setDialog(`* 你攻击了 ${BOSS.name}！\n* MISS... 完全没打中。`, () => {
+        setTimeout(startEnemyTurn, 600);
+      });
+      return;
     }
 
     b.bossHp = Math.max(0, b.bossHp - dmg);
-    b.player.mercy = Math.max(0, b.player.mercy - (multiplier >= 1.4 ? 5 : 8));
-
-    setDialog(`* 你攻击了 ${b.boss.name}！\n* ${label || ''} 造成 ${dmg} 点伤害！${critText}`.replace(/\n{2,}/g, '\n'), () => {
+    setDialog(`* 你攻击了 ${BOSS.name}！\n* ${label} 造成 ${dmg} 点伤害！`, () => {
       updateBattleUI();
-      if (b.bossHp <= 0) {
-        onVictory('kill');
-      } else {
-        setTimeout(startEnemyTurn, 500);
-      }
+      if (b.bossHp <= 0) onVictory('kill');
+      else setTimeout(startEnemyTurn, 600);
     });
   }
 
-  // ===== ACT =====
   function doAct() {
     const b = _battle;
-    if (!b) return;
-    const label = b.boss.pacifistLabel || '交谈';
     const panel = document.createElement('div');
     panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100065;display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace;color:#fff;';
     panel.innerHTML = `
       <div style="background:#1a1a2a;border:2px solid #fff;padding:20px;max-width:360px;width:90%;">
-        <div style="font-size:14px;color:#ffcc00;margin-bottom:14px;text-align:center;">⚔️ 选择 ACT</div>
+        <div style="font-size:14px;color:#e0c080;margin-bottom:14px;text-align:center;">⚔ 选择 ACT</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <button class="ub-act-btn" data-act="0" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">🔍 检查 - 观察对手弱点</button>
-          <button class="ub-act-btn" data-act="1" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">💬 ${label} - 尝试理解对手</button>
-          <button class="ub-act-btn" data-act="2" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">🔥 质问 - 激怒对手 (MERCY↑, 攻击上升)</button>
+          <button class="ub-act-btn" data-act="0" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">🔍 Check - 观察德衫</button>
+          <button class="ub-act-btn" data-act="1" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">😤 Complain - 抱怨命运</button>
+          <button class="ub-act-btn" data-act="2" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">💬 Talk - 尝试沟通</button>
+          <button class="ub-act-btn" data-act="3" style="background:#000;border:2px solid #888;color:#fff;padding:10px;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;">💘 Flirt - 对骷髅调情</button>
         </div>
       </div>
     `;
     document.body.appendChild(panel);
     panel.querySelectorAll('.ub-act-btn').forEach(btn => {
-      btn.onmouseenter = () => { btn.style.background = '#333'; btn.style.borderColor = '#ffcc00'; };
+      btn.onmouseenter = () => { btn.style.background = '#333'; btn.style.borderColor = '#e0c080'; };
       btn.onmouseleave = () => { btn.style.background = '#000'; btn.style.borderColor = '#888'; };
       btn.onclick = () => {
         const idx = parseInt(btn.dataset.act);
         panel.remove();
-        applyActResult(idx);
+        applyAct(idx);
       };
     });
   }
 
-  function applyActResult(idx) {
+  function applyAct(idx) {
     const b = _battle;
     let text = '', mercyGain = 0;
-    if (idx === 0) {
-      text = b.boss.actCheck;
-    } else if (idx === 1) {
-      text = b.boss.actEncourage || b.boss.actAppreciate || '* 你说了些好话。';
-      mercyGain = 15 + Math.floor(Math.random() * 10);
-    } else {
-      text = b.boss.actThreaten || b.boss.actDebunk || '* 你质问了他。';
-      mercyGain = 25 + Math.floor(Math.random() * 15);
-      b.boss.atk = Math.min(30, b.boss.atk + 2);
-    }
-    b.player.mercy = Math.min(b.boss.mercyThreshold, b.player.mercy + mercyGain);
-    setDialog(text + `\n* MERCY +${mercyGain}`, () => {
+    if (idx === 0)      text = BOSS.checkText;
+    else if (idx === 1) { text = BOSS.complainText; mercyGain = 12 + Math.floor(Math.random() * 8); }
+    else if (idx === 2) { text = BOSS.talkText;    mercyGain = 18 + Math.floor(Math.random() * 10); }
+    else                { text = BOSS.flirtText;   mercyGain = 22 + Math.floor(Math.random() * 10); }
+    b.player.mercy = Math.min(BOSS.mercyThreshold, b.player.mercy + mercyGain);
+    setDialog(text + (mercyGain ? `\n* MERCY +${mercyGain}` : ''), () => {
       updateBattleUI();
-      setTimeout(startEnemyTurn, 600);
+      b.turn++;
+      setTimeout(startEnemyTurn, 500);
     });
   }
 
-  // ===== ITEM =====
   function doItem() {
     const b = _battle;
-    const r = (typeof Game !== 'undefined' && Game.state) ? Game.state.resources : {};
-    let healAmount = 30;
-    let cost = 50;
-    const canAfford = (r.money || 0) >= cost && b.player.hp < b.player.maxHp;
-
-    if (!canAfford) {
-      setDialog('* 没有足够的资金...或者HP已满。', () => {
-        setTimeout(startEnemyTurn, 400);
-      });
-      return;
-    }
-    r.money -= cost;
-    b.player.hp = Math.min(b.player.maxHp, b.player.hp + healAmount);
-    setDialog(`* 你掏出急救包，恢复了 ${healAmount} HP！\n* (花费 ${cost} 资金)`, () => {
-      updateBattleUI();
-      setTimeout(startEnemyTurn, 600);
+    const panel = document.createElement('div');
+    panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100065;display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace;color:#fff;';
+    let html = `<div style="background:#1a1a2a;border:2px solid #fff;padding:20px;max-width:360px;width:90%;">
+      <div style="font-size:14px;color:#e0c080;margin-bottom:14px;text-align:center;">📦 选择物品</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">`;
+    ITEMS.forEach((it, i) => {
+      const count = b.player.items[i];
+      const disabled = count <= 0;
+      html += `<button class="ub-item-btn" data-idx="${i}" ${disabled ? 'disabled' : ''} style="background:#000;border:2px solid ${disabled ? '#444' : '#888'};color:${disabled ? '#555' : '#fff'};padding:10px;font-family:inherit;cursor:${disabled ? 'default' : 'pointer'};text-align:left;font-size:13px;">
+        ${it.name} (+${it.heal} HP) · x${count}
+      </button>`;
     });
+    html += `<button id="ub-item-back" style="margin-top:10px;background:#222;border:1px solid #555;color:#888;padding:8px;font-family:inherit;cursor:pointer;">← 返回</button>
+      </div></div>`;
+    panel.innerHTML = html;
+    document.body.appendChild(panel);
+    panel.querySelectorAll('.ub-item-btn').forEach(btn => {
+      btn.onmouseenter = () => { if (!btn.disabled) { btn.style.background = '#333'; btn.style.borderColor = '#e0c080'; } };
+      btn.onmouseleave = () => { btn.style.background = '#000'; btn.style.borderColor = btn.disabled ? '#444' : '#888'; };
+      btn.onclick = () => {
+        const idx = parseInt(btn.dataset.idx);
+        if (b.player.items[idx] <= 0) return;
+        b.player.items[idx]--;
+        const it = ITEMS[idx];
+        const realHeal = Math.min(it.heal, b.player.maxHp - b.player.hp);
+        b.player.hp = Math.min(b.player.maxHp, b.player.hp + it.heal);
+        panel.remove();
+        setDialog(`${it.text}\n* 恢复 ${realHeal} HP！`, () => {
+          updateBattleUI();
+          b.turn++;
+          setTimeout(startEnemyTurn, 500);
+        });
+      };
+    });
+    panel.querySelector('#ub-item-back').onclick = () => panel.remove();
   }
 
-  // ===== MERCY =====
   function doMercy() {
     const b = _battle;
-    if (b.player.mercy >= b.boss.mercyThreshold) {
-      setDialog(`* 你伸出了手...\n* "让我们结束这一切吧。"\n* ${b.boss.name} 愣住了...`, () => {
-        setTimeout(() => {
-          setDialog(b.boss.onSpareText, () => onVictory('spare'));
-        }, 800);
+    if (b.player.mercy >= BOSS.mercyThreshold) {
+      setDialog('* 你伸出了手...\n* "结束这一切吧，德衫。"\n* 他愣了很久...', () => {
+        mkTimeout(() => setDialog(BOSS.onSpareText, () => onVictory('spare')), 1200);
       });
     } else {
-      setDialog('* 你尝试饶恕...\n* 但 MERCY 还不够。\n* (MERCY 需要 ' + b.boss.mercyThreshold + ')');
-      setTimeout(startEnemyTurn, 1000);
+      setDialog('* 你尝试饶恕...\n* 但德衫只是冷笑。\n* (MERCY 还需要 ' + BOSS.mercyThreshold + ')', () => {
+        b.turn++;
+        setTimeout(startEnemyTurn, 500);
+      });
     }
   }
 
-  // ===== 敌人回合（弹幕）=====
+  // ====== 敌人回合 / 弹幕 ======
   function startEnemyTurn() {
     const b = _battle;
-    if (b.ended) return;
+    if (!b || b.ended) return;
     b.phase = 'enemy_turn';
+    b.bullets = [];
+    b.lasers = [];
+    b.platforms = [];
+    b.soulColor = 'red';
+    b.gravity = 0;
+
     const area = b.modal.querySelector('#ub-bullet-area');
     area.style.display = 'block';
 
     const canvas = b.modal.querySelector('#ub-canvas');
-    const ctx = canvas.getContext('2d');
-    b.bullets = [];
-    // 让 canvas 的像素尺寸匹配 CSS 显示尺寸（响应式适配）
     const rect = canvas.getBoundingClientRect();
     canvas.width = Math.round(rect.width);
     canvas.height = Math.round(rect.height);
-    b.soul = { x: canvas.width / 2, y: canvas.height / 2, vx: 0, vy: 0 };
-    const keys = {};
-    const onKeyDown = e => { keys[e.key.toLowerCase()] = true; if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault(); };
-    const onKeyUp = e => { keys[e.key.toLowerCase()] = false; };
+    b.canvasW = canvas.width;
+    b.canvasH = canvas.height;
+
+    b.soul = {
+      x: b.canvasW / 2,
+      y: b.canvasH - 30,
+      vx: 0, vy: 0,
+      onGround: false,
+    };
+    b.hitCooldown = 0;
+    b.keys = {};
+    b.phaseIndex = (b.phaseIndex + 1) % 8;
+    b.phaseStart = performance.now();
+    b.phaseDuration = 4000 + Math.floor(Math.random() * 3000);
+
+    b.modal.querySelector('#ub-soul-indicator').textContent = `Phase ${b.phaseIndex + 1}/8 · RED`;
+
+    const onKeyDown = e => {
+      b.keys[e.key.toLowerCase()] = true;
+      if (['arrowup','arrowdown','arrowleft','arrowright',' ','w','a','s','d'].includes(e.key.toLowerCase())) e.preventDefault();
+    };
+    const onKeyUp = e => { b.keys[e.key.toLowerCase()] = false; };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    // ===== 触摸拖拽：手机端直接用手指拖红心（无方向键，隐藏控制）=====
-    let isTouching = false;
-    let touchPointerId = null;
-    function canvasPosFromEvent(clientX, clientY) {
+    let isTouching = false, touchPointerId = null;
+    function canvasPos(clientX, clientY) {
       const r = canvas.getBoundingClientRect();
-      const sx = canvas.width / r.width;
-      const sy = canvas.height / r.height;
-      return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy };
+      return { x: (clientX - r.left) * (canvas.width / r.width), y: (clientY - r.top) * (canvas.height / r.height) };
     }
     const onTouchStart = e => {
       e.preventDefault();
       const t = e.changedTouches[0];
-      isTouching = true;
-      touchPointerId = t.identifier;
-      const p = canvasPosFromEvent(t.clientX, t.clientY);
-      b.soul.x = Math.max(6, Math.min(canvas.width - 6, p.x));
-      b.soul.y = Math.max(6, Math.min(canvas.height - 6, p.y));
+      isTouching = true; touchPointerId = t.identifier;
+      const p = canvasPos(t.clientX, t.clientY);
+      if (b.soulColor === 'blue' && b.soul.onGround) {
+        b.soul.vy = -8; b.soul.onGround = false;
+      } else {
+        b.soul.x = p.x; b.soul.y = p.y;
+      }
     };
     const onTouchMove = e => {
-      if (!isTouching) return;
+      if (!isTouching || b.soulColor === 'blue') return;
       e.preventDefault();
-      for (const t of e.changedTouches) {
-        if (t.identifier === touchPointerId) {
-          const p = canvasPosFromEvent(t.clientX, t.clientY);
-          b.soul.x = Math.max(6, Math.min(canvas.width - 6, p.x));
-          b.soul.y = Math.max(6, Math.min(canvas.height - 6, p.y));
-          break;
-        }
+      for (const t of e.changedTouches) if (t.identifier === touchPointerId) {
+        const p = canvasPos(t.clientX, t.clientY);
+        b.soul.x = Math.max(6, Math.min(b.canvasW - 6, p.x));
+        b.soul.y = Math.max(6, Math.min(b.canvasH - 6, p.y));
+        break;
       }
     };
     const onTouchEnd = e => {
-      if (!isTouching) return;
-      e.preventDefault();
-      for (const t of e.changedTouches) {
-        if (t.identifier === touchPointerId) {
-          isTouching = false;
-          touchPointerId = null;
-          break;
-        }
+      for (const t of e.changedTouches) if (t.identifier === touchPointerId) {
+        isTouching = false; touchPointerId = null; break;
       }
     };
     canvas.addEventListener('touchstart', onTouchStart, { passive: false });
     canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     canvas.addEventListener('touchend', onTouchEnd, { passive: false });
     canvas.addEventListener('touchcancel', onTouchEnd, { passive: false });
-    // 鼠标端也允许直接拖动
+
     let isMouseDown = false;
-    const onMouseDown = e => { isMouseDown = true; updateFromMouse(e); };
-    const onMouseMove = e => { if (isMouseDown) updateFromMouse(e); };
-    const onMouseUp = () => { isMouseDown = false; };
-    function updateFromMouse(e) {
-      const p = canvasPosFromEvent(e.clientX, e.clientY);
-      b.soul.x = Math.max(6, Math.min(canvas.width - 6, p.x));
-      b.soul.y = Math.max(6, Math.min(canvas.height - 6, p.y));
-    }
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    // 随机选 pattern
-    const pattern = b.boss.patterns[Math.floor(Math.random() * b.boss.patterns.length)];
-    spawnPattern(pattern, canvas.width, canvas.height);
-
-    let startTime = Date.now();
-    let hitCooldown = 0;
-    const attackDuration = 5000;
-    let running = true;
+    const onMD = e => {
+      isMouseDown = true;
+      if (b.soulColor === 'blue' && b.soul.onGround) { b.soul.vy = -8; b.soul.onGround = false; }
+      else { const p = canvasPos(e.clientX, e.clientY); b.soul.x = p.x; b.soul.y = p.y; }
+    };
+    const onMM = e => {
+      if (!isMouseDown || b.soulColor === 'blue') return;
+      const p = canvasPos(e.clientX, e.clientY);
+      b.soul.x = Math.max(6, Math.min(b.canvasW - 6, p.x));
+      b.soul.y = Math.max(6, Math.min(b.canvasH - 6, p.y));
+    };
+    const onMU = () => { isMouseDown = false; };
+    canvas.addEventListener('mousedown', onMD);
+    canvas.addEventListener('mousemove', onMM);
+    window.addEventListener('mouseup', onMU);
 
     function cleanup() {
       window.removeEventListener('keydown', onKeyDown);
@@ -733,95 +564,235 @@
       canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('touchend', onTouchEnd);
       canvas.removeEventListener('touchcancel', onTouchEnd);
-      canvas.removeEventListener('mousedown', onMouseDown);
-      canvas.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      canvas.removeEventListener('mousedown', onMD);
+      canvas.removeEventListener('mousemove', onMM);
+      window.removeEventListener('mouseup', onMU);
     }
 
+    spawnPhase(b.phaseIndex, b.canvasW, b.canvasH);
+
+    const ctx = canvas.getContext('2d');
+    b._running = true;
+    b._animStop = false;
+    b.enemyTurnStart = performance.now();
+    b.enemyTurnDuration = 22000;
+
     function loop() {
-      if (!running || !_battle) { cleanup(); return; }
-      const elapsed = Date.now() - startTime;
-      if (elapsed > attackDuration) {
-        running = false;
+      if (!b._running || b._animStop || !_battle) { cleanup(); return; }
+
+      const totalElapsed = performance.now() - b.enemyTurnStart;
+      if (totalElapsed > b.enemyTurnDuration) {
+        b._running = false;
         cleanup();
         endEnemyTurn();
         return;
       }
-      // 键盘控制（桌面端兜底）
-      const speed = 3;
-      if (keys['arrowleft'] || keys['a']) b.soul.x -= speed;
-      if (keys['arrowright'] || keys['d']) b.soul.x += speed;
-      if (keys['arrowup'] || keys['w']) b.soul.y -= speed;
-      if (keys['arrowdown'] || keys['s']) b.soul.y += speed;
-      b.soul.x = Math.max(6, Math.min(canvas.width - 6, b.soul.x));
-      b.soul.y = Math.max(6, Math.min(canvas.height - 6, b.soul.y));
 
-      // 更新子弹
-      b.bullets.forEach(bu => {
-        bu.x += bu.vx;
-        bu.y += bu.vy;
-        if (bu.fn) bu.fn(bu, elapsed);
-      });
-      // 移除出界（边界留够余量，speech/blitz 等从屏幕外挂进来的子弹有空间滑行）
-      b.bullets = b.bullets.filter(bu => bu.x > -120 && bu.x < canvas.width + 120 && bu.y > -120 && bu.y < canvas.height + 120);
+      let elapsed = performance.now() - b.phaseStart;
+      if (elapsed > b.phaseDuration) {
+        clearEnemyTimers();
+        b.phaseIndex = (b.phaseIndex + 1) % 8;
+        b.phaseStart = performance.now();
+        b.phaseDuration = 4000 + Math.floor(Math.random() * 3000);
+        b.bullets = []; b.lasers = []; b.platforms = [];
+        spawnPhase(b.phaseIndex, b.canvasW, b.canvasH);
+        b.modal.querySelector('#ub-soul-indicator').textContent = `Phase ${b.phaseIndex + 1}/8 · ${b.soulColor.toUpperCase()}`;
+      }
 
-      // 碰撞
-      if (hitCooldown > 0) hitCooldown--;
-      for (const bu of b.bullets) {
-        const dx = bu.x - b.soul.x;
-        const dy = bu.y - b.soul.y;
-        if (dx * dx + dy * dy < (bu.r + 6) * (bu.r + 6) && hitCooldown === 0) {
-          hitCooldown = 40;
-          // UT原版: max(1, ATK - DEF + random(-2, +2))
-          const raw = Math.max(1, b.boss.atk - b.player.def + Math.floor(Math.random() * 5) - 2);
-          b.player.hp = Math.max(0, b.player.hp - raw);
-          b.player.mercy = Math.max(0, b.player.mercy - 3);
-          updateBattleUI();
-          flashScreen('#ff0000');
-          if (b.player.hp <= 0) {
-            running = false;
-            onDefeat();
-            return;
+      if (b.keys[' '] && b.soulColor === 'blue' && b.soul.onGround) {
+        b.soul.vy = -8; b.soul.onGround = false; b.keys[' '] = false;
+      }
+      if ((b.keys['arrowup'] || b.keys['w']) && b.soulColor === 'blue' && b.soul.onGround) {
+        b.soul.vy = -8; b.soul.onGround = false;
+      }
+
+      const speed = b.soulColor === 'blue' ? 3.5 : 4.2;
+      if (b.soulColor === 'red') {
+        if (b.keys['arrowleft'] || b.keys['a'])   b.soul.x -= speed;
+        if (b.keys['arrowright'] || b.keys['d'])  b.soul.x += speed;
+        if (b.keys['arrowup'] || b.keys['w'])     b.soul.y -= speed;
+        if (b.keys['arrowdown'] || b.keys['s'])   b.soul.y += speed;
+      } else {
+        if (b.keys['arrowleft'] || b.keys['a'])   b.soul.x -= speed;
+        if (b.keys['arrowright'] || b.keys['d'])  b.soul.x += speed;
+        b.soul.vy += 0.55;
+        b.soul.y += b.soul.vy;
+
+        b.soul.onGround = false;
+        for (const p of b.platforms) {
+          if (b.soul.vy >= 0 &&
+              b.soul.x >= p.x - 4 && b.soul.x <= p.x + p.w + 4 &&
+              b.soul.y >= p.y - 4 && b.soul.y <= p.y + 12) {
+            b.soul.y = p.y; b.soul.vy = 0; b.soul.onGround = true;
           }
-          break;
+        }
+        if (b.soul.y >= b.canvasH - 6) {
+          b.soul.y = b.canvasH - 6; b.soul.vy = 0; b.soul.onGround = true;
+        }
+      }
+      b.soul.x = Math.max(6, Math.min(b.canvasW - 6, b.soul.x));
+      b.soul.y = Math.max(6, Math.min(b.canvasH - 6, b.soul.y));
+
+      for (const bu of b.bullets) {
+        bu.x += bu.vx; bu.y += bu.vy;
+        if (bu.fn) bu.fn(bu);
+      }
+      b.bullets = b.bullets.filter(bu => bu.x > -80 && bu.x < b.canvasW + 80 && bu.y > -80 && bu.y < b.canvasH + 80);
+
+      for (const laser of b.lasers) {
+        if (!laser.warned) {
+          laser.warnTime = (laser.warnTime || 0) + 16;
+          if (laser.warnTime >= 200) { laser.warned = true; laser.fireTime = 0; }
+        } else {
+          laser.fireTime = (laser.fireTime || 0) + 16;
+          if (laser.fireTime > laser.duration) laser.done = true;
+        }
+      }
+      b.lasers = b.lasers.filter(l => !l.done);
+
+      if (b.hitCooldown > 0) b.hitCooldown--;
+
+      for (const bu of b.bullets) {
+        const dx = bu.x - b.soul.x, dy = bu.y - b.soul.y;
+        if (dx * dx + dy * dy < (bu.r + 6) * (bu.r + 6) && b.hitCooldown === 0) {
+          applyHit(); break;
         }
       }
 
-      // 绘制
+      for (const laser of b.lasers) {
+        if (!laser.warned) continue;
+        if (laser.type === 'rotating') {
+          for (const beam of laser.beams) {
+            const ang = beam.ang;
+            const dx = Math.cos(ang), dy = Math.sin(ang);
+            const px = b.soul.x - laser.cx, py = b.soul.y - laser.cy;
+            const t = px * dx + py * dy;
+            if (t < 0 || t > b.canvasW) continue;
+            const cx = laser.cx + dx * t, cy = laser.cy + dy * t;
+            const ddx = b.soul.x - cx, ddy = b.soul.y - cy;
+            if (ddx * ddx + ddy * ddy < 36) { applyHit(); break; }
+          }
+        } else if (laser.type === 'horizontal') {
+          const dy = Math.abs(b.soul.y - laser.y);
+          if (b.soul.x > 0 && b.soul.x < b.canvasW && dy < 6) applyHit();
+        } else if (laser.type === 'vertical') {
+          const dx = Math.abs(b.soul.x - laser.x);
+          if (b.soul.y > 0 && b.soul.y < b.canvasH && dx < 6) applyHit();
+        }
+      }
+
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // 魂 (心形)
-      ctx.fillStyle = hitCooldown > 0 && hitCooldown % 6 < 3 ? '#ff6666' : '#ff0000';
-      drawHeart(ctx, b.soul.x, b.soul.y, 6);
-      // 子弹
-      b.bullets.forEach(bu => {
-        ctx.fillStyle = bu.color || '#ffff00';
-        if (bu.shape === 'text') {
-          ctx.font = bu.font || 'bold 12px Courier New';
-          ctx.fillText(bu.text, bu.x, bu.y);
-        } else if (bu.shape === 'square') {
-          ctx.fillRect(bu.x - bu.r, bu.y - bu.r, bu.r * 2, bu.r * 2);
-        } else if (bu.shape === 'diamond') {
+
+      if (b.soulColor === 'blue') {
+        ctx.fillStyle = 'rgba(30, 60, 140, 0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.fillStyle = '#88aadd';
+      b.platforms.forEach(p => { ctx.fillRect(p.x, p.y, p.w, 4); });
+      ctx.strokeStyle = '#c0d8ff';
+      b.platforms.forEach(p => { ctx.strokeRect(p.x, p.y, p.w, 4); });
+
+      for (const laser of b.lasers) {
+        const warn = !laser.warned;
+        if (laser.type === 'rotating') {
+          for (const beam of laser.beams) {
+            const ang = beam.ang;
+            const ex = laser.cx + Math.cos(ang) * b.canvasW * 2;
+            const ey = laser.cy + Math.sin(ang) * b.canvasW * 2;
+            ctx.strokeStyle = warn ? '#ff2222' : '#4488ff';
+            ctx.lineWidth = warn ? 2 : 4;
+            ctx.globalAlpha = warn ? 0.6 : 1;
+            ctx.beginPath(); ctx.moveTo(laser.cx, laser.cy); ctx.lineTo(ex, ey); ctx.stroke();
+            ctx.globalAlpha = 1;
+            if (!warn) {
+              ctx.strokeStyle = '#aaccff';
+              ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.moveTo(laser.cx, laser.cy); ctx.lineTo(ex, ey); ctx.stroke();
+            }
+          }
+        } else if (laser.type === 'horizontal') {
+          ctx.strokeStyle = warn ? '#ff2222' : '#4488ff';
+          ctx.lineWidth = warn ? 2 : 5;
+          ctx.globalAlpha = warn ? 0.6 + Math.sin(performance.now() / 40) * 0.3 : 1;
+          ctx.beginPath(); ctx.moveTo(0, laser.y); ctx.lineTo(b.canvasW, laser.y); ctx.stroke();
+          ctx.globalAlpha = 1;
+        } else if (laser.type === 'vertical') {
+          ctx.strokeStyle = warn ? '#ff2222' : '#4488ff';
+          ctx.lineWidth = warn ? 2 : 5;
+          ctx.globalAlpha = warn ? 0.6 + Math.sin(performance.now() / 40) * 0.3 : 1;
+          ctx.beginPath(); ctx.moveTo(laser.x, 0); ctx.lineTo(laser.x, b.canvasH); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      for (const bu of b.bullets) {
+        if (bu.shape === 'bone_h') {
+          ctx.fillStyle = '#ffffff';
+          const bw = bu.w, bh = bu.h;
+          ctx.fillRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
           ctx.beginPath();
-          ctx.moveTo(bu.x, bu.y - bu.r);
-          ctx.lineTo(bu.x + bu.r, bu.y);
-          ctx.lineTo(bu.x, bu.y + bu.r);
-          ctx.lineTo(bu.x - bu.r, bu.y);
-          ctx.closePath();
+          ctx.arc(bu.x - bw/2, bu.y - bh/2, bh/2, 0, Math.PI*2);
+          ctx.arc(bu.x - bw/2, bu.y + bh/2, bh/2, 0, Math.PI*2);
+          ctx.arc(bu.x + bw/2, bu.y - bh/2, bh/2, 0, Math.PI*2);
+          ctx.arc(bu.x + bw/2, bu.y + bh/2, bh/2, 0, Math.PI*2);
+          ctx.fill();
+        } else if (bu.shape === 'bone_v') {
+          ctx.fillStyle = '#ffffff';
+          const bw = bu.w, bh = bu.h;
+          ctx.fillRect(bu.x - bw/2, bu.y - bh/2, bw, bh);
+          ctx.beginPath();
+          ctx.arc(bu.x - bw/2, bu.y - bh/2, bw/2, 0, Math.PI*2);
+          ctx.arc(bu.x + bw/2, bu.y - bh/2, bw/2, 0, Math.PI*2);
+          ctx.arc(bu.x - bw/2, bu.y + bh/2, bw/2, 0, Math.PI*2);
+          ctx.arc(bu.x + bw/2, bu.y + bh/2, bw/2, 0, Math.PI*2);
           ctx.fill();
         } else {
+          ctx.fillStyle = bu.color || '#ffff00';
           ctx.beginPath();
           ctx.arc(bu.x, bu.y, bu.r, 0, Math.PI * 2);
           ctx.fill();
         }
-      });
+      }
+
+      ctx.fillStyle = (b.hitCooldown > 0 && b.hitCooldown % 6 < 3)
+        ? (b.soulColor === 'blue' ? '#66aaff' : '#ff8888')
+        : (b.soulColor === 'blue' ? '#4488ff' : '#ff0000');
+      drawHeart(ctx, b.soul.x, b.soul.y, 6);
 
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
+
+    function applyHit() {
+      if (b.hitCooldown > 0) return;
+      b.hitCooldown = 50;
+      const raw = Math.max(1, 8 - b.player.def + Math.floor(Math.random() * 4));
+      const hpLoss = Math.min(b.player.hp, raw);
+      b.player.hp -= hpLoss;
+      const overflow = raw - hpLoss;
+      if (overflow > 0) {
+        b.player.karma = Math.min(b.player.maxHp, b.player.karma + overflow);
+      }
+      if (b.player.hp <= 0) {
+        b.player.hp = 0;
+        if (b.player.karma >= b.player.maxHp) {
+          b._running = false;
+          onDefeat();
+          return;
+        }
+      }
+      flashArea('#ff2244');
+      updateBattleUI();
+      if (b.player.karma >= b.player.maxHp) {
+        b._running = false;
+        onDefeat();
+      }
+    }
   }
 
-  function flashScreen(color) {
+  function flashArea(color) {
     const area = _battle.modal.querySelector('#ub-bullet-area');
     area.style.background = color;
     setTimeout(() => { area.style.background = '#000'; }, 80);
@@ -835,231 +806,291 @@
     ctx.fill();
   }
 
-  // ===== 弹幕 pattern =====
-  function spawnPattern(pattern, w, h) {
+  function spawnPhase(idx, w, h) {
     const b = _battle;
-    if (pattern === 'speech') {
-      const texts = ['GLORY!', 'REICH!', 'ORDER!', 'POWER!', 'NO PEACE!', 'UNITY!'];
+    b.bullets = [];
+    b.lasers = [];
+    b.platforms = [];
+
+    function addPlatform(x, y, ww) { b.platforms.push({ x, y, w: ww }); }
+
+    if (idx === 0) {
+      // Phase 1: 蓝魂骨头平台跳跃
+      b.soulColor = 'blue';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 1/8 · BLUE · 跳跃躲避骨头';
+      addPlatform(w * 0.1, h * 0.6, w * 0.2);
+      addPlatform(w * 0.5, h * 0.45, w * 0.22);
+      addPlatform(w * 0.78, h * 0.6, w * 0.18);
       let i = 0;
-      const intv = setInterval(() => {
-        if (!_battle) { clearInterval(intv); return; }
-        const y = 20 + Math.random() * Math.max(20, h - 40);
-        b.bullets.push({ x: -50, y, vx: Math.max(1.0, w / 300), vy: 0, r: 4, shape: 'text', text: texts[i % texts.length], font: 'bold 14px Courier New', color: '#ff4444' });
-        b.bullets.push({ x: w + 50, y, vx: -Math.max(1.0, w / 300), vy: 0, r: 4, shape: 'text', text: texts[(i + 2) % texts.length], font: 'bold 14px Courier New', color: '#ff4444' });
+      mkInterval(() => {
+        if (!_battle) return;
+        const colCount = 3;
+        const spacing = w / (colCount + 1);
+        for (let c = 0; c < colCount; c++) {
+          const baseX = spacing * (c + 1);
+          const skip = (c + i) % 4 === 0;
+          if (skip) continue;
+          b.bullets.push({
+            shape: 'bone_v',
+            x: baseX, y: -30,
+            vx: 0, vy: 3.5,
+            w: 14, h: 24 + Math.random() * 12,
+            r: 4,
+          });
+        }
         i++;
-      }, 400);
-      setTimeout(() => clearInterval(intv), 4800);
-    } else if (pattern === 'sieg_heil') {
+      }, 450);
+    }
+
+    else if (idx === 1) {
+      // Phase 2: 龙骨炮风暴
+      b.soulColor = 'red';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 2/8 · RED · 龙骨炮风暴';
+      mkInterval(() => {
+        if (!_battle) return;
+        const horizontal = Math.random() < 0.5;
+        if (horizontal) {
+          b.lasers.push({ type: 'horizontal', y: 40 + Math.random() * (h - 80), warned: false, warnTime: 0, fireTime: 0, duration: 400 });
+        } else {
+          b.lasers.push({ type: 'vertical', x: 40 + Math.random() * (w - 80), warned: false, warnTime: 0, fireTime: 0, duration: 400 });
+        }
+      }, 900);
       let i = 0;
-      const intv = setInterval(() => {
-        if (!_battle) { clearInterval(intv); return; }
-        b.bullets.push({ x: w / 2, y: h + 10, vx: Math.sin(i * 0.7) * 1.5, vy: -Math.max(2.0, h / 60), r: 6, color: '#ff0000' });
-        i++;
-      }, 120);
-      setTimeout(() => clearInterval(intv), 4800);
-    } else if (pattern === 'hand_raise') {
-      let i = 0;
-      const intv = setInterval(() => {
-        if (!_battle) { clearInterval(intv); return; }
-        const y1 = 10 + (i * 10 % Math.max(20, h - 20));
-        const y2 = 10 + ((i + 5) * 10 % Math.max(20, h - 20));
-        b.bullets.push({ x: -10, y: y1, vx: Math.max(2.0, w / 150), vy: 0.8, r: 5, color: '#ffcc00' });
-        b.bullets.push({ x: w + 10, y: y2, vx: -Math.max(2.0, w / 150), vy: 0.8, r: 5, color: '#ffcc00' });
+      mkInterval(() => {
+        if (!_battle) return;
+        const y = 30 + Math.random() * (h - 60);
+        b.bullets.push({ x: -20, y, vx: 4 + Math.random() * 2, vy: 0, r: 4, color: '#88ccff' });
         i++;
       }, 180);
-      setTimeout(() => clearInterval(intv), 4800);
-    } else if (pattern === 'grid') {
-      // 下落网格：列间距自适应 canvas 宽度，桌面 8 列，手机自动减少
-      const colCount = Math.max(4, Math.min(10, Math.floor(w / 50)));
-      const colSpacing = (w - 40) / (colCount - 1);
-      for (let col = 0; col < colCount; col++) {
-        const delay = col * 120;
-        const intv = setInterval(() => {
-          if (!_battle) { clearInterval(intv); return; }
-          b.bullets.push({ x: 20 + col * colSpacing, y: -10, vx: 0, vy: Math.max(1.8, h / 80), r: 5, shape: 'square', color: '#888' });
-        }, Math.max(500, 900 - colCount * 30));
-        setTimeout(() => { clearInterval(intv); }, delay + 4800);
-      }
-    } else if (pattern === 'blitz') {
-      // 快速横向波浪
+    }
+
+    else if (idx === 2) {
+      // Phase 3: 蓝魂白骨扫过
+      b.soulColor = 'blue';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 3/8 · BLUE · 白骨横扫';
+      addPlatform(10, h * 0.75, w - 20);
+      mkInterval(() => {
+        if (!_battle) return;
+        const fromLeft = Math.random() < 0.5;
+        const gapY = 30 + Math.random() * (h - 80);
+        b.bullets.push({
+          shape: 'bone_h',
+          x: fromLeft ? -w : w * 2, y: gapY,
+          vx: fromLeft ? 5 : -5, vy: 0,
+          w: w * 1.2, h: 14,
+          r: 4,
+        });
+      }, 1400);
       let i = 0;
-      const intv = setInterval(() => {
-        if (!_battle) { clearInterval(intv); return; }
-        const baseY = h / 2;
-        const amp = Math.min(60, h * 0.35);
-        b.bullets.push({ x: -10, y: baseY + Math.sin(i * 0.4) * amp, vx: Math.max(2.5, w / 100), vy: 0, r: 4, color: '#ff8800' });
-        b.bullets.push({ x: w + 10, y: baseY + Math.cos(i * 0.4) * amp, vx: -Math.max(2.5, w / 100), vy: 0, r: 4, color: '#ff8800' });
+      mkInterval(() => {
+        if (!_battle) return;
+        b.bullets.push({
+          shape: 'bone_h',
+          x: -w * 1.2 + i * 6, y: h * 0.3 + Math.sin(i * 0.3) * 20,
+          vx: 3.5, vy: 0,
+          w: w * 0.7, h: 12,
+          r: 4,
+        });
         i++;
       }, 130);
-      setTimeout(() => clearInterval(intv), 4800);
-    } else if (pattern === 'random') {
-      let i = 0;
-      const intv = setInterval(() => {
-        if (!_battle) { clearInterval(intv); return; }
-        const x = Math.random() * w;
-        const y = Math.random() < 0.5 ? -10 : h + 10;
-        b.bullets.push({ x, y, vx: (Math.random() - 0.5) * 3, vy: y < 0 ? Math.max(2.0, h / 60) : -Math.max(2.0, h / 60), r: 4 + Math.random() * 3, color: ['#ff0000','#00ff00','#ffff00','#ff00ff','#00ffff'][Math.floor(Math.random()*5)] });
-        i++;
-      }, 100);
-      setTimeout(() => clearInterval(intv), 4800);
-    } else if (pattern === 'geometric') {
-      let t = 0;
-      const intv = setInterval(() => {
-        if (!_battle) { clearInterval(intv); return; }
-        for (let k = 0; k < 6; k++) {
-          const ang = t + k * Math.PI / 3;
-          b.bullets.push({ x: w / 2, y: h / 2, vx: Math.cos(ang) * Math.max(1.2, w / 200), vy: Math.sin(ang) * Math.max(1.2, w / 200), r: 5, shape: 'diamond', color: '#66ffaa' });
+    }
+
+    else if (idx === 3) {
+      // Phase 4: 骨头夹击
+      b.soulColor = 'red';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 4/8 · RED · 骨头夹击';
+      let squeeze = 0;
+      mkInterval(() => {
+        if (!_battle) return;
+        squeeze += 1.2;
+        const gapTop = Math.max(20, h / 2 - 50);
+        const gapBot = Math.min(h - 20, h / 2 + 50);
+        if (squeeze > 60) squeeze = 60;
+        for (let x = 10; x < w; x += 24) {
+          b.bullets.push({ shape: 'bone_v', x, y: -20 + squeeze, vx: 0, vy: 0, w: 12, h: 18 + squeeze * 0.5, r: 4 });
+          b.bullets.push({ shape: 'bone_v', x, y: h + 20 - squeeze, vx: 0, vy: 0, w: 12, h: 18 + squeeze * 0.5, r: 4 });
         }
-        t += 0.2;
-      }, 180);
-      setTimeout(() => clearInterval(intv), 4800);
+      }, 220);
+    }
+
+    else if (idx === 4) {
+      // Phase 5: 蓝魂平台 + 静止激光柱
+      b.soulColor = 'blue';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 5/8 · BLUE · 平台+激光';
+      addPlatform(w * 0.15, h * 0.55, w * 0.2);
+      addPlatform(w * 0.5, h * 0.4, w * 0.2);
+      addPlatform(w * 0.8, h * 0.55, w * 0.15);
+      mkInterval(() => {
+        if (!_battle) return;
+        b.lasers.push({ type: 'vertical', x: 40 + Math.random() * (w - 80), warned: false, warnTime: 0, fireTime: 0, duration: 350 });
+      }, 1100);
+      mkInterval(() => {
+        if (!_battle) return;
+        b.lasers.push({ type: 'horizontal', y: 30 + Math.random() * (h - 60), warned: false, warnTime: 0, fireTime: 0, duration: 300 });
+      }, 1500);
+    }
+
+    else if (idx === 5) {
+      // Phase 6: 混乱模式
+      b.soulColor = 'red';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 6/8 · RED · 混乱模式';
+      mkInterval(() => {
+        if (!_battle) return;
+        const rx = Math.random() * w;
+        const ry = Math.random() < 0.5 ? -10 : h + 10;
+        b.bullets.push({ x: rx, y: ry, vx: (Math.random() - 0.5) * 3, vy: ry < 0 ? 3 + Math.random() * 2 : -3 - Math.random() * 2, r: 4 + Math.random() * 2, color: ['#ff0066','#00ffcc','#ffcc00','#aa44ff','#44aaff'][Math.floor(Math.random()*5)] });
+      }, 100);
+      mkInterval(() => {
+        if (!_battle) return;
+        if (Math.random() < 0.5) {
+          b.lasers.push({ type: 'horizontal', y: 30 + Math.random() * (h - 60), warned: false, warnTime: 0, fireTime: 0, duration: 250 });
+        } else {
+          b.lasers.push({ type: 'vertical', x: 30 + Math.random() * (w - 60), warned: false, warnTime: 0, fireTime: 0, duration: 250 });
+        }
+      }, 1400);
+    }
+
+    else if (idx === 6) {
+      // Phase 7: 旋转风车激光
+      b.soulColor = 'red';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 7/8 · RED · 旋转风车';
+      const laser = {
+        type: 'rotating',
+        cx: w / 2, cy: h / 2,
+        beams: [
+          { ang: 0 },
+          { ang: Math.PI * 2 / 3 },
+          { ang: Math.PI * 4 / 3 },
+        ],
+        warned: false, warnTime: 0, fireTime: 0, duration: 9000,
+        rotSpeed: 0.04,
+      };
+      b.lasers.push(laser);
+      const rot = setInterval(() => {
+        if (!_battle) { clearInterval(rot); return; }
+        laser.beams.forEach(beam => { beam.ang += laser.rotSpeed; });
+      }, 16);
+      _enemyTimers.push(rot);
+      mkInterval(() => {
+        if (!_battle) return;
+        const fromLeft = Math.random() < 0.5;
+        const y = 20 + Math.random() * (h - 40);
+        b.bullets.push({ shape: 'bone_h', x: fromLeft ? -w : w * 2, y, vx: fromLeft ? 4 : -4, vy: 0, w: w, h: 10, r: 4 });
+      }, 1800);
+    }
+
+    else if (idx === 7) {
+      // Phase 8: 死亡冲撞
+      b.soulColor = 'blue';
+      b.modal.querySelector('#ub-soul-indicator').textContent = 'Phase 8/8 · BLUE · 死亡冲撞';
+      addPlatform(w * 0.05, h * 0.55, w * 0.15);
+      addPlatform(w * 0.3, h * 0.45, w * 0.15);
+      addPlatform(w * 0.55, h * 0.55, w * 0.15);
+      mkInterval(() => {
+        if (!_battle) return;
+        const y = 20 + Math.random() * (h - 40);
+        b.bullets.push({ shape: 'bone_h', x: -w, y, vx: 6, vy: 0, w: w * 1.2, h: 14, r: 4 });
+      }, 900);
+      mkInterval(() => {
+        if (!_battle) return;
+        const colCount = 4;
+        const spacing = w / (colCount + 1);
+        for (let c = 0; c < colCount; c++) {
+          const baseX = spacing * (c + 1);
+          b.bullets.push({ shape: 'bone_v', x: baseX, y: -30, vx: 0, vy: 4.5, w: 14, h: 20 + Math.random() * 10, r: 4 });
+        }
+      }, 1200);
     }
   }
 
   function endEnemyTurn() {
     const b = _battle;
     if (!b || b.ended) return;
+    b._running = false;
+    clearEnemyTimers();
     b.modal.querySelector('#ub-bullet-area').style.display = 'none';
-    b.bullets = [];
+    b.bullets = []; b.lasers = []; b.platforms = [];
     b.phase = 'player_turn';
-    updateBattleUI();
-    b.modal.querySelectorAll('[id^="ub-fight"],[id^="ub-act"],[id^="ub-item"],[id^="ub-mercy"]').forEach(x => x.disabled = false);
-    setDialog('* 你感到一阵疲惫...\n* 轮到你了。');
+    if (b.player.karma > 0) {
+      b.player.karma = Math.max(0, b.player.karma - 1);
+      updateBattleUI();
+    }
+    setButtonsEnabled(true);
+    setDialog('* 你喘了口气...\n* 轮到你了。');
   }
 
-  // ===== 结果 =====
   function onVictory(type) {
     const b = _battle;
     b.ended = true;
-    b.phase = 'result';
-    const area = b.modal.querySelector('#ub-bullet-area');
-    area.style.display = 'none';
-    const rewardData = type === 'spare' ? b.boss.rewardSpare : b.boss.rewardKill;
-    const text = type === 'spare' ? b.boss.onSpareText : b.boss.onKillText;
-    setDialog(text, () => {
-      applyReward(rewardData, type);
-      showResultModal(type);
-    });
+    b._running = false;
+    clearEnemyTimers();
+    b.modal.querySelector('#ub-bullet-area').style.display = 'none';
+    const text = type === 'spare' ? BOSS.onSpareText : BOSS.onKillText;
+    setDialog(text, () => showResultModal(type));
   }
 
   function onDefeat() {
     const b = _battle;
+    if (!b) return;
     b.ended = true;
-    b.phase = 'result';
-    const area = b.modal.querySelector('#ub-bullet-area');
-    area.style.display = 'none';
-    // 惩罚
-    if (Game && Game.state) {
-      Game.state.resources.stability = Math.max(0, Game.state.resources.stability - 20);
-      Game.state.resources.manpower = Math.max(0, Game.state.resources.manpower - 20);
-      Game.clampResources();
-      Game.addNews(`你在与 ${b.boss.name} 的战斗中倒下了... 稳定-20 人力-20`, 'crisis');
-    }
-    setDialog('* 你倒下了...\n* 但故事还没结束。', () => showResultModal('defeat'));
+    b._running = false;
+    clearEnemyTimers();
+    b.modal.querySelector('#ub-bullet-area').style.display = 'none';
+    setDialog('* 你倒下了...\n* 但...还没结束...', () => showDefeatModal());
   }
 
   function showResultModal(type) {
     const b = _battle;
     if (!b) return;
+    const modal = b.modal;
     setTimeout(() => {
-      const bossName = b.boss.name;
-      const playerHp = b.player.hp;
-      b._animStop = true;
-      b.modal.remove();
-      _battle = null;
-
-      const r = document.createElement('div');
-      r.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100070;display:flex;align-items:center;justify-content:center;color:#fff;font-family:"Courier New",monospace;';
       let color, title;
-      if (type === 'kill') { color = '#ff4444'; title = '☠ 胜利 (击杀)'; }
-      else if (type === 'spare') { color = '#44ff44'; title = '💚 胜利 (饶恕)'; }
-      else if (type === 'flee') { color = '#aaa'; title = '🏃 逃跑'; }
-      else { color = '#888'; title = '💀 战败'; }
-
-      let rw = {};
-      if (type === 'kill') rw = BOSSES[getBossIdByName(bossName)]?.rewardKill || {};
-      else if (type === 'spare') rw = BOSSES[getBossIdByName(bossName)]?.rewardSpare || {};
-      else if (type === 'flee') rw = BOSSES[getBossIdByName(bossName)]?.rewardFlee || {};
-      const rwStr = Object.keys(rw).length ? Object.entries(rw).map(([k,v]) => resourceLabel(k) + (v >= 0 ? '+' : '') + v).join('  ') : '';
-
-      let extraInfo = '';
-      if (type === 'defeat') {
-        extraInfo = '<div style="font-size:11px;color:#ff6666;margin-top:12px;">稳定 -20  人力 -20</div>';
-      }
-
-      r.innerHTML = `
-        <div style="text-align:center;padding:30px;border:2px solid ${color};border-radius:8px;background:#111;max-width:400px;">
+      if (type === 'kill') { color = '#ff4444'; title = '☠ 胜利'; }
+      else { color = '#44ff44'; title = '💚 饶恕成功'; }
+      modal.innerHTML = `
+        <div style="text-align:center;padding:30px;border:2px solid ${color};border-radius:8px;background:#0a0a0a;">
           <div style="font-size:36px;margin-bottom:12px;">${title.split(' ')[0]}</div>
           <div style="font-size:20px;color:${color};margin-bottom:16px;letter-spacing:2px;">${title.split(' ').slice(1).join(' ')}</div>
-          <div style="font-size:13px;color:#ccc;margin-bottom:10px;">对手: ${bossName}</div>
-          <div style="font-size:11px;color:#888;margin-bottom:16px;">剩余HP ${playerHp}/${getPlayerStats().maxHp}</div>
-          <div style="font-size:12px;color:#ffcc00;margin-bottom:8px;">${rwStr}</div>
-          ${extraInfo}
-          <button id="ub-result-close" style="margin-top:16px;background:#333;color:#fff;border:1px solid #fff;padding:8px 28px;border-radius:4px;cursor:pointer;font-family:inherit;">确认</button>
+          <div style="font-size:13px;color:#ccc;margin-bottom:10px;">你战胜了 ${BOSS.name}</div>
+          <div style="font-size:11px;color:#888;margin-bottom:16px;">剩余 HP ${b.player.hp}/${b.player.maxHp}</div>
+          <button id="ub-result-close" style="background:#333;color:#fff;border:1px solid #fff;padding:10px 32px;border-radius:4px;cursor:pointer;font-family:inherit;min-height:44px;">结束</button>
         </div>
       `;
-      document.body.appendChild(r);
-      r.querySelector('#ub-result-close').onclick = () => r.remove();
-    }, 500);
+      modal.querySelector('#ub-result-close').onclick = () => close();
+    }, 1500);
   }
 
-  function getBossIdByName(name) {
-    for (const id in BOSSES) if (BOSSES[id].name === name) return id;
-    return null;
+  function showDefeatModal() {
+    const b = _battle;
+    const modal = b.modal;
+    setTimeout(() => {
+      modal.innerHTML = `
+        <div style="text-align:center;padding:30px;border:2px solid #aa2222;border-radius:8px;background:#0a0000;">
+          <div style="font-size:42px;margin-bottom:12px;color:#ff4444;">☠ GAME OVER</div>
+          <div style="font-size:14px;color:#cc6666;margin-bottom:8px;">* 你又倒下了...</div>
+          <div style="font-size:11px;color:#888;margin-bottom:16px;">德衫在某处冷笑。</div>
+          <div style="display:flex;gap:10px;justify-content:center;">
+            <button id="ub-retry" style="background:#552222;color:#ffcccc;border:1px solid #ff4444;padding:10px 24px;border-radius:4px;cursor:pointer;font-family:inherit;min-height:44px;">重新来过</button>
+            <button id="ub-giveup" style="background:#222;color:#888;border:1px solid #555;padding:10px 24px;border-radius:4px;cursor:pointer;font-family:inherit;min-height:44px;">放弃</button>
+          </div>
+        </div>
+      `;
+      modal.querySelector('#ub-retry').onclick = () => { close(); setTimeout(startBattle, 150); };
+      modal.querySelector('#ub-giveup').onclick = () => close();
+    }, 1200);
   }
 
-  function resourceLabel(k) {
-    const m = { money: '💰', manpower: '👥', stability: '✨', deterrence: '🛡️', militaryPower: '⚔️', nukeDeter: '☢️', research: '🔬',
-                ofn: '🤝 OFN', japan: '🇯🇵', italy: '🇮🇹', burgundy: '🖤 BR', russia: '🇷🇺', egypt: '🇪🇬', middle_east: '🌍', africa: '🌍',
-                burgundy_relation: '🖤 BR' };
-    return m[k] || k;
+  function getPlayerStats() {
+    return { maxHp: PLAYER.maxHp, atk: PLAYER.atk, def: PLAYER.def };
   }
 
-  function applyReward(rewards, type) {
-    if (!rewards || !Game || !Game.state) return;
-    const r = Game.state.resources;
-    const rel = Game.state.relations;
-    for (const key in rewards) {
-      const v = rewards[key];
-      if (key === 'stability') { r.stability = Math.max(0, Math.min(100, r.stability + v)); }
-      else if (key === 'manpower') { r.manpower = Math.max(0, r.manpower + v); }
-      else if (key === 'money') { r.money = Math.max(0, r.money + v); }
-      else if (key === 'deterrence') { r.deterrence = Math.max(0, r.deterrence + v); }
-      else if (key === 'militaryPower') { r.militaryPower = Math.max(0, r.militaryPower + v); }
-      else if (key === 'nukeDeter') { r.nukeDeter = Math.max(0, r.nukeDeter + v); }
-      else if (key === 'research') { r.research = Math.max(0, r.research + v); }
-      else if (key === 'ofn' || key === 'ofn_relation') { rel.ofn = Math.max(-100, Math.min(100, (rel.ofn || 0) + v)); }
-      else if (key === 'japan' || key === 'japan_relation') { rel.japan = Math.max(-100, Math.min(100, (rel.japan || 0) + v)); }
-      else if (key === 'italy' || key === 'italy_relation') { rel.italy = Math.max(-100, Math.min(100, (rel.italy || 0) + v)); }
-      else if (key === 'burgundy_relation' || key === 'burgundy') { rel.burgundy = Math.max(-100, Math.min(100, (rel.burgundy || 0) + v)); }
-      else if (key === 'russia' || key === 'russia_relation') { rel.russia = Math.max(-100, Math.min(100, (rel.russia || 0) + v)); }
-      else { r[key] = (r[key] || 0) + v; }
-    }
-    Game.clampResources();
-    if (typeof Game.addNews === 'function') {
-      const b = _battle;
-      let label = '';
-      if (type === 'spare') label = '饶恕了';
-      else if (type === 'kill') label = '击败了';
-      else if (type === 'flee') label = '从';
-      else label = '在与';
-      const suffix = type === 'flee' ? '逃跑' : (type === 'defeat' ? '战斗中倒下' : 'BOSS 战胜利');
-      Game.addNews(`⚔️ BOSS 战: 你${label}${b ? b.boss.name : 'BOSS'} ${suffix}！`, type === 'defeat' || type === 'flee' ? 'crisis' : 'tech');
-    }
-    if (typeof UI !== 'undefined') {
-      try { UI.renderTopbar(); } catch(e) {}
-      try { UI.renderLeftPanel(); } catch(e) {}
-    }
-  }
-
-  // ===== 对外 API =====
   window.UndertaleBattle = {
     openBossSelect,
+    close,
     startBattle,
-    closeBattle,
-    getBosses: () => BOSSES,
     getPlayerStats,
-    isAvailable: () => !!Game && !!Game.getMode && Game.getMode().funMode,
+    getBoss: () => BOSS,
+    isAvailable: () => true,
   };
 
 })();
