@@ -1,16 +1,48 @@
 (function(){
 'use strict';
 
-let keys = { up:false, down:false, left:false, right:false, z:false, x:false };
-
-function pressKey(code, isDown) {
-    if (code === 'up')    { keys.up = isDown; if (isDown) simulateKey(38, true, 'ArrowUp'); else simulateKey(38, false, 'ArrowUp'); }
-    if (code === 'down')  { keys.down = isDown; if (isDown) simulateKey(40, true, 'ArrowDown'); else simulateKey(40, false, 'ArrowDown'); }
-    if (code === 'left')  { keys.left = isDown; if (isDown) simulateKey(37, true, 'ArrowLeft'); else simulateKey(37, false, 'ArrowLeft'); }
-    if (code === 'right') { keys.right = isDown; if (isDown) simulateKey(39, true, 'ArrowRight'); else simulateKey(39, false, 'ArrowRight'); }
-    if (code === 'z')     { keys.z = isDown; if (isDown) simulateKey(90, true, 'KeyZ'); else simulateKey(90, false, 'KeyZ'); }
-    if (code === 'x')     { keys.x = isDown; if (isDown) simulateKey(88, true, 'KeyX'); else simulateKey(88, false, 'KeyX'); }
+// ── 自动跳过 MainMenu 直接进战斗 ──
+function skipToBattle() {
+    try {
+        if (typeof window.cr_getC2Runtime === 'undefined') return;
+        var rt = window.cr_getC2Runtime();
+        if (!rt) return;
+        // GoToLayoutByName 在 system_object.acts 上
+        if (rt.system_object && rt.system_object.acts && typeof rt.system_object.acts.GoToLayoutByName === 'function') {
+            rt.system_object.acts.GoToLayoutByName('BattleScreen');
+        } else if (typeof rt.doChangeLayout === 'function') {
+            // 或者直接用 runtime 内部方法
+            var layouts = rt.layouts;
+            if (layouts) {
+                for (var k in layouts) {
+                    if (layouts.hasOwnProperty(k) && k.toLowerCase() === 'battlescreen') {
+                        rt.doChangeLayout(layouts[k]);
+                        break;
+                    }
+                }
+            }
+        }
+    } catch(e) { console.warn('skipToBattle failed:', e); }
 }
+
+// 每秒尝试一次，最多 15 秒
+var skipAttempts = 0;
+var skipTimer = setInterval(function(){
+    skipAttempts++;
+    // 如果已经在 BattleScreen 就停止
+    try {
+        var rt2 = window.cr_getC2Runtime && window.cr_getC2Runtime();
+        if (rt2 && rt2.layout && rt2.layout.name && rt2.layout.name.toLowerCase() === 'battlescreen') {
+            clearInterval(skipTimer);
+            return;
+        }
+    } catch(e) {}
+    skipToBattle();
+    if (skipAttempts > 15) clearInterval(skipTimer);
+}, 800);
+
+// ── 虚拟按键 ──
+var keys = { up:false, down:false, left:false, right:false, z:false, x:false };
 
 function simulateKey(keyCode, isDown, code) {
     var evt = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
@@ -20,16 +52,20 @@ function simulateKey(keyCode, isDown, code) {
     document.dispatchEvent(evt);
 }
 
-function getCanvas() {
-    return document.getElementById('c2canvas');
-}
-
-function screenToCanvas(sx, sy) {
-    var c = getCanvas();
-    if (!c) return {x:sx, y:sy};
-    var r = c.getBoundingClientRect();
-    var scale = c.width / r.width;
-    return { x: (sx - r.left) * scale, y: (sy - r.top) * scale };
+function pressKey(code, isDown) {
+    var map = {
+        up:    { key: 38, cd: 'ArrowUp' },
+        down:  { key: 40, cd: 'ArrowDown' },
+        left:  { key: 37, cd: 'ArrowLeft' },
+        right: { key: 39, cd: 'ArrowRight' },
+        z:     { key: 90, cd: 'KeyZ' },
+        x:     { key: 88, cd: 'KeyX' },
+    };
+    if (code in map) {
+        keys[code] = isDown;
+        var m = map[code];
+        simulateKey(m.key, isDown, m.cd);
+    }
 }
 
 var vpad_canvas = null;
@@ -47,7 +83,6 @@ function drawVPad() {
     var op = 0.55;
     var op_pressed = 0.9;
 
-    // D-pad (bottom-left)
     var cx = 100 * s, cy = H - 140 * s;
     var arr = [
         { label:'▲', x:cx, y:cy-90*s, code:'up',    k:keys.up    },
@@ -72,7 +107,6 @@ function drawVPad() {
         ctx.fillText(b.label, b.x, b.y);
     }
 
-    // Action buttons (bottom-right)
     var bx = W - 160 * s, by = H - 180 * s;
     var act = [
         { label:'Z', x:bx-60*s, y:by+60*s, code:'z', k:keys.z },
@@ -151,7 +185,6 @@ function setup() {
     resize();
     window.addEventListener('resize', resize);
 
-    // overlay for touch events (on top of canvas but with pointer-events)
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;pointer-events:none;';
     document.body.appendChild(overlay);
@@ -160,7 +193,6 @@ function setup() {
     overlay.addEventListener('touchcancel', onTouchEnd, {passive:false});
     overlay.addEventListener('touchmove', function(e){
         e.preventDefault();
-        // handle move - if finger slides off button, release old one, press new one
         for (var i = 0; i < e.changedTouches.length; i++) {
             var t = e.changedTouches[i];
             var found = null;
