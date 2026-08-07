@@ -1,6 +1,7 @@
-// ===== Undertale Sans BOSS 战引擎 v110 =====
-// 完整 sans-simulator 贴图版: Sans sprite sheet + speech bubble + HP bar + UI icons + touch buttons
-// 640x480 内部分辨率, CSS object-fit:contain 自动横竖屏放大
+// ===== Undertale Sans BOSS 战引擎 v120 =====
+// 保守重写: 纯 canvas 手绘, 无 sprite sheet 依赖, 稳定优先
+// 布局: 对话框(y20-90) → Sans(y110-220) → 战斗区(y226-391 引擎固定) → HP(y400) → 菜单(y425-470)
+// 640x480 内部分辨率, object-fit:contain 自动横竖屏放大
 
 (function () {
   'use strict';
@@ -69,24 +70,18 @@
     modal: null, canvas: null, ctx: null,
     c2sfReady: false,
     c2sfCache: {},
-    sansX: 320,
-    sansBodyFrame: 0, sansBodyFrameTime: 0,
-    sansHeadFrame: 0, sansHeadFrameTime: 0,
-    sansBlinkTimer: 0,
-    sansEyeGlow: 0,
+    sansX: 320, sansBob: 0,
     player: { hp: PLAYER.maxHp, maxHp: PLAYER.maxHp, karma: 0, mercy: 0, items: [2,1,1,1], atk: PLAYER.atk, def: PLAYER.def, lv: PLAYER.lv },
     soulTeleportCooldown: 0,
     dialog: '', dialogTimer: 0,
     introIdx: 0,
     menuIdx: 0,
-    fightBarPos: 0, fightDir: 1, fightActive: false,
+    fightBarPos: 0, fightDir: 1,
     sansHurtT: 0,
     c2sfIdx: 0, c2sfStart: 0,
     keys: {},
     virtualKeys: { up:false,down:false,left:false,right:false,confirm:false,jump:false },
     isMobile: false,
-    shakeT: 0,
-    touchDpadHold: 0,
   };
 
   function close() {
@@ -114,9 +109,7 @@
     state.player.items = [2,1,1,1];
     state.keys = {};
     state.virtualKeys = { up:false,down:false,left:false,right:false,confirm:false,jump:false };
-    state.sansX = 320;
     state.sansHurtT = 0;
-    state.shakeT = 0;
 
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:100060;display:flex;align-items:center;justify-content:center;overflow:hidden;';
@@ -173,8 +166,7 @@
     if (state.phase === 'intro' && (k === ' ' || k === 'enter' || k === 'z')) nextIntro();
     else if (state.phase === 'player_turn' && (k === ' ' || k === 'enter' || k === 'z')) selectMenu();
     else if (state.phase === 'fight' && (k === ' ' || k === 'enter' || k === 'z')) confirmFight();
-    else if ((state.phase === 'act_menu' || state.phase === 'item_menu') && (k === ' ' || k === 'enter' || k === 'z')) selectSubMenu();
-    else if (state.phase === 'mercy_menu' && (k === ' ' || k === 'enter' || k === 'z')) selectSubMenu();
+    else if (['act_menu','item_menu','mercy_menu'].includes(state.phase) && (k === ' ' || k === 'enter' || k === 'z')) selectSubMenu();
     else if (k === 'escape' || k === 'x') {
       if (state.phase === 'player_turn') close();
       else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) { state.phase = 'player_turn'; state.menuIdx = 0; }
@@ -184,29 +176,25 @@
 
   function touchToCanvasPoint(clientX, clientY) {
     const rect = state.canvas.getBoundingClientRect();
-    // object-fit:contain means canvas letterboxes. Need to account for that.
     const scale = Math.min(rect.width / CW, rect.height / CH);
-    const drawW = CW * scale;
-    const drawH = CH * scale;
+    const drawW = CW * scale, drawH = CH * scale;
     const offX = (rect.width - drawW) / 2;
     const offY = (rect.height - drawH) / 2;
-    const nx = (clientX - rect.left - offX) / scale;
-    const ny = (clientY - rect.top - offY) / scale;
-    return { x: nx, y: ny };
+    return {
+      x: (clientX - rect.left - offX) / scale,
+      y: (clientY - rect.top - offY) / scale,
+    };
   }
 
   function hitVirtualBtn(px, py) {
-    // Left D-Pad cluster (for enemy_turn mode)
-    const cx = 75, cy = CH - 75;
-    if (Math.hypot(px - cx, py - cy) < 40) {
+    const cx = 75, cy = CH - 75, r = 40;
+    if (Math.hypot(px - cx, py - cy) < r) {
       const dx = px - cx, dy = py - cy;
       if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right';
       return dy < 0 ? 'up' : 'down';
     }
-    // Right jump/action button cluster
     const bx = CW - 75, by = CH - 75;
-    if (Math.hypot(px - bx, py - by) < 40) return 'a';
-    // Battlefield drag zone (enemy turn, in combat zone)
+    if (Math.hypot(px - bx, py - by) < r) return 'a';
     if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && C2SF.state) {
       const z = C2SF.state.cz;
       if (px >= z.l && px <= z.r && py >= z.t && py <= z.b) return 'drag';
@@ -233,8 +221,7 @@
         else if (state.phase === 'defeat' || state.phase === 'victory') close();
       } else if (btn === 'drag') {
         state._dragTouchId = t.identifier;
-        const cs = C2SF.state.soul;
-        const z = C2SF.state.cz;
+        const cs = C2SF.state.soul, z = C2SF.state.cz;
         cs.x = Math.max(z.l + 6, Math.min(z.r - 6, p.x));
         cs.y = Math.max(z.t + 6, Math.min(z.b - 6, p.y));
         cs.vx = 0; cs.vy = 0;
@@ -243,15 +230,7 @@
         else if (state.phase === 'player_turn') selectMenu();
         else if (state.phase === 'fight') confirmFight();
         else if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) selectSubMenu();
-        else if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined') {
-          const z = C2SF.state.cz;
-          if (p.x >= z.l && p.x <= z.r && p.y >= z.t && p.y <= z.b) {
-            state._dragTouchId = t.identifier;
-            C2SF.state.soul.x = Math.max(z.l + 6, Math.min(z.r - 6, p.x));
-            C2SF.state.soul.y = Math.max(z.t + 6, Math.min(z.b - 6, p.y));
-            C2SF.state.soul.vx = 0; C2SF.state.soul.vy = 0;
-          }
-        } else if (state.phase === 'defeat' || state.phase === 'victory') close();
+        else if (state.phase === 'defeat' || state.phase === 'victory') close();
       }
     }
   }
@@ -291,18 +270,6 @@
     else state.dialog = BOSS.introLines[state.introIdx];
   }
 
-  // ============= SPRITE HELPERS =============
-  function getSprite(name) {
-    if (typeof C2SF !== 'undefined' && C2SF.sp) return C2SF.sp[name];
-    return null;
-  }
-
-  function drawSpriteFrame(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) {
-    if (!img || !img.complete || img.naturalWidth === 0) return false;
-    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-    return true;
-  }
-
   // ============= DRAW =============
   function draw() {
     const ctx = state.ctx;
@@ -313,16 +280,10 @@
       const s = C2SF.state.shake;
       if (s > 0) { shakeX = (Math.random()*2-1) * 12 * s; shakeY = (Math.random()*2-1) * 12 * s; }
     }
-    if (state.shakeT > 0) {
-      shakeX += (Math.random()*2-1) * 6 * state.shakeT;
-      shakeY += (Math.random()*2-1) * 6 * state.shakeT;
-      state.shakeT -= 0.05;
-    }
 
     ctx.save();
     ctx.translate(shakeX, shakeY);
-
-    ctx.fillStyle = '#0c0a1a';
+    ctx.fillStyle = '#0a0816';
     ctx.fillRect(-20, -20, CW + 40, CH + 40);
 
     if (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.blackScreen > 0) {
@@ -330,22 +291,30 @@
       ctx.fillRect(-20, -20, CW + 40, CH + 40);
     }
 
-    drawSans(ctx);
+    // Sans BOSS (ON TOP of combat zone background)
+    if (state.phase !== 'defeat') drawSans(ctx);
 
+    // Enemy turn: use C2SF engine draw (combatzone + bullets + soul)
     if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && state.c2sfReady) {
       C2SF.draw(ctx);
     } else {
-      drawBattleAreaFrame(ctx);
+      drawBattleFrame(ctx);
     }
 
+    // Dialog (always on top of Sans)
     drawDialog(ctx);
 
+    // UI (HP + menu)
     drawUI(ctx);
+
+    // Fight bar
+    if (state.phase === 'fight') drawFightBar(ctx);
+    if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) drawSubMenu(ctx);
 
     if (state.phase === 'defeat') drawDefeatScreen(ctx);
     if (state.phase === 'victory') drawVictoryScreen(ctx);
 
-    // Virtual keys ON TOP (mobile)
+    // Mobile virtual keys ON TOP
     if (state.isMobile && state.phase !== 'defeat' && state.phase !== 'victory') {
       drawVirtualKeys(ctx);
     }
@@ -353,113 +322,128 @@
     ctx.restore();
   }
 
-  function drawBattleAreaFrame(ctx) {
-    const bx = 239, by = 226, bw = 166, bh = 165;
+  function drawBattleFrame(ctx) {
     ctx.save();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
-    ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2);
+    ctx.strokeRect(237, 224, 168, 169);
     ctx.fillStyle = '#000';
-    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillRect(239, 226, 166, 165);
     ctx.restore();
   }
 
   function drawSans(ctx) {
-    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
     const sx = state.sansX;
-    const baseY = 210;
+    const bob = Math.sin(Date.now() / 400) * 1.5;
+    const sy = 160 + bob;
 
     ctx.save();
-
-    // Hurt flash
     if (state.sansHurtT > 0) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(255,80,80,${state.sansHurtT * 0.5})`;
+      ctx.fillRect(sx - 50, sy - 70, 100, 160);
     }
 
-    // Sans body sprites - 32x32 frames from 256x256 sheet
-    const body = sp ? sp['sansbody0'] : null;
-    if (body && body.complete && body.naturalWidth > 0) {
-      state.sansBodyFrameTime += 0.016;
-      if (state.sansBodyFrameTime > 0.15) {
-        state.sansBodyFrameTime = 0;
-        state.sansBodyFrame = (state.sansBodyFrame + 1) % 4;
-      }
-      const fw = body.naturalWidth / 8;
-      const fh = body.naturalHeight / 8;
-      const bob = Math.sin(Date.now() / 300) * 1;
-      // body center frame
-      ctx.drawImage(body, state.sansBodyFrame * fw, 0, fw, fh,
-                    sx - 48, baseY - 24 + bob, 96, 96);
-      ctx.drawImage(body, state.sansBodyFrame * fw, fh, fw, fh,
-                    sx - 48, baseY + 48 + bob, 96, 96);
-    } else {
-      // Fallback: hoodie
-      ctx.fillStyle = '#1a1a2a';
-      ctx.fillRect(sx - 30, baseY - 20, 60, 85);
-    }
+    // Hoodie body
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(sx - 32, sy + 18, 64, 80);
+    // Hood
+    ctx.fillStyle = '#151528';
+    ctx.beginPath();
+    ctx.arc(sx, sy - 5, 34, Math.PI * 0.95, Math.PI * 2.05);
+    ctx.fill();
+    // Hood inner shade
+    ctx.fillStyle = '#0e0e1c';
+    ctx.beginPath();
+    ctx.arc(sx, sy - 8, 30, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.fill();
+    // Pocket
+    ctx.fillStyle = '#22223a';
+    ctx.fillRect(sx - 18, sy + 42, 36, 22);
+    // Drawstrings
+    ctx.fillStyle = '#2a2a45';
+    ctx.fillRect(sx - 9, sy + 38, 3, 22);
+    ctx.fillRect(sx + 6, sy + 38, 3, 22);
+    // Legs
+    ctx.fillStyle = '#20203a';
+    ctx.fillRect(sx - 24, sy + 96, 20, 40);
+    ctx.fillRect(sx + 4, sy + 96, 20, 40);
+    // Shoes
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(sx - 28, sy + 134, 30, 12);
+    ctx.fillRect(sx + 0, sy + 134, 30, 12);
 
-    // Sans head - 32x32 frames from 128x128 sheet
-    const head = sp ? sp['sanshead'] : null;
-    if (head && head.complete && head.naturalWidth > 0) {
-      state.sansHeadFrameTime += 0.016;
-      if (state.sansHeadFrameTime > 0.03) {
-        state.sansHeadFrameTime = 0;
-        state.sansHeadFrame++;
-      }
-      const fw = head.naturalWidth / 4;
-      const fh = head.naturalHeight / 4;
-      const bob = Math.sin(Date.now() / 400) * 1.5;
-      ctx.drawImage(head, (state.sansHeadFrame % 4) * fw, 0, fw, fh,
-                    sx - 40, baseY - 60 + bob, 80, 80);
-    } else {
-      // Fallback skull
-      const bob = Math.sin(Date.now() / 400) * 1.5;
-      ctx.save();
-      ctx.translate(sx, baseY - 35 + bob);
-      ctx.fillStyle = '#e8e8e8';
-      ctx.beginPath(); ctx.ellipse(0, 0, 26, 28, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#05050a';
-      ctx.beginPath(); ctx.ellipse(-9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(+9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#4488ff'; ctx.beginPath(); ctx.arc(-9, -1, 3, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(+9, -1, 3, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(-7, 14); ctx.lineTo(+7, 14); ctx.stroke();
-      ctx.restore();
-    }
+    // Skull
+    ctx.save();
+    ctx.translate(sx, sy - 18);
 
-    if (state.sansHurtT > 0) {
-      ctx.globalAlpha = state.sansHurtT;
-      ctx.fillStyle = '#ff3333';
-      ctx.fillRect(sx - 60, baseY - 70, 120, 150);
-      ctx.globalAlpha = 1;
-    }
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 26, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d4d4d4';
+    ctx.beginPath();
+    ctx.ellipse(-4, 2, 22, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
 
+    // Eye sockets
+    ctx.fillStyle = '#05050a';
+    ctx.beginPath(); ctx.ellipse(-9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(+9, -2, 8, 10, 0, 0, Math.PI*2); ctx.fill();
+
+    // Left pupil — blue (Dusttale heterochromia)
+    ctx.save();
+    const leftG = 0.6 + Math.sin(Date.now() / 280) * 0.4;
+    ctx.shadowColor = '#4488ff';
+    ctx.shadowBlur = 14 * leftG;
+    ctx.fillStyle = '#4488ff';
+    ctx.beginPath(); ctx.arc(-9, -1, 3, 0, Math.PI*2); ctx.fill();
     ctx.restore();
+
+    // Right pupil — red laser
+    ctx.save();
+    const rightG = 0.7 + Math.sin(Date.now() / 220 + 1) * 0.3;
+    ctx.shadowColor = '#ff3333';
+    ctx.shadowBlur = 16 * rightG;
+    ctx.fillStyle = '#ff3333';
+    ctx.beginPath(); ctx.arc(+9, -1, 3, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // Nose
+    ctx.fillStyle = '#0a0a0f';
+    ctx.beginPath();
+    ctx.moveTo(0, 5); ctx.lineTo(-3, 10); ctx.lineTo(3, 10);
+    ctx.closePath(); ctx.fill();
+
+    // Mouth / teeth
+    ctx.strokeStyle = '#0a0a0f';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-7, 14); ctx.lineTo(+7, 14);
+    ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-5, 14); ctx.lineTo(-5, 19);
+    ctx.moveTo(-2, 14); ctx.lineTo(-2, 19);
+    ctx.moveTo(+1, 14); ctx.lineTo(+1, 19);
+    ctx.moveTo(+4, 14); ctx.lineTo(+4, 19);
+    ctx.stroke();
+
+    ctx.restore(); // skull
+    ctx.restore(); // sans
   }
 
   function drawDialog(ctx) {
     if (!state.dialog) return;
     ctx.save();
-    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
-    const bubble = sp ? sp['speech'] : null;
     const dx = 60, dy = 20, dw = CW - 120, dh = 60;
-
-    if (bubble && bubble.complete && bubble.naturalWidth > 0) {
-      ctx.drawImage(bubble, 0, 0, bubble.naturalWidth, bubble.naturalHeight, dx - 8, dy - 4, dw + 16, dh + 16);
-    } else {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(dx, dy, dw, dh);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(dx, dy, dw, dh);
-    }
-
+    ctx.fillStyle = '#000';
+    ctx.fillRect(dx, dy, dw, dh);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(dx, dy, dw, dh);
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = '#ffffcc';
     const lines = state.dialog.split('\n');
     for (let i = 0; i < lines.length; i++) {
       ctx.fillText(lines[i], dx + 14, dy + 12 + i * 18);
@@ -470,137 +454,80 @@
     ctx.restore();
   }
 
-  function drawHPBar(ctx, x, y, w, h, hp, maxHp, karma) {
+  function drawHPBar(ctx) {
+    const b = state.player;
     ctx.save();
-    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
+    const x = 40, y = 400;
 
-    // Player name + LV
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.textBaseline = 'top';
     ctx.fillText(PLAYER.name, x, y);
     ctx.fillStyle = '#cc66ff';
-    ctx.fillText('LV ' + PLAYER.lv, x + 78, y);
+    ctx.fillText('LV ' + PLAYER.lv, x + 82, y);
 
-    const barX = x + 140, barY = y - 2;
-    const barW = w - 220, barH = h;
+    const barX = x + 150, barY = y - 1;
+    const barW = 220, barH = 12;
 
-    // HP background
     ctx.fillStyle = '#000';
     ctx.fillRect(barX, barY, barW, barH);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.strokeRect(barX, barY, barW, barH);
 
-    // HP yellow + Karma purple
-    const yellowW = Math.max(0, barW * (hp / maxHp));
-    const redW = Math.min(barW - yellowW, barW * (karma / maxHp));
+    const yellowW = Math.max(0, barW * (b.hp / b.maxHp));
+    const karmaW = Math.min(barW - yellowW, barW * (b.karma / b.maxHp));
 
-    if (yellowW > 0) {
-      ctx.fillStyle = '#ffee44';
-      ctx.fillRect(barX, barY, yellowW, barH);
-    }
-    if (redW > 0) {
-      ctx.fillStyle = '#aa44ff';
-      ctx.fillRect(barX + yellowW, barY, redW, barH);
-    }
+    if (yellowW > 0) { ctx.fillStyle = '#ffee44'; ctx.fillRect(barX, barY, yellowW, barH); }
+    if (karmaW > 0)  { ctx.fillStyle = '#aa44ff'; ctx.fillRect(barX + yellowW, barY, karmaW, barH); }
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '13px "Courier New", monospace';
+    ctx.font = '12px monospace';
     ctx.fillText('HP', barX - 32, y);
-    ctx.fillText(`${hp} / ${maxHp}`, barX + barW + 8, y);
+    ctx.fillText(`${b.hp} / ${b.maxHp}`, barX + barW + 8, y);
 
-    // KR 小条
     const krX = barX + barW + 100;
     ctx.fillStyle = '#cc66ff';
     ctx.fillText('KR', krX, y);
     ctx.fillStyle = '#1a0022';
-    ctx.fillRect(krX + 22, y - 2, 55, barH);
+    ctx.fillRect(krX + 22, y - 1, 55, barH);
     ctx.strokeStyle = '#cc66ff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(krX + 22, y - 2, 55, barH);
-    const krPct = Math.min(1, karma / maxHp);
+    ctx.strokeRect(krX + 22, y - 1, 55, barH);
     ctx.fillStyle = '#aa44ff';
-    ctx.fillRect(krX + 22, y - 2, 55 * krPct, barH);
+    ctx.fillRect(krX + 22, y - 1, 55 * Math.min(1, b.karma / b.maxHp), barH);
 
     ctx.restore();
-  }
-
-  function drawUI(ctx) {
-    const b = state.player;
-    ctx.save();
-
-    drawHPBar(ctx, 70, 322, CW - 140, 12, b.hp, b.maxHp, b.karma);
-
-    if (state.phase === 'player_turn') drawMenuButtons(ctx);
-
-    ctx.restore();
-
-    if (state.phase === 'fight') drawFightBar(ctx);
-
-    if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) {
-      drawSubMenu(ctx);
-    }
-
-    if (state.phase === 'enemy_turn') {
-      ctx.save();
-      ctx.fillStyle = '#555';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'right';
-      const mode = (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 0) ? 'BLUE' : 'RED';
-      const phase = (typeof C2SF !== 'undefined' && C2SF.state) ? C2SF.state.phaseName : '';
-      ctx.fillText(`${phase}  ${mode}`, CW - 12, 105);
-      ctx.textAlign = 'left';
-      ctx.restore();
-    }
   }
 
   function drawMenuButtons(ctx) {
-    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
     const defs = [
-      { key:'uifight', label:'FIGHT', col:'#ffee44', icon:'❤' },
-      { key:'uiact',   label:'ACT',   col:'#ff8833', icon:'⚙' },
-      { key:'uiitem',  label:'ITEM',  col:'#ffcc44', icon:'◆' },
-      { key:'uimercy', label:'MERCY', col:'#88ccff', icon:'☼' },
+      { label:'FIGHT', col:'#ffee44' },
+      { label:'ACT',   col:'#ff8833' },
+      { label:'ITEM',  col:'#ffcc44' },
+      { label:'MERCY', col:'#88ccff' },
     ];
-    const btnY = 360;
-    const btnH = 50;
+    const btnY = 425;
+    const btnH = 42;
     const btnGap = 6;
-    const totalW = CW - 120;
+    const totalW = CW - 100;
     const btnW = (totalW - btnGap * 3) / 4;
 
     for (let i = 0; i < 4; i++) {
-      const bx = 60 + i * (btnW + btnGap);
+      const bx = 50 + i * (btnW + btnGap);
       const active = state.menuIdx === i;
-
-      // Draw UI sprite if available
-      const sprite = sp ? sp[defs[i].key] : null;
-      if (sprite && sprite.complete && sprite.naturalWidth > 0) {
-        ctx.drawImage(sprite, 0, 0, sprite.naturalWidth, sprite.naturalHeight,
-                      bx - 4, btnY - 4, btnW + 8, btnH + 8);
-        if (active) {
-          ctx.save();
-          ctx.shadowColor = defs[i].col;
-          ctx.shadowBlur = 14;
-          ctx.strokeStyle = defs[i].col;
-          ctx.lineWidth = 3;
-          ctx.strokeRect(bx, btnY, btnW, btnH);
-          ctx.restore();
-        }
-      } else {
-        ctx.fillStyle = active ? '#1a1a2e' : '#0a0a14';
-        ctx.fillRect(bx, btnY, btnW, btnH);
-        ctx.strokeStyle = active ? defs[i].col : '#333355';
-        ctx.lineWidth = active ? 2 : 1;
-        ctx.strokeRect(bx, btnY, btnW, btnH);
-      }
-
+      ctx.fillStyle = active ? '#1a1a2e' : '#0a0a14';
+      ctx.fillRect(bx, btnY, btnW, btnH);
+      ctx.strokeStyle = active ? defs[i].col : '#333355';
+      ctx.lineWidth = active ? 2 : 1;
+      ctx.strokeRect(bx, btnY, btnW, btnH);
       if (active) {
         ctx.save();
         ctx.shadowColor = defs[i].col;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = defs[i].col;
+      } else {
+        ctx.fillStyle = '#888';
       }
-      ctx.fillStyle = active ? defs[i].col : '#888';
       ctx.font = 'bold 15px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(defs[i].label, bx + btnW/2, btnY + btnH/2 + 5);
@@ -615,22 +542,34 @@
     ctx.textAlign = 'left';
   }
 
+  function drawUI(ctx) {
+    drawHPBar(ctx);
+    if (state.phase === 'player_turn') drawMenuButtons(ctx);
+    if (state.phase === 'enemy_turn' && typeof C2SF !== 'undefined' && C2SF.state) {
+      ctx.save();
+      ctx.fillStyle = '#555';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      const mode = C2SF.state.soul.mode === 1 ? 'BLUE' : 'RED';
+      const phase = C2SF.state.phaseName || '';
+      ctx.fillText(`${phase}  ${mode}`, CW - 12, 218);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+  }
+
   function drawFightBar(ctx) {
     ctx.save();
     const bx = 60, by = 260, bw = CW - 120, bh = 18;
-
     ctx.fillStyle = '#111';
     ctx.fillRect(bx, by, bw, bh);
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     ctx.strokeRect(bx, by, bw, bh);
-
-    const sweetX = bx + bw * 0.42, sweetW = bw * 0.16;
     ctx.fillStyle = 'rgba(100,255,100,0.5)';
-    ctx.fillRect(sweetX, by, sweetW, bh);
-    const greatX = bx + bw * 0.35, greatW = bw * 0.30;
+    ctx.fillRect(bx + bw * 0.42, by, bw * 0.16, bh);
     ctx.fillStyle = 'rgba(255,200,50,0.3)';
-    ctx.fillRect(greatX, by, greatW, bh);
+    ctx.fillRect(bx + bw * 0.35, by, bw * 0.30, bh);
 
     const px = bx + state.fightBarPos * bw;
     ctx.save();
@@ -720,71 +659,52 @@
     ctx.restore();
   }
 
-  // ============= VIRTUAL KEYS =============
   function drawVirtualKeys(ctx) {
-    const sp = typeof C2SF !== 'undefined' ? C2SF.sp : null;
     ctx.save();
-    ctx.globalAlpha = state.phase === 'enemy_turn' ? 0.85 : 0.55;
-
-    // D-Pad on LEFT
-    const cx = 75, cy = CH - 75, r = 38;
-    const dpad = sp ? sp['touchdpad'] : null;
-    if (dpad && dpad.complete && dpad.naturalWidth > 0) {
-      ctx.drawImage(dpad, cx - r, cy - r, r*2, r*2);
-      // Highlight pressed direction
-      ctx.fillStyle = 'rgba(100,150,255,0.35)';
-      const dx = (state.virtualKeys.right ? 1 : 0) - (state.virtualKeys.left ? 1 : 0);
-      const dy = (state.virtualKeys.down ? 1 : 0) - (state.virtualKeys.up ? 1 : 0);
-      if (dx !== 0 || dy !== 0) {
-        ctx.beginPath();
-        ctx.arc(cx + dx*10, cy + dy*10, 14, 0, Math.PI*2);
-        ctx.fill();
-      }
-    } else {
-      ctx.fillStyle = 'rgba(74,74,102,0.7)';
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#888';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = '#ddd';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('▲', cx, cy - 24);
-      ctx.fillText('▼', cx, cy + 24);
-      ctx.fillText('◀', cx - 24, cy);
-      ctx.fillText('▶', cx + 24, cy);
-    }
-
-    // A button on RIGHT (blue: JUMP in enemy_turn, green: CONFIRM otherwise)
-    const bx = CW - 75, by = CH - 75;
-    const aSprite = state.virtualKeys.jump ? (sp ? sp['toucha1'] : null) : (sp ? sp['toucha0'] : null);
-    const aImg = aSprite || (sp ? sp['toucha0'] : null);
-    const isBlueSoul = (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 1);
-
-    if (aImg && aImg.complete && aImg.naturalWidth > 0) {
-      ctx.drawImage(aImg, bx - r, by - r, r*2, r*2);
-    } else {
-      ctx.fillStyle = isBlueSoul ? '#3366ff' : '#4a4a66';
-      ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('JUMP', bx, by);
-    }
-
-    // Label hint
     ctx.globalAlpha = 0.6;
+    const cx = 75, cy = CH - 75, r = 40;
+    // D-Pad base
+    ctx.fillStyle = 'rgba(74,74,102,0.6)';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#ddd';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('▲', cx, cy - 24);
+    ctx.fillText('▼', cx, cy + 24);
+    ctx.fillText('◀', cx - 24, cy);
+    ctx.fillText('▶', cx + 24, cy);
+    // Pressed highlight
+    const dx = (state.virtualKeys.right ? 1 : 0) - (state.virtualKeys.left ? 1 : 0);
+    const dy = (state.virtualKeys.down ? 1 : 0) - (state.virtualKeys.up ? 1 : 0);
+    if (dx !== 0 || dy !== 0) {
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#4488ff';
+      ctx.beginPath();
+      ctx.arc(cx + dx*14, cy + dy*14, 16, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 0.6;
+    }
+
+    // A button (right)
+    const bx = CW - 75, by = CH - 75;
+    const isBlueSoul = (typeof C2SF !== 'undefined' && C2SF.state && C2SF.state.soul.mode === 1);
+    ctx.fillStyle = isBlueSoul ? 'rgba(51,102,255,0.7)' : 'rgba(74,74,102,0.7)';
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = isBlueSoul ? '#88aaff' : '#999'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(state.phase === 'enemy_turn' ? 'JUMP' : 'A', bx, by);
+
+    ctx.globalAlpha = 0.7;
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    if (state.phase === 'enemy_turn' && isBlueSoul) {
-      ctx.fillText('▲JUMP▼', bx, by + r + 10);
-    } else if (state.phase === 'enemy_turn') {
-      ctx.fillText('MOVE', cx, cy + r + 10);
+    if (state.phase === 'enemy_turn') {
+      ctx.fillText('MOVE', cx, cy + r + 12);
+      if (isBlueSoul) ctx.fillText('JUMP', bx, by + r + 12);
     } else {
-      ctx.fillText('◀▶MENU', cx, cy + r + 10);
-      ctx.fillText('CONFIRM', bx, by + r + 10);
+      ctx.fillText('◀▶MENU', cx, cy + r + 12);
+      ctx.fillText('CONFIRM', bx, by + r + 12);
     }
 
     ctx.restore();
@@ -800,7 +720,7 @@
       if (justPressed('arrowup') || state.virtualKeys.up) { state.menuIdx = (state.menuIdx + 1) % 4; state.virtualKeys.up = false; }
       if (justPressed('arrowdown') || state.virtualKeys.down) { state.menuIdx = (state.menuIdx + 1) % 4; state.virtualKeys.down = false; }
     }
-    if (state.phase === 'act_menu' || state.phase === 'item_menu' || state.phase === 'mercy_menu') {
+    if (['act_menu','item_menu','mercy_menu'].includes(state.phase)) {
       if (justPressed('arrowup')) state.menuIdx = Math.max(0, state.menuIdx - 1);
       if (justPressed('arrowdown')) state.menuIdx++;
     }
@@ -833,30 +753,26 @@
     const damage = Math.round(PLAYER.atk * mult);
 
     if (state.turn < BOSS.sansoverturn) {
-      state.phase = 'player_turn';
-      state.menuIdx = 0;
+      state.phase = 'player_turn'; state.menuIdx = 0;
       state.dialog = BOSS.dodgeText;
-      state.shakeT = 0.5;
+      state.sansHurtT = 0;
       if (typeof C2SF !== 'undefined') {
         C2SF.shake(0.3);
-        C2SF.spawnDust(state.sansX + 15, 180 - 20, 12);
-        C2SF.spawnDust(state.sansX - 15, 180 - 20, 12);
+        C2SF.spawnDust(state.sansX, 140, 15);
       }
       state.turn++;
       setTimeout(() => startEnemyTurn(), 1800);
       return;
     }
 
-    state.phase = 'player_turn';
-    state.menuIdx = 0;
+    state.phase = 'player_turn'; state.menuIdx = 0;
     state.dialog = `${label} — ${damage} damage!`;
     state.sansHurtT = 1.0;
-    state.shakeT = 0.8;
 
     if (typeof C2SF !== 'undefined') {
       C2SF.shake(1.2);
-      C2SF.spawnDust(state.sansX, 180, 25);
-      C2SF.spawnDmg(state.sansX, 140, String(damage), col);
+      C2SF.spawnDust(state.sansX, 140, 25);
+      C2SF.spawnDmg(state.sansX, 100, String(damage), col);
     }
 
     state.player.mercy += 5;
@@ -930,7 +846,6 @@
         if (d) { state.c2sfCache[phase.csv] = d; C2SF.startAttack(d, phase.name); }
       });
     }
-    state.c2sfStart = performance.now();
   }
 
   function checkEnemyTurn() {
@@ -940,33 +855,27 @@
     const cs = C2SF.state.soul;
     const z = C2SF.state.cz;
     const speed = 4.2;
-    const keys = state.keys;
 
     if (!state._dragTouchId) {
       if (cs.mode === 0) {
-        if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
-        if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
-        if (keys['arrowup'] || keys['w'] || state.virtualKeys.up) cs.y -= speed;
-        if (keys['arrowdown'] || keys['s'] || state.virtualKeys.down) cs.y += speed;
+        if (keys('arrowleft','a','left')) cs.x -= speed;
+        if (keys('arrowright','d','right')) cs.x += speed;
+        if (keys('arrowup','w','up')) cs.y -= speed;
+        if (keys('arrowdown','s','down')) cs.y += speed;
       } else {
-        if ((keys[' '] || keys['arrowup'] || keys['w'] || state.virtualKeys.jump) && cs.onGround) {
-          cs.vy = -8; cs.onGround = false;
-        }
-        if (keys['arrowleft'] || keys['a'] || state.virtualKeys.left) cs.x -= speed;
-        if (keys['arrowright'] || keys['d'] || state.virtualKeys.right) cs.x += speed;
+        if ((keys(' ','arrowup','w','jump')) && cs.onGround) { cs.vy = -8; cs.onGround = false; }
+        if (keys('arrowleft','a','left')) cs.x -= speed;
+        if (keys('arrowright','d','right')) cs.x += speed;
         cs.vy = (cs.vy || 0) + 0.55;
         cs.vy = Math.min(cs.vy, (cs.maxFallSpeed || 750) / 60);
-        cs.y += cs.vy;
-        cs.onGround = false;
+        cs.y += cs.vy; cs.onGround = false;
         for (const p of C2SF.state.platforms) {
           if (cs.vy >= 0 && cs.x >= p.x - 4 && cs.x <= p.x + p.w + 4 &&
               cs.y >= p.y - 4 && cs.y <= p.y + 12) {
             cs.y = p.y; cs.vy = 0; cs.onGround = true;
           }
         }
-        if (cs.y >= C2SF.CH - 6) {
-          cs.y = C2SF.CH - 6; cs.vy = 0; cs.onGround = true;
-        }
+        if (cs.y >= C2SF.CH - 6) { cs.y = C2SF.CH - 6; cs.vy = 0; cs.onGround = true; }
       }
     } else {
       cs.vy = 0; cs.onGround = false;
@@ -979,23 +888,19 @@
     const hit = C2SF.hitTest();
     if (hit && state.soulTeleportCooldown <= 0) {
       state.soulTeleportCooldown = 12;
-
       const dmg = 5;
       state.player.hp -= dmg;
-
       if (state.player.hp < 0) {
         state.player.karma += -state.player.hp;
         state.player.hp = 0;
       } else {
         state.player.karma = Math.max(0, state.player.karma - 2);
       }
-
       if (typeof C2SF !== 'undefined') {
         C2SF.shake(0.8);
         C2SF.hitFlash();
         C2SF.spawnDmg(cs.x, cs.y - 20, String(dmg), '#ff4444');
       }
-
       if (state.player.hp <= 0 && state.player.karma >= PLAYER.maxHp) {
         state.player.hp = 0;
         state.phase = 'defeat';
@@ -1005,7 +910,6 @@
       if (state.player.hp <= 0) state.player.hp = 0;
     }
     if (state.soulTeleportCooldown > 0) state.soulTeleportCooldown--;
-
     if (state.player.karma > 0 && !hit) {
       state.player.karma = Math.max(0, state.player.karma - 0.01);
     }
@@ -1017,6 +921,13 @@
         }
       }, 800);
     }
+  }
+
+  function keys(k1, k2, k3) {
+    if (state.keys[k1]) return true;
+    if (k2 && state.keys[k2]) return true;
+    if (k3 && state.virtualKeys[k3]) return true;
+    return false;
   }
 
   // ============= LOOP =============
@@ -1032,7 +943,6 @@
     requestAnimationFrame(loop);
   }
 
-  // ============= PUBLIC =============
   function openBossSelect() { startBattle(); }
   window.UndertaleBattle = { startBattle, close, openBossSelect };
   window.openBossSelect = openBossSelect;

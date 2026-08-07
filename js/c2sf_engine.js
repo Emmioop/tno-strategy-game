@@ -438,16 +438,6 @@ const C2SF = (() => {
   }
 
   function drawCZ(ctx, z) {
-    const img = sp['cz'];
-    if (img) {
-      ctx.globalAlpha = 0.9;
-      for (let yy = z.t; yy < z.b; yy += img.height) {
-        for (let xx = z.l; xx < z.r; xx += img.width) {
-          ctx.drawImage(img, xx, yy);
-        }
-      }
-      ctx.globalAlpha = 1;
-    }
   }
 
   function drawBorder(ctx, z) {
