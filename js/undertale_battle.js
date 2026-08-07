@@ -159,6 +159,13 @@
         <div id="ub-bullet-area" style="background:#000;border:2px solid #0f0;height:clamp(160px,38vw,220px);margin-bottom:8px;position:relative;overflow:hidden;display:none;touch-action:none;">
           <canvas id="ub-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
           <div id="ub-soul-indicator" style="position:absolute;top:4px;right:6px;font-size:9px;color:#666;pointer-events:none;"></div>
+          <div id="ub-dpad" style="position:absolute;left:4px;bottom:4px;width:clamp(88px,22vw,120px);height:clamp(88px,22vw,120px);z-index:5;pointer-events:none;">
+            <button data-dir="up"    style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▲</button>
+            <button data-dir="left"  style="position:absolute;top:50%;left:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">◀</button>
+            <button data-dir="right" style="position:absolute;top:50%;right:0;transform:translateY(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▶</button>
+            <button data-dir="down"  style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:33.3%;height:33.3%;border:2px solid #ffffff80;background:#00000060;color:#ffffff;font-size:clamp(18px,4.5vw,26px);border-radius:6px;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:0;margin:0;cursor:pointer;">▼</button>
+          </div>
+          <button id="ub-jump-btn" style="position:absolute;right:4px;bottom:4px;width:clamp(56px,14vw,80px);height:clamp(56px,14vw,80px);border:2px solid #ffffff90;background:#00000070;color:#ffe066;font-family:inherit;font-size:clamp(12px,3vw,16px);font-weight:bold;border-radius:50%;z-index:5;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;letter-spacing:1px;cursor:pointer;">JUMP</button>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;flex-wrap:wrap;gap:4px;">
@@ -504,6 +511,49 @@
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
+    // 虚拟方向键 —— 直接写 b.keys 让主循环读取
+    const dirMap = { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright' };
+    const dpad = b.modal.querySelector('#ub-dpad');
+    const jumpBtn = b.modal.querySelector('#ub-jump-btn');
+    const dpadBtnDown = e => {
+      e.preventDefault(); e.stopPropagation();
+      const dir = e.currentTarget.dataset.dir;
+      if (dir) { b.keys[dirMap[dir]] = true; e.currentTarget.style.background = '#ffffff40'; }
+    };
+    const dpadBtnUp = e => {
+      e.preventDefault(); e.stopPropagation();
+      const dir = e.currentTarget.dataset.dir;
+      if (dir) { b.keys[dirMap[dir]] = false; e.currentTarget.style.background = '#00000060'; }
+    };
+    const dpadBtns = dpad ? dpad.querySelectorAll('button[data-dir]') : [];
+    dpadBtns.forEach(btn => {
+      btn.addEventListener('touchstart', dpadBtnDown, { passive: false });
+      btn.addEventListener('touchend', dpadBtnUp, { passive: false });
+      btn.addEventListener('touchcancel', dpadBtnUp, { passive: false });
+      btn.addEventListener('mousedown', dpadBtnDown);
+      btn.addEventListener('mouseup', dpadBtnUp);
+      btn.addEventListener('mouseleave', dpadBtnUp);
+    });
+    const jumpDown = e => {
+      e.preventDefault(); e.stopPropagation();
+      b.keys[' '] = true;
+      if (b.soulColor === 'blue' && b.soul.onGround) { b.soul.vy = -8; b.soul.onGround = false; }
+      if (jumpBtn) jumpBtn.style.background = '#ffe06650';
+    };
+    const jumpUp = e => {
+      e.preventDefault(); e.stopPropagation();
+      b.keys[' '] = false;
+      if (jumpBtn) jumpBtn.style.background = '#00000070';
+    };
+    if (jumpBtn) {
+      jumpBtn.addEventListener('touchstart', jumpDown, { passive: false });
+      jumpBtn.addEventListener('touchend', jumpUp, { passive: false });
+      jumpBtn.addEventListener('touchcancel', jumpUp, { passive: false });
+      jumpBtn.addEventListener('mousedown', jumpDown);
+      jumpBtn.addEventListener('mouseup', jumpUp);
+      jumpBtn.addEventListener('mouseleave', jumpUp);
+    }
+
     let isTouching = false, touchPointerId = null;
     function canvasPos(clientX, clientY) {
       const r = canvas.getBoundingClientRect();
@@ -567,6 +617,22 @@
       canvas.removeEventListener('mousedown', onMD);
       canvas.removeEventListener('mousemove', onMM);
       window.removeEventListener('mouseup', onMU);
+      dpadBtns.forEach(btn => {
+        btn.removeEventListener('touchstart', dpadBtnDown);
+        btn.removeEventListener('touchend', dpadBtnUp);
+        btn.removeEventListener('touchcancel', dpadBtnUp);
+        btn.removeEventListener('mousedown', dpadBtnDown);
+        btn.removeEventListener('mouseup', dpadBtnUp);
+        btn.removeEventListener('mouseleave', dpadBtnUp);
+      });
+      if (jumpBtn) {
+        jumpBtn.removeEventListener('touchstart', jumpDown);
+        jumpBtn.removeEventListener('touchend', jumpUp);
+        jumpBtn.removeEventListener('touchcancel', jumpUp);
+        jumpBtn.removeEventListener('mousedown', jumpDown);
+        jumpBtn.removeEventListener('mouseup', jumpUp);
+        jumpBtn.removeEventListener('mouseleave', jumpUp);
+      }
     }
 
     spawnPhase(b.phaseIndex, b.canvasW, b.canvasH);
