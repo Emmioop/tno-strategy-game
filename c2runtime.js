@@ -4965,14 +4965,8 @@ quat4.str=function(a){return"["+a[0]+", "+a[1]+", "+a[2]+", "+a[3]+"]"};
 			if (t.onAppBegin)
 				t.onAppBegin();
 		}
-		if (document["hidden"] || document["webkitHidden"] || document["mozHidden"] || document["msHidden"])
-		{
-			window["cr_setSuspended"](true);		// stop rendering
-		}
-		else
-		{
-			this.tick(false);
-		}
+		this.isSuspended = false;
+		this.tick(false);
 		if (this.isDirectCanvas)
 			AppMobi["webview"]["execute"]("onGameReady();");
 	};
