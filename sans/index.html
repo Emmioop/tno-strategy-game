@@ -131,11 +131,10 @@ function vpadSetup() {
             }
             
             var cur = rt.running_layout && rt.running_layout.name;
-            if (!cur) return;
-            var n = cur.toLowerCase();
+            var n = cur ? cur.toLowerCase() : '';
 
-            // ── 尽早启动 tick 循环（让它能处理 changelayout）──
-            if (!tickBootstrapped && (n === 'loader' || n === 'instructions' || n === 'battlescreen')) {
+            // ── 尽早启动 tick 循环（runtime 一创建就启动，处理所有状态）──
+            if (!tickBootstrapped && rt.layouts) {
                 tickBootstrapped = true;
                 rt.raf_id = -1;
                 rt.timeout_id = -1;
@@ -149,6 +148,8 @@ function vpadSetup() {
                     } catch(e){}
                 }, 16);
             }
+            
+            if (!cur) return;
             
             // ── Loader/Instructions 过场：直接切 BattleScreen ──
             if ((n === 'loader' || n === 'instructions') && !window.__vpadLoaderDone && p >= 1) {
