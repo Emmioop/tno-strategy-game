@@ -514,7 +514,11 @@ function get_joy_stick() { return joystick_type===0?joy_stick0:joy_stick1; }
 function get_settings_img(p) { return p?settings_p_img:settings_n_img; }
 
 let joystick_font = false;
-new FontFace('MobileFont','url(MobileFont/mnc.woff2)').load().then(f=>{document.fonts.add(f);joystick_font=true;draw();}).catch(()=>{});
+try {
+    if (typeof FontFace !== 'undefined' && typeof document !== 'undefined' && document.fonts) {
+        new FontFace('MobileFont','url(MobileFont/mnc.woff2)').load().then(f=>{document.fonts.add(f);joystick_font=true;try{draw();}catch(e){}}).catch(()=>{});
+    }
+} catch(e) { /* FontFace 不支持的浏览器（如部分安卓浏览器）直接跳过 */ }
 
 // ── 改进的 Canvas 存活检测与重建 ──
 let canvas, ctx, game_area={scale:1};
@@ -1842,7 +1846,16 @@ document.addEventListener('mousemove', on_mouse_move, {passive: true, capture: f
 document.addEventListener('mouseup', on_mouse_up, {passive: true, capture: false});
 document.addEventListener('mouseleave', on_mouse_leave, {passive: true, capture: false});
 
-// ── 游戏循环（受 stage_ready 与 keyboard_ready 双重保护） ──
+// ── 游戏循环（受 stage_ready 与 keyboard_ready 双重保护）
+// 使用 setInterval 驱动，避免安卓浏览器 requestAnimationFrame 在后台暂停导致按键消失
+let _mcLoopTimer = null;
+let _mcLoopRunning = false;
+function start_game_loop() {
+    if (_mcLoopRunning) return;
+    _mcLoopRunning = true;
+    console.log('[MC] game_loop started via setInterval');
+    _mcLoopTimer = setInterval(game_loop, 16);
+}
 function game_loop() {
     ensure_canvas_alive();
     update_area();
@@ -1860,7 +1873,6 @@ function game_loop() {
 
     // 舞台或贴图未就绪时，只维持自身存活，不执行任何键盘逻辑
     if (!stage_ready || !keyboard_ready) {
-        requestAnimationFrame(game_loop);
         return;
     }
 
@@ -1870,7 +1882,6 @@ function game_loop() {
     else if (ui_state === 4 && instances.obj_mobilecontrols_button) obj_mobilecontrols_button_Step_0(instances.obj_mobilecontrols_button);
     draw();
     for (const id in _pointers) if (_pointers[id]) _pointers[id].justPressed = false;
-    requestAnimationFrame(game_loop);
 }
 
 function draw() {
@@ -1994,7 +2005,7 @@ function init() {
                     draw_calls: 0
                 };
                 console.log('[MC] __mc created, starting game_loop');
-                game_loop();
+                start_game_loop();
             } catch(e) {
                 console.error('[MC] tryInitKeyboard error:', e.message, e.stack);
             }
