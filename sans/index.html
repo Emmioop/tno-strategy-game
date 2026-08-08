@@ -5,6 +5,63 @@
 
 <head>
 <script>
+// ★ CDN 加速钩子：在任何其他脚本之前运行，拦截所有相对路径资源请求
+(function(){
+    var CDN = 'https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/';
+    var LOCAL = window.location.protocol + '//' + window.location.host + '/';
+    var onLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    
+    function toCDN(url) {
+        if (!url || /^(https?:)?\/\//.test(url) || /^data:/.test(url) || /^blob:/.test(url)) return url;
+        // 相对路径 -> CDN
+        var clean = url.replace(/^\.?\//, '');
+        return CDN + clean;
+    }
+    
+    // 1. Hook XMLHttpRequest（c2runtime.js 用它加载 data.js）
+    var _open = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
+        var args = Array.prototype.slice.call(arguments);
+        if (!onLocal && typeof url === 'string') {
+            args[1] = toCDN(url);
+        }
+        return _open.apply(this, args);
+    };
+    
+    // 2. Hook Image.src（Construct 2 加载图片用 new Image().src）
+    var _origSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+        get: function(){ return _origSrc.get.call(this); },
+        set: function(v) {
+            if (!onLocal && typeof v === 'string' && !this._cdnSet) {
+                v = toCDN(v);
+                this._cdnSet = true;
+            }
+            _origSrc.set.call(this, v);
+        },
+        configurable: true
+    });
+    
+    // 3. Hook Audio.src（Construct 2 加载音频）
+    if (window.Audio) {
+        var _audioSrc = Object.getOwnPropertyDescriptor(HTMLAudioElement.prototype, 'src');
+        if (_audioSrc) {
+            Object.defineProperty(HTMLAudioElement.prototype, 'src', {
+                get: function(){ return _audioSrc.get.call(this); },
+                set: function(v) {
+                    if (!onLocal && typeof v === 'string' && !this._cdnSet) {
+                        v = toCDN(v);
+                        this._cdnSet = true;
+                    }
+                    _audioSrc.set.call(this, v);
+                },
+                configurable: true
+            });
+        }
+    }
+})();
+</script>
+<script>
 // vpad.js - virtual buttons + auto-skip loader
 'use strict';
 
