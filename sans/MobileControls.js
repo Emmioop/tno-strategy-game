@@ -1334,31 +1334,42 @@ function obj_mobilekey_Create_0() {
 function obj_mobilekey_Step_0(self) {
     let cu=1, cd=1, cl=1, cr=1, cz=1, cx=1, cg=1, ch=1, cf2=1,
         cextra1=1, cextra2=1, cextra3=1, cextra4=1, cakb=1;
-    // 第一套键盘固定使用 (-50,5)
-    const useAkbX = -50;
-    const useAkbY = 5;
+
+    // 屏幕物理像素的摇杆中心和半径（与绘制完全一致）
+    const S = _mcGetStickLayout();
+    const stickCX = S.cx * dpr;
+    const stickCY = S.cy * dpr;
+    const stickR  = S.stickR * dpr;
+
     for(let i=0;i<4;i++) {
         if(!device_mouse_check_button(i, mb_left)) continue;
         const gx=device_mouse_x_to_gui(i), gy=device_mouse_y_to_gui(i);
-        if (Android_System_Keyboard && gx>=useAkbX && gx<=useAkbX+AKB_W && gy>=useAkbY && gy<=useAkbY+AKB_H) {
-            cakb = 0.5; keyboard_key_press(105);
+        const p = _pointers[_pointerSlots[i]];
+
+        // 用屏幕物理像素匹配按钮区域（与 obj_mobilekey_Draw_75 的绘制完全一致）
+        let hitBtn = false;
+        if (p && _mcBtnCache) {
+            if (p.sx >= _mcBtnCache.z.x1 && p.sx <= _mcBtnCache.z.x2 &&
+                p.sy >= _mcBtnCache.z.y1 && p.sy <= _mcBtnCache.z.y2) { cz=0.5; keyboard_key_press(self.mk_z); hitBtn=true; }
+            else if (p.sx >= _mcBtnCache.x.x1 && p.sx <= _mcBtnCache.x.x2 &&
+                     p.sy >= _mcBtnCache.x.y1 && p.sy <= _mcBtnCache.x.y2) { cx=0.5; keyboard_key_press(self.mk_x); hitBtn=true; }
+            else if (p.sx >= _mcBtnCache.c.x1 && p.sx <= _mcBtnCache.c.x2 &&
+                     p.sy >= _mcBtnCache.c.y1 && p.sy <= _mcBtnCache.c.y2) { cg=0.5; keyboard_key_press(self.mk_c); hitBtn=true; }
         }
-        // ★ 更新按钮触摸检测坐标（匹配新的阶梯布局）
-        else if (gx>=860 && gx<=960 && gy>=270 && gy<=360) { cz=0.5; keyboard_key_press(self.mk_z); }
-        else if (gx>=750 && gx<=860 && gy>=330 && gy<=420) { cx=0.5; keyboard_key_press(self.mk_x); }
-        else if (gx>=640 && gx<=750 && gy>=390 && gy<=480) { cg=0.5; keyboard_key_press(self.mk_c); }
-        else if (mobile_f2 && gx>=0 && gx<=80 && gy>=0 && gy<=30) { cf2=0.5; keyboard_key_press(self.mk_f2); }
-        else if (button_extra_1 && gx>=0 && gx<=80 && gy>=40 && gy<=70) { cextra1=0.5; keyboard_key_press(self.mk_extra1); }
-        else if (button_extra_3 && gx>=90 && gx<=170 && gy>=0 && gy<=30) { cextra3=0.5; keyboard_key_press(self.mk_extra3); }
-        else if (mobile_heal && gx>=560 && gx<=640 && gy>=0 && gy<=30) { ch=0.5; keyboard_key_press(self.mk_h); }
-        else if (button_extra_2 && gx>=560 && gx<=640 && gy>=40 && gy<=70) { cextra2=0.5; keyboard_key_press(self.mk_extra2); }
-        else if (button_extra_4 && gx>=471 && gx<=551 && gy>=0 && gy<=30) { cextra4=0.5; keyboard_key_press(self.mk_extra4); }
-        else {
-            const da = (Math.atan2(-(gy-410), gx-90)*180/Math.PI + 360) % 360;
-            if(da>=292.5||da<=67.5) { cr=0.5; keyboard_key_press(self.mk_right); }
-            if(da>=22.5&&da<=157.5) { cu=0.5; keyboard_key_press(self.mk_up); }
-            if(da>=112.5&&da<=247.5) { cl=0.5; keyboard_key_press(self.mk_left); }
-            if(da>=202.5&&da<=337.5) { cd=0.5; keyboard_key_press(self.mk_down); }
+
+        if (hitBtn) continue;
+
+        // 摇杆：用屏幕物理像素计算方向
+        if (p) {
+            const dx = p.sx - stickCX;
+            const dy = p.sy - stickCY;
+            if (Math.hypot(dx, dy) <= stickR * 2.5) {
+                const da = (Math.atan2(-dy, dx)*180/Math.PI + 360) % 360;
+                if(da>=292.5||da<=67.5) { cr=0.5; keyboard_key_press(self.mk_right); }
+                if(da>=22.5&&da<=157.5) { cu=0.5; keyboard_key_press(self.mk_up); }
+                if(da>=112.5&&da<=247.5) { cl=0.5; keyboard_key_press(self.mk_left); }
+                if(da>=202.5&&da<=337.5) { cd=0.5; keyboard_key_press(self.mk_down); }
+            }
         }
     }
     if (keyboard_check_pressed(105)) _openSystemKeyboard();
@@ -1378,52 +1389,95 @@ function obj_mobilekey_Step_0(self) {
     if(cakb===1&&keyboard_check(105)) keyboard_key_release(105);
     self.cu=cu; self.cd=cd; self.cl=cl; self.cr=cr; self.cz=cz; self.cx=cx; self.cg=cg;
 }
+let _mcBtnCache = null;
+function _mcGetScreenMetrics() {
+    const w = window.innerWidth, h = window.innerHeight;
+    return { w, h, dpr };
+}
+function _mcIsPortrait() {
+    const m = _mcGetScreenMetrics();
+    return m.h > m.w * 1.1;
+}
+function _mcGetBtnLayout() {
+    const m = _mcGetScreenMetrics();
+    const isPortrait = _mcIsPortrait();
+    const base = Math.min(m.w, m.h) * (isPortrait ? 0.14 : 0.11);
+    const gap = base * 0.12;
+    const btnSize = base;
+    const rightEdge = m.w - btnSize * 0.1;
+    // 竖屏按钮往屏幕上方集中，避开被拉长的底部战斗菜单
+    const centerY = isPortrait ? m.h * 0.22 : m.h * 0.42;
+    return { btnSize, gap, rightEdge, centerY, isPortrait };
+}
+function _mcGetStickLayout() {
+    const m = _mcGetScreenMetrics();
+    const isPortrait = _mcIsPortrait();
+    const stickR = Math.min(m.w, m.h) * (isPortrait ? 0.12 : 0.11);
+    const cx = stickR * 1.8;
+    const cy = isPortrait ? m.h * 0.78 : m.h * 0.65;
+    return { stickR, cx, cy };
+}
+
 function obj_mobilekey_Draw_75(self) {
-    // ★ obj_mobilekey 在屏幕坐标下绘制——把游戏逻辑坐标转换为屏幕物理像素
-    const sx = (lx) => (game_area.x + lx * game_area.scale) * dpr;
-    const sy = (ly) => (game_area.y + ly * game_area.scale) * dpr;
-    
-    // ★ 辅助：填充+白色描边的圆角矩形
-    function btn(x1,y1,x2,y2,fillCol) {
-        draw_roundrect_color(x1,y1,x2,y2, fillCol, fillCol, 0);
+    const m = _mcGetScreenMetrics();
+    const L = _mcGetBtnLayout();
+    const S = _mcGetStickLayout();
+    const d = m.dpr;
+
+    // 阶梯按钮坐标（屏幕像素，已乘dpr）
+    const pad = L.btnSize * d;
+    const g = L.gap * d;
+    const bx1 = L.rightEdge * d - pad;
+    const bx2 = L.rightEdge * d;
+    const midY = L.centerY * d;
+    const btnH = pad;
+
+    _mcBtnCache = {
+        z: { x1: bx1, y1: midY - pad - g/2, x2: bx2, y2: midY - g/2 },
+        x: { x1: bx1 - pad - g, y1: midY - btnH/2, x2: bx1 - g, y2: midY + btnH/2 },
+        c: { x1: bx1 - 2*pad - 2*g, y1: midY + g/2, x2: bx1 - pad - 2*g, y2: midY + pad + g/2 },
+        stick: { cx: S.cx * d, cy: S.cy * d, r: S.stickR * d }
+    };
+
+    function drawBtn(label, rect, fillCol) {
+        const r = Math.min(10, (rect.x2-rect.x1)/4, (rect.y2-rect.y1)/4);
         ctx.save();
-        ctx.globalAlpha = _draw_alpha;
-        ctx.strokeStyle = 'rgba(255,255,255,1)';
-        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.9;
         ctx.beginPath();
-        const lx=Math.min(x1,x2), rx=Math.max(x1,x2), ty=Math.min(y1,y2), by=Math.max(y1,y2);
-        const w=rx-lx, h=by-ty, r=Math.min(8,w/2,h/2);
-        ctx.moveTo(lx+r,ty); ctx.lineTo(rx-r,ty); ctx.quadraticCurveTo(rx,ty,rx,ty+r);
-        ctx.lineTo(rx,by-r); ctx.quadraticCurveTo(rx,by,rx-r,by); ctx.lineTo(lx+r,by);
-        ctx.quadraticCurveTo(lx,by,lx,by-r); ctx.lineTo(lx,ty+r); ctx.quadraticCurveTo(lx,ty,lx+r,ty);
+        ctx.moveTo(rect.x1+r, rect.y1);
+        ctx.lineTo(rect.x2-r, rect.y1);
+        ctx.quadraticCurveTo(rect.x2, rect.y1, rect.x2, rect.y1+r);
+        ctx.lineTo(rect.x2, rect.y2-r);
+        ctx.quadraticCurveTo(rect.x2, rect.y2, rect.x2-r, rect.y2);
+        ctx.lineTo(rect.x1+r, rect.y2);
+        ctx.quadraticCurveTo(rect.x1, rect.y2, rect.x1, rect.y2-r);
+        ctx.lineTo(rect.x1, rect.y1+r);
+        ctx.quadraticCurveTo(rect.x1, rect.y1, rect.x1+r, rect.y1);
         ctx.closePath();
+        ctx.fillStyle = fillCol;
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3 * d;
         ctx.stroke();
-        // ★ 绘制按钮文字 (Z/X/C)
-        ctx.fillStyle = 'rgba(255,255,255,1)';
-        ctx.font = 'bold ' + Math.min(w, h) * 0.5 + 'px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold ' + ((rect.x2-rect.x1) * 0.5) + 'px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(btn._label || '', (lx+rx)/2, (ty+by)/2);
+        ctx.fillText(label, (rect.x1+rect.x2)/2, (rect.y1+rect.y2)/2);
         ctx.restore();
     }
-    
-    draw_set_alpha(1);
-    
-    // ★ 加大按钮 + 阶梯布局（完全避开游戏 FIGHT/ACT/ITEM/MERCY 按钮）
-    // Z 按钮 - 青色 (最右上)
-    btn._label = 'Z';
-    btn(sx(860), sy(270), sx(960), sy(360), gms_col(self.zCol));
-    // X 按钮 - 橙色 (中间右上)
-    btn._label = 'X';
-    btn(sx(750), sy(330), sx(860), sy(420), gms_col(self.xCol));
-    // C 按钮 - 绿色 (中间)
-    btn._label = 'C';
-    btn(sx(640), sy(390), sx(750), sy(480), gms_col(self.cCol));
-    
+
+    drawBtn('Z', _mcBtnCache.z, gms_col(self.zCol));
+    drawBtn('X', _mcBtnCache.x, gms_col(self.xCol));
+    drawBtn('C', _mcBtnCache.c, gms_col(self.cCol));
+
     draw_set_alpha(1);
     drawAKB(1);
-    // 左下摇杆背景图
-    if(spr_mobilekey?.complete) draw_sprite_ext(spr_mobilekey,0,sx(90),sy(410),2*game_area.scale,2*game_area.scale,0,c_white,1);
+
+    if(spr_mobilekey?.complete) {
+        const size = S.stickR * 2 * d;
+        draw_sprite_ext(spr_mobilekey, 0, S.cx*d - size/2, S.cy*d - size/2, size/spr_mobilekey.naturalWidth, size/spr_mobilekey.naturalHeight, 0, c_white, 0.6);
+    }
 }
 
 function obj_mobilecontrols_Create_0() {
@@ -1657,40 +1711,54 @@ document.addEventListener('keydown', e => {
 });
 
 // ── 修复后的触摸事件处理（只拦截虚拟按键上的触摸，不碰游戏） ──
+function _mcIsInUI(sx, sy) {
+    if (!_mcBtnCache) return false;
+    const B = _mcBtnCache;
+    if (sx >= B.z.x1 && sx <= B.z.x2 && sy >= B.z.y1 && sy <= B.z.y2) return true;
+    if (sx >= B.x.x1 && sx <= B.x.x2 && sy >= B.x.y1 && sy <= B.x.y2) return true;
+    if (sx >= B.c.x1 && sx <= B.c.x2 && sy >= B.c.y1 && sy <= B.c.y2) return true;
+    const dxs = sx - B.stick.cx, dys = sy - B.stick.cy;
+    if (Math.hypot(dxs, dys) <= B.stick.r * 2.5) return true;
+    return false;
+}
+
 function on_touch_start(e) {
     if (ui_state === 1) return;
     ensure_canvas_alive();
     let handledAny = false;
     for (const t of e.changedTouches) {
-        // 只处理落在虚拟按键上的触摸点，其他的完全放行给游戏
-        if (is_touch_on_controls(t.clientX, t.clientY)) {
-            try {
-                const {x, y} = world_xy(t.clientX, t.clientY);
-                _pointerDown[t.identifier] = true;
-                _pointers[t.identifier] = {wx:x, wy:y, justPressed:true};
-                handledAny = true;
-            } catch(err) {}
+        const sx = t.clientX * dpr, sy = t.clientY * dpr;
+        if (ui_state === 2) {
+            // ui_state=2：只拦截落在虚拟按键/摇杆区域内的触摸
+            if (!_mcIsInUI(sx, sy)) continue;
+        } else if (!is_touch_on_controls(t.clientX, t.clientY)) {
+            continue;
         }
+        try {
+            const {x, y} = world_xy(t.clientX, t.clientY);
+            _pointerDown[t.identifier] = true;
+            _pointers[t.identifier] = {wx:x, wy:y, sx, sy, justPressed:true};
+            handledAny = true;
+        } catch(err) {}
     }
     if (handledAny) _updatePointerSlots();
-    // 不调用 e.preventDefault()，让不在虚拟按键上的触摸点正常触发游戏的点击/触摸
 }
 function on_touch_move(e) {
     if (ui_state === 1) return;
     let handledAny = false;
     for (const t of e.changedTouches) {
-        // 只更新我们跟踪的触摸点（在虚拟按键上的）
         if (_pointers[t.identifier]) {
             try {
                 const {x, y} = world_xy(t.clientX, t.clientY);
                 _pointers[t.identifier].wx = x;
                 _pointers[t.identifier].wy = y;
+                _pointers[t.identifier].sx = t.clientX * dpr;
+                _pointers[t.identifier].sy = t.clientY * dpr;
                 handledAny = true;
             } catch(err) {}
         }
     }
     if (handledAny) _updatePointerSlots();
-    // 不阻止默认行为，让游戏能正常接收触摸移动
 }
 function on_touch_end(e) {
     if (ui_state === 1) return;
@@ -1717,13 +1785,13 @@ const MOUSE_ID = 'mouse';
 
 function on_mouse_down(e) {
     if (ui_state === 1) return;
-    if (e.button !== 0) return; // 只处理左键
+    if (e.button !== 0) return;
     ensure_canvas_alive();
     if (!is_touch_on_controls(e.clientX, e.clientY)) return;
     try {
         const {x, y} = world_xy(e.clientX, e.clientY);
         _pointerDown[MOUSE_ID] = true;
-        _pointers[MOUSE_ID] = {wx: x, wy: y, justPressed: true};
+        _pointers[MOUSE_ID] = {wx: x, wy: y, sx: e.clientX*dpr, sy: e.clientY*dpr, justPressed: true};
         _updatePointerSlots();
     } catch(err) {}
 }
@@ -1736,6 +1804,8 @@ function on_mouse_move(e) {
         if (_pointers[MOUSE_ID]) {
             _pointers[MOUSE_ID].wx = x;
             _pointers[MOUSE_ID].wy = y;
+            _pointers[MOUSE_ID].sx = e.clientX * dpr;
+            _pointers[MOUSE_ID].sy = e.clientY * dpr;
             _updatePointerSlots();
         }
     } catch(err) {}
