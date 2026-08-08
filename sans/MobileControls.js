@@ -1402,24 +1402,75 @@ function _mcIsPortrait() {
     const m = _mcGetScreenMetrics();
     return m.h > m.w * 1.1;
 }
+
+// 计算 letterbox/contain 模式下游戏画面在屏幕上的实际矩形
+// 游戏逻辑分辨率 960x540，canvas CSS 铺满屏幕，画面等比缩放居中
+function _mcGetGameRect() {
+    const m = _mcGetScreenMetrics();
+    const GAME_W = 960, GAME_H = 540;
+
+    // 计算 contain 模式下的缩放和偏移
+    const containScale = Math.min(m.w / GAME_W, m.h / GAME_H);
+    const scaledW = GAME_W * containScale;
+    const scaledH = GAME_H * containScale;
+    const offsetX = (m.w - scaledW) / 2;
+    const offsetY = (m.h - scaledH) / 2;
+
+    return {
+        sx: offsetX,       // 画面左
+        sy: offsetY,       // 画面上
+        sw: scaledW,       // 画面宽
+        sh: scaledH,       // 画面高
+        scale: containScale
+    };
+}
+
 function _mcGetBtnLayout() {
     const m = _mcGetScreenMetrics();
     const isPortrait = _mcIsPortrait();
-    const base = Math.min(m.w, m.h) * (isPortrait ? 0.14 : 0.11);
-    const gap = base * 0.12;
+    const gr = _mcGetGameRect();
+
+    // 按钮大小基于游戏画面宽度的 12-14%，保持在不同设备上视觉一致
+    const base = Math.min(gr.sw, gr.sh) * (isPortrait ? 0.15 : 0.12);
     const btnSize = base;
-    const rightEdge = m.w - btnSize * 0.1;
-    // 竖屏按钮往屏幕上方集中，避开被拉长的底部战斗菜单
-    const centerY = isPortrait ? m.h * 0.22 : m.h * 0.42;
-    return { btnSize, gap, rightEdge, centerY, isPortrait };
+    const gap = base * 0.12;
+
+    // 阶梯按钮完全放在游戏画面内，避开上下边缘
+    // Z 在最上最右，X 在中间右，C 在下方右
+    // 整体靠右但不贴右边，留一点边距更好看
+    const marginX = btnSize * 0.3;
+    const marginTop = btnSize * 0.8;
+    const marginBottom = btnSize * 1.2;
+
+    const rightEdge = gr.sx + gr.sw - marginX;
+    const topY = gr.sy + marginTop;
+    const bottomY = gr.sy + gr.sh - marginBottom;
+
+    // 三个按钮等间距分布在 topY 到 bottomY 之间
+    const totalH = bottomY - topY;
+    const step = btnSize + gap;
+
+    const zCenterY = topY + btnSize / 2;
+    const xCenterY = topY + totalH / 2;
+    const cCenterY = bottomY - btnSize / 2;
+
+    return { btnSize, gap, rightEdge, topY, bottomY, zCenterY, xCenterY, cCenterY, isPortrait, gr };
 }
+
 function _mcGetStickLayout() {
     const m = _mcGetScreenMetrics();
+    const gr = _mcGetGameRect();
     const isPortrait = _mcIsPortrait();
-    const stickR = Math.min(m.w, m.h) * (isPortrait ? 0.12 : 0.11);
-    const cx = stickR * 1.8;
-    const cy = isPortrait ? m.h * 0.78 : m.h * 0.65;
-    return { stickR, cx, cy };
+
+    // 摇杆在游戏画面左下
+    const stickR = Math.min(gr.sw, gr.sh) * 0.1;
+    const marginX = stickR * 1.8;
+    const marginY = stickR * 2.2;
+
+    const cx = gr.sx + marginX;
+    const cy = gr.sy + gr.sh - marginY;
+
+    return { stickR, cx, cy, gr };
 }
 
 function obj_mobilekey_Draw_75(self) {
@@ -1428,18 +1479,21 @@ function obj_mobilekey_Draw_75(self) {
     const S = _mcGetStickLayout();
     const d = m.dpr;
 
-    // 阶梯按钮坐标（屏幕像素，已乘dpr）
+    // 阶梯按钮坐标（屏幕物理像素，已乘dpr）
     const pad = L.btnSize * d;
     const g = L.gap * d;
-    const bx1 = L.rightEdge * d - pad;
     const bx2 = L.rightEdge * d;
-    const midY = L.centerY * d;
-    const btnH = pad;
+    const bx1 = bx2 - pad;
+
+    // 用三个独立的 Y 坐标让按钮均匀分布
+    const zCenterY = L.zCenterY * d;
+    const xCenterY = L.xCenterY * d;
+    const cCenterY = L.cCenterY * d;
 
     _mcBtnCache = {
-        z: { x1: bx1, y1: midY - pad - g/2, x2: bx2, y2: midY - g/2 },
-        x: { x1: bx1 - pad - g, y1: midY - btnH/2, x2: bx1 - g, y2: midY + btnH/2 },
-        c: { x1: bx1 - 2*pad - 2*g, y1: midY + g/2, x2: bx1 - pad - 2*g, y2: midY + pad + g/2 },
+        z: { x1: bx1, x2: bx2, y1: zCenterY - pad/2, y2: zCenterY + pad/2 },
+        x: { x1: bx1 - pad - g, x2: bx1 - g, y1: xCenterY - pad/2, y2: xCenterY + pad/2 },
+        c: { x1: bx1 - 2*pad - 2*g, x2: bx1 - pad - 2*g, y1: cCenterY - pad/2, y2: cCenterY + pad/2 },
         stick: { cx: S.cx * d, cy: S.cy * d, r: S.stickR * d }
     };
 
