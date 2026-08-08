@@ -158,12 +158,12 @@ function vpadSetup() {
 
             if (rt.isSuspended) rt.isSuspended = false;
 
-            // ── 每次 poll 都无条件锁死原始分辨率 + letterbox 模式 ──
+            // ── 每次 poll 都无条件锁死原始分辨率 + scale outer ──
             try {
                 rt.original_width = 960;
                 rt.original_height = 540;
-                rt.fullscreen_mode = 4;
-                rt.fullscreen_mode_set = 4;
+                rt.fullscreen_mode = 3;
+                rt.fullscreen_mode_set = 3;
             } catch(e){}
 
             var p = rt.progress || 0;
