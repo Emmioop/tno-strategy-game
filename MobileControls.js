@@ -1879,53 +1879,62 @@ function getVM() {
 
 // ── 初始化 ──
 function init() {
-    load_cfg_all();
-    ensure_canvas_alive();
+    try {
+        load_cfg_all();
+        ensure_canvas_alive();
 
-    window.addEventListener('resize', () => { update_area(); draw(); });
-    document.addEventListener('visibilitychange', function() {
-        handle_visibility();
-        // 切到后台时强制关闭系统键盘
-        if (document.hidden && system_kb_active) {
-            _closeSystemKeyboard();
+        window.addEventListener('resize', () => { update_area(); draw(); });
+        document.addEventListener('visibilitychange', function() {
+            handle_visibility();
+            if (document.hidden && system_kb_active) {
+                _closeSystemKeyboard();
+            }
+        });
+        try { document.addEventListener('pause', freeze_runtime, false); } catch(e) {}
+        try { document.addEventListener('resume', unfreeze_runtime, false); } catch(e) {}
+
+        handleScratchButtons();
+        handleAutoStart();
+        preloadAllNeededSounds();
+
+        setInterval(scheduleCanvasCheck, 2000);
+
+        let initAttempts = 0;
+        const maxAttempts = 50;
+
+        function tryInitKeyboard() {
+            try {
+                console.log('[MC] tryInitKeyboard called, ui_state=' + ui_state);
+                stage_ready = true;
+                keyboard_ready = true;
+                system_ready = true;
+                if (ui_state !== 1) {
+                    if (ui_state === 2) instance_create_depth(0,0,0,'obj_mobilekey');
+                    else if (ui_state === 3) { instance_create_depth(0,0,0,'obj_mobilecontrols'); load_vars_from_cfg(); }
+                    else if (ui_state === 4) { instance_create_depth(0,0,0,'obj_mobilecontrols_button'); load_vars_from_cfg(); }
+                }
+                window.__mc = {
+                    ui_state: ui_state,
+                    stage_ready: stage_ready,
+                    keyboard_ready: keyboard_ready,
+                    system_ready: system_ready,
+                    instances: instances,
+                    game_area: null,
+                    loop_calls: 0,
+                    draw_calls: 0
+                };
+                console.log('[MC] __mc created, starting game_loop');
+                game_loop();
+            } catch(e) {
+                console.error('[MC] tryInitKeyboard error:', e.message, e.stack);
+            }
         }
-    });
-    try { document.addEventListener('pause', freeze_runtime, false); } catch(e) {}
-    try { document.addEventListener('resume', unfreeze_runtime, false); } catch(e) {}
-
-    handleScratchButtons();
-    handleAutoStart();
-    preloadAllNeededSounds();
-
-    setInterval(scheduleCanvasCheck, 2000);
-
-    let initAttempts = 0;
-    const maxAttempts = 50;
-
-    function tryInitKeyboard() {
-        stage_ready = true;
-        keyboard_ready = true;
-        system_ready = true;
-        if (ui_state !== 1) {
-            if (ui_state === 2) instance_create_depth(0,0,0,'obj_mobilekey');
-            else if (ui_state === 3) { instance_create_depth(0,0,0,'obj_mobilecontrols'); load_vars_from_cfg(); }
-            else if (ui_state === 4) { instance_create_depth(0,0,0,'obj_mobilecontrols_button'); load_vars_from_cfg(); }
-        }
-        // ★ 调试暴露到 window
-        window.__mc = {
-            ui_state: ui_state,
-            stage_ready: stage_ready,
-            keyboard_ready: keyboard_ready,
-            system_ready: system_ready,
-            instances: instances,
-            game_area: null,
-            loop_calls: 0,
-            draw_calls: 0
-        };
-        game_loop();
+        tryInitKeyboard();
+    } catch(e) {
+        console.error('[MC] init error:', e.message, e.stack);
     }
-    tryInitKeyboard();
 }
+console.log('[MC] IIFE executed, readyState=' + document.readyState);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
 })();
