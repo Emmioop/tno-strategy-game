@@ -1344,9 +1344,9 @@ function obj_mobilekey_Step_0(self) {
             cakb = 0.5; keyboard_key_press(105);
         }
         // ★ 更新按钮触摸检测坐标（匹配新的阶梯布局）
-        else if (gx>=830 && gx<=940 && gy>=270 && gy<=360) { cz=0.5; keyboard_key_press(self.mk_z); }
-        else if (gx>=720 && gx<=830 && gy>=330 && gy<=420) { cx=0.5; keyboard_key_press(self.mk_x); }
-        else if (gx>=610 && gx<=720 && gy>=390 && gy<=480) { cg=0.5; keyboard_key_press(self.mk_c); }
+        else if (gx>=860 && gx<=960 && gy>=270 && gy<=360) { cz=0.5; keyboard_key_press(self.mk_z); }
+        else if (gx>=750 && gx<=860 && gy>=330 && gy<=420) { cx=0.5; keyboard_key_press(self.mk_x); }
+        else if (gx>=640 && gx<=750 && gy>=390 && gy<=480) { cg=0.5; keyboard_key_press(self.mk_c); }
         else if (mobile_f2 && gx>=0 && gx<=80 && gy>=0 && gy<=30) { cf2=0.5; keyboard_key_press(self.mk_f2); }
         else if (button_extra_1 && gx>=0 && gx<=80 && gy>=40 && gy<=70) { cextra1=0.5; keyboard_key_press(self.mk_extra1); }
         else if (button_extra_3 && gx>=90 && gx<=170 && gy>=0 && gy<=30) { cextra3=0.5; keyboard_key_press(self.mk_extra3); }
@@ -1412,13 +1412,13 @@ function obj_mobilekey_Draw_75(self) {
     // ★ 加大按钮 + 阶梯布局（完全避开游戏 FIGHT/ACT/ITEM/MERCY 按钮）
     // Z 按钮 - 青色 (最右上)
     btn._label = 'Z';
-    btn(sx(830), sy(270), sx(940), sy(360), gms_col(self.zCol));
+    btn(sx(860), sy(270), sx(960), sy(360), gms_col(self.zCol));
     // X 按钮 - 橙色 (中间右上)
     btn._label = 'X';
-    btn(sx(720), sy(330), sx(830), sy(420), gms_col(self.xCol));
+    btn(sx(750), sy(330), sx(860), sy(420), gms_col(self.xCol));
     // C 按钮 - 绿色 (中间)
     btn._label = 'C';
-    btn(sx(610), sy(390), sx(720), sy(480), gms_col(self.cCol));
+    btn(sx(640), sy(390), sx(750), sy(480), gms_col(self.cCol));
     
     draw_set_alpha(1);
     drawAKB(1);
