@@ -33,7 +33,20 @@ addToBody(pct);
 
 window.vpadDebug = { setupCalled: false, pollCalls: 0 };
 
-function getRuntime() {
+    // ★ v2: 强制清除所有旧状态 + 设置新版本（解决手机缓存旧版本问题）
+    try {
+        var __rm = [];
+        for (var __k in localStorage) {
+            if (__k.indexOf('ui_state') !== -1 || __k.indexOf('tno') !== -1 || __k.indexOf('sans') !== -1 || __k.indexOf('mc_') !== -1 || __k.indexOf('font') !== -1) {
+                __rm.push(__k);
+            }
+        }
+        __rm.forEach(function(k){ localStorage.removeItem(k); });
+        localStorage.setItem('tno_v', '2');
+        localStorage.setItem('ui_state', '2');
+    } catch(e){}
+
+    function getRuntime() {
     var rt = document.getElementById('c2canvas') && document.getElementById('c2canvas').c2runtime;
     if (!rt) rt = window.c2runtime;
     return rt;
@@ -53,6 +66,33 @@ function vpadSetup() {
     var tickBootstrapped = false;
     var origSizeFixed = false;
 
+    // 强制隐藏所有 DOM 虚拟键盘元素（MobileControls.js 用 virt-ctrl canvas 自己画）
+    try {
+        var __hideIds = [
+            'joystick-container','joystick-handle','joystick-mk',
+            'arrow-up','arrow-left','arrow-right','arrow-down',
+            'button-z','button-x','button-c',
+            'toggle-button','keyboard-set','button-f1','button-f2','button-debug',
+            'settings-overlay','settings-panel',
+            'text-scale','text-opacity','text-joystickscale','text-reset'
+        ];
+        __hideIds.forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) { el.style.display = 'none'; }
+        });
+    } catch(e){}
+
+    // Loader 阶段就要驱动 tick 循环，否则 isloading 不会变 false
+    window.__bootTickInterval = setInterval(function(){
+        try {
+            var r = getRuntime();
+            if (r && !r.isSuspended) {
+                r.redraw = true;
+                r.tick(false);
+            }
+        } catch(e){}
+    }, 16);
+
     setInterval(function(){
         window.vpadDebug.pollCalls++;
         try {
@@ -61,21 +101,49 @@ function vpadSetup() {
 
             if (rt.isSuspended) rt.isSuspended = false;
 
-            // 强制修正 original_width/original_height（SetCanvasSize 会用 canvas 属性值覆盖 data.js 中的 960x540）
-            if (!origSizeFixed && rt.original_width !== 960) {
-                rt.original_width = 960;
-                rt.original_height = 540;
-                if (rt.setSize) rt.setSize(window.innerWidth, window.innerHeight, true);
-                origSizeFixed = true;
-            }
+            // ── 每次 poll 都强制 canvas CSS 铺满全屏 + 锁定原始分辨率 ──
+            // ★ SetCanvasSize 会反复覆盖 original_width/height！每次都强制锁死！
+            try {
+                var rtCanvas = document.getElementById('c2canvas');
+                if (rtCanvas) {
+                    rtCanvas.setAttribute('style', 'position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;object-fit:contain!important;z-index:1!important;background:#000!important;');
+                    // ★ 每次都检查！SetCanvasSize 会在布局切换时覆盖 original_width/height
+                    if (rt.original_width !== 960 || rt.original_height !== 540 || rt.fullscreen_mode !== 3) {
+                        rt.original_width = 960;
+                        rt.original_height = 540;
+                        rt.fullscreen_mode = 3;
+                        rt.fullscreen_mode_set = 3;
+                        rt.setSize(rt.lastWindowWidth || window.innerWidth, rt.lastWindowHeight || window.innerHeight, true);
+                    }
+                }
+            } catch(e){}
 
             var p = rt.progress || 0;
-            fill.style.width = (p*100).toFixed(1)+'%';
-            pct.textContent = 'Loading ' + Math.round(p*100) + '%';
+            
+            // ── 进度条：超过 5% 就立即彻底移除（不等 BattleScreen）──
+            if (!window.__vpadBarRemoved && p > 0.05) {
+                window.__vpadBarRemoved = true;
+                try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
+                try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
+            }
+            if (!window.__vpadBarRemoved) {
+                try { fill.style.width = (p*100).toFixed(1)+'%'; pct.textContent = 'Loading ' + Math.round(p*100) + '%'; } catch(e){}
+            }
             
             var cur = rt.running_layout && rt.running_layout.name;
             if (!cur) return;
             var n = cur.toLowerCase();
+
+            // ── Loader 过场：加载完后自动切 BattleScreen（0.8s 过场，不卡）──
+            if (n === 'loader' && p >= 1 && !window.__vpadLoaderDone) {
+                window.__vpadLoaderDone = true;
+                setTimeout(function(){
+                    var r = getRuntime();
+                    if (r && r.system && r.system.acts) {
+                        r.system.acts.GoToLayoutByName('BattleScreen');
+                    }
+                }, 800);
+            }
             
             if (n === 'battlescreen') {
                 // 1. 用我们自己的 setInterval 驱动 tick 循环（绕过 headless 下 RAF 不稳定的问题）
@@ -148,11 +216,9 @@ function vpadSetup() {
                     }
                 } catch(e){}
                 
-                // 6. 隐藏进度条
-                if (p >= 1) {
-                    pct.style.opacity = '0';
-                    bar.style.opacity = '0';
-                }
+                // 6. 彻底移除进度条（强制跳过加载时 progress 可能还没到 1）
+                try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
+                try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
             }
         } catch(e){}
     }, 150);
@@ -165,7 +231,6 @@ if (document.readyState === 'loading') {
 }
 
 </script>
-<script defer src="MobileControls.js"></script>
 
     <meta charset="UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -200,6 +265,16 @@ if (document.readyState === 'loading') {
         html, body { width: 100%; height: 100%; background: #000; overflow: hidden; position: fixed; top: 0; left: 0; }
         #c2canvasdiv { position: relative; margin: 0 auto; overflow: hidden; }
         canvas { display: block; background: #000; max-width: 100vw; max-height: 100vh; }
+
+        /* ── 隐藏 Construct 2 模板里的 DOM 键盘元素（MobileControls.js 用 virt-ctrl canvas 自己画）── */
+        #joystick-container, #joystick-handle, #joystick-mk,
+        #arrow-up, #arrow-left, #arrow-right, #arrow-down,
+        #button-z, #button-x, #button-c,
+        #toggle-button, #button-f1, #button-f2, #button-debug,
+        #keyboard-set, #settings-overlay, #settings-panel,
+        #text-scale, #text-opacity, #text-joystickscale, #text-reset {
+            display: none !important;
+        }
 
         /* Joystick Styling */
         #joystick-container { 
@@ -437,74 +512,6 @@ if (document.readyState === 'loading') {
 </head> 
  
 <body>
-    <a id="back-btn" href="../index.html" style="position:fixed;top:10px;left:10px;z-index:999999;color:#fff;text-decoration:none;font-size:24px;background:rgba(0,0,0,.5);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);" title="返回">←</a>
-    <style>
-        #dbg-panel {
-            position: fixed; top: 8px; right: 8px; z-index: 99999;
-            width: 240px; background: rgba(0,0,0,0.85); color: #fff;
-            font: 11px/1.5 monospace; border-radius: 6px; padding: 8px;
-            max-height: 60vh; overflow: auto; pointer-events: none;
-        }
-        #dbg-panel .bar-wrap { height: 14px; background: #333; border-radius: 3px; margin: 4px 0; overflow: hidden; }
-        #dbg-panel .bar { height: 100%; background: linear-gradient(90deg,#0f0,#0ff); width: 0%; transition: width .2s; }
-        #dbg-panel .ok { color: #4f4; }
-        #dbg-panel .err { color: #f44; }
-        #dbg-panel .wrn { color: #ff4; }
-    </style>
-    <div id="dbg-panel">
-        <div><b>🔍 Debug Panel</b></div>
-        <div>Loading... <span id="dbg-progress">0%</span></div>
-        <div class="bar-wrap"><div class="bar" id="dbg-bar"></div></div>
-        <div id="dbg-status" class="ok">waiting...</div>
-        <div id="dbg-console" style="margin-top:6px;max-height:200px;overflow:auto"></div>
-    </div>
-    <script>
-    (function(){
-        var dp = document.getElementById('dbg-panel');
-        var dc = document.getElementById('dbg-console');
-        var db = document.getElementById('dbg-bar');
-        var dpct = document.getElementById('dbg-progress');
-        var ds = document.getElementById('dbg-status');
-        function log(type, msg) {
-            var d = new Date().toLocaleTimeString();
-            var cls = type==='error'?'err':type==='warn'?'wrn':'ok';
-            dc.innerHTML += '<div class="'+cls+'">['+d+'] '+type+': '+String(msg).slice(0,200)+'</div>';
-            dc.scrollTop = dc.scrollHeight;
-        }
-        var _origC = console.log, _origE = console.error, _origW = console.warn;
-        console.log = function(){ _origC.apply(console, arguments); log('log', [].slice.call(arguments).join(' ')); };
-        console.error = function(){ _origE.apply(console, arguments); log('error', [].slice.call(arguments).join(' ')); };
-        console.warn = function(){ _origW.apply(console, arguments); log('warn', [].slice.call(arguments).join(' ')); };
-
-        window.addEventListener('error', function(e){ log('error', e.message + ' @ ' + (e.filename||'?') + ':' + (e.lineno||'?')); });
-
-        var startTime = Date.now();
-
-        setTimeout(function(){
-            log('info', 'After 3s, checking runtime...');
-            try {
-                var rt = window.cr_getC2Runtime && window.cr_getC2Runtime();
-                if (!rt) { log('error', 'cr_getC2Runtime returned null!'); ds.className='err'; ds.textContent='❌ Runtime NOT initialized'; return; }
-                log('info', 'Runtime OK. layout=' + (rt.layout && rt.layout.name) + ', running=' + rt.running);
-                log('info', 'layouts: ' + Object.keys(rt.layouts||{}).join(', '));
-                ds.className='ok'; ds.textContent='✅ Runtime ready';
-                dpct.textContent = '100%'; db.style.width='100%';
-            } catch(e) { log('error', e); ds.className='err'; ds.textContent='❌ ' + e.message; }
-        }, 3000);
-
-        // 每 500ms 更新一次状态
-        setInterval(function(){
-            try {
-                var rt = window.cr_getC2Runtime && window.cr_getC2Runtime();
-                if (rt && rt.layout) {
-                    var name = rt.layout.name || '?';
-                    ds.textContent = '✅ Layout: ' + name;
-                    dpct.textContent = '100%'; db.style.width='100%';
-                }
-            } catch(e){}
-        }, 500);
-    })();
-    </script>
  
 	<div id="fb-root"></div>
 	
@@ -548,13 +555,15 @@ if (document.readyState === 'loading') {
 	<!-- Pages load faster with scripts at the bottom -->
 	
 	<!-- Construct 2 exported games require jQuery. -->
-	<script src="jquery-3.4.1.min.js"></script>
+	<script src="jquery-3.4.1.min.js?v=2"></script>
 
 
 	
     <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
     This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
-	<script src="c2runtime.js"></script>
+	<script src="c2runtime.js?v=2"></script>
+    
+<script src="MobileControls.js?v=2"></script>
 
     
 
@@ -564,6 +573,34 @@ if (document.readyState === 'loading') {
 		{			
 			// Create new runtime using the c2canvas
 			cr_createRuntime("c2canvas");
+
+			// ★ 强制跳过资源加载，直接进 BattleScreen（加强版）
+			var _forceTickCount = 0;
+			var _forceTick = setInterval(function(){
+				_forceTickCount++;
+				try {
+					var _rt = (window.cr_getC2Runtime && window.cr_getC2Runtime()) || 
+							  (document.getElementById('c2canvas') && document.getElementById('c2canvas').c2runtime);
+					if (_rt) {
+						clearInterval(_forceTick);
+						_rt.isloading = false;
+						_rt.progress = 1;
+						_rt.isSuspended = false;
+						_rt.running = true;
+						_rt.changelayout = 'BattleScreen';
+						_rt._changeLayoutPending = false;
+						// 清除 changeLayoutPending 防止它覆盖 changelayout
+						if (typeof _rt.go_loading_finished === 'function') {
+							try { _rt.go_loading_finished(); } catch(e){}
+						}
+						// 如果 go_loading_finished 没启动 RAF，手动启动 tick
+						if (!_rt._tickBound && typeof _rt.tick === 'function') {
+							_rt.tick(false);
+						}
+						console.log('✅ Forced skip load → BattleScreen (tries: ' + _forceTickCount + ')');
+					}
+				} catch(e){}
+			}, 100);
 		});
 		
 		// DISABLED: do NOT suspend on visibility change — it breaks auto-skip and game flow
@@ -612,5 +649,12 @@ if (document.readyState === 'loading') {
 			}
 		};
     </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
 </body> 
 </html> 
