@@ -199,6 +199,16 @@ function vpadSetup() {
             
             if (!cur) return;
             
+            // ── 强制背景永远纯黑（防止初始画面/过场时出现奇怪颜色）──
+            try {
+                document.body.style.background = '#000';
+                document.documentElement.style.background = '#000';
+                var cv = document.querySelector('canvas');
+                if (cv) cv.style.background = '#000';
+                var cdiv = document.getElementById('c2canvasdiv');
+                if (cdiv) cdiv.style.background = '#000';
+            } catch(e){}
+
             // ── Loader/Instructions 过场：直接切 BattleScreen ──
             if ((n === 'loader' || n === 'instructions') && !window.__vpadLoaderDone && p >= 1) {
                 window.__vpadLoaderDone = true;
@@ -219,6 +229,24 @@ function vpadSetup() {
             }
             
             if (n === 'battlescreen') {
+                // 1. 自动连续模拟 Z 键跳过标题过场（最多按 10 次，间隔 200ms）
+                try {
+                    if (!window.__vpadSkipIntroStarted) {
+                        window.__vpadSkipIntroStarted = true;
+                        var pressed = 0;
+                        var skipTimer = setInterval(function(){
+                            if (pressed >= 10) { clearInterval(skipTimer); return; }
+                            var ke = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
+                            document.dispatchEvent(ke);
+                            setTimeout(function(){
+                                var ke2 = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
+                                document.dispatchEvent(ke2);
+                            }, 80);
+                            pressed++;
+                        }, 200);
+                    }
+                } catch(e){}
+
                 // 2. 隐藏 Touch 层的全屏白色触摸区域实例
                 try {
                     var layers = rt.running_layout.layers;
