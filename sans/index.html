@@ -158,18 +158,18 @@ function vpadSetup() {
 
             if (rt.isSuspended) rt.isSuspended = false;
 
-            // ── 锁死原始分辨率 + letterbox 模式，让 Construct 2 自己算尺寸 ──
+            // ── 每次 poll 都锁死原始分辨率 + letterbox 模式 ──
             try {
-                var changed = false;
-                if (rt.original_width !== 960) { rt.original_width = 960; changed = true; }
-                if (rt.original_height !== 540) { rt.original_height = 540; changed = true; }
-                if (rt.fullscreen_mode !== 4) { rt.fullscreen_mode = 4; rt.fullscreen_mode_set = 4; changed = true; }
-                if (changed) {
-                    // 先清掉我们之前强制加的 inline style，让 C2 setSize 重新应用
-                    var rc = document.getElementById('c2canvas');
-                    if (rc) rc.removeAttribute('style');
-                    var cd = document.getElementById('c2canvasdiv');
-                    if (cd) cd.removeAttribute('style');
+                var rc = document.getElementById('c2canvas');
+                var cd = document.getElementById('c2canvasdiv');
+                var needResize = false;
+                if (rt.original_width !== 960) { rt.original_width = 960; needResize = true; }
+                if (rt.original_height !== 540) { rt.original_height = 540; needResize = true; }
+                if (rt.fullscreen_mode !== 4) { rt.fullscreen_mode = 4; rt.fullscreen_mode_set = 4; needResize = true; }
+                // 强制清理 canvas/div 的 inline style（C2 模板初始有 100vw/100vh）
+                if (rc && rc.getAttribute('style')) { rc.removeAttribute('style'); needResize = true; }
+                if (cd && cd.getAttribute('style')) { cd.removeAttribute('style'); needResize = true; }
+                if (needResize) {
                     rt.setSize(window.innerWidth, window.innerHeight, true);
                 }
             } catch(e){}
