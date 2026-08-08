@@ -1,0 +1,372 @@
+<script defer src="MobileControls.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<title>UT_C2 Engine</title>
+
+    <!-- All margins and padding must be zero for the canvas to fill the screen. -->
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		html, body {
+			background: #000;
+			color: #fff;
+			overflow: hidden;
+			touch-action-delay: none;
+			touch-action: none;
+			-ms-touch-action: none;
+		}
+		canvas {
+			touch-action-delay: none;
+			touch-action: none;
+			-ms-touch-action: none;
+		}
+    </style>
+	<style>
+        * { margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #c2canvasdiv { position: relative; width: 100%; height: 100%; }
+        canvas { display: block; margin: auto; background: #000; }
+
+        /* Joystick Styling */
+        #joystick-container { 
+            position: absolute; 
+            width: 140px; 
+            height: 155px; 
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            left: -75px; 
+            bottom: 45px;
+            background-size: cover;
+            z-index: 1000;
+            background-size: contain !important;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+            opacity: 0.7;
+        }
+        #joystick-handle { 
+            position: absolute; 
+            width: 90px; 
+            height: 105px; 
+            background: rgba(255, 255, 255, 0.5);
+             border-radius: 50%;
+            left: 25px; 
+            bottom: 22.5px;
+            background-size: cover;
+            z-index: 1000;
+            background-size: contain !important;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+            opacity: 0.7;
+        }
+        #joystick-mk {
+            position: absolute;
+            width: 140px;
+            height: 155px;
+            left: -75px;
+            bottom: 45px;
+            z-index: 1000;
+            background-size: contain !important;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+            opacity: 0.8;
+            display: none;
+        }
+        
+        /* Arrow Styling */
+        .arrow {
+            position: absolute;
+            z-index: 1000;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            line-height: 70px;
+            font-size: 40px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            background-size: contain !important;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+            opacity: 0.7;
+        }
+
+        #arrow-up {
+            bottom: 150px;
+            right: -65px;
+        }
+
+        #arrow-left {
+            bottom: 35px;
+            left: -120px;
+        }
+
+        #arrow-right {
+            bottom: 35px;
+            left: -10px;
+        }
+
+        #arrow-down {
+            bottom: 35px;
+            right: -65px;
+        }
+
+        /* Button Styling */
+        .button {
+            position: absolute;
+            z-index: 1000;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            line-height: 70px;
+            font-size: 24px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            background-size: contain !important;
+            background-repeat: no-repeat;
+            background-position: center;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+            opacity: 0.7;
+        }
+        .button, .arrow {
+            user-select: none;
+            -webkit-user-select: none;
+            transform-origin: center center;
+            --btn-scale: 1;
+            --btn-translate-x: 0px;
+            --btn-translate-y: 0px;
+            transform: translate(var(--btn-translate-x), var(--btn-translate-y)) scale(var(--btn-scale));
+        }
+        #joystick-container,
+        #joystick-handle,
+        #joystick-mk {
+            transform-origin: center center;
+            --btn-scale: 1;
+            --btn-translate-x: 0px;
+            --btn-translate-y: 0px;
+            transform: translate(var(--btn-translate-x), var(--btn-translate-y)) scale(var(--btn-scale));
+        }
+        #keyboard-set {
+            width: 35px;
+            height: 35px;
+            right: 15px;
+            top: 15px;
+            line-height: 35px;
+            font-size: 14px;
+            display: block;
+            z-index: 1300;
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.3);
+            -webkit-text-fill-color: #fff;
+            forced-color-adjust: none;
+            filter: none;
+        }
+        #settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1100;
+            display: none;
+            pointer-events: none;
+        }
+        #settings-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 220px;
+            height: 220px;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 1400;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .settings-button {
+            position: absolute;
+            width: 90px;
+            height: 40px;
+            line-height: 40px;
+            font-size: 16px;
+            pointer-events: auto;
+            opacity: 1;
+        }
+        #text-scale {
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #text-opacity {
+            top: 41.7%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #text-joystickscale {
+            top: 58.3%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #text-reset {
+            top: 85%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #toggle-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+        .layout2 #button-z {
+            width: 70px;
+            height: 70px;
+        }
+        .layout2 #button-x {
+            width: 70px;
+            height: 70px;
+        }
+       .layout2 #button-c {
+            width: 70px;
+            height: 70px;
+        }
+       
+        /* Default positions for layout 1 */
+        #button-z { right: 60px; bottom: 30px; display: none; }
+        #button-x { right: -15px; bottom: 70px; display: none; }
+        #button-c { right: -90px; bottom: 110px; display: none; }
+        #button-f2 { left: -60px; top: 10px; display: none; }
+        #button-f1 { left: 81px; top: 10px; display: none; }
+        #button-debug { position: absolute; left: -130px; top: 10px; display: none; }
+                
+        /* Specific positions for layout 2 */
+        .layout2 #button-z { right: 60px; top: 30px; } /* Specific positions for layout 2 */
+        .layout2 #button-x { right: -15px; top: 30px; } /* Specific positions for layout 2 */
+        .layout2 #button-c { right: -90px; top: 30px; } /* Specific positions for layout 2 */
+        .layout2 #button-f2 { left: -60px; top: 10px; display: none; } /* Specific positions for layout 2 */
+       .layout2 #button-f1 { left: 81px; top: 10px; display: none; } /* Specific positions for layout 2 */
+      .layout2 #button-debug { position: absolute; left: -130px; top: 10px; display: none; } /* Specific positions for layout 2 */
+    </style>
+	
+
+</head> 
+ 
+<body> 
+	<div id="fb-root"></div>
+	
+	<!-- The canvas must be inside a div called c2canvasdiv -->
+	<div id="c2canvasdiv">
+	
+		<!-- The canvas the project will render to.  If you change its ID, don't forget to change the
+		ID the runtime looks for in the jQuery events above (ready() and cr_sizeCanvas()). -->
+		<canvas id="c2canvas" width="640" height="480"></canvas>
+		
+    	<!-- Joystick -->
+        <div id="joystick-container">
+            <div id="joystick-handle"></div>
+	</div>
+        <div id="joystick-mk"></div>
+
+		<!-- Arrow Controls -->
+        <div id="arrow-up" class="arrow">↑</div>
+        <div id="arrow-left" class="arrow">←</div>
+        <div id="arrow-right" class="arrow">→</div>
+        <div id="arrow-down" class="arrow">↓</div>
+
+        <!-- Buttons -->
+        <div id="button-z" class="button">Z</div>
+        <div id="button-x" class="button">X</div>
+        <div id="button-c" class="button">C</div>
+        <div id="toggle-button" class="button">SET</div>
+        <div id="button-f2" class="button">F2</div>
+        <div id="button-f1" class="button">F1</div>
+        <div id="button-debug" class="button">DBG</div>
+        <div id="keyboard-set" class="button">KB</div>
+        <div id="settings-overlay"></div>
+        <div id="settings-panel">
+            <div id="text-scale" class="button settings-button">SIZE</div>
+            <div id="text-opacity" class="button settings-button">OPACITY</div>
+            <div id="text-joystickscale" class="button settings-button">JOY SIZE</div>
+            <div id="text-reset" class="button settings-button">RESET</div>
+        </div>
+	</div>
+	
+	<!-- Pages load faster with scripts at the bottom -->
+	
+	<!-- Construct 2 exported games require jQuery. -->
+	<script src="jquery-3.4.1.min.js"></script>
+
+
+	
+    <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
+    This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
+	<script src="c2runtime.js"></script>
+
+    
+
+    <script>
+		// Start the Construct 2 project running on window load.
+		jQuery(document).ready(function ()
+		{			
+			// Create new runtime using the c2canvas
+			cr_createRuntime("c2canvas");
+		});
+		
+		// Pause and resume on page becoming visible/invisible
+		function onVisibilityChanged() {
+			if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
+				cr_setSuspended(true);
+			else
+				cr_setSuspended(false);
+		};
+		
+		document.addEventListener("visibilitychange", onVisibilityChanged, false);
+		document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
+		
+				
+		function OnRegisterSWError(e)
+		{
+			console.warn("Failed to register service worker: ", e);
+		};
+		
+		// Runtime calls this global method when ready to start caching (i.e. after startup).
+		// This registers the service worker which caches resources for offline support.
+		window.C2_RegisterSW = function C2_RegisterSW()
+		{
+			if (!navigator.serviceWorker)
+				return;		// no SW support, ignore call
+			
+			try {
+				navigator.serviceWorker.register("sw.js", { scope: "./" })
+				.then(function (reg)
+				{
+					console.log("Registered service worker on " + reg.scope);
+				})
+				.catch(OnRegisterSWError);
+			}
+			catch (e)
+			{
+				OnRegisterSWError(e);
+			}
+		};
+    </script>
+</body> 
+</html> 

@@ -134,34 +134,42 @@ function vpadSetup() {
             if (!cur) return;
             var n = cur.toLowerCase();
 
-            // ── Loader 过场：加载完后自动切 BattleScreen（0.8s 过场，不卡）──
-            if (n === 'loader' && p >= 1 && !window.__vpadLoaderDone) {
+            // ── 尽早启动 tick 循环（让它能处理 changelayout）──
+            if (!tickBootstrapped && (n === 'loader' || n === 'instructions' || n === 'battlescreen')) {
+                tickBootstrapped = true;
+                rt.raf_id = -1;
+                rt.timeout_id = -1;
+                window.__vpadTickInterval = setInterval(function(){
+                    try {
+                        var r = getRuntime();
+                        if (r && !r.isSuspended) {
+                            r.redraw = true;
+                            r.tick(false);
+                        }
+                    } catch(e){}
+                }, 16);
+            }
+            
+            // ── Loader/Instructions 过场：直接切 BattleScreen ──
+            if ((n === 'loader' || n === 'instructions') && !window.__vpadLoaderDone && p >= 1) {
                 window.__vpadLoaderDone = true;
                 setTimeout(function(){
                     var r = getRuntime();
-                    if (r && r.system && r.system.acts) {
-                        r.system.acts.GoToLayoutByName('BattleScreen');
+                    if (r && r.layouts) {
+                        // changelayout 必须是布局对象（不是字符串）！
+                        var target = r.layouts['BattleScreen'] || r.layouts['battlescreen'];
+                        if (target) {
+                            r.changelayout = target;
+                            r._changeLayoutPending = false;
+                            console.log('✅ changelayout set to BattleScreen object');
+                        } else {
+                            console.log('❌ BattleScreen not found in layouts');
+                        }
                     }
-                }, 800);
+                }, 300);
             }
             
             if (n === 'battlescreen') {
-                // 1. 用我们自己的 setInterval 驱动 tick 循环（绕过 headless 下 RAF 不稳定的问题）
-                if (!tickBootstrapped) {
-                    tickBootstrapped = true;
-                    rt.raf_id = -1;
-                    rt.timeout_id = -1;
-                    window.__vpadTickInterval = setInterval(function(){
-                        try {
-                            var r = getRuntime();
-                            if (r && !r.isSuspended) {
-                                r.redraw = true;
-                                r.tick(false);
-                            }
-                        } catch(e){}
-                    }, 16);
-                }
-                
                 // 2. 隐藏 Touch 层的全屏白色触摸区域实例
                 try {
                     var layers = rt.running_layout.layers;
@@ -574,33 +582,24 @@ if (document.readyState === 'loading') {
 			// Create new runtime using the c2canvas
 			cr_createRuntime("c2canvas");
 
-			// ★ 强制跳过资源加载，直接进 BattleScreen（加强版）
-			var _forceTickCount = 0;
-			var _forceTick = setInterval(function(){
-				_forceTickCount++;
-				try {
-					var _rt = (window.cr_getC2Runtime && window.cr_getC2Runtime()) || 
-							  (document.getElementById('c2canvas') && document.getElementById('c2canvas').c2runtime);
-					if (_rt) {
-						clearInterval(_forceTick);
-						_rt.isloading = false;
-						_rt.progress = 1;
-						_rt.isSuspended = false;
-						_rt.running = true;
-						_rt.changelayout = 'BattleScreen';
-						_rt._changeLayoutPending = false;
-						// 清除 changeLayoutPending 防止它覆盖 changelayout
-						if (typeof _rt.go_loading_finished === 'function') {
-							try { _rt.go_loading_finished(); } catch(e){}
-						}
-						// 如果 go_loading_finished 没启动 RAF，手动启动 tick
-						if (!_rt._tickBound && typeof _rt.tick === 'function') {
-							_rt.tick(false);
-						}
-						console.log('✅ Forced skip load → BattleScreen (tries: ' + _forceTickCount + ')');
-					}
-				} catch(e){}
-			}, 100);
+			// ★ 让 Loader 正常加载完资源（progress>=1），然后自动跳 BattleScreen
+		// （不强制跳过，否则公网资源慢的时候 sprite 没加载完会黑屏）
+		var _forceTickCount = 0;
+		var _forceTick = setInterval(function(){
+			_forceTickCount++;
+			try {
+				var _rt = (window.cr_getC2Runtime && window.cr_getC2Runtime()) || 
+						  (document.getElementById('c2canvas') && document.getElementById('c2canvas').c2runtime);
+				if (_rt) {
+					clearInterval(_forceTick);
+					_rt.isSuspended = false;
+					_rt.running = true;
+					// 不强制 changelayout，让 Loader 正常 finish 后自己切换
+					// 只需要确保 RAF tick 循环能启动
+					console.log('✅ Runtime ready, waiting for Loader progress=1 (' + _forceTickCount + ' tries)');
+				}
+			} catch(e){}
+		}, 100);
 		});
 		
 		// DISABLED: do NOT suspend on visibility change — it breaks auto-skip and game flow

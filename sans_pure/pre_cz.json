@@ -1,0 +1,167 @@
+{
+   "turn.1": {
+        "func": "Dialogue",
+        "left": 200,
+        "top": 250,
+        "right": 440,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 319,
+        "heartmode": 0
+    },
+
+   "turn.2": {
+        "func": "Dialogue",
+        "left": 200,
+        "top": 250,
+        "right": 440,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 319,
+        "heartmode": 0
+    },
+
+   "turn.3": {
+        "func": "Dialogue",
+        "left": 200,
+        "top": 250,
+        "right": 440,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 320,
+        "heartmode": 0
+    },
+
+   "turn.4": {
+        "func": "Dialogue",
+        "left": 200,
+        "top": 250,
+        "right": 440,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 320,
+        "heartmode": 0
+    },
+
+   "turn.5": {
+        "func": "Dialogue",
+        "left": 100,
+        "top": 240,
+        "right": 540,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 320,
+        "heartmode": 0
+    },
+
+   "turn.6": {
+        "func": "Dialogue",
+        "left": 200,
+        "top": 250,
+        "right": 440,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 320,
+        "heartmode": 0
+    },
+
+   "turn.7": {
+        "func": "Dialogue",
+        "left": 32,
+        "top": 250,
+        "right": 607,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 320,
+        "heartmode": 0
+    },
+
+   "turn.8": {
+        "func": "Dialogue",
+        "left": 238,
+        "top": 225,
+        "right": 403,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 308,
+        "heartmode": 0
+    },
+
+   "turn.9": {
+        "func": "Dialogue",
+        "left": 132,
+        "top": 250,
+        "right": 507,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 320,
+        "heartmode": 0
+    },
+
+   "turn.10": {
+        "func": "Dialogue",
+        "left": 132,
+        "top": 200,
+        "right": 507,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 377,
+        "heartmode": 1
+    },
+
+   "turn.11": {
+        "func": "Dialogue",
+        "left": 273,
+        "top": 209,
+        "right": 369,
+        "bottom": 306,
+        "heartx": 321,
+        "hearty": 258,
+        "heartmode": 8
+    },
+
+   "turn.12": {
+        "func": "Dialogue",
+        "left": 238,
+        "top": 225,
+        "right": 403,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 308,
+        "heartmode": 0
+    },
+
+   "turn.13": {
+        "func": "Dialogue",
+        "left": 132,
+        "top": 250,
+        "right": 507,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 377,
+        "heartmode": 1
+    },
+
+   "turn.14": {
+        "func": "Dialogue",
+        "left": 238,
+        "top": 225,
+        "right": 403,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 308,
+        "heartmode": 0
+    },
+
+   "turn.15": {
+        "func": "Dialogue",
+        "left": 238,
+        "top": 225,
+        "right": 403,
+        "bottom": 390,
+        "heartx": 320,
+        "hearty": 308,
+        "heartmode": 0
+    }
+
+}

@@ -1,0 +1,65 @@
+{
+    "battle.sans.dialog.box.turn0" : "* Sans attacks.",
+    "battle.sans.dialog.box.turn1" : "* Sans is preparing his next attack.",
+    "battle.sans.dialog.box.turn2" : "* Sans is scheming something.",
+    "battle.sans.dialog.box.turn3" : "* Sans is scheming something.",
+    "battle.sans.dialog.box.turn4" : "* Just keep attacking.",
+    "battle.sans.dialog.box.turn5" : "* Just keep attacking.",
+    "battle.sans.dialog.box.turn6" : "* He looks a little tired.",
+
+    "battle.sans.enemyspeech.intro1" : "this test message<pause><clear><font 2><voice PapyrusSpeak>NORMAL FONT<pause><clear><font 3><voice BattleText2>NORMAL FONT",
+    "battle.sans.enemyspeech.intro2" : "Serious&Intro&Text.",
+    "battle.sans.enemyspeech.introend" : "Intro End Text.",
+    "battle.sans.enemyspeech.turn.1" : "<color red><sansface NoEyes>heh. . .",
+    "battle.sans.enemyspeech.turn.2" : "what's your end goal&here?",
+    "battle.sans.enemyspeech.turn.3" : "<sansface FunnyNoEyes>i have to get more <color red>exp <color black>&ahead of you.<pause><clear><sansface Upset>and then. . .<wait 1>&<sansface UpsetAndLook>well. . .",
+    "battle.sans.enemyspeech.turn.4" : "<sansface Upset>soon, <wait 0.2><sansface FunnyNoEyes>my power will be&way beyond yours.<pause><clear>and by then, <wait 0.2><color red>will you&even be able to defeat&me?",
+    "battle.sans.enemyspeech.turn.5" : "<sansface Upset>once i obtain sufficient&<color red>LOVE<color black>...<pause><clear><sansface NoEyes>i will tear you to pieces&<color red>over and over again.",
+    "battle.sans.enemyspeech.turn.6" : "<sansface ClosedEyes>after being killed again&and again...<pause><clear>i slowly realized one&thing.<pause><clear><sansface NoEyes><color red><speed 0.1>in this world, <wait 0.2><sansface FunnyNoEyes>it's kill or&be killed.",
+    "battle.sans.enemyspeech.turn.7" : "you...<pause><clear><sansface Upset3>fine...<pause><clear><sansface Wink2>it's time for you to see&my <color red>special attack<color black>.",
+    "battle.sans.enemyspeech.turn.8" : "turn8_text",
+    "battle.sans.enemyspeech.turn.9" : "turn9_text",
+    "battle.sans.enemyspeech.turn.10" : "turn10_text",
+    "battle.sans.enemyspeech.turn.11" : "turn11_text",
+    "battle.sans.enemyspeech.turn.12" : "turn12_text",
+    "battle.sans.enemyspeech.turn.13" : "turn13_text",
+    "battle.sans.enemyspeech.turn.14" : "turn14_text",
+    "battle.sans.enemyspeech.turn.15" : "turn15_text",
+    "battle.sans.enemyspeech.turn.16" : "turn16_text",
+
+
+    "text.asterisk" : "*",
+
+
+    "battle.dialog.act.check" : "* Check",
+    "battle.dialog.act.acttest" : "* Act test",
+    "battle.dialog.mercy.spare" : "* Spare",
+    "battle.dialog.mercy.flee" : "* Flee",
+
+    "battle.dialog.act.check.template" : "* % 2 ATK 2 DEF&",
+
+    "battle.sans.dialog.act.check.phase1" : "<wait 0.3>* He looks overwelhmed.",
+    "battle.sans.dialog.act.check.phase2" : "{battle.sans.dialog.check.phase1}<pause><clear>* Can't keep dodging forever.^1&* Keep attacking.",
+
+    "battle.sans.dialog.act.acttest" : "* Custom Act Test.^1&<font 1><voice SansSpeak>* <anim 3>er er er",
+    
+
+    "item.default.use.ateheal" : "* You ate the %.",
+    "item.default.use.hpheal" : "* You recovered % HP!",
+    "item.default.use.hpmax" : "* Your HP was maxed out.",
+
+    "item.pie.lname" : "ButtsPie",
+    "item.pie.sname" : "Pie",
+    "item.pie.use" : "{item.default.use.ateheal %}",
+
+    "item.candy.lname" : "MnstrCndy",
+    "item.candy.sname" : "M.Candy",
+    "item.candy.use" : "{item.default.use.ateheal %}",
+
+    "item.rock.lname" : "Rock",
+    "item.rock.sname" : "Rock",
+    "item.rock.use" : "{item.default.use.ateheal %}",
+
+
+    "gameover.text" : "<spd 0.075><textspacing 3>You cannot give&up just yet...<pause><clear>Stay determined..."
+}
