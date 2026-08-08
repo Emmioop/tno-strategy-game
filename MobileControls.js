@@ -1344,9 +1344,9 @@ function obj_mobilekey_Step_0(self) {
             cakb = 0.5; keyboard_key_press(105);
         }
         // ★ 更新按钮触摸检测坐标（匹配新的阶梯布局）
-        else if (gx>=600 && gx<=720 && gy>=200 && gy<=310) { cz=0.5; keyboard_key_press(self.mk_z); }
-        else if (gx>=500 && gx<=610 && gy>=260 && gy<=360) { cx=0.5; keyboard_key_press(self.mk_x); }
-        else if (gx>=400 && gx<=500 && gy>=310 && gy<=410) { cg=0.5; keyboard_key_press(self.mk_c); }
+        else if (gx>=830 && gx<=940 && gy>=270 && gy<=360) { cz=0.5; keyboard_key_press(self.mk_z); }
+        else if (gx>=720 && gx<=830 && gy>=330 && gy<=420) { cx=0.5; keyboard_key_press(self.mk_x); }
+        else if (gx>=610 && gx<=720 && gy>=390 && gy<=480) { cg=0.5; keyboard_key_press(self.mk_c); }
         else if (mobile_f2 && gx>=0 && gx<=80 && gy>=0 && gy<=30) { cf2=0.5; keyboard_key_press(self.mk_f2); }
         else if (button_extra_1 && gx>=0 && gx<=80 && gy>=40 && gy<=70) { cextra1=0.5; keyboard_key_press(self.mk_extra1); }
         else if (button_extra_3 && gx>=90 && gx<=170 && gy>=0 && gy<=30) { cextra3=0.5; keyboard_key_press(self.mk_extra3); }
@@ -1354,7 +1354,7 @@ function obj_mobilekey_Step_0(self) {
         else if (button_extra_2 && gx>=560 && gx<=640 && gy>=40 && gy<=70) { cextra2=0.5; keyboard_key_press(self.mk_extra2); }
         else if (button_extra_4 && gx>=471 && gx<=551 && gy>=0 && gy<=30) { cextra4=0.5; keyboard_key_press(self.mk_extra4); }
         else {
-            const da = (Math.atan2(-(gy-360), gx-140)*180/Math.PI + 360) % 360;
+            const da = (Math.atan2(-(gy-410), gx-90)*180/Math.PI + 360) % 360;
             if(da>=292.5||da<=67.5) { cr=0.5; keyboard_key_press(self.mk_right); }
             if(da>=22.5&&da<=157.5) { cu=0.5; keyboard_key_press(self.mk_up); }
             if(da>=112.5&&da<=247.5) { cl=0.5; keyboard_key_press(self.mk_left); }
@@ -1412,18 +1412,18 @@ function obj_mobilekey_Draw_75(self) {
     // ★ 加大按钮 + 阶梯布局（完全避开游戏 FIGHT/ACT/ITEM/MERCY 按钮）
     // Z 按钮 - 青色 (最右上)
     btn._label = 'Z';
-    btn(sx(600), sy(200), sx(720), sy(310), gms_col(self.zCol));
+    btn(sx(830), sy(270), sx(940), sy(360), gms_col(self.zCol));
     // X 按钮 - 橙色 (中间右上)
     btn._label = 'X';
-    btn(sx(500), sy(260), sx(610), sy(360), gms_col(self.xCol));
+    btn(sx(720), sy(330), sx(830), sy(420), gms_col(self.xCol));
     // C 按钮 - 绿色 (中间)
     btn._label = 'C';
-    btn(sx(400), sy(310), sx(500), sy(410), gms_col(self.cCol));
+    btn(sx(610), sy(390), sx(720), sy(480), gms_col(self.cCol));
     
     draw_set_alpha(1);
     drawAKB(1);
     // 左下摇杆背景图
-    if(spr_mobilekey?.complete) draw_sprite_ext(spr_mobilekey,0,sx(76),sy(296),2*game_area.scale,2*game_area.scale,0,c_white,1);
+    if(spr_mobilekey?.complete) draw_sprite_ext(spr_mobilekey,0,sx(90),sy(410),2*game_area.scale,2*game_area.scale,0,c_white,1);
 }
 
 function obj_mobilecontrols_Create_0() {
