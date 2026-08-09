@@ -72,32 +72,37 @@ function getGameRect() {
 function getLayout() {
     const r = getGameRect();
 
-    // 按钮/摇杆相对游戏画面的尺寸
     const base = Math.min(r.sw, r.sh) * 0.14;
     const btnSize = base;
     const gap = base * 0.15;
     const dpr = DPR;
+    const pad = btnSize * dpr;
+    const gapPx = gap * dpr;
 
-    // 阶梯按钮：全部在游戏画面右侧内部
     const marginX = btnSize * 0.4;
-    const marginTop = btnSize * 0.6;
-    const marginBottom = btnSize * 1.0;
+    const marginTop = btnSize * 0.5;
+    const marginBottom = btnSize * 0.5;
     const rightEdge = (r.sx + r.sw - marginX) * dpr;
 
-    // 三个按钮均匀分布在 topY 到 bottomY 之间
     const topY = (r.sy + marginTop) * dpr;
     const bottomY = (r.sy + r.sh - marginBottom) * dpr;
-    const pad = btnSize * dpr;
-    const step = (bottomY - topY - pad) / 2;
+    const totalH = bottomY - topY;
 
-    const z = { x2: rightEdge, x1: rightEdge - pad,
-                y1: topY, y2: topY + pad };
-    const x = { x2: z.x1 - gap * dpr, x1: z.x2 - pad - gap * dpr,
-                y1: topY + step, y2: topY + step + pad };
-    const c = { x2: x.x1 - gap * dpr, x1: x.x2 - pad - gap * dpr,
-                y1: bottomY - pad, y2: bottomY };
+    // 从右向左三个按钮：Z (最右), X (中间), C (最左)
+    const zR = rightEdge;
+    const zL = zR - pad;
+    const xR = zL - gapPx;
+    const xL = xR - pad;
+    const cR = xL - gapPx;
+    const cL = cR - pad;
 
-    // 摇杆：游戏画面左下
+    // Y 方向均匀分布在 topY..bottomY 之间
+    const stepY = (totalH - 3 * pad) / 2;
+
+    const z = { x1: zL, x2: zR, y1: topY, y2: topY + pad };
+    const x = { x1: xL, x2: xR, y1: topY + pad + stepY, y2: topY + 2 * pad + stepY };
+    const c = { x1: cL, x2: cR, y1: topY + 2 * pad + 2 * stepY, y2: bottomY };
+
     const stickR = Math.min(r.sw, r.sh) * 0.1;
     const sx = (r.sx + stickR * 1.8) * dpr;
     const sy = (r.sy + r.sh - stickR * 2.2) * dpr;
@@ -208,6 +213,14 @@ function dirFromStick(sx, sy) {
 function onTouchStart(e) {
     e.preventDefault();
     const layout = getLayout();
+    if (!draw._logged) {
+        var L = layout;
+        console.log('[MC-DEBUG] btnSize='+L.btnSize+' pad='+L.pad+' gap='+(L.btnSize*0.15*L.dpr));
+        console.log('[MC-DEBUG] Z:', JSON.stringify(L.z));
+        console.log('[MC-DEBUG] X:', JSON.stringify(L.x));
+        console.log('[MC-DEBUG] C:', JSON.stringify(L.c));
+        draw._logged = true;
+    }
     for (const t of e.changedTouches) {
         const sx = t.clientX * DPR;
         const sy = t.clientY * DPR;
@@ -233,6 +246,14 @@ function onTouchStart(e) {
 function onTouchMove(e) {
     e.preventDefault();
     const layout = getLayout();
+    if (!draw._logged) {
+        var L = layout;
+        console.log('[MC-DEBUG] btnSize='+L.btnSize+' pad='+L.pad+' gap='+(L.btnSize*0.15*L.dpr));
+        console.log('[MC-DEBUG] Z:', JSON.stringify(L.z));
+        console.log('[MC-DEBUG] X:', JSON.stringify(L.x));
+        console.log('[MC-DEBUG] C:', JSON.stringify(L.c));
+        draw._logged = true;
+    }
     for (const t of e.changedTouches) {
         const state = touchState[t.identifier];
         if (!state) continue;
@@ -316,6 +337,14 @@ function draw() {
     ctx.globalAlpha = BTN_OPACITY;
 
     const layout = getLayout();
+    if (!draw._logged) {
+        var L = layout;
+        console.log('[MC-DEBUG] btnSize='+L.btnSize+' pad='+L.pad+' gap='+(L.btnSize*0.15*L.dpr));
+        console.log('[MC-DEBUG] Z:', JSON.stringify(L.z));
+        console.log('[MC-DEBUG] X:', JSON.stringify(L.x));
+        console.log('[MC-DEBUG] C:', JSON.stringify(L.c));
+        draw._logged = true;
+    }
     const { dpr, z, x, c, stickCenter, stickR } = layout;
 
     // 按钮
@@ -383,7 +412,11 @@ let loopRunning = false;
 function startLoop() {
     if (loopRunning) return;
     loopRunning = true;
+    console.log('[MC-DEBUG] startLoop called, setting interval');
+    var ticks = 0;
     setInterval(function () {
+        ticks++;
+        if (ticks <= 3) console.log('[MC-DEBUG] draw tick #' + ticks);
         draw();
     }, 16);
 }
