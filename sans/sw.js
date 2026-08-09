@@ -1,4 +1,4 @@
-const CACHE = 'tno-dusttale-v2';
+const CACHE = 'tno-dusttale-v3';
 
 // 核心文件预缓存
 const PRECACHE = [
