@@ -266,27 +266,42 @@ function vpadSetup() {
             if (n === 'battlescreen' && !window.__battleIntroDone) {
                 window.__battleIntroDone = true;
                 try {
-                    // 盖黑色 div 死死捂住 canvas（比 layer.opacity 靠谱得多）
-                    var cover = document.createElement('div');
-                    cover.id = '__intro_cover__';
-                    cover.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;pointer-events:none;';
-                    document.body.appendChild(cover);
-                    // 狂按 Z 飞速跳过标题过场（50次 × 50ms = 2.5秒）
-                    var zCount = 0;
-                    var zTimer = setInterval(function(){
-                        zCount++;
-                        if (zCount > 50) { clearInterval(zTimer); return; }
+                    var L = rt.running_layout.layers;
+                    // 1. 隐藏所有背景层（标题过场时纯黑）
+                    for (var i = 0; i < L.length; i++) {
+                        var ln = L[i].name.toLowerCase();
+                        if (ln === 'bg' || ln === 'background' || ln === 'forestbg' || ln.indexOf('back') === 0) {
+                            L[i].opacity = 0;
+                        }
+                    }
+                    // 2. 温和跳过标题过场（自动按Z键多次）
+                    var skipCount = 0;
+                    var skipTimer = setInterval(function(){
+                        skipCount++;
+                        if (skipCount > 5) { clearInterval(skipTimer); return; }
                         try {
                             var kd = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
                             document.dispatchEvent(kd);
-                            var ku = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                            document.dispatchEvent(ku);
+                            setTimeout(function(){
+                                var ku = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
+                                document.dispatchEvent(ku);
+                            }, 50);
                         } catch(e){}
-                    }, 50);
-                    // 3.5 秒后拿开黑罩，游戏应该已进入正式战斗
+                    }, 500);
+                    // 3. 3.5秒后恢复背景层
                     setTimeout(function(){
-                        var c = document.getElementById('__intro_cover__');
-                        if (c && c.parentNode) c.parentNode.removeChild(c);
+                        try {
+                            var r = getRuntime();
+                            if (r && r.running_layout && r.running_layout.name.toLowerCase() === 'battlescreen') {
+                                var L2 = r.running_layout.layers;
+                                for (var i = 0; i < L2.length; i++) {
+                                    var ln2 = L2[i].name.toLowerCase();
+                                    if (ln2 === 'bg' || ln2 === 'background' || ln2 === 'forestbg' || ln2.indexOf('back') === 0) {
+                                        L2[i].opacity = 1;
+                                    }
+                                }
+                            }
+                        } catch(e){}
                     }, 3500);
                 } catch(e){}
             }
