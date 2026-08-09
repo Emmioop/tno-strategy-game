@@ -32,6 +32,57 @@
         #c2canvasdiv { position: relative; width: 100%; height: 100%; }
         canvas { display: block; margin: auto; background: #000; image-rendering: pixelated; }
     </style>
+	<style>
+		#c2loader {
+			position: fixed; inset: 0; z-index: 9999;
+			display: flex; flex-direction: column;
+			justify-content: center; align-items: center;
+			background: #0a0a0a;
+			font-family: "Courier New", "Menlo", monospace;
+			color: #eee;
+			transition: opacity 0.6s ease;
+		}
+		#c2loader.hide { opacity: 0; pointer-events: none; }
+		#c2loader .logo {
+			font-size: 18px; letter-spacing: 2px;
+			color: #ffcc33; margin-bottom: 24px;
+			text-shadow: 0 0 8px rgba(255,204,51,0.4);
+		}
+		#c2loader .logo span { color: #4dd0e1; }
+		#c2loader .bar-wrap {
+			width: min(420px, 80vw); height: 14px;
+			background: #222; border: 1px solid #444; border-radius: 2px;
+			overflow: hidden; position: relative;
+		}
+		#c2loader .bar-fill {
+			height: 100%; width: 0%;
+			background: linear-gradient(90deg, #00e5ff, #00bcd4, #ffcc33);
+			transition: width 0.25s ease-out;
+			box-shadow: 0 0 10px rgba(0,229,255,0.5);
+		}
+		#c2loader .bar-fill.indeterminate {
+			width: 40%;
+			animation: shimmer 1.2s linear infinite;
+		}
+		@keyframes shimmer {
+			0%   { transform: translateX(-120%); }
+			100% { transform: translateX(380%); }
+		}
+		#c2loader .pct {
+			margin-top: 10px; font-size: 14px;
+			color: #4dd0e1; font-variant-numeric: tabular-nums;
+		}
+		#c2loader .hint {
+			margin-top: 20px; font-size: 11px;
+			color: #777; max-width: 80vw; text-align: center;
+			line-height: 1.6;
+		}
+		#c2loader .hint b { color: #ffcc33; }
+		#c2loader .stage {
+			margin-top: 6px; font-size: 11px;
+			color: #999;
+		}
+	</style>
 </head> 
  
 <body> 
@@ -43,6 +94,14 @@
 		<!-- The canvas the project will render to.  If you change its ID, don't forget to change the
 		ID the runtime looks for in the jQuery events above (ready() and cr_sizeCanvas()). -->
 		<canvas id="c2canvas" width="640" height="480"></canvas>
+	</div>
+
+	<div id="c2loader">
+		<div class="logo">DUSSTALE <span>· 德衫 BOSS战</span></div>
+		<div class="bar-wrap"><div class="bar-fill indeterminate" id="c2loader-fill"></div></div>
+		<div class="pct" id="c2loader-pct">加载中…</div>
+		<div class="stage" id="c2loader-stage">正在准备资源</div>
+		<div class="hint"><b>首次加载约需 30–90 秒</b>（30MB 资源经 CDN 传输）<br/>请勿关闭此页面，进度条会自动更新</div>
 	</div>
 
 	<!-- Pages load faster with scripts at the bottom -->
@@ -67,6 +126,67 @@
 			cr_createRuntime("c2canvas");
 			var _rt = document.getElementById("c2canvas").c2runtime;
 			if (_rt) { _rt.enableWebGL = false; _rt.gl = null; }
+			// Loader overlay: update progress + auto-hide when ready
+			(function _startLoader() {
+				var el = document.getElementById("c2loader");
+				var fill = document.getElementById("c2loader-fill");
+				var pct = document.getElementById("c2loader-pct");
+				var stage = document.getElementById("c2loader-stage");
+				if (!el) return;
+				var lastPct = -1;
+				var stableTicks = 0;
+				var prevStablePct = -1;
+				var tick = 0;
+				var stages = [
+					[0,   "正在读取 data.js 项目数据"],
+					[3,   "正在加载字体精灵"],
+					[15,  "正在加载 Sans / Frisk 角色图"],
+					[30,  "正在加载 Gaster Blaster 特效"],
+					[50,  "正在加载弹幕 CSV 轨道"],
+					[70,  "正在加载战斗音效（骷髅、射击、斩击…）"],
+					[90,  "即将就绪，正在编译运行时"]
+				];
+				function pickStage(p) {
+					var s = stages[0];
+					for (var i = 0; i < stages.length; i++) {
+						if (p >= stages[i][0]) s = stages[i];
+					}
+					return s[1];
+				}
+				var t = setInterval(function() {
+					tick++;
+					var R = (document.getElementById("c2canvas").c2runtime) || window.c2runtime;
+					if (!R) return;
+					var isLoading = !!R.isloading;
+					var raw = (typeof R.loadingprogress === "number") ? R.loadingprogress : 0;
+					var p = Math.max(0, Math.min(1, raw));
+					var pctInt = Math.round(p * 100);
+					fill.classList.remove("indeterminate");
+					fill.style.width = pctInt + "%";
+					pct.textContent = pctInt + "%";
+					stage.textContent = pickStage(pctInt);
+					if (pctInt === lastPct && pctInt > 0) {
+						stableTicks++;
+						if (stableTicks >= 20 && prevStablePct === pctInt) {
+							stage.textContent = "网络较慢，仍在加载…请耐心等待";
+						}
+					} else {
+						stableTicks = 0;
+						prevStablePct = lastPct;
+						lastPct = pctInt;
+					}
+					if (!isLoading || pctInt >= 100) {
+						clearInterval(t);
+						fill.style.width = "100%";
+						pct.textContent = "100%";
+						stage.textContent = "准备就绪";
+						setTimeout(function() {
+							el.classList.add("hide");
+							setTimeout(function() { el.remove(); }, 700);
+						}, 400);
+					}
+				}, 250);
+			})();
 			// Inject Keyboard plugin instance (missing from exported data.js)
 			(function() {
 				var canvas = document.getElementById("c2canvas");
