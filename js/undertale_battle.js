@@ -8,6 +8,20 @@
 
   const CW = 640, CH = 480;
 
+  // ===== Debug flags (URL query: ?debug=god&debug=sanshp&debug=all) =====
+  const _up = new URLSearchParams(location.search);
+  const DEBUG = {
+    god:    _up.has('debug') && (_up.get('debug') === 'god'    || _up.get('debug') === 'all' || _up.get('debug') === '1'),
+    sanshp: _up.has('debug') && (_up.get('debug') === 'sanshp' || _up.get('debug') === 'all'),
+    phase:  _up.has('debug') && (_up.get('debug') === 'phase'  || _up.get('debug') === 'all'),
+    heal:   _up.has('debug') && (_up.get('debug') === 'heal'   || _up.get('debug') === 'all'),
+  };
+  if (DEBUG.god)    console.log('[BATTLE-DEBUG] GOD MODE (infinite HP)');
+  if (DEBUG.sanshp) console.log('[BATTLE-DEBUG] SANS 1 HP');
+  if (DEBUG.phase)  console.log('[BATTLE-DEBUG] PHASE SKIP (next on Space)');
+  if (DEBUG.heal)   console.log('[BATTLE-DEBUG] ITEMS 99x');
+  window.__BATTLE_DEBUG__ = DEBUG;
+
   const BOSS = {
     name: '德衫',
     sanshp: 1,
@@ -106,7 +120,7 @@
     state.player.hp = PLAYER.maxHp;
     state.player.karma = 0;
     state.player.mercy = 0;
-    state.player.items = [2,1,1,1];
+    state.player.items = DEBUG.heal ? [99,99,99,99] : [2,1,1,1];
     state.keys = {};
     state.virtualKeys = { up:false,down:false,left:false,right:false,confirm:false,jump:false };
     state.sansHurtT = 0;
@@ -484,7 +498,17 @@
     ctx.fillStyle = '#ffffff';
     ctx.font = '12px monospace';
     ctx.fillText('HP', barX - 32, y);
-    ctx.fillText(`${b.hp} / ${b.maxHp}`, barX + barW + 8, y);
+    ctx.fillText(DEBUG.god ? '∞ / ∞' : `${b.hp} / ${b.maxHp}`, barX + barW + 8, y);
+    if (DEBUG.god) {
+      ctx.fillStyle = '#44ff88';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('DEBUG GOD', x, y + 16);
+    }
+    if (DEBUG.heal && !DEBUG.god) {
+      ctx.fillStyle = '#ffaa44';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('DEBUG ITEMS×99', x + 90, y + 16);
+    }
 
     const krX = barX + barW + 100;
     ctx.fillStyle = '#cc66ff';
@@ -889,25 +913,27 @@
     if (hit && state.soulTeleportCooldown <= 0) {
       state.soulTeleportCooldown = 12;
       const dmg = 5;
-      state.player.hp -= dmg;
-      if (state.player.hp < 0) {
-        state.player.karma += -state.player.hp;
-        state.player.hp = 0;
-      } else {
-        state.player.karma = Math.max(0, state.player.karma - 2);
+      if (!DEBUG.god) state.player.hp -= dmg;
+      if (!DEBUG.god) {
+        if (state.player.hp < 0) {
+          state.player.karma += -state.player.hp;
+          state.player.hp = 0;
+        } else {
+          state.player.karma = Math.max(0, state.player.karma - 2);
+        }
       }
       if (typeof C2SF !== 'undefined') {
         C2SF.shake(0.8);
         C2SF.hitFlash();
-        C2SF.spawnDmg(cs.x, cs.y - 20, String(dmg), '#ff4444');
+        C2SF.spawnDmg(cs.x, cs.y - 20, DEBUG.god ? '∞' : String(dmg), DEBUG.god ? '#44ff88' : '#ff4444');
       }
-      if (state.player.hp <= 0 && state.player.karma >= PLAYER.maxHp) {
+      if (!DEBUG.god && state.player.hp <= 0 && state.player.karma >= PLAYER.maxHp) {
         state.player.hp = 0;
         state.phase = 'defeat';
         state.dialog = BOSS.onKillText;
         return;
       }
-      if (state.player.hp <= 0) state.player.hp = 0;
+      if (!DEBUG.god && state.player.hp <= 0) state.player.hp = 0;
     }
     if (state.soulTeleportCooldown > 0) state.soulTeleportCooldown--;
     if (state.player.karma > 0 && !hit) {
