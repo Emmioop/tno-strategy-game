@@ -266,43 +266,38 @@ function vpadSetup() {
             if (n === 'battlescreen' && !window.__battleIntroDone) {
                 window.__battleIntroDone = true;
                 try {
+                    // 把所有层 opacity 设为 0 → 画面完全纯黑，标题过场看不到任何东西
                     var L = rt.running_layout.layers;
-                    // 1. 隐藏所有背景层（标题过场时纯黑）
                     for (var i = 0; i < L.length; i++) {
-                        var ln = L[i].name.toLowerCase();
-                        if (ln === 'bg' || ln === 'background' || ln === 'forestbg' || ln.indexOf('back') === 0) {
-                            L[i].opacity = 0;
-                        }
+                        L[i].__saveOpacity = L[i].opacity;
+                        L[i].opacity = 0;
                     }
-                    // 2. 温和跳过标题过场（自动按Z键多次）
-                    var skipCount = 0;
-                    var skipTimer = setInterval(function(){
-                        skipCount++;
-                        if (skipCount > 5) { clearInterval(skipTimer); return; }
+                    // 狂按 Z 飞速跳过所有对话/标题过场（20次 × 120ms = 2.4秒）
+                    var zCount = 0;
+                    var zTimer = setInterval(function(){
+                        zCount++;
+                        if (zCount > 20) { clearInterval(zTimer); return; }
                         try {
                             var kd = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
                             document.dispatchEvent(kd);
                             setTimeout(function(){
                                 var ku = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
                                 document.dispatchEvent(ku);
-                            }, 50);
+                            }, 40);
                         } catch(e){}
-                    }, 500);
-                    // 3. 3.5秒后恢复背景层
+                    }, 120);
+                    // 2.8 秒后恢复所有层（过场应已全部跳完，进入正式战斗）
                     setTimeout(function(){
                         try {
                             var r = getRuntime();
                             if (r && r.running_layout && r.running_layout.name.toLowerCase() === 'battlescreen') {
                                 var L2 = r.running_layout.layers;
                                 for (var i = 0; i < L2.length; i++) {
-                                    var ln2 = L2[i].name.toLowerCase();
-                                    if (ln2 === 'bg' || ln2 === 'background' || ln2 === 'forestbg' || ln2.indexOf('back') === 0) {
-                                        L2[i].opacity = 1;
-                                    }
+                                    L2[i].opacity = L2[i].__saveOpacity !== undefined ? L2[i].__saveOpacity : 1;
                                 }
                             }
                         } catch(e){}
-                    }, 3500);
+                    }, 2800);
                 } catch(e){}
             }
 
