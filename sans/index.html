@@ -278,9 +278,39 @@ function vpadSetup() {
         } catch(e){}
     }, 150);
 
-    // ── 开始界面：加载完按钮变 ready，点按钮开始游戏 ──
+    // ── 开始界面：加载完后延迟 0.5s 自动消失（用户也可以提前点）──
     var ssBtn = document.getElementById('ssBtn');
     var ssEl = document.getElementById('startScreen');
+    var _autoStartScheduled = false;
+
+    function doStart() {
+        if (window.__startScreenHidden) return;
+        window.__startScreenHidden = true;
+        if (ssEl) ssEl.classList.add('hidden');
+        setTimeout(function(){ if (ssEl && ssEl.parentNode) ssEl.parentNode.removeChild(ssEl); }, 600);
+        try { window.dispatchEvent(new Event('resize')); } catch(e){}
+        // ── 进 BattleScreen 后温和跳过标题过场 ──
+        setTimeout(function(){
+            var pressed = 0;
+            var skipTimer = setInterval(function(){
+                pressed++;
+                if (pressed > 4) { clearInterval(skipTimer); return; }
+                var r = getRuntime();
+                if (!r || !r.running_layout || r.running_layout.name.toLowerCase() !== 'battlescreen') {
+                    if (pressed >= 2) { clearInterval(skipTimer); return; }
+                }
+                try {
+                    var kd = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
+                    document.dispatchEvent(kd);
+                    setTimeout(function(){
+                        var ku = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
+                        document.dispatchEvent(ku);
+                    }, 60);
+                } catch(e){}
+            }, 600);
+        }, 1500);
+    }
+
     var ssCheckInterval = setInterval(function(){
         try {
             var r = getRuntime();
@@ -289,28 +319,19 @@ function vpadSetup() {
             if (p >= 1 && !ssBtn.classList.contains('ready')) {
                 ssBtn.disabled = false;
                 ssBtn.classList.add('ready');
-                ssBtn.textContent = '▼  PRESS TO START  ▼';
+                ssBtn.textContent = '▼  TAP OR WAIT  ▼';
+                // 0.5s 后自动开始
+                if (!_autoStartScheduled) {
+                    _autoStartScheduled = true;
+                    setTimeout(doStart, 500);
+                }
             }
         } catch(e){}
     }, 200);
 
     if (ssBtn) {
-        var startHandler = function(){
-            ssBtn.disabled = true;
-            ssBtn.classList.remove('ready');
-            window.__startScreenHidden = true;
-            // 隐藏开始界面（淡出动画）
-            if (ssEl) ssEl.classList.add('hidden');
-            setTimeout(function(){
-                if (ssEl && ssEl.parentNode) ssEl.parentNode.removeChild(ssEl);
-            }, 600);
-            // 触发 reshape 确保 canvas 重新布局
-            try {
-                window.dispatchEvent(new Event('resize'));
-            } catch(e){}
-        };
-        ssBtn.addEventListener('click', startHandler);
-        ssBtn.addEventListener('touchstart', function(e){ e.preventDefault(); startHandler(); }, { passive: false });
+        ssBtn.addEventListener('click', doStart);
+        ssBtn.addEventListener('touchstart', function(e){ e.preventDefault(); doStart(); }, { passive: false });
     }
 
     // ── 窗口/方向变化时强制重算全屏 ──
