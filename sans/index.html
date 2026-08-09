@@ -368,12 +368,12 @@ function vpadSetup() {
     // 旧内联进度条清掉
     try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
     try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
+}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', vpadSetup);
 } else {
     vpadSetup();
-}
 }
 
 </script>
