@@ -164,20 +164,21 @@ function vpadSetup() {
                 rt.original_height = 540;
                 rt.fullscreen_mode = 4;
                 rt.fullscreen_mode_set = 4;
+                if (typeof rt.setSize === 'function') {
+                    try { rt.setSize(window.innerWidth, window.innerHeight, true); } catch(e){}
+                }
             } catch(e){}
 
             var p = rt.progress || 0;
-            
-            // ── 进度条：超过 5% 就立即彻底移除（不等 BattleScreen）──
-            if (!window.__vpadBarRemoved && p > 0.05) {
-                window.__vpadBarRemoved = true;
-                try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
-                try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
-            }
-            if (!window.__vpadBarRemoved) {
-                try { fill.style.width = (p*100).toFixed(1)+'%'; pct.textContent = 'Loading ' + Math.round(p*100) + '%'; } catch(e){}
-            }
-            
+
+            // ── 更新开始界面进度条 ──
+            try {
+                var ssBar = document.getElementById('ssBar');
+                var ssPct = document.getElementById('ssPct');
+                if (ssBar) ssBar.style.width = (p * 100).toFixed(1) + '%';
+                if (ssPct) ssPct.textContent = (p >= 1 ? 'READY' : 'LOADING ' + Math.round(p * 100) + '%');
+            } catch(e){}
+
             var cur = rt.running_layout && rt.running_layout.name;
             var n = cur ? cur.toLowerCase() : '';
 
@@ -196,10 +197,25 @@ function vpadSetup() {
                     } catch(e){}
                 }, 16);
             }
-            
+
+            // ── Loader 阶段：点开始后才切 BattleScreen ──
+            if ((n === 'loader' || n === 'instructions') && !window.__startChangelogDone && window.__startScreenHidden) {
+                window.__startChangelogDone = true;
+                setTimeout(function(){
+                    var r = getRuntime();
+                    if (r && r.layouts) {
+                        var target = r.layouts['BattleScreen'] || r.layouts['battlescreen'];
+                        if (target) {
+                            r.changelayout = target;
+                            r._changeLayoutPending = false;
+                        }
+                    }
+                }, 100);
+            }
+
             if (!cur) return;
-            
-            // ── 强制背景永远纯黑（防止初始画面/过场时出现奇怪颜色）──
+
+            // ── 强制背景永远纯黑 ──
             try {
                 document.body.style.background = '#000';
                 document.documentElement.style.background = '#000';
@@ -209,69 +225,24 @@ function vpadSetup() {
                 if (cdiv) cdiv.style.background = '#000';
             } catch(e){}
 
-            // ── Loader/Instructions 过场：直接切 BattleScreen ──
-            if ((n === 'loader' || n === 'instructions') && !window.__vpadLoaderDone && p >= 1) {
-                window.__vpadLoaderDone = true;
-                setTimeout(function(){
-                    var r = getRuntime();
-                    if (r && r.layouts) {
-                        // changelayout 必须是布局对象（不是字符串）！
-                        var target = r.layouts['BattleScreen'] || r.layouts['battlescreen'];
-                        if (target) {
-                            r.changelayout = target;
-                            r._changeLayoutPending = false;
-                            console.log('✅ changelayout set to BattleScreen object');
-                        } else {
-                            console.log('❌ BattleScreen not found in layouts');
-                        }
-                    }
-                }, 300);
-            }
-            
-            if (n === 'battlescreen') {
-                // 1. 自动连续模拟 Z 键跳过标题过场（最多按 10 次，间隔 200ms）
-                try {
-                    if (!window.__vpadSkipIntroStarted) {
-                        window.__vpadSkipIntroStarted = true;
-                        var pressed = 0;
-                        var skipTimer = setInterval(function(){
-                            if (pressed >= 10) { clearInterval(skipTimer); return; }
-                            var ke = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                            document.dispatchEvent(ke);
-                            setTimeout(function(){
-                                var ke2 = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                                document.dispatchEvent(ke2);
-                            }, 80);
-                            pressed++;
-                        }, 200);
-                    }
-                } catch(e){}
-
-                // 2. 隐藏 Touch 层的全屏白色触摸区域实例
+            if (n === 'battlescreen' || n === 'gameover') {
                 try {
                     var layers = rt.running_layout.layers;
+                    // Touch 层隐藏
                     for (var i = 0; i < layers.length; i++) {
                         if (layers[i].name.toLowerCase() === 'touch') {
-                            layers[i].instances.forEach(function(inst){
-                                inst.opacity = 0;
-                            });
+                            layers[i].instances.forEach(function(inst){ inst.opacity = 0; });
                             break;
                         }
                     }
-                } catch(e){}
-                
-                // 3. 清空 Fade 层残留实例
-                try {
+                    // Fade 层清空
                     for (var i = 0; i < layers.length; i++) {
                         if (layers[i].name.toLowerCase() === 'fade') {
                             layers[i].instances.length = 0;
                             break;
                         }
                     }
-                } catch(e){}
-                
-                // 4. CombatZoneClipped 禁用 destination-in 混合
-                try {
+                    // CombatZoneClipped 禁用混合
                     for (var i = 0; i < layers.length; i++) {
                         if (layers[i].name.toLowerCase().indexOf('clipped') >= 0) {
                             layers[i].forceOwnTexture = true;
@@ -279,12 +250,15 @@ function vpadSetup() {
                         }
                     }
                 } catch(e){}
-                
-                // 5. HP 保持满值 20/20
+            }
+
+            if (n === 'battlescreen') {
                 try {
-                    for (var i = 0; i < layers.length; i++) {
-                        if (layers[i].name.toLowerCase() === 'hud') {
-                            var insts = layers[i].instances;
+                    var layers2 = rt.running_layout.layers;
+                    // HP 保持满值
+                    for (var i = 0; i < layers2.length; i++) {
+                        if (layers2[i].name.toLowerCase() === 'hud') {
+                            var insts = layers2[i].instances;
                             for (var j = 0; j < insts.length; j++) {
                                 var inst = insts[j];
                                 if (inst.type.name === 't78' && inst.text && inst.text.indexOf('/') >= 0) {
@@ -300,14 +274,68 @@ function vpadSetup() {
                         }
                     }
                 } catch(e){}
-                
-                // 6. 彻底移除进度条（强制跳过加载时 progress 可能还没到 1）
-                try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
-                try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
             }
         } catch(e){}
     }, 150);
-}
+
+    // ── 开始界面：加载完按钮变 ready，点按钮开始游戏 ──
+    var ssBtn = document.getElementById('ssBtn');
+    var ssEl = document.getElementById('startScreen');
+    var ssCheckInterval = setInterval(function(){
+        try {
+            var r = getRuntime();
+            if (!r || !ssBtn) return;
+            var p = r.progress || 0;
+            if (p >= 1 && !ssBtn.classList.contains('ready')) {
+                ssBtn.disabled = false;
+                ssBtn.classList.add('ready');
+                ssBtn.textContent = '▼  PRESS TO START  ▼';
+            }
+        } catch(e){}
+    }, 200);
+
+    if (ssBtn) {
+        var startHandler = function(){
+            ssBtn.disabled = true;
+            ssBtn.classList.remove('ready');
+            window.__startScreenHidden = true;
+            // 隐藏开始界面（淡出动画）
+            if (ssEl) ssEl.classList.add('hidden');
+            setTimeout(function(){
+                if (ssEl && ssEl.parentNode) ssEl.parentNode.removeChild(ssEl);
+            }, 600);
+            // 触发 reshape 确保 canvas 重新布局
+            try {
+                window.dispatchEvent(new Event('resize'));
+            } catch(e){}
+        };
+        ssBtn.addEventListener('click', startHandler);
+        ssBtn.addEventListener('touchstart', function(e){ e.preventDefault(); startHandler(); }, { passive: false });
+    }
+
+    // ── 窗口/方向变化时强制重算全屏 ──
+    window.addEventListener('resize', function(){
+        try {
+            var r = getRuntime();
+            if (r && typeof r.setSize === 'function') {
+                r.setSize(window.innerWidth, window.innerHeight, true);
+            }
+        } catch(e){}
+    });
+    window.addEventListener('orientationchange', function(){
+        setTimeout(function(){
+            try {
+                var r = getRuntime();
+                if (r && typeof r.setSize === 'function') {
+                    r.setSize(window.innerWidth, window.innerHeight, true);
+                }
+            } catch(e){}
+        }, 300);
+    });
+
+    // 旧内联进度条清掉
+    try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
+    try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', vpadSetup);
@@ -591,14 +619,103 @@ if (document.readyState === 'loading') {
         .layout2 #button-f2 { left: -60px; top: 10px; display: none; } /* Specific positions for layout 2 */
        .layout2 #button-f1 { left: 81px; top: 10px; display: none; } /* Specific positions for layout 2 */
       .layout2 #button-debug { position: absolute; left: -130px; top: 10px; display: none; } /* Specific positions for layout 2 */
+
+        /* ── 开始界面 ── */
+        #startScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 99999999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease;
+        }
+        #startScreen.hidden { opacity: 0; pointer-events: none; }
+        #startScreen h1 {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(28px, 8vw, 56px);
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+            letter-spacing: 2px;
+            margin: 0 0 8px 0;
+            text-align: center;
+        }
+        #startScreen h1 span { color: #FF4444; }
+        #startScreen .subtitle {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(14px, 3.5vw, 20px);
+            color: #888;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        #startScreen .progress-wrap {
+            width: min(280px, 70vw);
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        #startScreen .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #666, #fff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        #startScreen .progress-text {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+        }
+        #startScreen .start-btn {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(16px, 4.5vw, 22px);
+            color: #fff;
+            background: transparent;
+            border: 2px solid #fff;
+            padding: 14px 48px;
+            letter-spacing: 4px;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.3s, background 0.3s, transform 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #startScreen .start-btn.ready { opacity: 1; animation: pulse 1.5s infinite; }
+        #startScreen .start-btn:active { transform: scale(0.95); }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+        }
+        #startScreen .hints {
+            margin-top: 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #444;
+            text-align: center;
+            line-height: 1.8;
+        }
+        #startScreen .hints b { color: #888; }
     </style>
 	
 
 </head> 
  
 <body>
- 
-	<div id="fb-root"></div>
+
+        <!-- ── 开始界面（加载 + 点击开始）── -->
+        <div id="startScreen">
+            <h1>DUST<span>TALE</span></h1>
+            <div class="subtitle">sans · BOSS FIGHT</div>
+            <div class="progress-wrap"><div class="progress-bar" id="ssBar"></div></div>
+            <div class="progress-text" id="ssPct">LOADING 0%</div>
+            <button class="start-btn" id="ssBtn" disabled>PRESS TO START</button>
+            <div class="hints">
+                <b>Z</b> 确认　<b>X</b> 取消　<b>C</b> 菜单<br>
+                摇杆控制 <b>SOUL</b> 移动
+            </div>
+        </div>
+
+        <div id="fb-root"></div>
 	
 	<!-- The canvas must be inside a div called c2canvasdiv -->
 	<div id="c2canvasdiv">
@@ -648,7 +765,7 @@ if (document.readyState === 'loading') {
     This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
 	<script src="https://emmioop.github.io/tno-strategy-game/c2runtime.js?_v=20260808"></script>
     
-<script src="https://emmioop.github.io/tno-strategy-game/MobileControls.js?_v=v2_refactor_20260809_092137"></script>
+<script src="https://emmioop.github.io/tno-strategy-game/MobileControls.js?_v=start_screen_20260809_094432"></script>
 
     
 
