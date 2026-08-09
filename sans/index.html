@@ -4,9 +4,9 @@
 
 
 <head>
-<!-- CDN 钩子暂时禁用，直接从 gh-pages 加载最新资源
 <script>
 (function(){
+    return; // CDN 钩子暂时禁用
     var CDN = '';
     var LOCAL = window.location.protocol + '//' + window.location.host + '/';
     var onLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -927,14 +927,6 @@ if (document.readyState === 'loading') {
 			}
 		};
     </script>
-<!-- SW disabled
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/sw.js').catch(function(){});
-  });
-}
-</script>
--->
+
 </body> 
 </html> 
