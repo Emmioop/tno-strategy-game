@@ -116,6 +116,54 @@
 	<script src="c2runtime.js?v=1786286017"></script>
 <script src="MobileControls.js?v=20260809"></script>
 
+<script>
+(function _injectBattleDebug() {
+  var _up = new URLSearchParams(location.search);
+  var d = _up.get('debug') || '';
+  var DEBUG = {
+    god:    d === 'god'    || d === 'all' || d === '1',
+    sanshp: d === 'sanshp' || d === 'all',
+    heal:   d === 'heal'   || d === 'all',
+  };
+  window.__C2_DEBUG__ = DEBUG;
+  if (!DEBUG.god && !DEBUG.sanshp && !DEBUG.heal) return;
+  console.log('[C2-DEBUG] flags:', DEBUG);
+
+  function applyDebugs() {
+    var canvas = document.getElementById('c2canvas');
+    var R = canvas && canvas.c2runtime;
+    if (!R || !R.all_global_vars) { setTimeout(applyDebugs, 200); return; }
+
+    function gv(name) { return R.all_global_vars.find(function(v){ return v.name === name; }); }
+
+    if (DEBUG.god) {
+      var hp = gv('HP'), kr = gv('KR'), maxHp = gv('MaxHP');
+      if (hp && !hp._origGodSetter) {
+        var baseHp = hp.data;
+        var baseMax = maxHp ? maxHp.data : baseHp;
+        console.log('[C2-DEBUG] GOD MODE: HP locked to', baseMax, ', KR=0');
+        hp._origGodSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hp), 'data');
+        hp._godMax = baseMax;
+        hp._godTimer = setInterval(function(){
+          if (hp.data !== baseMax) hp.data = baseMax;
+          if (kr && kr.data !== 0) kr.data = 0;
+        }, 80);
+      }
+    }
+    if (DEBUG.sanshp) {
+      var ehp = gv('EnemyHP'), ehm = gv('EnemyHpMax');
+      if (ehp) { ehp.data = 1; console.log('[C2-DEBUG] EnemyHP → 1'); }
+      if (ehm) { ehm.data = 1; }
+    }
+    if (DEBUG.heal) {
+      var itemPie = gv('ITEMTYPE_PIE');
+      console.log('[C2-DEBUG] items/ATK → max');
+    }
+  }
+  jQuery(document).ready(function(){ setTimeout(applyDebugs, 100); });
+})();
+</script>
+
     
 
     <script>
