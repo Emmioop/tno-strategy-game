@@ -289,60 +289,69 @@ function vpadSetup() {
         } catch(e){}
     }, 150);
 
-    // ── 开始界面：加载完后延迟 0.5s 自动消失（用户也可以提前点）──
+    // ── 开始界面：runtime 一就绪立即移除 + 强制进 BattleScreen ──
     var ssBtn = document.getElementById('ssBtn');
     var ssEl = document.getElementById('startScreen');
-    var _autoStartScheduled = false;
 
     function doStart() {
         if (window.__startScreenHidden) return;
         window.__startScreenHidden = true;
-        if (ssEl) ssEl.classList.add('hidden');
-        setTimeout(function(){ if (ssEl && ssEl.parentNode) ssEl.parentNode.removeChild(ssEl); }, 600);
+        // 立即移除，不做 fade
+        if (ssEl && ssEl.parentNode) {
+            ssEl.parentNode.removeChild(ssEl);
+        }
         try { window.dispatchEvent(new Event('resize')); } catch(e){}
-        // ── 进 BattleScreen 后温和跳过标题过场 ──
-        setTimeout(function(){
-            var pressed = 0;
-            var skipTimer = setInterval(function(){
-                pressed++;
-                if (pressed > 4) { clearInterval(skipTimer); return; }
-                var r = getRuntime();
-                if (!r || !r.running_layout || r.running_layout.name.toLowerCase() !== 'battlescreen') {
-                    if (pressed >= 2) { clearInterval(skipTimer); return; }
-                }
-                try {
-                    var kd = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                    document.dispatchEvent(kd);
-                    setTimeout(function(){
-                        var ku = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                        document.dispatchEvent(ku);
-                    }, 60);
-                } catch(e){}
-            }, 600);
-        }, 1500);
     }
 
-    var ssCheckInterval = setInterval(function(){
+    function forceBattleScreen() {
         try {
             var r = getRuntime();
-            if (!ssBtn) return;
-            var lp = window.__ssLocalProgress || 0;
-            if (lp >= 1 && !ssBtn.classList.contains('ready')) {
-                ssBtn.disabled = false;
-                ssBtn.classList.add('ready');
-                ssBtn.textContent = '▼  TAP OR WAIT  ▼';
-                // 0.5s 后自动开始
-                if (!_autoStartScheduled) {
-                    _autoStartScheduled = true;
-                    setTimeout(doStart, 500);
+            if (!r || !r.layouts) return;
+            var cur = r.running_layout && r.running_layout.name.toLowerCase();
+            if (cur === 'battlescreen') return; // 已在战斗界面
+            // 强制设置 changelayout
+            var target = r.layouts['BattleScreen'] || r.layouts['battlescreen'];
+            if (!target) {
+                var keys = Object.keys(r.layouts);
+                for (var i = 0; i < keys.length; i++) {
+                    if (keys[i].toLowerCase() === 'battlescreen') { target = r.layouts[keys[i]]; break; }
                 }
+            }
+            if (target) {
+                r.changelayout = target;
+                r._changeLayoutPending = false;
+            }
+        } catch(e){}
+    }
+
+    // 独立检测：runtime 就绪 → 移除 startScreen + 强制进战斗
+    var startCheckInterval = setInterval(function(){
+        try {
+            var r = getRuntime();
+            if (!r || !r.layouts) return;
+            // startScreen 移除（最多等页面加载后 3 秒）
+            var elapsed = Date.now() - (window.__bootStart || (window.__bootStart = Date.now()));
+            if (!window.__startScreenHidden && elapsed > 1500) {
+                doStart();
+            }
+            // 强制进 BattleScreen
+            if (r.changelayout !== 'force_wait' && !window.__forceDone) {
+                var cur = r.running_layout && r.running_layout.name.toLowerCase();
+                if (cur && cur !== 'battlescreen') {
+                    forceBattleScreen();
+                    window.__forceDone = true;
+                }
+            }
+            // 两个都搞定就停
+            if (window.__startScreenHidden && window.__forceDone) {
+                clearInterval(startCheckInterval);
             }
         } catch(e){}
     }, 200);
 
     if (ssBtn) {
-        ssBtn.addEventListener('click', doStart);
-        ssBtn.addEventListener('touchstart', function(e){ e.preventDefault(); doStart(); }, { passive: false });
+        ssBtn.addEventListener('click', function(){ doStart(); forceBattleScreen(); });
+        ssBtn.addEventListener('touchstart', function(e){ e.preventDefault(); doStart(); forceBattleScreen(); }, { passive: false });
     }
 
     // ── 窗口/方向变化时强制重算全屏 ──
