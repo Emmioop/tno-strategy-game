@@ -6,8 +6,7 @@
 <head>
 <script>
 (function(){
-    return; // CDN 钩子暂时禁用
-    var CDN = '';
+    var CDN = 'https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/';
     var LOCAL = window.location.protocol + '//' + window.location.host + '/';
     var onLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     
@@ -176,17 +175,25 @@ function vpadSetup() {
                 if (ssBar && ssPct) {
                     if (window.__ssLocalProgress === undefined) window.__ssLocalProgress = 0;
                     var r = getRuntime();
-                    var ticking = !!(r && !r.isSuspended);
-                    if (ticking && window.__ssLocalProgress < 1) {
-                        // 已经在 tick 了，从 0 平滑升到 1 用 2 秒
-                        window.__ssLocalProgress = Math.min(1, window.__ssLocalProgress + 0.08);
-                    } else if (!ticking && window.__ssLocalProgress < 0.7) {
-                        // 还没 tick，慢慢爬
-                        window.__ssLocalProgress = Math.min(0.7, window.__ssLocalProgress + 0.02);
+                    var isLoading = !!(r && r.isloading);
+                    if (r && r.isloading === false && r.isloading !== undefined) {
+                        // data.js 加载完了（rt.isloading 变 false）—— 瞬间满，准备移除 startScreen
+                        window.__ssLocalProgress = Math.min(1, window.__ssLocalProgress + 0.15);
+                    } else if (r && !r.isSuspended && window.__ssLocalProgress < 0.95) {
+                        // runtime 在跑（tick 循环正常）—— 稳步爬升
+                        window.__ssLocalProgress = Math.min(0.95, window.__ssLocalProgress + 0.04);
+                    } else if (window.__ssLocalProgress < 0.5) {
+                        // 还没 runtime，慢慢爬
+                        window.__ssLocalProgress = Math.min(0.5, window.__ssLocalProgress + 0.015);
                     }
                     var lp = window.__ssLocalProgress;
                     ssBar.style.width = (lp * 100).toFixed(1) + '%';
-                    ssPct.textContent = lp >= 1 ? 'READY' : 'LOADING ' + Math.round(lp * 100) + '%';
+                    if (lp >= 1) {
+                        ssPct.textContent = 'READY';
+                        if (ssBtn && ssBtn.disabled) ssBtn.disabled = false;
+                    } else {
+                        ssPct.textContent = 'LOADING ' + Math.round(lp * 100) + '%';
+                    }
                 }
             } catch(e){}
 
@@ -374,7 +381,7 @@ function vpadSetup() {
             if (!r || !r.layouts) return;
             // startScreen 移除（最多等页面加载后 3 秒）
             var elapsed = Date.now() - (window.__bootStart || (window.__bootStart = Date.now()));
-            if (!window.__startScreenHidden && elapsed > 1500) {
+            if (!window.__startScreenHidden && elapsed > 2500 && r && r.isloading === false && r.running_layout) {
                 doStart();
             }
             // 强制进 BattleScreen
@@ -437,7 +444,7 @@ if (document.readyState === 'loading') {
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="mobile-web-app-capable" content="yes" />
 	<title>DUSTTALE · 德衫 BOSS战</title>
-    <!-- base href removed, use relative paths -->
+    <base href="https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/sans/">
 
     <!-- All margins and padding must be zero for the canvas to fill the screen. -->
 	<style type="text/css">
