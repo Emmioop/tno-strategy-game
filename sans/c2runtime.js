@@ -4229,6 +4229,12 @@ quat4.str=function(a){return"["+a[0]+", "+a[1]+", "+a[2]+", "+a[3]+"]"};
 		this.original_height = pm[11];
 		this.parallax_x_origin = this.original_width / 2;
 		this.parallax_y_origin = this.original_height / 2;
+		if (this.isDomFree && !this.isEjecta && (pm[12] >= 4 || pm[12] === 0))
+		{
+			cr.logexport("[Construct 2] Letterbox scale fullscreen modes are not supported on this platform - falling back to 'Scale outer'");
+			this.fullscreen_mode = 3;
+			this.fullscreen_mode_set = 3;
+		}
 		this.uses_loader_layout = pm[18];
 		this.loaderstyle = pm[19];
 		if (this.loaderstyle === 0)
@@ -4959,8 +4965,14 @@ quat4.str=function(a){return"["+a[0]+", "+a[1]+", "+a[2]+", "+a[3]+"]"};
 			if (t.onAppBegin)
 				t.onAppBegin();
 		}
-		this.isSuspended = false;
-		this.tick(false);
+		if (document["hidden"] || document["webkitHidden"] || document["mozHidden"] || document["msHidden"])
+		{
+			window["cr_setSuspended"](true);		// stop rendering
+		}
+		else
+		{
+			this.tick(false);
+		}
 		if (this.isDirectCanvas)
 			AppMobi["webview"]["execute"]("onGameReady();");
 	};

@@ -1,450 +1,10 @@
-
 <!DOCTYPE html>
 <html>
-
-
 <head>
-<script>
-(function(){
-    var CDN = 'https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/';
-    var LOCAL = window.location.protocol + '//' + window.location.host + '/';
-    var onLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    
-    function toCDN(url) {
-        if (!url || /^(https?:)?\/\//.test(url) || /^data:/.test(url) || /^blob:/.test(url)) return url;
-        // 相对路径 -> CDN
-        var clean = url.replace(/^\.?\//, '');
-        return CDN + clean;
-    }
-    
-    // 1. Hook XMLHttpRequest（c2runtime.js 用它加载 data.js）
-    var _open = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
-        var args = Array.prototype.slice.call(arguments);
-        if (!onLocal && typeof url === 'string') {
-            args[1] = toCDN(url);
-        }
-        return _open.apply(this, args);
-    };
-    
-    // 2. Hook Image.src（Construct 2 加载图片用 new Image().src）
-    var _origSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-    Object.defineProperty(HTMLImageElement.prototype, 'src', {
-        get: function(){ return _origSrc.get.call(this); },
-        set: function(v) {
-            if (!onLocal && typeof v === 'string' && !this._cdnSet) {
-                v = toCDN(v);
-                this._cdnSet = true;
-            }
-            _origSrc.set.call(this, v);
-        },
-        configurable: true
-    });
-    
-    // 3. Hook Audio.src（Construct 2 加载音频）
-    if (window.Audio) {
-        var _audioSrc = Object.getOwnPropertyDescriptor(HTMLAudioElement.prototype, 'src');
-        if (_audioSrc) {
-            Object.defineProperty(HTMLAudioElement.prototype, 'src', {
-                get: function(){ return _audioSrc.get.call(this); },
-                set: function(v) {
-                    if (!onLocal && typeof v === 'string' && !this._cdnSet) {
-                        v = toCDN(v);
-                        this._cdnSet = true;
-                    }
-                    _audioSrc.set.call(this, v);
-                },
-                configurable: true
-            });
-        }
-    }
-})();
-</script>
-<script>
-// vpad.js - virtual buttons + auto-skip loader
-'use strict';
-
-var bar = document.createElement('div');
-bar.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:3px;background:rgba(255,255,255,.15);z-index:999999;pointer-events:none;transition:opacity .6s;';
-var fill = document.createElement('div');
-fill.style.cssText = 'width:0%;height:100%;background:linear-gradient(90deg,#ff4444,#ff8844);transition:width .2s linear;';
-bar.appendChild(fill);
-
-var pct = document.createElement('div');
-pct.style.cssText = 'position:fixed;top:8px;left:8px;z-index:999999;color:#fff;font:13px monospace;text-shadow:0 0 3px #000;pointer-events:none;';
-
-// 安全添加元素到 body
-function addToBody(el) {
-    if (document.body) {
-        document.body.appendChild(el);
-    } else {
-        document.addEventListener('DOMContentLoaded', function() {
-            document.body.appendChild(el);
-        });
-    }
-}
-
-addToBody(bar);
-addToBody(pct);
-
-window.vpadDebug = { setupCalled: false, pollCalls: 0 };
-
-    // ★ v2: 强制清除所有旧状态 + 设置新版本（解决手机缓存旧版本问题）
-    try {
-        var __rm = [];
-        for (var __k in localStorage) {
-            if (__k.indexOf('ui_state') !== -1 || __k.indexOf('tno') !== -1 || __k.indexOf('sans') !== -1 || __k.indexOf('mc_') !== -1 || __k.indexOf('font') !== -1) {
-                __rm.push(__k);
-            }
-        }
-        __rm.forEach(function(k){ localStorage.removeItem(k); });
-        localStorage.setItem('tno_v', '2');
-        localStorage.setItem('ui_state', '2');
-    } catch(e){}
-
-    function getRuntime() {
-    var rt = document.getElementById('c2canvas') && document.getElementById('c2canvas').c2runtime;
-    if (!rt) rt = window.c2runtime;
-    return rt;
-}
-function getLayout(name) {
-    var rt = getRuntime();
-    if (!rt || !rt.layouts) return null;
-    var keys = Object.keys(rt.layouts);
-    for (var i = 0; i < keys.length; i++) {
-        if (keys[i].toLowerCase() === name.toLowerCase()) return rt.layouts[keys[i]];
-    }
-    return null;
-}
-
-function vpadSetup() {
-    window.vpadDebug.setupCalled = true;
-    var tickBootstrapped = false;
-    var origSizeFixed = false;
-
-    // 强制隐藏所有 DOM 虚拟键盘元素（MobileControls.js 用 virt-ctrl canvas 自己画）
-    try {
-        var __hideIds = [
-            'joystick-container','joystick-handle','joystick-mk',
-            'arrow-up','arrow-left','arrow-right','arrow-down',
-            'button-z','button-x','button-c',
-            'toggle-button','keyboard-set','button-f1','button-f2','button-debug',
-            'settings-overlay','settings-panel',
-            'text-scale','text-opacity','text-joystickscale','text-reset'
-        ];
-        __hideIds.forEach(function(id){
-            var el = document.getElementById(id);
-            if (el) { el.style.display = 'none'; }
-        });
-    } catch(e){}
-
-    // Loader 阶段就要驱动 tick 循环，否则 isloading 不会变 false
-    window.__bootTickInterval = setInterval(function(){
-        try {
-            var r = getRuntime();
-            if (r && !r.isSuspended) {
-                r.redraw = true;
-                r.tick(false);
-            }
-        } catch(e){}
-    }, 16);
-
-    setInterval(function(){
-        window.vpadDebug.pollCalls++;
-        try {
-            var rt = getRuntime();
-            if (!rt) return;
-
-            if (rt.isSuspended) rt.isSuspended = false;
-
-            // ── 每次 poll 都无条件锁死原始分辨率 + scale outer ──
-            try {
-                rt.original_width = 960;
-                rt.original_height = 540;
-                rt.fullscreen_mode = 4;
-                rt.fullscreen_mode_set = 4;
-                if (typeof rt.setSize === 'function') {
-                    try { rt.setSize(window.innerWidth, window.innerHeight, true); } catch(e){}
-                }
-            } catch(e){}
-
-            // ── 更新开始界面进度条（rt.progress 永远是 0，自己算）──
-            try {
-                var ssBar = document.getElementById('ssBar');
-                var ssPct = document.getElementById('ssPct');
-                if (ssBar && ssPct) {
-                    if (window.__ssLocalProgress === undefined) window.__ssLocalProgress = 0;
-                    var r = getRuntime();
-                    var isLoading = !!(r && r.isloading);
-                    if (r && r.isloading === false && r.isloading !== undefined) {
-                        // data.js 加载完了（rt.isloading 变 false）—— 瞬间满，准备移除 startScreen
-                        window.__ssLocalProgress = Math.min(1, window.__ssLocalProgress + 0.15);
-                    } else if (r && !r.isSuspended && window.__ssLocalProgress < 0.95) {
-                        // runtime 在跑（tick 循环正常）—— 稳步爬升
-                        window.__ssLocalProgress = Math.min(0.95, window.__ssLocalProgress + 0.04);
-                    } else if (window.__ssLocalProgress < 0.5) {
-                        // 还没 runtime，慢慢爬
-                        window.__ssLocalProgress = Math.min(0.5, window.__ssLocalProgress + 0.015);
-                    }
-                    var lp = window.__ssLocalProgress;
-                    ssBar.style.width = (lp * 100).toFixed(1) + '%';
-                    if (lp >= 1) {
-                        ssPct.textContent = 'READY';
-                        if (ssBtn && ssBtn.disabled) ssBtn.disabled = false;
-                    } else {
-                        ssPct.textContent = 'LOADING ' + Math.round(lp * 100) + '%';
-                    }
-                }
-            } catch(e){}
-
-            var cur = rt.running_layout && rt.running_layout.name;
-            var n = cur ? cur.toLowerCase() : '';
-
-            // ── 尽早启动 tick 循环（runtime 一创建就启动，处理所有状态）──
-            if (!tickBootstrapped && rt.layouts) {
-                tickBootstrapped = true;
-                rt.raf_id = -1;
-                rt.timeout_id = -1;
-                window.__vpadTickInterval = setInterval(function(){
-                    try {
-                        var r = getRuntime();
-                        if (r && !r.isSuspended) {
-                            r.redraw = true;
-                            r.tick(false);
-                        }
-                    } catch(e){}
-                }, 16);
-            }
-
-            // ── Loader 阶段：点开始后才切 BattleScreen ──
-            if ((n === 'loader' || n === 'instructions') && !window.__startChangelogDone && window.__startScreenHidden) {
-                window.__startChangelogDone = true;
-                setTimeout(function(){
-                    var r = getRuntime();
-                    if (r && r.layouts) {
-                        var target = r.layouts['BattleScreen'] || r.layouts['battlescreen'];
-                        if (target) {
-                            r.changelayout = target;
-                            r._changeLayoutPending = false;
-                        }
-                    }
-                }, 100);
-            }
-
-            if (!cur) return;
-
-            // ── 强制背景永远纯黑 ──
-            try {
-                document.body.style.background = '#000';
-                document.documentElement.style.background = '#000';
-                var cv = document.querySelector('canvas');
-                if (cv) cv.style.background = '#000';
-                var cdiv = document.getElementById('c2canvasdiv');
-                if (cdiv) cdiv.style.background = '#000';
-            } catch(e){}
-
-            if (n === 'battlescreen' || n === 'gameover') {
-                try {
-                    var layers = rt.running_layout.layers;
-                    // Touch 层隐藏
-                    for (var i = 0; i < layers.length; i++) {
-                        if (layers[i].name.toLowerCase() === 'touch') {
-                            layers[i].instances.forEach(function(inst){ inst.opacity = 0; });
-                            break;
-                        }
-                    }
-                    // Fade 层清空
-                    for (var i = 0; i < layers.length; i++) {
-                        if (layers[i].name.toLowerCase() === 'fade') {
-                            layers[i].instances.length = 0;
-                            break;
-                        }
-                    }
-                    // CombatZoneClipped 禁用混合
-                    for (var i = 0; i < layers.length; i++) {
-                        if (layers[i].name.toLowerCase().indexOf('clipped') >= 0) {
-                            layers[i].forceOwnTexture = true;
-                            layers[i].blend_mode = 0;
-                        }
-                    }
-                } catch(e){}
-            }
-
-            if (n === 'battlescreen' && !window.__battleIntroDone) {
-                window.__battleIntroDone = true;
-                try {
-                    var L = rt.running_layout.layers;
-                    // 1. 隐藏所有背景层（标题过场时纯黑）
-                    for (var i = 0; i < L.length; i++) {
-                        var ln = L[i].name.toLowerCase();
-                        if (ln === 'bg' || ln === 'background' || ln === 'forestbg' || ln.indexOf('back') === 0) {
-                            L[i].opacity = 0;
-                        }
-                    }
-                    // 2. 温和跳过标题过场（自动按Z键多次）
-                    var skipCount = 0;
-                    var skipTimer = setInterval(function(){
-                        skipCount++;
-                        if (skipCount > 5) { clearInterval(skipTimer); return; }
-                        try {
-                            var kd = new KeyboardEvent('keydown', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                            document.dispatchEvent(kd);
-                            setTimeout(function(){
-                                var ku = new KeyboardEvent('keyup', {key:'z', code:'KeyZ', keyCode:90, which:90, bubbles:true});
-                                document.dispatchEvent(ku);
-                            }, 50);
-                        } catch(e){}
-                    }, 500);
-                    // 3. 3.5秒后恢复背景层
-                    setTimeout(function(){
-                        try {
-                            var r = getRuntime();
-                            if (r && r.running_layout && r.running_layout.name.toLowerCase() === 'battlescreen') {
-                                var L2 = r.running_layout.layers;
-                                for (var i = 0; i < L2.length; i++) {
-                                    var ln2 = L2[i].name.toLowerCase();
-                                    if (ln2 === 'bg' || ln2 === 'background' || ln2 === 'forestbg' || ln2.indexOf('back') === 0) {
-                                        L2[i].opacity = 1;
-                                    }
-                                }
-                            }
-                        } catch(e){}
-                    }, 3500);
-                } catch(e){}
-            }
-
-            if (n === 'battlescreen') {
-                try {
-                    var layers2 = rt.running_layout.layers;
-                    // HP 保持满值
-                    for (var i = 0; i < layers2.length; i++) {
-                        if (layers2[i].name.toLowerCase() === 'hud') {
-                            var insts = layers2[i].instances;
-                            for (var j = 0; j < insts.length; j++) {
-                                var inst = insts[j];
-                                if (inst.type.name === 't78' && inst.text && inst.text.indexOf('/') >= 0) {
-                                    if (inst.text !== '20 / 20') inst.text = '20 / 20';
-                                }
-                                if (inst.type.name === 't41') inst.width = 100;
-                                if (inst.type.name === 't40') {
-                                    inst.width = 100;
-                                    inst.instance_vars = [0, 100, 30];
-                                }
-                            }
-                            break;
-                        }
-                    }
-                } catch(e){}
-            }
-        } catch(e){}
-    }, 150);
-
-    // ── 开始界面：runtime 一就绪立即移除 + 强制进 BattleScreen ──
-    var ssBtn = document.getElementById('ssBtn');
-    var ssEl = document.getElementById('startScreen');
-
-    function doStart() {
-        if (window.__startScreenHidden) return;
-        window.__startScreenHidden = true;
-        // 立即移除，不做 fade
-        if (ssEl && ssEl.parentNode) {
-            ssEl.parentNode.removeChild(ssEl);
-        }
-        try { window.dispatchEvent(new Event('resize')); } catch(e){}
-    }
-
-    function forceBattleScreen() {
-        try {
-            var r = getRuntime();
-            if (!r || !r.layouts) return;
-            var cur = r.running_layout && r.running_layout.name.toLowerCase();
-            if (cur === 'battlescreen') return; // 已在战斗界面
-            // 强制设置 changelayout
-            var target = r.layouts['BattleScreen'] || r.layouts['battlescreen'];
-            if (!target) {
-                var keys = Object.keys(r.layouts);
-                for (var i = 0; i < keys.length; i++) {
-                    if (keys[i].toLowerCase() === 'battlescreen') { target = r.layouts[keys[i]]; break; }
-                }
-            }
-            if (target) {
-                r.changelayout = target;
-                r._changeLayoutPending = false;
-            }
-        } catch(e){}
-    }
-
-    // 独立检测：runtime 就绪 → 移除 startScreen + 强制进战斗
-    var startCheckInterval = setInterval(function(){
-        try {
-            var r = getRuntime();
-            if (!r || !r.layouts) return;
-            // startScreen 移除（最多等页面加载后 3 秒）
-            var elapsed = Date.now() - (window.__bootStart || (window.__bootStart = Date.now()));
-            if (!window.__startScreenHidden && elapsed > 2500 && r && r.isloading === false && r.running_layout) {
-                doStart();
-            }
-            // 强制进 BattleScreen
-            if (r.changelayout !== 'force_wait' && !window.__forceDone) {
-                var cur = r.running_layout && r.running_layout.name.toLowerCase();
-                if (cur && cur !== 'battlescreen') {
-                    forceBattleScreen();
-                    window.__forceDone = true;
-                }
-            }
-            // 两个都搞定就停
-            if (window.__startScreenHidden && window.__forceDone) {
-                clearInterval(startCheckInterval);
-            }
-        } catch(e){}
-    }, 200);
-
-    if (ssBtn) {
-        ssBtn.addEventListener('click', function(){ doStart(); forceBattleScreen(); });
-        ssBtn.addEventListener('touchstart', function(e){ e.preventDefault(); doStart(); forceBattleScreen(); }, { passive: false });
-    }
-
-    // ── 窗口/方向变化时强制重算全屏 ──
-    window.addEventListener('resize', function(){
-        try {
-            var r = getRuntime();
-            if (r && typeof r.setSize === 'function') {
-                r.setSize(window.innerWidth, window.innerHeight, true);
-            }
-        } catch(e){}
-    });
-    window.addEventListener('orientationchange', function(){
-        setTimeout(function(){
-            try {
-                var r = getRuntime();
-                if (r && typeof r.setSize === 'function') {
-                    r.setSize(window.innerWidth, window.innerHeight, true);
-                }
-            } catch(e){}
-        }, 300);
-    });
-
-    // 旧内联进度条清掉
-    try { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); } catch(e){}
-    try { if (pct && pct.parentNode) pct.parentNode.removeChild(pct); } catch(e){}
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', vpadSetup);
-} else {
-    vpadSetup();
-}
-
-</script>
-
     <meta charset="UTF-8" />
+       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-	<meta name="mobile-web-app-capable" content="yes" />
 	<title>DUSTTALE · 德衫 BOSS战</title>
-    <base href="https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/sans/">
 
     <!-- All margins and padding must be zero for the canvas to fill the screen. -->
 	<style type="text/css">
@@ -468,396 +28,34 @@ if (document.readyState === 'loading') {
     </style>
 	<style>
         * { margin: 0; padding: 0; }
-        html, body { background: #000; overflow: hidden; }
-        canvas { display: block; }
-
-        /* ── 隐藏 Construct 2 模板里的 DOM 键盘元素（MobileControls.js 用 virt-ctrl canvas 自己画）── */
-        #joystick-container, #joystick-handle, #joystick-mk,
-        #arrow-up, #arrow-left, #arrow-right, #arrow-down,
-        #button-z, #button-x, #button-c,
-        #toggle-button, #button-f1, #button-f2, #button-debug,
-        #keyboard-set, #settings-overlay, #settings-panel,
-        #text-scale, #text-opacity, #text-joystickscale, #text-reset {
-            display: none !important;
-        }
-
-        /* Joystick Styling */
-        #joystick-container { 
-            position: absolute; 
-            width: 140px; 
-            height: 155px; 
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            left: -75px; 
-            bottom: 45px;
-            background-size: cover;
-            z-index: 1000;
-            background-size: contain !important;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: pixelated;
-            opacity: 0.7;
-        }
-        #joystick-handle { 
-            position: absolute; 
-            width: 90px; 
-            height: 105px; 
-            background: rgba(255, 255, 255, 0.5);
-             border-radius: 50%;
-            left: 25px; 
-            bottom: 22.5px;
-            background-size: cover;
-            z-index: 1000;
-            background-size: contain !important;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: pixelated;
-            opacity: 0.7;
-        }
-        #joystick-mk {
-            position: absolute;
-            width: 140px;
-            height: 155px;
-            left: -75px;
-            bottom: 45px;
-            z-index: 1000;
-            background-size: contain !important;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: pixelated;
-            opacity: 0.8;
-            display: none;
-        }
-        
-        /* Arrow Styling */
-        .arrow {
-            position: absolute;
-            z-index: 1000;
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.3);
-            text-align: center;
-            line-height: 70px;
-            font-size: 40px;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            background-size: contain !important;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: pixelated;
-            opacity: 0.7;
-        }
-
-        #arrow-up {
-            bottom: 150px;
-            right: -65px;
-        }
-
-        #arrow-left {
-            bottom: 35px;
-            left: -120px;
-        }
-
-        #arrow-right {
-            bottom: 35px;
-            left: -10px;
-        }
-
-        #arrow-down {
-            bottom: 35px;
-            right: -65px;
-        }
-
-        /* Button Styling */
-        .button {
-            position: absolute;
-            z-index: 1000;
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.3);
-            text-align: center;
-            line-height: 70px;
-            font-size: 24px;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            background-size: contain !important;
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: pixelated;
-            opacity: 0.7;
-        }
-        .button, .arrow {
-            user-select: none;
-            -webkit-user-select: none;
-            transform-origin: center center;
-            --btn-scale: 1;
-            --btn-translate-x: 0px;
-            --btn-translate-y: 0px;
-            transform: translate(var(--btn-translate-x), var(--btn-translate-y)) scale(var(--btn-scale));
-        }
-        #joystick-container,
-        #joystick-handle,
-        #joystick-mk {
-            transform-origin: center center;
-            --btn-scale: 1;
-            --btn-translate-x: 0px;
-            --btn-translate-y: 0px;
-            transform: translate(var(--btn-translate-x), var(--btn-translate-y)) scale(var(--btn-scale));
-        }
-        #keyboard-set {
-            width: 35px;
-            height: 35px;
-            right: 15px;
-            top: 15px;
-            line-height: 35px;
-            font-size: 14px;
-            display: block;
-            z-index: 1300;
-            color: #fff;
-            background-color: rgba(255, 255, 255, 0.3);
-            -webkit-text-fill-color: #fff;
-            forced-color-adjust: none;
-            filter: none;
-        }
-        #settings-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 1100;
-            display: none;
-            pointer-events: none;
-        }
-        #settings-panel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 220px;
-            height: 220px;
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 1400;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-        .settings-button {
-            position: absolute;
-            width: 90px;
-            height: 40px;
-            line-height: 40px;
-            font-size: 16px;
-            pointer-events: auto;
-            opacity: 1;
-        }
-        #text-scale {
-            top: 15%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #text-opacity {
-            top: 41.7%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #text-joystickscale {
-            top: 58.3%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #text-reset {
-            top: 85%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #toggle-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-        }
-        .layout2 #button-z {
-            width: 70px;
-            height: 70px;
-        }
-        .layout2 #button-x {
-            width: 70px;
-            height: 70px;
-        }
-       .layout2 #button-c {
-            width: 70px;
-            height: 70px;
-        }
-       
-        /* Default positions for layout 1 */
-        #button-z { right: 60px; bottom: 30px; display: none; }
-        #button-x { right: -15px; bottom: 70px; display: none; }
-        #button-c { right: -90px; bottom: 110px; display: none; }
-        #button-f2 { left: -60px; top: 10px; display: none; }
-        #button-f1 { left: 81px; top: 10px; display: none; }
-        #button-debug { position: absolute; left: -130px; top: 10px; display: none; }
-                
-        /* Specific positions for layout 2 */
-        .layout2 #button-z { right: 60px; top: 30px; } /* Specific positions for layout 2 */
-        .layout2 #button-x { right: -15px; top: 30px; } /* Specific positions for layout 2 */
-        .layout2 #button-c { right: -90px; top: 30px; } /* Specific positions for layout 2 */
-        .layout2 #button-f2 { left: -60px; top: 10px; display: none; } /* Specific positions for layout 2 */
-       .layout2 #button-f1 { left: 81px; top: 10px; display: none; } /* Specific positions for layout 2 */
-      .layout2 #button-debug { position: absolute; left: -130px; top: 10px; display: none; } /* Specific positions for layout 2 */
-
-        /* ── 开始界面 ── */
-        #startScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 99999999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.6s ease;
-        }
-        #startScreen.hidden { opacity: 0; pointer-events: none; }
-        #startScreen h1 {
-            font-family: 'Courier New', monospace;
-            font-size: clamp(28px, 8vw, 56px);
-            color: #ffffff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.4);
-            letter-spacing: 2px;
-            margin: 0 0 8px 0;
-            text-align: center;
-        }
-        #startScreen h1 span { color: #FF4444; }
-        #startScreen .subtitle {
-            font-family: 'Courier New', monospace;
-            font-size: clamp(14px, 3.5vw, 20px);
-            color: #888;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        #startScreen .progress-wrap {
-            width: min(280px, 70vw);
-            height: 4px;
-            background: #222;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-        #startScreen .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #666, #fff);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        #startScreen .progress-text {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #666;
-            letter-spacing: 1px;
-            margin-bottom: 32px;
-        }
-        #startScreen .start-btn {
-            font-family: 'Courier New', monospace;
-            font-size: clamp(16px, 4.5vw, 22px);
-            color: #fff;
-            background: transparent;
-            border: 2px solid #fff;
-            padding: 14px 48px;
-            letter-spacing: 4px;
-            cursor: pointer;
-            opacity: 0.3;
-            transition: opacity 0.3s, background 0.3s, transform 0.15s;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #startScreen .start-btn.ready { opacity: 1; animation: pulse 1.5s infinite; }
-        #startScreen .start-btn:active { transform: scale(0.95); }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
-        }
-        #startScreen .hints {
-            margin-top: 40px;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            color: #444;
-            text-align: center;
-            line-height: 1.8;
-        }
-        #startScreen .hints b { color: #888; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #c2canvasdiv { position: relative; width: 100%; height: 100%; }
+        canvas { display: block; margin: auto; background: #000; image-rendering: pixelated; }
     </style>
-	
-
 </head> 
  
-<body>
-
-        <!-- ── 开始界面（加载 + 点击开始）── -->
-        <div id="startScreen">
-            <h1>DUST<span>TALE</span></h1>
-            <div class="subtitle">sans · BOSS FIGHT</div>
-            <div class="progress-wrap"><div class="progress-bar" id="ssBar"></div></div>
-            <div class="progress-text" id="ssPct">LOADING 0%</div>
-            <button class="start-btn" id="ssBtn" disabled>PRESS TO START</button>
-            <div class="hints">
-                <b>Z</b> 确认　<b>X</b> 取消　<b>C</b> 菜单<br>
-                摇杆控制 <b>SOUL</b> 移动
-            </div>
-        </div>
-
-        <div id="fb-root"></div>
+<body> 
+	<div id="fb-root"></div>
 	
 	<!-- The canvas must be inside a div called c2canvasdiv -->
 	<div id="c2canvasdiv">
 	
 		<!-- The canvas the project will render to.  If you change its ID, don't forget to change the
 		ID the runtime looks for in the jQuery events above (ready() and cr_sizeCanvas()). -->
-		<canvas id="c2canvas" width="960" height="540"></canvas>
-		
-    	<!-- Joystick -->
-        <div id="joystick-container">
-            <div id="joystick-handle"></div>
+		<canvas id="c2canvas" width="640" height="480"></canvas>
 	</div>
-        <div id="joystick-mk"></div>
 
-		<!-- Arrow Controls -->
-        <div id="arrow-up" class="arrow">↑</div>
-        <div id="arrow-left" class="arrow">←</div>
-        <div id="arrow-right" class="arrow">→</div>
-        <div id="arrow-down" class="arrow">↓</div>
-
-        <!-- Buttons -->
-        <div id="button-z" class="button">Z</div>
-        <div id="button-x" class="button">X</div>
-        <div id="button-c" class="button">C</div>
-        <div id="toggle-button" class="button">SET</div>
-        <div id="button-f2" class="button">F2</div>
-        <div id="button-f1" class="button">F1</div>
-        <div id="button-debug" class="button">DBG</div>
-        <div id="keyboard-set" class="button">KB</div>
-        <div id="settings-overlay"></div>
-        <div id="settings-panel">
-            <div id="text-scale" class="button settings-button">SIZE</div>
-            <div id="text-opacity" class="button settings-button">OPACITY</div>
-            <div id="text-joystickscale" class="button settings-button">JOY SIZE</div>
-            <div id="text-reset" class="button settings-button">RESET</div>
-        </div>
-	</div>
-	
 	<!-- Pages load faster with scripts at the bottom -->
 	
 	<!-- Construct 2 exported games require jQuery. -->
-	<script src="jquery-3.4.1.min.js"></script>
+	<script src="jquery-3.4.1.min.js?v=1786286012"></script>
 
 
 	
     <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
     This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
-	<script src="c2runtime.js"></script>
-    
-<script src="MobileControls.js?v=3"></script>
+	<script src="c2runtime.js?v=1786286017"></script>
+<script src="MobileControls.js?v=20260809"></script>
 
     
 
@@ -867,30 +65,54 @@ if (document.readyState === 'loading') {
 		{			
 			// Create new runtime using the c2canvas
 			cr_createRuntime("c2canvas");
-
-			// ★ 让 Loader 正常加载完资源（progress>=1），然后自动跳 BattleScreen
-		// （不强制跳过，否则公网资源慢的时候 sprite 没加载完会黑屏）
-		var _forceTickCount = 0;
-		var _forceTick = setInterval(function(){
-			_forceTickCount++;
-			try {
-				var _rt = (window.cr_getC2Runtime && window.cr_getC2Runtime()) || 
-						  (document.getElementById('c2canvas') && document.getElementById('c2canvas').c2runtime);
-				if (_rt) {
-					clearInterval(_forceTick);
-					_rt.isSuspended = false;
-					_rt.running = true;
-					// 不强制 changelayout，让 Loader 正常 finish 后自己切换
-					// 只需要确保 RAF tick 循环能启动
-					console.log('✅ Runtime ready, waiting for Loader progress=1 (' + _forceTickCount + ' tries)');
+			var _rt = document.getElementById("c2canvas").c2runtime;
+			if (_rt) { _rt.enableWebGL = false; _rt.gl = null; }
+			// Inject Keyboard plugin instance (missing from exported data.js)
+			(function() {
+				var canvas = document.getElementById("c2canvas");
+				var R = (canvas && canvas.c2runtime) || window.c2runtime;
+				if (!R || !cr.plugins_.Keyboard) return;
+				try {
+					var plugin = new cr.plugins_.Keyboard(R);
+					var type = new cr.plugins_.Keyboard.prototype.Type(plugin);
+					type.name = "Keyboard";
+					type.families = [];
+					type.behaviors = [];
+					type.is_family = false;
+					var inst = new cr.plugins_.Keyboard.prototype.Instance(type);
+					inst.onCreate();
+					R.__keyboardInstance = inst;
+					console.log("[keyboard] injected Keyboard plugin instance");
+				} catch(e) {
+					console.warn("[keyboard] inject failed:", e);
 				}
-			} catch(e){}
-		}, 100);
+			})();
+			var _c2 = document.getElementById("c2canvas");
+			if (_c2) _c2.style.imageRendering = "pixelated";
+			// Auto-skip straight to BattleScreen
+			var _tries = 0;
+			var _skipInterval = setInterval(function() {
+				_tries++;
+				try {
+					var R = (document.getElementById("c2canvas").c2runtime) || window.c2runtime;
+					if (!R || !R.running_layout || R.isloading) return;
+					var LN = R.running_layout.name;
+					if (LN === "BattleScreen") {
+						clearInterval(_skipInterval);
+						console.log("[autoskip] Already on BattleScreen");
+						return;
+					}
+					var BL = R.layouts["BattleScreen"];
+					if (BL) {
+						R.changelayout = BL;
+						console.log("[autoskip]", LN, "→ BattleScreen (attempt", _tries, ")");
+					}
+					if (_tries > 50) clearInterval(_skipInterval);
+				} catch(e) {}
+			}, 200);
 		});
 		
-		// DISABLED: do NOT suspend on visibility change — it breaks auto-skip and game flow
-		// (the browser may report page as hidden during CDP navigations, freezing the main loop)
-		/*
+		// Pause and resume on page becoming visible/invisible
 		function onVisibilityChanged() {
 			if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
 				cr_setSuspended(true);
@@ -902,7 +124,6 @@ if (document.readyState === 'loading') {
 		document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
 		document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
 		document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
-		*/
 		
 				
 		function OnRegisterSWError(e)
@@ -918,15 +139,12 @@ if (document.readyState === 'loading') {
 				return;		// no SW support, ignore call
 			
 			try {
-				// SW DISABLED
-				/*
-				navigator.serviceWorker.register("https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/sw.js", { scope: "./" })
+				navigator.serviceWorker.register("sw.js", { scope: "./" })
 				.then(function (reg)
 				{
 					console.log("Registered service worker on " + reg.scope);
 				})
 				.catch(OnRegisterSWError);
-				*/
 			}
 			catch (e)
 			{
@@ -934,6 +152,5 @@ if (document.readyState === 'loading') {
 			}
 		};
     </script>
-
 </body> 
 </html> 

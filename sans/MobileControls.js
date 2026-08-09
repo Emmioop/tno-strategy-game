@@ -52,6 +52,21 @@ let activeKeys = new Set();
 function getGameRect() {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    var canvas = document.getElementById('c2canvas');
+    if (canvas) {
+        var cr = canvas.getBoundingClientRect();
+        if (cr.width > 0 && cr.height > 0) {
+            return {
+                sx: cr.left,
+                sy: cr.top,
+                sw: cr.width,
+                sh: cr.height,
+                scale: cr.width / GAME_W,
+                w: w,
+                h: h,
+            };
+        }
+    }
     const scale = Math.min(w / GAME_W, h / GAME_H);
     const sw = GAME_W * scale;
     const sh = GAME_H * scale;

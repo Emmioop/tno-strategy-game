@@ -919,7 +919,7 @@ const Game = {
     }
 
     // 5. 核心事件按 tag 优先级 + 显式 priority 排序，限制弹窗数量（按回合模式）
-    const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, minor: 6 };
+    const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, culture: 4, tech: 4, minor: 6, random: 8 };
     core.sort((a, b) => {
       const ta = (a.tag in tagPriority) ? tagPriority[a.tag] : 7;
       const tb = (b.tag in tagPriority) ? tagPriority[b.tag] : 7;
