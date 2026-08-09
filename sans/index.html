@@ -4,10 +4,10 @@
 
 
 <head>
+<!-- CDN 钩子暂时禁用，直接从 gh-pages 加载最新资源
 <script>
-// ★ CDN 加速钩子：在任何其他脚本之前运行，拦截所有相对路径资源请求
 (function(){
-    var CDN = 'https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/';
+    var CDN = '';
     var LOCAL = window.location.protocol + '//' + window.location.host + '/';
     var onLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     
@@ -437,7 +437,7 @@ if (document.readyState === 'loading') {
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="mobile-web-app-capable" content="yes" />
 	<title>DUSTTALE · 德衫 BOSS战</title>
-    <base href="https://cdn.jsdelivr.net/gh/Emmioop/tno-strategy-game@gh-pages/">
+    <!-- base href removed, use relative paths -->
 
     <!-- All margins and padding must be zero for the canvas to fill the screen. -->
 	<style type="text/css">
@@ -927,6 +927,7 @@ if (document.readyState === 'loading') {
 			}
 		};
     </script>
+<!-- SW disabled
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -934,5 +935,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+-->
 </body> 
 </html> 
