@@ -133,7 +133,8 @@
 		
 		// Runtime calls this global method when ready to start caching (i.e. after startup).
 		// This registers the service worker which caches resources for offline support.
-		window.C2_RegisterSW = function C2_RegisterSW()
+		window.C2_RegisterSW = function C2_RegisterSW() { return; } // disabled SW for GitHub Pages
+                void function _unused()
 		{
 			if (!navigator.serviceWorker)
 				return;		// no SW support, ignore call
