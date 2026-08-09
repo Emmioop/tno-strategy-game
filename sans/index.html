@@ -169,14 +169,25 @@ function vpadSetup() {
                 }
             } catch(e){}
 
-            var p = rt.progress || 0;
-
-            // ── 更新开始界面进度条 ──
+            // ── 更新开始界面进度条（rt.progress 永远是 0，自己算）──
             try {
                 var ssBar = document.getElementById('ssBar');
                 var ssPct = document.getElementById('ssPct');
-                if (ssBar) ssBar.style.width = (p * 100).toFixed(1) + '%';
-                if (ssPct) ssPct.textContent = (p >= 1 ? 'READY' : 'LOADING ' + Math.round(p * 100) + '%');
+                if (ssBar && ssPct) {
+                    if (!window.__ssLocalProgress) window.__ssLocalProgress = 0;
+                    var r = getRuntime();
+                    var ticking = !!(r && r.layouts && !r.isSuspended);
+                    if (ticking && window.__ssLocalProgress < 1) {
+                        // 已经在 tick 了，从 0 平滑升到 1 用 2 秒
+                        window.__ssLocalProgress = Math.min(1, window.__ssLocalProgress + 0.08);
+                    } else if (!ticking && window.__ssLocalProgress < 0.7) {
+                        // 还没 tick，慢慢爬
+                        window.__ssLocalProgress = Math.min(0.7, window.__ssLocalProgress + 0.02);
+                    }
+                    var lp = window.__ssLocalProgress;
+                    ssBar.style.width = (lp * 100).toFixed(1) + '%';
+                    ssPct.textContent = lp >= 1 ? 'READY' : 'LOADING ' + Math.round(lp * 100) + '%';
+                }
             } catch(e){}
 
             var cur = rt.running_layout && rt.running_layout.name;
@@ -314,9 +325,9 @@ function vpadSetup() {
     var ssCheckInterval = setInterval(function(){
         try {
             var r = getRuntime();
-            if (!r || !ssBtn) return;
-            var p = r.progress || 0;
-            if (p >= 1 && !ssBtn.classList.contains('ready')) {
+            if (!ssBtn) return;
+            var lp = window.__ssLocalProgress || 0;
+            if (lp >= 1 && !ssBtn.classList.contains('ready')) {
                 ssBtn.disabled = false;
                 ssBtn.classList.add('ready');
                 ssBtn.textContent = '▼  TAP OR WAIT  ▼';
