@@ -174,9 +174,9 @@ function vpadSetup() {
                 var ssBar = document.getElementById('ssBar');
                 var ssPct = document.getElementById('ssPct');
                 if (ssBar && ssPct) {
-                    if (!window.__ssLocalProgress) window.__ssLocalProgress = 0;
+                    if (window.__ssLocalProgress === undefined) window.__ssLocalProgress = 0;
                     var r = getRuntime();
-                    var ticking = !!(r && r.layouts && !r.isSuspended);
+                    var ticking = !!(r && !r.isSuspended);
                     if (ticking && window.__ssLocalProgress < 1) {
                         // 已经在 tick 了，从 0 平滑升到 1 用 2 秒
                         window.__ssLocalProgress = Math.min(1, window.__ssLocalProgress + 0.08);

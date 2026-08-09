@@ -164,7 +164,7 @@ const GAME_MODES = {
   fun: {
     id: 'fun',
     name: '趣味模式',
-    desc: '🎮 Undertale 风格独立 Boss 战：垂死元首/勃艮第之主/宣传机器/沙漠之狐——选一个狠狠干，打赢有大奖励',
+    desc: '🎮 Undertale 风格 Boss 战模式：独立节奏、独立结算、独立奖励——在主线之外狠狠干一把',
     color: '#d4a017',
     icon: '🎮',
     aiSpeedMod: 1.2,
