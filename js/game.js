@@ -919,7 +919,8 @@ const Game = {
     }
 
     // 5. 核心事件按 tag 优先级 + 显式 priority 排序，限制弹窗数量（按回合模式）
-    const tagPriority = { critical: 0, major: 1, story: 2, diplomacy: 3, economy: 4, military: 5, culture: 4, tech: 4, minor: 6, random: 8 };
+    // 修正：军事行动（东线、战事）应排在 major 之后、外交之前；story 是叙事风味弹窗，不应压过军事/外交/经济
+    const tagPriority = { critical: 0, major: 1, military: 2, diplomacy: 3, economy: 4, tech: 4, culture: 4, story: 5, minor: 6, random: 8 };
     core.sort((a, b) => {
       const ta = (a.tag in tagPriority) ? tagPriority[a.tag] : 7;
       const tb = (b.tag in tagPriority) ? tagPriority[b.tag] : 7;
