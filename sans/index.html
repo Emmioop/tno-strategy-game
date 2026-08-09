@@ -138,16 +138,32 @@
 
     if (DEBUG.god) {
       var hp = gv('HP'), kr = gv('KR'), maxHp = gv('MaxHP');
-      if (hp && !hp._origGodSetter) {
-        var baseHp = hp.data;
-        var baseMax = maxHp ? maxHp.data : baseHp;
-        console.log('[C2-DEBUG] GOD MODE: HP locked to', baseMax, ', KR=0');
-        hp._origGodSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hp), 'data');
+      if (hp && !hp._godHooked) {
+        var baseMax = maxHp ? maxHp.data : hp.data;
+        hp._godHooked = true;
         hp._godMax = baseMax;
-        hp._godTimer = setInterval(function(){
-          if (hp.data !== baseMax) hp.data = baseMax;
-          if (kr && kr.data !== 0) kr.data = 0;
-        }, 80);
+        hp._origSetValue = hp.setValue.bind(hp);
+        hp.setValue = function (x) {
+          return this._origSetValue(this._godMax);
+        };
+        Object.defineProperty(hp, 'data', {
+          get: function(){ return hp._godMax; },
+          set: function(){ /* ignore */ },
+          configurable: true,
+          enumerable: true,
+        });
+        if (kr && !kr._godHooked) {
+          kr._godHooked = true;
+          kr._origSetValue = kr.setValue.bind(kr);
+          kr.setValue = function(){ return kr._origSetValue(0); };
+          Object.defineProperty(kr, 'data', {
+            get: function(){ return 0; },
+            set: function(){},
+            configurable: true,
+            enumerable: true,
+          });
+        }
+        console.log('[C2-DEBUG] GOD MODE hooked: HP always=', baseMax, ', KR=0');
       }
     }
     if (DEBUG.sanshp) {
